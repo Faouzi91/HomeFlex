@@ -1,0 +1,77 @@
+<ion-content class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8">
+
+        <div class="text-center mb-8">
+            <ion-icon name="home" class="text-5xl text-blue-600"></ion-icon>
+            <h1 class="text-3xl font-semibold mt-3 text-gray-800">{{ 'app.name' | translate }}</h1>
+            <p class="text-gray-500">{{ 'auth.registerWelcome' | translate }}</p>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.firstName' | translate }}</label>
+                <ion-input class="border border-gray-300 rounded-lg p-3 mt-1" formControlName="firstName"></ion-input>
+            </div>
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.lastName' | translate }}</label>
+                <ion-input class="border border-gray-300 rounded-lg p-3 mt-1" formControlName="lastName"></ion-input>
+            </div>
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.email' | translate }}</label>
+                <ion-input type="email" class="border border-gray-300 rounded-lg p-3 mt-1"
+                    formControlName="email"></ion-input>
+            </div>
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.phoneNumber' | translate }}</label>
+                <ion-input type="tel" class="border border-gray-300 rounded-lg p-3 mt-1"
+                    formControlName="phoneNumber"></ion-input>
+            </div>
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.password' | translate }}</label>
+                <ion-input type="password" class="border border-gray-300 rounded-lg p-3 mt-1"
+                    formControlName="password"></ion-input>
+            </div>
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.confirmPassword' | translate }}</label>
+                <ion-input type="password" class="border border-gray-300 rounded-lg p-3 mt-1"
+                    formControlName="confirmPassword"></ion-input>
+            </div>
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.role' | translate }}</label>
+                <ion-select formControlName="role" class="border border-gray-300 rounded-lg">
+                    <ion-select-option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</ion-select-option>
+                </ion-select>
+            </div>
+
+            <ion-text color="danger" *ngIf="error">
+                <p class="text-red-500">{{ error }}</p>
+            </ion-text>
+
+            <button type="submit"
+                class="w-full py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition disabled:opacity-40"
+                [disabled]="registerForm.invalid || loading">
+
+                <ion-spinner *ngIf="loading"></ion-spinner>
+                <span *ngIf="!loading">{{ 'auth.register' | translate }}</span>
+            </button>
+
+        </form>
+
+        <p class="text-center mt-4 text-gray-600">
+            {{ 'auth.haveAccount' | translate }}
+            <a (click)="goToLogin()" class="text-blue-600 cursor-pointer hover:underline">
+                {{ 'auth.login' | translate }}
+            </a>
+        </p>
+
+    </div>
+
+</ion-content>

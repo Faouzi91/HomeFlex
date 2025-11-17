@@ -1,0 +1,50 @@
+<ion-header>
+    <ion-toolbar>
+        <ion-title>{{ 'property.title' | translate }}</ion-title>
+        <ion-buttons slot="end">
+            <ion-button (click)="toggleFilters()">
+                <ion-icon name="filter"></ion-icon>
+            </ion-button>
+        </ion-buttons>
+    </ion-toolbar>
+
+    <ion-toolbar>
+        <ion-searchbar [placeholder]="'property.search' | translate" (ionChange)="onSearch($event.detail.value!)">
+        </ion-searchbar>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content>
+    <ion-refresher slot="fixed" (ionRefresh)="doRefresh($event)">
+        <ion-refresher-content></ion-refresher-content>
+    </ion-refresher>
+
+    <!-- Filters Panel -->
+    <div class="filters-panel" *ngIf="showFilters">
+        <app-property-filters (filtersApplied)="applyFilters($event)" (filtersClosed)="toggleFilters()">
+        </app-property-filters>
+    </div>
+
+    <!-- Properties Grid -->
+    <div class="properties-grid" *ngIf="!loading || properties.length > 0">
+        <app-property-card *ngFor="let property of properties" [property]="property" (click)="viewProperty(property)">
+        </app-property-card>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading-container" *ngIf="loading && properties.length === 0">
+        <ion-spinner></ion-spinner>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!loading && properties.length === 0">
+        <ion-icon name="home-outline"></ion-icon>
+        <h3>No properties found</h3>
+        <p>Try adjusting your search or filters</p>
+    </div>
+
+    <!-- Infinite Scroll -->
+    <ion-infinite-scroll threshold="100px" (ionInfinite)="loadMore($event)">
+        <ion-infinite-scroll-content></ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+</ion-content>

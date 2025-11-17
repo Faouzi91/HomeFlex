@@ -1,0 +1,67 @@
+{
+    "app": {
+        "name": "HomeFlex",
+        "welcome": "Bienvenue"
+    },
+    "auth": {
+        "login": "Connexion",
+        "register": "S'inscrire",
+        "registerWelcome": "Créer votre compte",
+        "logout": "Déconnexion",
+        "email": "Email",
+        "password": "Mot de passe",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "phoneNumber": "Numéro de téléphone",
+        "confirmPassword": "Confirmer le mot de passe",
+        "forgotPassword": "Mot de passe oublié ?",
+        "noAccount": "Vous n'avez pas de compte ?",
+        "haveAccount": "Vous avez déjà un compte ?",
+        "signInWithGoogle": "Se connecter avec Google",
+        "role": "Rôle"
+    },
+    "header": {
+        "buy": "Acheter",
+        "rent": "Louer",
+        "sell": "Vendre",
+        "agents": "Agents",
+        "contact": "Contact"
+    },
+    "property": {
+        "title": "Propriétés",
+        "search": "Rechercher des propriétés",
+        "addNew": "Ajouter une propriété",
+        "details": "Détails de la propriété",
+        "price": "Prix",
+        "bedrooms": "Chambres",
+        "bathrooms": "Salles de bain",
+        "area": "Surface (m²)",
+        "location": "Localisation",
+        "amenities": "Équipements",
+        "description": "Description",
+        "contactLandlord": "Contacter le propriétaire",
+        "requestViewing": "Demander une visite",
+        "addToFavorites": "Ajouter aux favoris",
+        "removeFromFavorites": "Retirer des favoris"
+    },
+    "filters": {
+        "filters": "Filtres",
+        "propertyType": "Type de propriété",
+        "priceRange": "Fourchette de prix",
+        "minPrice": "Prix minimum",
+        "maxPrice": "Prix maximum",
+        "city": "Ville",
+        "apply": "Appliquer les filtres",
+        "clear": "Effacer les filtres"
+    },
+    "common": {
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "delete": "Supprimer",
+        "edit": "Modifier",
+        "submit": "Soumettre",
+        "loading": "Chargement...",
+        "error": "Erreur",
+        "success": "Succès"
+    }
+}

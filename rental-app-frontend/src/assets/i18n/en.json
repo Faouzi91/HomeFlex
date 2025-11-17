@@ -1,0 +1,67 @@
+{
+    "app": {
+        "name": "HomeFlex",
+        "welcome": "Welcome"
+    },
+    "auth": {
+        "login": "Login",
+        "register": "Register",
+        "registerWelcome": "Create your account",
+        "logout": "Logout",
+        "email": "Email",
+        "password": "Password",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "phoneNumber": "Phone Number",
+        "confirmPassword": "Confirm Password",
+        "forgotPassword": "Forgot Password?",
+        "noAccount": "Don't have an account?",
+        "haveAccount": "Already have an account?",
+        "signInWithGoogle": "Sign in with Google",
+        "role": "Role"
+    },
+    "header": {
+        "buy": "Buy",
+        "rent": "Rent",
+        "sell": "Sell",
+        "agents": "Agents",
+        "contact": "Contact"
+    },
+    "property": {
+        "title": "Properties",
+        "search": "Search Properties",
+        "addNew": "Add Property",
+        "details": "Property Details",
+        "price": "Price",
+        "bedrooms": "Bedrooms",
+        "bathrooms": "Bathrooms",
+        "area": "Area (m²)",
+        "location": "Location",
+        "amenities": "Amenities",
+        "description": "Description",
+        "contactLandlord": "Contact Landlord",
+        "requestViewing": "Request Viewing",
+        "addToFavorites": "Add to Favorites",
+        "removeFromFavorites": "Remove from Favorites"
+    },
+    "filters": {
+        "filters": "Filters",
+        "propertyType": "Property Type",
+        "priceRange": "Price Range",
+        "minPrice": "Min Price",
+        "maxPrice": "Max Price",
+        "city": "City",
+        "apply": "Apply Filters",
+        "clear": "Clear Filters"
+    },
+    "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "submit": "Submit",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success"
+    }
+}

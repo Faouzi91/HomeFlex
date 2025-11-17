@@ -1,0 +1,65 @@
+<ion-content class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8">
+
+        <!-- Logo + Title -->
+        <div class="text-center mb-8">
+            <ion-icon name="home" class="text-5xl text-blue-600"></ion-icon>
+            <h1 class="text-3xl font-semibold mt-3 text-gray-800">{{ 'app.name' | translate }}</h1>
+            <p class="text-gray-500">{{ 'app.welcome' | translate }}</p>
+        </div>
+
+        <!-- Login form -->
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.email' | translate }}</label>
+                <ion-input type="email" class="border border-gray-300 rounded-lg p-3 mt-1" formControlName="email">
+                </ion-input>
+            </div>
+
+            <div>
+                <label class="text-gray-600 text-sm">{{ 'auth.password' | translate }}</label>
+                <ion-input type="password" class="border border-gray-300 rounded-lg p-3 mt-1"
+                    formControlName="password">
+                </ion-input>
+            </div>
+
+            <ion-text color="danger" *ngIf="error">
+                <p class="text-red-500">{{ error }}</p>
+            </ion-text>
+
+            <button type="submit"
+                class="w-full py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition disabled:opacity-40"
+                [disabled]="loginForm.invalid || loading">
+
+                <ion-spinner *ngIf="loading"></ion-spinner>
+                <span *ngIf="!loading">{{ 'auth.login' | translate }}</span>
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="my-6 flex items-center">
+            <div class="flex-grow border-t border-gray-300"></div>
+            <span class="mx-3 text-gray-400">OR</span>
+            <div class="flex-grow border-t border-gray-300"></div>
+        </div>
+
+        <!-- Google -->
+        <button (click)="loginWithGoogle()"
+            class="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-100 transition">
+            <ion-icon name="logo-google"></ion-icon>
+            {{ 'auth.signInWithGoogle' | translate }}
+        </button>
+
+        <!-- Register link -->
+        <p class="text-center mt-4 text-gray-600">
+            {{ 'auth.noAccount' | translate }}
+            <a (click)="goToRegister()" class="text-blue-600 cursor-pointer hover:underline">
+                {{ 'auth.register' | translate }}
+            </a>
+        </p>
+
+    </div>
+
+</ion-content>

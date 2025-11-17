@@ -1,0 +1,69 @@
+<ion-header>
+    <ion-toolbar class="bg-white border-b border-gray-200 h-16 px-6 flex items-center justify-between">
+
+        <!-- LOGO -->
+        <div class="flex-shrink-0">
+            <ion-title class="text-2xl font-bold text-blue-600 cursor-pointer m-0" (click)="navigate('/properties')">
+                {{ 'app.name' | translate }}
+            </ion-title>
+        </div>
+
+        <!-- NAV LINKS (desktop only) -->
+        <nav class="hidden md:flex flex-1 justify-center space-x-6">
+            <ion-button fill="clear"
+                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
+                (click)="navigate('/properties?type=buy')">{{ 'header.buy' | translate }}</ion-button>
+            <ion-button fill="clear"
+                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
+                (click)="navigate('/properties?type=rent')">{{ 'header.rent' | translate }}</ion-button>
+            <ion-button fill="clear"
+                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
+                (click)="navigate('/properties?type=sell')">{{ 'header.sell' | translate }}</ion-button>
+            <ion-button fill="clear"
+                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
+                (click)="navigate('/agents')">{{ 'header.agents' | translate }}</ion-button>
+            <ion-button fill="clear"
+                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
+                (click)="navigate('/contact')">{{ 'header.contact' | translate }}</ion-button>
+        </nav>
+
+        <!-- USER ACTIONS + LANGUAGE -->
+        <div class="flex items-center space-x-3">
+
+            <!-- Language Selector -->
+            <ion-select [(ngModel)]="selectedLang" (ionChange)="changeLanguage($event)" interface="popover"
+                class="w-16">
+                <ion-select-option value="en">EN</ion-select-option>
+                <ion-select-option value="fr">FR</ion-select-option>
+            </ion-select>
+
+            <!-- Auth buttons -->
+            <ng-container *ngIf="!user">
+                <ion-button fill="clear" class="text-gray-700 hover:text-blue-600 font-medium"
+                    (click)="navigate('/auth/login')">{{ 'auth.login' | translate }}</ion-button>
+                <ion-button fill="outline" class="border-gray-300 text-gray-700 hover:text-blue-600 font-medium"
+                    (click)="navigate('/auth/register')">{{ 'auth.register' | translate }}</ion-button>
+            </ng-container>
+
+            <!-- User buttons -->
+            <ng-container *ngIf="user">
+                <ion-button fill="clear" class="text-gray-700 hover:text-blue-600" (click)="navigate('/favorites')">
+                    <ion-icon name="heart-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" class="text-gray-700 hover:text-blue-600" (click)="navigate('/profile')">
+                    <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" class="text-red-600 hover:text-red-700" (click)="logout()">
+                    <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+            </ng-container>
+
+            <!-- Mobile menu toggle -->
+            <button class="md:hidden text-gray-700 hover:text-blue-600">
+                <ion-icon name="menu-outline" size="large"></ion-icon>
+            </button>
+
+        </div>
+
+    </ion-toolbar>
+</ion-header>

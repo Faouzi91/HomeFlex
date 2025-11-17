@@ -1,0 +1,43 @@
+<ion-card class="property-card">
+    <div class="image-container">
+        <img [src]="property.images[0]?.imageUrl || 'assets/images/placeholder.jpg'" [alt]="property.title" />
+        <div class="property-type-badge">
+            {{ property.propertyType }}
+        </div>
+        <ion-button class="favorite-btn" fill="clear" (click)="onFavoriteClick($event)">
+            <ion-icon [name]="isFavorite ? 'heart' : 'heart-outline'" [color]="isFavorite ? 'danger' : 'light'">
+            </ion-icon>
+        </ion-button>
+    </div>
+
+    <ion-card-content>
+        <h2 class="property-title">{{ property.title }}</h2>
+        <p class="property-location">
+            <ion-icon name="location-outline"></ion-icon>
+            {{ property.city }}, {{ property.country }}
+        </p>
+
+        <div class="property-details">
+            <span *ngIf="property.bedrooms">
+                <ion-icon name="bed-outline"></ion-icon>
+                {{ property.bedrooms }}
+            </span>
+            <span *ngIf="property.bathrooms">
+                <ion-icon name="water-outline"></ion-icon>
+                {{ property.bathrooms }}
+            </span>
+            <span *ngIf="property.areaSqm">
+                <ion-icon name="resize-outline"></ion-icon>
+                {{ property.areaSqm }} m²
+            </span>
+        </div>
+
+        <div class="property-footer">
+            <div class="price">
+                <span class="currency">{{ property.currency }}</span>
+                <span class="amount">{{ property.price | number }}</span>
+                <span class="period">/month</span>
+            </div>
+        </div>
+    </ion-card-content>
+</ion-card>
