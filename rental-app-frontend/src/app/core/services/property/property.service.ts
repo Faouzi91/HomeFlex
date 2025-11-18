@@ -1,18 +1,19 @@
 // ====================================
-// core/services/property.service.ts
+// features/properties/services/property.service.ts
 // ====================================
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
-import { Property, PropertySearchParams } from "../../../models/property.model";
+import { Observable, BehaviorSubject } from "rxjs";
+import { tap, map } from "rxjs/operators";
+import { environment } from "src/app/environments/environment";
+import { Property, PropertySearchParams } from "src/app/models/property.model";
 
 export interface PagedResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
+  page: number;
   size: number;
-  number: number;
 }
 
 @Injectable({
@@ -21,6 +22,10 @@ export interface PagedResponse<T> {
 export class PropertyService {
   private apiUrl = `${environment.apiUrl}/properties`;
 
+  // State management
+  private propertiesSubject = new BehaviorSubject<Property[]>([]);
+  public properties$ = this.propertiesSubject.asObservable();
+
   constructor(private http: HttpClient) {}
 
   searchProperties(
@@ -28,31 +33,62 @@ export class PropertyService {
   ): Observable<PagedResponse<Property>> {
     let httpParams = new HttpParams();
 
-    Object.keys(params).forEach((key) => {
-      const value = (params as any)[key];
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach((v) => (httpParams = httpParams.append(key, v)));
-        } else {
-          httpParams = httpParams.set(key, value.toString());
-        }
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "") {
+        httpParams = httpParams.append(key, value.toString());
       }
     });
 
-    return this.http.get<PagedResponse<Property>>(`${this.apiUrl}/search`, {
-      params: httpParams,
-    });
+    return this.http
+      .get<PagedResponse<Property>>(`${this.apiUrl}/search`, {
+        params: httpParams,
+      })
+      .pipe(
+        tap((response) => {
+          if (params.page === 0) {
+            this.propertiesSubject.next(response.content);
+          } else {
+            const current = this.propertiesSubject.value;
+            this.propertiesSubject.next([...current, ...response.content]);
+          }
+        })
+      );
   }
 
   getPropertyById(id: string): Observable<Property> {
     return this.http.get<Property>(`${this.apiUrl}/${id}`);
   }
 
-  createProperty(property: FormData): Observable<Property> {
+  getFeaturedProperties(limit: number = 8): Observable<Property[]> {
+    return this.http
+      .get<PagedResponse<Property>>(
+        `${this.apiUrl}/search?size=${limit}&sortBy=viewCount&sortDirection=desc`
+      )
+      .pipe(map((response) => response.content));
+  }
+
+  getMyProperties(
+    page: number = 0,
+    size: number = 20
+  ): Observable<PagedResponse<Property>> {
+    const params = new HttpParams()
+      .set("page", page.toString())
+      .set("size", size.toString());
+
+    return this.http.get<PagedResponse<Property>>(
+      `${this.apiUrl}/my-properties`,
+      { params }
+    );
+  }
+
+  createProperty(property: Partial<Property>): Observable<Property> {
     return this.http.post<Property>(this.apiUrl, property);
   }
 
-  updateProperty(id: string, property: FormData): Observable<Property> {
+  updateProperty(
+    id: string,
+    property: Partial<Property>
+  ): Observable<Property> {
     return this.http.put<Property>(`${this.apiUrl}/${id}`, property);
   }
 
@@ -64,7 +100,25 @@ export class PropertyService {
     return this.http.post<void>(`${this.apiUrl}/${id}/view`, {});
   }
 
-  getMyProperties(): Observable<Property[]> {
-    return this.http.get<Property[]>(`${this.apiUrl}/my-properties`);
+  getSimilarProperties(id: string): Observable<Property[]> {
+    return this.http.get<Property[]>(`${this.apiUrl}/${id}/similar`);
+  }
+
+  uploadImage(propertyId: string, file: File): Observable<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return this.http
+      .post<{ imageUrl: string }>(
+        `${this.apiUrl}/${propertyId}/images`,
+        formData
+      )
+      .pipe(map((response) => response.imageUrl));
+  }
+
+  deleteImage(propertyId: string, imageId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.apiUrl}/${propertyId}/images/${imageId}`
+    );
   }
 }

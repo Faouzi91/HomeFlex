@@ -1,24 +1,89 @@
 {
     "app": {
         "name": "HomeFlex",
-        "welcome": "Bienvenue"
+        "welcome": "Bienvenue",
+        "slogan": "Trouvez Votre Maison Parfaite"
     },
     "auth": {
         "login": "Connexion",
         "register": "S'inscrire",
-        "registerWelcome": "Créer votre compte",
+        "registerWelcome": "Créer un Compte",
+        "registerSubtitle": "Rejoignez des milliers de personnes trouvant leur maison de rêve",
+        "loginWelcome": "Bienvenue !",
+        "loginSubtitle": "Connectez-vous pour continuer votre recherche de propriété",
         "logout": "Déconnexion",
-        "email": "Email",
+        "email": "Adresse Email",
         "password": "Mot de passe",
         "firstName": "Prénom",
         "lastName": "Nom",
-        "phoneNumber": "Numéro de téléphone",
-        "confirmPassword": "Confirmer le mot de passe",
-        "forgotPassword": "Mot de passe oublié ?",
+        "phoneNumber": "Numéro de Téléphone",
+        "confirmPassword": "Confirmer le Mot de Passe",
+        "rememberMe": "Se souvenir de moi",
         "noAccount": "Vous n'avez pas de compte ?",
         "haveAccount": "Vous avez déjà un compte ?",
         "signInWithGoogle": "Se connecter avec Google",
-        "role": "Rôle"
+        "continueWith": "Ou continuer avec",
+        "role": "Je suis",
+        "passwordPlaceholder": "Créer un mot de passe fort",
+        "confirmPasswordPlaceholder": "Confirmer le mot de passe",
+        "passwordRules": "Utilisez 8+ caractères avec un mélange de lettres, chiffres et symboles",
+        "passwordStrength": {
+            "weak": "Mot de passe faible",
+            "medium": "Mot de passe moyen",
+            "strong": "Mot de passe fort"
+        },
+        "roleTenant": "Locataire",
+        "roleLandlord": "Propriétaire",
+        "roleTenantDesc": "Cherche une propriété",
+        "roleLandlordDesc": "Liste une propriété",
+        "termsAgree": "En créant un compte, vous acceptez nos",
+        "termsOfService": "Conditions d'Utilisation",
+        "and": "et",
+        "privacyPolicy": "Politique de Confidentialité",
+        "createAccountBtn": "Créer un Compte",
+        "forgotPassword": "Mot de passe oublié",
+        "forgotTitle": "Réinitialisez votre mot de passe",
+        "forgotSubtitle": "Entrez votre email et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+        "sendResetLink": "Envoyer le lien de réinitialisation",
+        "resetPassword": "Réinitialiser le mot de passe",
+        "resetTitle": "Créer un nouveau mot de passe",
+        "resetSubtitle": "Entrez un nouveau mot de passe pour votre compte.",
+        "newPassword": "Nouveau mot de passe",
+        "resetPasswordBtn": "Réinitialiser le mot de passe",
+        "resetEmailSent": "Email de réinitialisation envoyé. Vérifiez votre boîte de réception.",
+        "resetEmailFailed": "Échec de l'envoi de l'email de réinitialisation.",
+        "resetSuccess": "Mot de passe mis à jour. Vous pouvez maintenant vous connecter.",
+        "resetFailed": "Échec de la réinitialisation du mot de passe.",
+        "resetNoToken": "Jeton de réinitialisation invalide ou manquant.",
+        "features": {
+            "smartSearch": "Recherche Intelligente",
+            "smartSearchDesc": "Trouvez des propriétés qui correspondent à vos préférences exactes",
+            "instantMessaging": "Messagerie Instantanée",
+            "instantMessagingDesc": "Connectez-vous directement avec les propriétaires",
+            "verifiedListings": "Annonces Vérifiées",
+            "verifiedListingsDesc": "Toutes les propriétés sont vérifiées pour votre sécurité"
+        }
+    },
+    "errors": {
+        "requiredFirstName": "Le prénom est obligatoire",
+        "minName": "Obligatoire (min 2 caractères)",
+        "requiredLastName": "Le nom est obligatoire",
+        "minLastName": "Obligatoire (min 2 caractères)",
+        "requiredEmail": "L'email est obligatoire",
+        "invalidEmail": "Format d'email invalide",
+        "validEmailRequired": "Email valide requis",
+        "invalidPhone": "Numéro de téléphone invalide",
+        "requiredPassword": "Le mot de passe est obligatoire",
+        "minPassword": "Le mot de passe doit contenir au moins 6 caractères",
+        "weakPassword": "Le mot de passe ne respecte pas les exigences de sécurité",
+        "confirmPasswordRequired": "Veuillez confirmer votre mot de passe",
+        "passwordMismatch": "Les mots de passe ne correspondent pas",
+        "passwordsMatch": "Les mots de passe correspondent",
+        "roleRequired": "La sélection du rôle est obligatoire",
+        "loginFailed": "Échec de la connexion. Vérifiez vos identifiants.",
+        "registrationFailed": "Échec de l'inscription. Veuillez réessayer.",
+        "minFirstName": "Obligatoire (min 2 caractères)",
+        "passwordMinLength": "Le mot de passe doit contenir au moins {{min}} caractères"
     },
     "header": {
         "buy": "Acheter",
@@ -27,32 +92,129 @@
         "agents": "Agents",
         "contact": "Contact"
     },
+    "landing": {
+        "hero": {
+            "title": "Trouvez Votre Maison Parfaite au Cameroun",
+            "subtitle": "Découvrez des milliers de propriétés vérifiées à louer et à vendre dans les grandes villes",
+            "searchPlaceholder": "Entrez une ville (ex: Douala, Yaoundé)",
+            "searchBtn": "Rechercher"
+        },
+        "quickFilters": {
+            "bedrooms": "1-2 Chambres",
+            "price": "Moins de 200K XAF",
+            "nearMe": "Près de Moi"
+        },
+        "stats": {
+            "properties": "Propriétés Listées",
+            "users": "Utilisateurs Actifs",
+            "cities": "Villes Couvertes",
+            "transactions": "Transactions Réussies"
+        },
+        "featured": {
+            "title": "Propriétés en Vedette",
+            "subtitle": "Propriétés sélectionnées pour vous",
+            "viewAll": "Voir Tout"
+        },
+        "features": {
+            "title": "Pourquoi Nous Choisir",
+            "subtitle": "Tout ce dont vous avez besoin pour trouver votre maison de rêve",
+            "smartSearch": {
+                "title": "Recherche Intelligente",
+                "description": "Trouvez votre propriété parfaite avec des filtres avancés et des recommandations IA"
+            },
+            "verified": {
+                "title": "Annonces Vérifiées",
+                "description": "Toutes les propriétés sont vérifiées par notre équipe pour l'authenticité et la qualité"
+            },
+            "instantChat": {
+                "title": "Chat Instantané",
+                "description": "Connectez-vous avec les propriétaires instantanément via notre système de messagerie en temps réel"
+            },
+            "favorites": {
+                "title": "Enregistrer les Favoris",
+                "description": "Créez des collections de vos propriétés préférées et recevez des alertes instantanées"
+            }
+        },
+        "cta": {
+            "title": "Prêt à Trouver Votre Maison ?",
+            "subtitle": "Rejoignez des milliers d'utilisateurs satisfaits qui ont trouvé leur propriété parfaite",
+            "getStarted": "Commencer Gratuitement",
+            "browseProperties": "Parcourir les Propriétés"
+        },
+        "footer": {
+            "terms": "Conditions",
+            "privacy": "Confidentialité",
+            "help": "Aide"
+        }
+    },
     "property": {
         "title": "Propriétés",
-        "search": "Rechercher des propriétés",
-        "addNew": "Ajouter une propriété",
-        "details": "Détails de la propriété",
+        "propertiesFor": "Propriétés à",
+        "propertiesFound": "propriétés trouvées",
+        "forRent": "À Louer",
+        "forSale": "À Vendre",
+        "perMonth": "/mois",
+        "search": "Rechercher des Propriétés",
+        "addNew": "Ajouter une Propriété",
+        "details": "Détails de la Propriété",
         "price": "Prix",
         "bedrooms": "Chambres",
-        "bathrooms": "Salles de bain",
-        "area": "Surface (m²)",
+        "beds": "Chambres",
+        "bathrooms": "Salles de Bain",
+        "baths": "SdB",
+        "area": "Surface",
+        "sqm": "m²",
         "location": "Localisation",
         "amenities": "Équipements",
         "description": "Description",
-        "contactLandlord": "Contacter le propriétaire",
-        "requestViewing": "Demander une visite",
-        "addToFavorites": "Ajouter aux favoris",
-        "removeFromFavorites": "Retirer des favoris"
+        "contactLandlord": "Contacter le Propriétaire",
+        "requestViewing": "Demander une Visite",
+        "addToFavorites": "Ajouter aux Favoris",
+        "removeFromFavorites": "Retirer des Favoris",
+        "views": "Vues",
+        "images": "Images",
+        "type": {
+            "APARTMENT": "Appartement",
+            "HOUSE": "Maison",
+            "STUDIO": "Studio",
+            "VILLA": "Villa",
+            "ROOM": "Chambre",
+            "OFFICE": "Bureau",
+            "LAND": "Terrain"
+        },
+        "noResults": {
+            "title": "Aucune propriété trouvée",
+            "subtitle": "Essayez d'ajuster vos filtres",
+            "clearBtn": "Effacer les Filtres"
+        }
     },
     "filters": {
         "filters": "Filtres",
-        "propertyType": "Type de propriété",
-        "priceRange": "Fourchette de prix",
-        "minPrice": "Prix minimum",
-        "maxPrice": "Prix maximum",
+        "propertyType": "Type de Propriété",
+        "allTypes": "Tous les Types",
+        "priceRange": "Fourchette de Prix",
+        "priceRangeXAF": "Fourchette de Prix (XAF)",
+        "minPrice": "Min",
+        "maxPrice": "Max",
         "city": "Ville",
-        "apply": "Appliquer les filtres",
-        "clear": "Effacer les filtres"
+        "cityOrArea": "Ville ou zone",
+        "location": "Localisation",
+        "bedrooms": "Chambres",
+        "any": "Tous",
+        "apply": "Appliquer les Filtres",
+        "clear": "Effacer",
+        "clearAll": "Tout Effacer",
+        "quickFilters": {
+            "studioBeds": "Studio",
+            "onePlusBeds": "1+",
+            "twoPlusBeds": "2+",
+            "threePlusBeds": "3+",
+            "fourPlusBeds": "4+",
+            "under100k": "Moins de 100K",
+            "100to200k": "100K - 200K",
+            "200to500k": "200K - 500K",
+            "over500k": "500K+"
+        }
     },
     "common": {
         "save": "Enregistrer",
@@ -61,7 +223,10 @@
         "edit": "Modifier",
         "submit": "Soumettre",
         "loading": "Chargement...",
+        "loadingMore": "Chargement...",
         "error": "Erreur",
-        "success": "Succès"
+        "success": "Succès",
+        "viewToggle": "Changer de Vue",
+        "close": "Fermer"
     }
 }

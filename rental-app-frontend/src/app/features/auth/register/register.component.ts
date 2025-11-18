@@ -1,3 +1,4 @@
+import { JsonPipe } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
 import {
   FormBuilder,
@@ -15,7 +16,7 @@ import { UserRole, RegisterRequest } from "src/app/models/user.model";
 @Component({
   selector: "app-register",
   standalone: true,
-  imports: [IonicModule, ReactiveFormsModule, TranslateModule],
+  imports: [IonicModule, ReactiveFormsModule, TranslateModule, JsonPipe],
   templateUrl: "./register.component.html",
   styleUrls: ["./register.component.scss"],
 })
@@ -41,14 +42,18 @@ export class RegisterComponent implements OnInit {
         lastName: ["", [Validators.required, Validators.minLength(2)]],
         email: ["", [Validators.required, Validators.email]],
         phoneNumber: ["", CustomValidators.phoneNumber()],
-        password: ["", [Validators.required, CustomValidators.password()]],
-        confirmPassword: ["", [Validators.required]],
-        role: [UserRole.TENANT, Validators.required],
+        password: [
+          "",
+          [Validators.required, CustomValidators.passwordStrength()],
+        ],
+        confirmPassword: ["", Validators.required],
+        role: ["", Validators.required],
       },
       {
-        validators: [
-          CustomValidators.matchPasswords("password", "confirmPassword"),
-        ],
+        validators: CustomValidators.matchPasswords(
+          "password",
+          "confirmPassword"
+        ),
       }
     );
   }
@@ -81,5 +86,18 @@ export class RegisterComponent implements OnInit {
 
   goToLogin(): void {
     this.router.navigate(["/auth/login"]);
+  }
+
+  // Helper for template: check password strength
+  get passwordStrength() {
+    const errors = this.registerForm.get("password")?.errors;
+    if (!errors) return "strong";
+    if (errors.weak) return "weak";
+    if (errors.medium) return "medium";
+    return "";
+  }
+
+  get passwordsMatch(): boolean {
+    return !this.registerForm.errors?.passwordMismatch;
   }
 }

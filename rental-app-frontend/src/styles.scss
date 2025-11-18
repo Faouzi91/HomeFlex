@@ -8,3 +8,67 @@
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
+@import './styles/tailwind-ionic.scss';
+
+
+
+ion-toolbar {
+    --background: white;
+    --border-width: 0 0 1px 0;
+    --border-color: #e5e7eb;
+}
+
+
+// Reset Ionic defaults that cause issues
+ion-content {
+    --background: #f9fafb;
+
+    &::part(scroll) {
+        padding-top: 0 !important;
+    }
+}
+
+// ion-toolbar {
+//     --background: white;
+//     --min-height: 4rem;
+// }
+
+// Fix button text visibility
+button {
+    font-family: inherit;
+}
+
+// Ensure proper spacing below header
+.auth-page,
+.landing-page {
+    --background: #f9fafb;
+}
+
+// Global utilities
+.w-full {
+    width: 100%;
+}
+
+.h-full {
+    height: 100%;
+}
+
+.flex {
+    display: flex;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-4 {
+    gap: 1rem;
+}

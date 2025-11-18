@@ -1,77 +1,189 @@
-<ion-content class="bg-gray-100 flex items-center justify-center min-h-screen">
+<ion-content class="auth-page" [scrollY]="true">
+    <div class="auth-container register-container">
 
-    <div class="bg-white w-full max-w-md rounded-xl shadow-lg p-8">
+        <!-- Left Side - Form -->
+        <div class="auth-form-container register-form-container">
+            <div class="auth-form-wrapper register-form-wrapper">
 
-        <div class="text-center mb-8">
-            <ion-icon name="home" class="text-5xl text-blue-600"></ion-icon>
-            <h1 class="text-3xl font-semibold mt-3 text-gray-800">{{ 'app.name' | translate }}</h1>
-            <p class="text-gray-500">{{ 'auth.registerWelcome' | translate }}</p>
+                <!-- Mobile Logo -->
+                <div class="mobile-logo">
+                    <div class="mobile-logo-icon">
+                        <ion-icon name="home"></ion-icon>
+                    </div>
+                    <h1 class="mobile-logo-text">{{ 'app.name' | translate }}</h1>
+                </div>
+
+                <div class="form-card">
+                    <h2 class="form-title">{{ 'auth.registerWelcome' | translate }}</h2>
+                    <p class="form-subtitle">{{ 'auth.registerSubtitle' | translate }}</p>
+
+                    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+
+                        <!-- Name Fields -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">{{ 'auth.firstName' | translate }}</label>
+                                <div class="input-wrapper">
+                                    <ion-icon name="person-outline" class="input-icon"></ion-icon>
+                                    <input type="text" formControlName="firstName" placeholder="John"
+                                        class="form-input" />
+                                </div>
+                                <div *ngIf="registerForm.get('firstName')?.touched && registerForm.get('firstName')?.errors"
+                                    class="form-error">
+                                    {{ 'errors.minFirstName' | translate }}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">{{ 'auth.lastName' | translate }}</label>
+                                <div class="input-wrapper">
+                                    <input type="text" formControlName="lastName" placeholder="Doe"
+                                        class="form-input form-input-no-icon" />
+                                </div>
+                                <div *ngIf="registerForm.get('lastName')?.touched && registerForm.get('lastName')?.errors"
+                                    class="form-error">
+                                    {{ 'errors.minLastName' | translate }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label class="form-label">{{ 'auth.email' | translate }}</label>
+                            <div class="input-wrapper">
+                                <ion-icon name="mail-outline" class="input-icon"></ion-icon>
+                                <input type="email" formControlName="email" placeholder="john@example.com"
+                                    class="form-input" />
+                            </div>
+                            <div *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.errors"
+                                class="form-error">
+                                {{ 'errors.validEmailRequired' | translate }}
+                            </div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="form-group">
+                            <label class="form-label">{{ 'auth.phoneNumber' | translate }}</label>
+                            <div class="input-wrapper">
+                                <ion-icon name="call-outline" class="input-icon"></ion-icon>
+                                <input type="tel" formControlName="phoneNumber" placeholder="+237 6XX XXX XXX"
+                                    class="form-input" />
+                            </div>
+                        </div>
+
+                        <!-- Role Selection -->
+                        <div class="form-group">
+                            <label class="form-label">{{ 'auth.role' | translate }}</label>
+                            <div class="role-selection">
+                                <label class="role-card"
+                                    [class.role-card-selected]="registerForm.get('role')?.value === 'TENANT'">
+                                    <input type="radio" formControlName="role" value="TENANT" class="role-radio" />
+                                    <ion-icon name="home-outline" class="role-icon"></ion-icon>
+                                    <div class="role-label">{{ 'auth.roleTenant' | translate }}</div>
+                                    <div class="role-desc">{{ 'auth.roleTenantDesc' | translate }}</div>
+                                </label>
+
+                                <label class="role-card"
+                                    [class.role-card-selected]="registerForm.get('role')?.value === 'LANDLORD'">
+                                    <input type="radio" formControlName="role" value="LANDLORD" class="role-radio" />
+                                    <ion-icon name="business-outline" class="role-icon"></ion-icon>
+                                    <div class="role-label">{{ 'auth.roleLandlord' | translate }}</div>
+                                    <div class="role-desc">{{ 'auth.roleLandlordDesc' | translate }}</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="form-group">
+                            <label class="form-label">{{ 'auth.password' | translate }}</label>
+                            <div class="input-wrapper">
+                                <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                                <input type="password" formControlName="password" placeholder="Create strong password"
+                                    class="form-input" />
+                            </div>
+                            <div class="password-strength">
+                                <div class="strength-bar" [class.strength-weak]="passwordStrength === 'weak'"></div>
+                                <div class="strength-bar" [class.strength-medium]="passwordStrength === 'medium'"></div>
+                                <div class="strength-bar" [class.strength-strong]="passwordStrength === 'strong'"></div>
+                            </div>
+                            <p class="form-hint">{{ 'auth.passwordRules' | translate }}</p>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="form-group">
+                            <label class="form-label">{{ 'auth.confirmPassword' | translate }}</label>
+                            <div class="input-wrapper">
+                                <ion-icon name="lock-closed-outline" class="input-icon"></ion-icon>
+                                <input type="password" formControlName="confirmPassword" placeholder="Re-enter password"
+                                    class="form-input" />
+                            </div>
+                            <div *ngIf="registerForm.get('confirmPassword')?.touched">
+                                <div *ngIf="!passwordsMatch && registerForm.get('confirmPassword')?.value"
+                                    class="form-error">
+                                    {{ 'errors.passwordMismatch' | translate }}
+                                </div>
+                                <div *ngIf="passwordsMatch && registerForm.get('confirmPassword')?.value"
+                                    class="form-success">
+                                    <ion-icon name="checkmark-circle"></ion-icon>
+                                    {{ 'errors.passwordsMatch' | translate }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms -->
+                        <div class="terms-box">
+                            <p>
+                                {{ 'auth.termsAgree' | translate }}
+                                <a class="link">{{ 'auth.termsOfService' | translate }}</a> {{ 'auth.and' | translate }}
+                                <a class="link">{{ 'auth.privacyPolicy' | translate }}</a>
+                            </p>
+                        </div>
+
+                        <!-- Error -->
+                        <div *ngIf="error" class="alert alert-error">
+                            <ion-icon name="alert-circle"></ion-icon>
+                            <span>{{ error }}</span>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || loading">
+                            <ion-spinner *ngIf="loading" name="crescent"></ion-spinner>
+                            <span>{{ 'auth.createAccountBtn' | translate }}</span>
+                        </button>
+
+                        <!-- Login Link -->
+                        <p class="footer-link">
+                            {{ 'auth.haveAccount' | translate }}
+                            <a (click)="goToLogin()" class="link">{{ 'auth.login' | translate }}</a>
+                        </p>
+
+                    </form>
+
+                </div>
+
+            </div>
         </div>
 
-        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
-
-            <div>
-                <label class="text-gray-600 text-sm">{{ 'auth.firstName' | translate }}</label>
-                <ion-input class="border border-gray-300 rounded-lg p-3 mt-1" formControlName="firstName"></ion-input>
+        <!-- Right Side - Branding -->
+        <div class="auth-branding register-branding">
+            <div class="brand-logo">
+                <ion-icon name="home"></ion-icon>
+                <span>{{ 'app.name' | translate }}</span>
             </div>
+            <h1 class="branding-title">Join Our Community</h1>
+            <p class="branding-subtitle">Start your journey to finding the perfect home today.</p>
 
-            <div>
-                <label class="text-gray-600 text-sm">{{ 'auth.lastName' | translate }}</label>
-                <ion-input class="border border-gray-300 rounded-lg p-3 mt-1" formControlName="lastName"></ion-input>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">10K+</div>
+                    <div class="stat-label">Properties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">50K+</div>
+                    <div class="stat-label">Happy Users</div>
+                </div>
             </div>
-
-            <div>
-                <label class="text-gray-600 text-sm">{{ 'auth.email' | translate }}</label>
-                <ion-input type="email" class="border border-gray-300 rounded-lg p-3 mt-1"
-                    formControlName="email"></ion-input>
-            </div>
-
-            <div>
-                <label class="text-gray-600 text-sm">{{ 'auth.phoneNumber' | translate }}</label>
-                <ion-input type="tel" class="border border-gray-300 rounded-lg p-3 mt-1"
-                    formControlName="phoneNumber"></ion-input>
-            </div>
-
-            <div>
-                <label class="text-gray-600 text-sm">{{ 'auth.password' | translate }}</label>
-                <ion-input type="password" class="border border-gray-300 rounded-lg p-3 mt-1"
-                    formControlName="password"></ion-input>
-            </div>
-
-            <div>
-                <label class="text-gray-600 text-sm">{{ 'auth.confirmPassword' | translate }}</label>
-                <ion-input type="password" class="border border-gray-300 rounded-lg p-3 mt-1"
-                    formControlName="confirmPassword"></ion-input>
-            </div>
-
-            <div>
-                <label class="text-gray-600 text-sm">{{ 'auth.role' | translate }}</label>
-                <ion-select formControlName="role" class="border border-gray-300 rounded-lg">
-                    <ion-select-option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</ion-select-option>
-                </ion-select>
-            </div>
-
-            <ion-text color="danger" *ngIf="error">
-                <p class="text-red-500">{{ error }}</p>
-            </ion-text>
-
-            <button type="submit"
-                class="w-full py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition disabled:opacity-40"
-                [disabled]="registerForm.invalid || loading">
-
-                <ion-spinner *ngIf="loading"></ion-spinner>
-                <span *ngIf="!loading">{{ 'auth.register' | translate }}</span>
-            </button>
-
-        </form>
-
-        <p class="text-center mt-4 text-gray-600">
-            {{ 'auth.haveAccount' | translate }}
-            <a (click)="goToLogin()" class="text-blue-600 cursor-pointer hover:underline">
-                {{ 'auth.login' | translate }}
-            </a>
-        </p>
+        </div>
 
     </div>
-
 </ion-content>

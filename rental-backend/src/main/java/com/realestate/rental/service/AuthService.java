@@ -10,6 +10,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.LoginRequest;
+import com.realestate.rental.dto.request.RegisterRequest;
 import com.realestate.rental.repository.*;
 import com.realestate.rental.security.JwtTokenProvider;
 import com.realestate.rental.utils.entity.OAuthProvider;

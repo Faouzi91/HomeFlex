@@ -92,6 +92,7 @@ export interface Amenity {
 }
 
 export interface PropertySearchParams {
+  [x: string]: any;
   city?: string;
   minPrice?: number;
   maxPrice?: number;

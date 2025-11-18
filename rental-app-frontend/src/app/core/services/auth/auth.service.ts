@@ -97,4 +97,37 @@ export class AuthService {
       })
       .pipe(tap((response) => this.handleAuthResponse(response)));
   }
+
+  /**
+   * Send forgot-password request to backend.
+   * Expects: { email: string }
+   * Backend returns MessageResponse (or 200 OK) with message text.
+   */
+  forgotPassword(email: string): Observable<{ message: string } | any> {
+    return this.http.post<{ message: string }>(
+      `${environment.apiUrl}/auth/forgot-password`,
+      { email }
+    );
+  }
+
+  /**
+   * Reset password using the token received by email.
+   * Expects: { token: string, newPassword: string }
+   */
+  resetPassword(
+    token: string,
+    newPassword: string
+  ): Observable<{ message: string } | any> {
+    return this.http.post<{ message: string }>(
+      `${environment.apiUrl}/auth/reset-password`,
+      {
+        token,
+        newPassword,
+      }
+    );
+  }
+}
+
+export interface MessageResponse {
+  message: string;
 }

@@ -1,1 +1,252 @@
-<p>property-detail works!</p>
+<ion-header class="ion-no-border bg-white">
+    <ion-toolbar>
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <ion-button fill="clear" (click)="goBack()" class="p-0">
+                    <ion-icon name="arrow-back"></ion-icon>
+                </ion-button>
+                <div class="text-lg font-semibold">{{ property?.title }}</div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <ion-button fill="clear" (click)="toggleFavorite()" *ngIf="property">
+                    <ion-icon [name]="isFavorite ? 'heart' : 'heart-outline'"
+                        [class.text-red-500]="isFavorite"></ion-icon>
+                </ion-button>
+                <ion-button (click)="startChat()" size="small" *ngIf="canMessage">
+                    <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
+                    {{ 'property.messageOwner' | translate }}
+                </ion-button>
+            </div>
+        </div>
+    </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-gray-50">
+
+    <!-- HERO / Carousel -->
+    <section class="relative">
+        <div class="w-full h-72 md:h-[520px] bg-gray-200">
+            <ng-container *ngIf="gallery && gallery.length > 0; else placeholder">
+                <ion-slides [options]="slideOpts" class="h-full">
+                    <ion-slide *ngFor="let img of gallery">
+                        <img [src]="img" class="w-full h-full object-cover" alt="property image" />
+                    </ion-slide>
+                </ion-slides>
+            </ng-container>
+
+            <ng-template #placeholder>
+                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                    <ion-icon name="image-outline" class="text-5xl"></ion-icon>
+                </div>
+            </ng-template>
+        </div>
+
+        <!-- Price & Quick info card (overlaid) -->
+        <div class="max-w-7xl mx-auto px-4 -mt-12 relative z-10">
+            <div
+                class="bg-white rounded-xl shadow-lg p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <div class="text-2xl md:text-3xl font-bold">
+                        {{ formatPrice(property?.price, property?.currency) }}
+                        <span *ngIf="property?.listingType === 'RENT'" class="text-sm font-normal text-gray-600">/ {{
+                            'property.perMonth' | translate }}</span>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        {{ property?.address }}, {{ property?.city }}
+                    </div>
+                    <div class="flex gap-4 mt-3 text-sm text-gray-700">
+                        <div class="flex items-center gap-1">
+                            <ion-icon name="bed-outline"></ion-icon>
+                            <span>{{ property?.bedrooms || '-' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <ion-icon name="water-outline"></ion-icon>
+                            <span>{{ property?.bathrooms || '-' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <ion-icon name="expand-outline"></ion-icon>
+                            <span>{{ property?.areaSqm ? (property.areaSqm + ' ' + ('property.sqm' | translate)) : '-'
+                                }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 mt-2 md:mt-0">
+                    <ion-button fill="solid" color="primary" (click)="openBooking()" class="px-6 py-3">
+                        <ion-icon name="calendar-outline" slot="start"></ion-icon>
+                        {{ 'property.bookViewing' | translate }}
+                    </ion-button>
+
+                    <ion-button fill="outline" (click)="scrollToSection('details')">
+                        {{ 'property.moreDetails' | translate }}
+                    </ion-button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main content -->
+    <div class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Left column: Details + description + amenities + map -->
+        <div class="md:col-span-2 space-y-6">
+
+            <!-- Description -->
+            <div id="details" class="bg-white rounded-xl p-6 shadow-sm">
+                <h2 class="text-xl font-semibold mb-2">{{ 'property.description' | translate }}</h2>
+                <p class="text-gray-700 whitespace-pre-line">{{ property?.description }}</p>
+            </div>
+
+            <!-- Amenities -->
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <h3 class="text-lg font-semibold mb-3">{{ 'property.amenities' | translate }}</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div *ngFor="let a of property?.amenities || []"
+                        class="flex items-center gap-2 text-sm text-gray-700">
+                        <ion-icon name="checkmark-circle-outline"></ion-icon>
+                        <span>{{ a }}</span>
+                    </div>
+                    <div *ngIf="!property?.amenities?.length" class="text-gray-500">{{ 'property.noAmenities' |
+                        translate }}</div>
+                </div>
+            </div>
+
+            <!-- Map (placeholder) -->
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <h3 class="text-lg font-semibold mb-3">{{ 'property.location' | translate }}</h3>
+                <div class="w-full h-56 bg-gray-100 rounded-md flex items-center justify-center">
+                    <!-- Replace with real map (Leaflet / GoogleMaps) -->
+                    <div class="text-sm text-gray-500">{{ property?.address }}, {{ property?.city }}</div>
+                </div>
+            </div>
+
+            <!-- Reviews -->
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold">
+                            {{ 'property.reviews' | translate }}
+                            <span class="text-sm text-gray-600">({{ reviews?.length || 0 }})</span>
+                        </h3>
+                        <div class="text-sm text-amber-600 mt-1">
+                            <ion-icon name="star" class="align-middle"></ion-icon>
+                            <span class="font-semibold">{{ averageRating != null ? (averageRating | number:'1.1-1') :
+                                '0.0' }}</span>
+                            <span class="text-gray-500"> · {{ 'property.averageRating' | translate }}</span>
+                        </div>
+                    </div>
+
+                    <ion-button size="small" fill="outline" (click)="openAddReview()"
+                        *ngIf="authService.isAuthenticated()">
+                        {{ 'property.addReview' | translate }}
+                    </ion-button>
+                </div>
+
+                <div *ngIf="reviews?.length; else noReviews" class="space-y-4">
+                    <div *ngFor="let r of reviews" class="border rounded-md p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="font-semibold">{{ r.reviewer?.firstName }} {{ r.reviewer?.lastName }}</div>
+                            <div class="text-sm text-gray-600">{{ r.createdAt | date:'mediumDate' }}</div>
+                        </div>
+                        <div class="text-sm text-amber-600">
+                            <ion-icon name="star" class="align-middle"></ion-icon>
+                            {{ r.rating }}
+                        </div>
+                        <p class="text-gray-700 mt-2">{{ r.comment }}</p>
+                    </div>
+                </div>
+
+                <ng-template #noReviews>
+                    <div class="text-gray-500">{{ 'property.noReviewsYet' | translate }}</div>
+                </ng-template>
+            </div>
+        </div>
+
+        <!-- Right column: Owner card + contact + stats + similar -->
+        <aside class="space-y-6">
+
+            <!-- Owner card -->
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-lg font-semibold">
+                        {{ property?.landlord?.firstName?.charAt(0) || 'U' }}
+                    </div>
+                    <div>
+                        <div class="font-semibold">{{ property?.landlord?.firstName }} {{ property?.landlord?.lastName
+                            }}</div>
+                        <div class="text-sm text-gray-600">{{ property?.landlord?.phoneNumber ||
+                            property?.landlord?.email }}</div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <ion-button expand="full" fill="solid" (click)="openBooking()" color="primary">
+                        <ion-icon name="call-outline" slot="start"></ion-icon>
+                        {{ 'property.contactOwner' | translate }}
+                    </ion-button>
+                </div>
+
+                <div class="mt-3 text-sm text-gray-600">
+                    <div>{{ 'property.posted' | translate }}: {{ property?.createdAt | date:'mediumDate' }}</div>
+                    <div>{{ 'property.views' | translate }}: {{ property?.viewCount || 0 }}</div>
+                </div>
+            </div>
+
+            <!-- Quick stats / features -->
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+                <div class="text-sm text-gray-600 mb-2">{{ 'property.features' | translate }}</div>
+                <div class="grid grid-cols-2 gap-3 text-sm text-gray-700">
+                    <div><ion-icon name="shield-checkmark-outline"></ion-icon> {{ property?.propertyType }}</div>
+                    <div><ion-icon name="pricetag-outline"></ion-icon> {{ property?.currency }}</div>
+                    <div><ion-icon name="home-outline"></ion-icon> {{ property?.listingType }}</div>
+                    <div><ion-icon name="people-outline"></ion-icon> {{ property?.bedrooms || 0 }} {{ 'property.beds' |
+                        translate }}</div>
+                </div>
+            </div>
+
+            <!-- Similar properties -->
+            <div class="bg-white rounded-xl p-4 shadow-sm">
+                <h4 class="font-semibold mb-3">{{ 'property.similar' | translate }}</h4>
+                <div class="space-y-3">
+                    <app-property-card *ngFor="let s of similarProperties" [property]="s"
+                        (click)="navigateToProperty(s.id)"></app-property-card>
+                    <div *ngIf="!similarProperties || similarProperties.length === 0" class="text-gray-500 text-sm">{{
+                        'property.noSimilar' | translate }}</div>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+    <!-- Booking Modal (Ionic) -->
+    <ion-modal [isOpen]="bookingModalOpen" (didDismiss)="bookingModalOpen = false">
+        <ng-template>
+            <div class="p-6">
+                <h3 class="text-lg font-semibold mb-3">{{ 'property.bookViewing' | translate }}</h3>
+
+                <form (ngSubmit)="submitBooking()" [formGroup]="bookingForm" class="space-y-3">
+                    <ion-item>
+                        <ion-label position="stacked">{{ 'property.selectDate' | translate }}</ion-label>
+                        <ion-datetime formControlName="requestedDate" display-format="YYYY-MM-DDTHH:mm"></ion-datetime>
+                    </ion-item>
+
+                    <ion-item>
+                        <ion-label position="stacked">{{ 'property.message' | translate }}</ion-label>
+                        <ion-textarea formControlName="message" rows="4"></ion-textarea>
+                    </ion-item>
+
+                    <div class="flex gap-3 mt-4">
+                        <ion-button expand="block" type="submit" [disabled]="bookingForm.invalid || bookingLoading">{{
+                            'common.submit' | translate }}</ion-button>
+                        <ion-button expand="block" fill="outline" (click)="bookingModalOpen = false">{{ 'common.cancel'
+                            | translate }}</ion-button>
+                    </div>
+                </form>
+
+            </div>
+        </ng-template>
+    </ion-modal>
+
+</ion-content>

@@ -1,4 +1,4 @@
-package com.realestate.rental.dto;
+package com.realestate.rental.dto.request;
 
 import com.realestate.rental.utils.enumeration.UserRole;
 import jakarta.validation.constraints.Email;

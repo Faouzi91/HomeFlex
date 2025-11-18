@@ -1,0 +1,448 @@
+// ====================================
+// features/auth/pages/register/register.component.scss (COMPACT - NO SCROLL)
+// ====================================
+
+.auth-page {
+    --background: #f9fafb;
+}
+
+ion-content.auth-page {
+    --padding-top: 0;
+    --padding-bottom: 0;
+    --padding-start: 0;
+    --padding-end: 0;
+}
+
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    padding-top: 4rem;
+
+    @media (max-width: 1023px) {
+        flex-direction: column;
+        min-height: auto;
+    }
+}
+
+// Register-specific: Reverse layout
+.register-container {
+    flex-direction: row-reverse;
+
+    @media (max-width: 1023px) {
+        flex-direction: column;
+    }
+}
+
+// Left Side - Form (60% width for more space)
+.register-form-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem; // Reduced padding
+
+    @media (min-width: 1024px) {
+        width: 60%;
+    }
+
+    @media (max-width: 1023px) {
+        padding: 1rem;
+    }
+}
+
+.register-form-wrapper {
+    width: 100%;
+    max-width: 40rem;
+}
+
+// Right Side - Branding (40% width, compact)
+.register-branding {
+    display: none;
+    width: 40%;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #4338ca 100%);
+    padding: 2rem;
+    flex-direction: column;
+    justify-content: center;
+    overflow-y: auto;
+
+    @media (min-width: 1024px) {
+        display: flex;
+    }
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+    margin-bottom: 1.5rem;
+
+    ion-icon {
+        font-size: 2rem;
+    }
+}
+
+.branding-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+}
+
+.branding-subtitle {
+    font-size: 1rem;
+    color: #bfdbfe;
+}
+
+// Mobile Logo - Compact
+.mobile-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1rem;
+
+    @media (min-width: 1024px) {
+        display: none;
+    }
+}
+
+.mobile-logo-icon {
+    width: 3rem;
+    height: 3rem;
+    background: #2563eb;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+
+    ion-icon {
+        font-size: 1.5rem;
+        color: white;
+    }
+}
+
+.mobile-logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+// Form Card - Compact spacing
+.form-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem; // Reduced from 2rem
+
+    @media (max-width: 1023px) {
+        padding: 1.25rem;
+    }
+}
+
+.form-title {
+    font-size: 1.25rem; // Reduced from 1.5rem
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.form-subtitle {
+    color: #6b7280;
+    margin-bottom: 1rem; // Reduced from 1.5rem
+    font-size: 0.8125rem;
+}
+
+// Form Elements - Tight spacing
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; // Reduced from 1rem
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem; // Reduced from 0.5rem
+}
+
+.form-label {
+    font-size: 0.8125rem; // Slightly smaller
+    font-weight: 600;
+    color: #374151;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 0.875rem;
+    font-size: 1.125rem; // Slightly smaller
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.form-input {
+    width: 100%;
+    height: 2.5rem; // Reduced from 3rem (40px)
+    padding: 0 0.875rem 0 2.75rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem; // Slightly smaller
+    color: #111827;
+    background: white;
+    transition: border-color 0.2s;
+
+    &:focus {
+        outline: none;
+        border-color: #3b82f6;
+    }
+
+    &::placeholder {
+        color: #9ca3af;
+    }
+}
+
+.form-input-no-icon {
+    padding-left: 0.875rem !important;
+}
+
+.form-error {
+    font-size: 0.75rem; // Smaller error text
+    color: #dc2626;
+    margin-top: 0.125rem;
+}
+
+// Form row for side-by-side fields
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// Role Selection - Compact
+.role-selection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.625rem;
+}
+
+.role-card {
+    padding: 0.75rem; // Reduced from 1rem
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+
+    &:hover {
+        border-color: #3b82f6;
+    }
+}
+
+.role-card-selected {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.role-radio {
+    display: none;
+}
+
+.role-icon {
+    font-size: 1.5rem; // Reduced from 2rem
+    margin-bottom: 0.375rem;
+    color: #6b7280;
+}
+
+.role-card-selected .role-icon {
+    color: #3b82f6;
+}
+
+.role-label {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.125rem;
+    font-size: 0.875rem;
+}
+
+.role-desc {
+    font-size: 0.6875rem; // Smaller
+    color: #6b7280;
+}
+
+// Password Strength - Compact
+.password-strength {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.375rem;
+}
+
+.strength-bar {
+    height: 0.1875rem; // Thinner
+    flex: 1;
+    background: #e5e7eb;
+    border-radius: 9999px;
+}
+
+.strength-weak {
+    background: #ef4444;
+}
+
+.strength-medium {
+    background: #eab308;
+}
+
+.strength-strong {
+    background: #22c55e;
+}
+
+.form-hint {
+    font-size: 0.6875rem; // Smaller
+    color: #6b7280;
+    margin-top: 0.125rem;
+}
+
+.form-success {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8125rem;
+    color: #16a34a;
+    margin-top: 0.125rem;
+
+    ion-icon {
+        font-size: 0.9375rem;
+    }
+}
+
+// Terms Box - Compact
+.terms-box {
+    padding: 0.75rem; // Reduced from 1rem
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.5rem;
+
+    p {
+        font-size: 0.75rem; // Smaller
+        color: #374151;
+        margin: 0;
+        line-height: 1.4;
+    }
+}
+
+// Alerts - Compact
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+
+    ion-icon {
+        font-size: 1.125rem;
+        flex-shrink: 0;
+    }
+
+    span {
+        font-size: 0.8125rem;
+        font-weight: 500;
+    }
+}
+
+.alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+
+    ion-icon {
+        color: #dc2626;
+    }
+}
+
+// Buttons - Standard height
+.btn-primary {
+    width: 100%;
+    height: 2.5rem; // Reduced from 3rem
+    background: #3b82f6;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    &:hover:not(:disabled) {
+        background: #2563eb;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    ion-spinner {
+        --color: white;
+    }
+}
+
+// Footer Link - Compact
+.footer-link {
+    text-align: center;
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin-top: 0.75rem; // Reduced from 1.5rem
+}
+
+.link {
+    font-weight: 600;
+    color: #2563eb;
+    cursor: pointer;
+    text-decoration: none;
+    margin-left: 0.25rem;
+
+    &:hover {
+        color: #1d4ed8;
+    }
+}
+
+// Stats Grid - Compact
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.125rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #bfdbfe;
+}

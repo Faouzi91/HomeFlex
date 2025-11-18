@@ -1,4 +1,3 @@
-// validators.ts
 import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
 
 export class CustomValidators {
@@ -10,25 +9,28 @@ export class CustomValidators {
     };
   }
 
-  static password(): ValidatorFn {
+  // Password strength: weak / medium / strong
+  static passwordStrength(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      if (!control.value) return null;
-      const hasUpperCase = /[A-Z]/.test(control.value);
-      const hasLowerCase = /[a-z]/.test(control.value);
-      const hasNumber = /[0-9]/.test(control.value);
-      const isLengthValid = control.value.length >= 8;
+      const value = control.value;
+      if (!value) return null;
 
-      const valid = hasUpperCase && hasLowerCase && hasNumber && isLengthValid;
-      return valid
-        ? null
-        : {
-            weakPassword: {
-              hasUpperCase,
-              hasLowerCase,
-              hasNumber,
-              isLengthValid,
-            },
-          };
+      const hasLower = /[a-z]/.test(value);
+      const hasUpper = /[A-Z]/.test(value);
+      const hasNumber = /[0-9]/.test(value);
+      const hasSymbol = /[^A-Za-z0-9]/.test(value);
+      const isLongEnough = value.length >= 8;
+
+      const score =
+        (hasLower ? 1 : 0) +
+        (hasUpper ? 1 : 0) +
+        (hasNumber ? 1 : 0) +
+        (hasSymbol ? 1 : 0) +
+        (isLongEnough ? 1 : 0);
+
+      if (score <= 2) return { weak: true };
+      if (score === 3 || score === 4) return { medium: true };
+      return null; // strong
     };
   }
 
@@ -39,7 +41,6 @@ export class CustomValidators {
     return (formGroup: AbstractControl): ValidationErrors | null => {
       const password = formGroup.get(passwordField);
       const confirmPassword = formGroup.get(confirmPasswordField);
-
       if (!password || !confirmPassword) return null;
 
       return password.value === confirmPassword.value

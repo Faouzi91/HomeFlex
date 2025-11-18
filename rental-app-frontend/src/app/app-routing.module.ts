@@ -4,12 +4,12 @@
 import { NgModule } from "@angular/core";
 import { PreloadAllModules, RouterModule, Routes } from "@angular/router";
 import { AuthGuard } from "./core/guards/auth.guard";
+import { LandingComponent } from "./features/landing/landing.component";
 
 const routes: Routes = [
   {
     path: "",
-    pathMatch: "full",
-    redirectTo: "auth/login",
+    component: LandingComponent, // New landing page
   },
   {
     path: "auth",
@@ -53,10 +53,10 @@ const routes: Routes = [
   //     import("./features/admin/admin.module").then((m) => m.AdminModule),
   //   canActivate: [AuthGuard],
   // },
-  // {
-  //   path: "**",
-  //   redirectTo: "properties",
-  // },
+  {
+    path: "**",
+    redirectTo: "",
+  },
 ];
 
 @NgModule({

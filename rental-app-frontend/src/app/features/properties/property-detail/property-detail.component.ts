@@ -1,175 +1,267 @@
-import { Component, OnInit } from "@angular/core";
+import {
+  Component,
+  CUSTOM_ELEMENTS_SCHEMA,
+  OnDestroy,
+  OnInit,
+} from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
-import { AlertController, ModalController } from "@ionic/angular";
-import { TranslateService } from "@ngx-translate/core";
-import { AuthService } from "src/app/core/services/auth/auth.service";
-import { ChatService } from "src/app/core/services/chat/chat.service";
-import { FavoriteService } from "src/app/core/services/favorite/favorite.service";
 import { PropertyService } from "src/app/core/services/property/property.service";
 import { Property } from "src/app/models/property.model";
+import { FavoriteService } from "src/app/core/services/favorite/favorite.service";
+import { BookingService } from "src/app/core/services/booking/booking.service";
+import { ChatService } from "src/app/core/services/chat/chat.service";
+import { AuthService } from "src/app/core/services/auth/auth.service";
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from "@angular/forms";
+import { Subscription } from "rxjs";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { ReviewService } from "src/app/core/services/review/review.service";
+import { IonicModule, IonicSlides } from "@ionic/angular";
+import { PropertyCardComponent } from "../property-card/property-card.component";
+import { CommonModule } from "@angular/common";
+// import { SwiperModule } from "swiper/angular";
 
 @Component({
   selector: "app-property-detail",
-  standalone: true,
-  imports: [],
   templateUrl: "./property-detail.component.html",
-  styleUrl: "./property-detail.component.scss",
+  styleUrls: ["./property-detail.component.scss"],
+  standalone: true,
+  imports: [
+    IonicModule,
+    ReactiveFormsModule,
+    TranslateModule,
+    PropertyCardComponent,
+    // SwiperModule,
+    CommonModule,
+  ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
-export class PropertyDetailComponent implements OnInit {
+export class PropertyDetailComponent implements OnInit, OnDestroy {
   property?: Property;
-  loading = false;
+  id!: string;
+  gallery: string[] = [];
+  reviews: any[] = [];
+  averageRating: number = 0;
+  similarProperties: Property[] = [];
   isFavorite = false;
-  currentImageIndex = 0;
+  bookingModalOpen = false;
+  bookingForm: FormGroup;
+  bookingLoading = false;
+  canMessage = false;
+
+  slideOpts = {
+    initialSlide: 0,
+    speed: 400,
+    slidesPerView: 1,
+    spaceBetween: 0,
+  };
+
+  private subs: Subscription[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private propertyService: PropertyService,
+    private reviewService: ReviewService,
     private favoriteService: FavoriteService,
+    private bookingService: BookingService,
     private chatService: ChatService,
-    private authService: AuthService,
-    private alertController: AlertController,
-    private modalController: ModalController,
+    public authService: AuthService,
+    private fb: FormBuilder,
     private translate: TranslateService
-  ) {}
+  ) {
+    this.bookingForm = this.fb.group({
+      requestedDate: [null, Validators.required],
+      message: ["", Validators.maxLength(500)],
+      bookingType: ["VIEWING"],
+    });
+  }
 
   ngOnInit(): void {
-    const propertyId = this.route.snapshot.paramMap.get("id");
-    if (propertyId) {
-      this.loadProperty(propertyId);
-      this.checkFavorite(propertyId);
-      this.incrementViewCount(propertyId);
-    }
+    this.subs.push(
+      this.route.paramMap.subscribe((params) => {
+        const id = params.get("id");
+        if (id) {
+          this.id = id;
+          this.loadProperty(id);
+          this.loadSimilar(id);
+          this.loadReviews(id);
+        } else {
+          this.router.navigate(["/properties"]);
+        }
+      })
+    );
+
+    // update canMessage based on auth
+    this.canMessage = this.authService.isAuthenticated();
+  }
+
+  ngOnDestroy(): void {
+    this.subs.forEach((s) => s.unsubscribe());
   }
 
   loadProperty(id: string): void {
-    this.loading = true;
     this.propertyService.getPropertyById(id).subscribe({
-      next: (property) => {
-        this.property = property;
-        this.loading = false;
+      next: (p) => {
+        this.property = p;
+        this.gallery = (p.images || []).map((i: any) => i.imageUrl || i);
+        this.checkFavorite();
+        // increment view count (optional)
+        try {
+          this.propertyService.incrementViewCount(p.id).subscribe();
+        } catch {}
       },
-      error: (error) => {
-        console.error("Error loading property:", error);
-        this.loading = false;
+      error: (err) => {
+        console.error("Error loading property", err);
       },
     });
   }
 
-  checkFavorite(propertyId: string): void {
-    if (!this.authService.isAuthenticated()) return;
+  loadReviews(id: string): void {
+    this.reviewService.getPropertyReviews(id).subscribe({
+      next: (r) => {
+        this.reviews = r;
+      },
+      error: (err) => {
+        console.error("Error loading reviews", err);
+      },
+    });
 
-    this.favoriteService.isFavorite(propertyId).subscribe({
-      next: (isFav) => (this.isFavorite = isFav),
-      error: (error) => console.error("Error checking favorite:", error),
+    this.reviewService.getAverageRating(id).subscribe({
+      next: (avg) => (this.averageRating = avg),
+      error: () => (this.averageRating = 0),
     });
   }
 
-  incrementViewCount(propertyId: string): void {
-    this.propertyService.incrementViewCount(propertyId).subscribe();
+  loadSimilar(id: string): void {
+    this.propertyService.getSimilarProperties(id).subscribe({
+      next: (res) => {
+        this.similarProperties = res;
+      },
+      error: (err) => {
+        console.error("Error loading similar properties", err);
+      },
+    });
+  }
+
+  checkFavorite(): void {
+    if (!this.authService.isAuthenticated() || !this.property) return;
+    this.favoriteService.isFavorite(this.property.id).subscribe({
+      next: (res) => (this.isFavorite = res),
+    });
   }
 
   toggleFavorite(): void {
+    if (!this.authService.isAuthenticated()) {
+      this.router.navigate(["/auth/login"]);
+      return;
+    }
     if (!this.property) return;
 
     if (this.isFavorite) {
       this.favoriteService.removeFromFavorites(this.property.id).subscribe({
         next: () => (this.isFavorite = false),
+        error: (err) => console.error(err),
       });
     } else {
       this.favoriteService.addToFavorites(this.property.id).subscribe({
         next: () => (this.isFavorite = true),
+        error: (err) => console.error(err),
       });
     }
   }
 
-  async contactLandlord(): Promise<void> {
+  openBooking(): void {
     if (!this.authService.isAuthenticated()) {
       this.router.navigate(["/auth/login"]);
       return;
     }
-
-    if (!this.property) return;
-
-    // Create or get chat room
-    this.chatService
-      .createOrGetChatRoom({
-        propertyId: this.property.id,
-        tenantId: this.authService.getCurrentUser()!.id,
-        landlordId: this.property.landlord.id,
-      })
-      .subscribe({
-        next: (chatRoom) => {
-          this.router.navigate(["/chat", chatRoom.id]);
-        },
-        error: (error) => {
-          console.error("Error creating chat room:", error);
-        },
-      });
+    this.bookingModalOpen = true;
   }
 
-  async requestViewing(): Promise<void> {
-    if (!this.authService.isAuthenticated()) {
-      this.router.navigate(["/auth/login"]);
-      return;
-    }
+  submitBooking(): void {
+    if (this.bookingForm.invalid || !this.property) return;
 
-    const alert = await this.alertController.create({
-      header: this.translate.instant("property.requestViewing"),
-      inputs: [
-        {
-          name: "message",
-          type: "textarea",
-          placeholder: "Add a message (optional)...",
-        },
-        {
-          name: "date",
-          type: "date",
-          min: new Date().toISOString().split("T")[0],
-        },
-      ],
-      buttons: [
-        {
-          text: this.translate.instant("common.cancel"),
-          role: "cancel",
-        },
-        {
-          text: this.translate.instant("common.submit"),
-          handler: (data) => {
-            this.submitBookingRequest(data);
-          },
-        },
-      ],
+    this.bookingLoading = true;
+    const payload = {
+      propertyId: this.property.id,
+      bookingType: this.bookingForm.value.bookingType,
+      requestedDate: this.bookingForm.value.requestedDate,
+      message: this.bookingForm.value.message,
+    };
+
+    this.bookingService.createBooking(payload).subscribe({
+      next: (b) => {
+        this.bookingLoading = false;
+        this.bookingModalOpen = false;
+        // show a simple toast via native service or navigate
+        alert(this.translate.instant("property.bookingSuccess"));
+      },
+      error: (err) => {
+        this.bookingLoading = false;
+        console.error("Booking error", err);
+        alert(this.translate.instant("property.bookingError"));
+      },
     });
-
-    await alert.present();
   }
 
-  submitBookingRequest(data: any): void {
-    // Implement booking request
-    console.log("Booking request:", data);
+  openAddReview(): void {
+    // For now navigate to /properties/:id/review or open a modal - simple alert placeholder
+    this.router.navigate(["/properties", this.id, "add-review"]);
   }
 
-  shareProperty(): void {
-    if (navigator.share && this.property) {
-      navigator.share({
-        title: this.property.title,
-        text: this.property.description,
-        url: window.location.href,
-      });
+  startChat(): void {
+    if (!this.authService.isAuthenticated() || !this.property) {
+      this.router.navigate(["/auth/login"]);
+      return;
     }
+    // create or get chat room with landlord
+    const tenantId = this.authService.getCurrentUser()?.id;
+    const landlordId = this.property?.landlord?.id;
+    const request = {
+      propertyId: this.property!.id,
+      tenantId: tenantId!,
+      landlordId: landlordId!,
+    };
+    this.chatService.createOrGetChatRoom(request).subscribe({
+      next: (room) => {
+        this.router.navigate(["/chat", room.id]);
+      },
+      error: (err) => {
+        console.error("Chat error", err);
+      },
+    });
   }
 
-  previousImage(): void {
-    if (!this.property || this.property.images.length === 0) return;
-    this.currentImageIndex =
-      (this.currentImageIndex - 1 + this.property.images.length) %
-      this.property.images.length;
+  navigateToProperty(id: string): void {
+    this.router.navigate(["/properties", id]);
+    // scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  nextImage(): void {
-    if (!this.property || this.property.images.length === 0) return;
-    this.currentImageIndex =
-      (this.currentImageIndex + 1) % this.property.images.length;
+  goBack(): void {
+    this.router.navigate(["/properties"]);
+  }
+
+  scrollToSection(id: string): void {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth' " as any });
+  }
+
+  formatPrice(price?: number, currency?: string): string {
+    if (!price) return "";
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency || "XAF",
+        minimumFractionDigits: 0,
+      }).format(price);
+    } catch {
+      return `${price} ${currency || ""}`;
+    }
   }
 }

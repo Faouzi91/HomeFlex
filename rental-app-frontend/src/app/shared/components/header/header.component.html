@@ -1,69 +1,107 @@
-<ion-header>
-    <ion-toolbar class="bg-white border-b border-gray-200 h-16 px-6 flex items-center justify-between">
+<ion-header class="app-header">
+    <ion-toolbar class="app-toolbar">
+        <div class="header-container">
 
-        <!-- LOGO -->
-        <div class="flex-shrink-0">
-            <ion-title class="text-2xl font-bold text-blue-600 cursor-pointer m-0" (click)="navigate('/properties')">
-                {{ 'app.name' | translate }}
-            </ion-title>
+            <!-- Left: Logo -->
+            <div class="header-left">
+                <div class="logo" (click)="navigate('/')">
+                    <span class="logo-text">{{ 'app.name' | translate }}</span>
+                </div>
+
+                <!-- Desktop Nav -->
+                <nav class="desktop-nav">
+                    <button class="nav-btn" (click)="navigate('/properties?type=buy')">
+                        <span>{{ 'header.buy' | translate }}</span>
+                        <div class="nav-underline"></div>
+                    </button>
+                    <button class="nav-btn" (click)="navigate('/properties?type=rent')">
+                        <span>{{ 'header.rent' | translate }}</span>
+                        <div class="nav-underline"></div>
+                    </button>
+                    <button class="nav-btn" (click)="navigate('/properties?type=sell')">
+                        <span>{{ 'header.sell' | translate }}</span>
+                        <div class="nav-underline"></div>
+                    </button>
+                    <button class="nav-btn" (click)="navigate('/agents')">
+                        <span>{{ 'header.agents' | translate }}</span>
+                        <div class="nav-underline"></div>
+                    </button>
+                    <button class="nav-btn" (click)="navigate('/contact')">
+                        <span>{{ 'header.contact' | translate }}</span>
+                        <div class="nav-underline"></div>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="header-right">
+
+                <!-- Language Selector -->
+                <select [(ngModel)]="selectedLang" (change)="changeLanguage($event)" class="lang-select">
+                    <option value="en">EN</option>
+                    <option value="fr">FR</option>
+                </select>
+
+                <!-- Not Logged In -->
+                <ng-container *ngIf="!user">
+                    <button class="btn-text" (click)="navigate('/auth/login')">
+                        {{ 'auth.login' | translate }}
+                    </button>
+                    <button class="btn-signup" (click)="navigate('/auth/register')">
+                        {{ 'auth.register' | translate }}
+                    </button>
+                </ng-container>
+
+                <!-- Logged In -->
+                <ng-container *ngIf="user">
+                    <button class="icon-btn" (click)="navigate('/favorites')">
+                        <ion-icon name="heart-outline"></ion-icon>
+                    </button>
+
+                    <!-- User Menu -->
+                    <div class="user-menu">
+                        <button class="user-avatar" (click)="toggleUserMenu()">
+                            <span class="avatar-initials">{{ getUserInitials() }}</span>
+                        </button>
+                    </div>
+                </ng-container>
+
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+                    <ion-icon name="menu-outline"></ion-icon>
+                </button>
+
+            </div>
+
         </div>
-
-        <!-- NAV LINKS (desktop only) -->
-        <nav class="hidden md:flex flex-1 justify-center space-x-6">
-            <ion-button fill="clear"
-                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
-                (click)="navigate('/properties?type=buy')">{{ 'header.buy' | translate }}</ion-button>
-            <ion-button fill="clear"
-                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
-                (click)="navigate('/properties?type=rent')">{{ 'header.rent' | translate }}</ion-button>
-            <ion-button fill="clear"
-                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
-                (click)="navigate('/properties?type=sell')">{{ 'header.sell' | translate }}</ion-button>
-            <ion-button fill="clear"
-                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
-                (click)="navigate('/agents')">{{ 'header.agents' | translate }}</ion-button>
-            <ion-button fill="clear"
-                class="text-gray-700 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-600 transition"
-                (click)="navigate('/contact')">{{ 'header.contact' | translate }}</ion-button>
-        </nav>
-
-        <!-- USER ACTIONS + LANGUAGE -->
-        <div class="flex items-center space-x-3">
-
-            <!-- Language Selector -->
-            <ion-select [(ngModel)]="selectedLang" (ionChange)="changeLanguage($event)" interface="popover"
-                class="w-16">
-                <ion-select-option value="en">EN</ion-select-option>
-                <ion-select-option value="fr">FR</ion-select-option>
-            </ion-select>
-
-            <!-- Auth buttons -->
-            <ng-container *ngIf="!user">
-                <ion-button fill="clear" class="text-gray-700 hover:text-blue-600 font-medium"
-                    (click)="navigate('/auth/login')">{{ 'auth.login' | translate }}</ion-button>
-                <ion-button fill="outline" class="border-gray-300 text-gray-700 hover:text-blue-600 font-medium"
-                    (click)="navigate('/auth/register')">{{ 'auth.register' | translate }}</ion-button>
-            </ng-container>
-
-            <!-- User buttons -->
-            <ng-container *ngIf="user">
-                <ion-button fill="clear" class="text-gray-700 hover:text-blue-600" (click)="navigate('/favorites')">
-                    <ion-icon name="heart-outline" slot="icon-only"></ion-icon>
-                </ion-button>
-                <ion-button fill="clear" class="text-gray-700 hover:text-blue-600" (click)="navigate('/profile')">
-                    <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
-                </ion-button>
-                <ion-button fill="clear" class="text-red-600 hover:text-red-700" (click)="logout()">
-                    <ion-icon name="log-out-outline" slot="icon-only"></ion-icon>
-                </ion-button>
-            </ng-container>
-
-            <!-- Mobile menu toggle -->
-            <button class="md:hidden text-gray-700 hover:text-blue-600">
-                <ion-icon name="menu-outline" size="large"></ion-icon>
-            </button>
-
-        </div>
-
     </ion-toolbar>
 </ion-header>
+
+<!-- Dropdown Menu OUTSIDE header (Portal Pattern) -->
+<div class="dropdown-portal" *ngIf="user && userMenuOpen" (click)="closeUserMenu()">
+    <div class="user-dropdown" (click)="$event.stopPropagation()" [style.top.px]="dropdownTop"
+        [style.right.px]="dropdownRight">
+        <div class="dropdown-header">
+            <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+            <div class="user-email">{{ user.email }}</div>
+        </div>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item" (click)="navigate('/profile')">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>Profile</span>
+        </button>
+        <button class="dropdown-item" (click)="navigate('/bookings')">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Bookings</span>
+        </button>
+        <button class="dropdown-item" (click)="navigate('/properties/add')" *ngIf="user.role === 'LANDLORD'">
+            <ion-icon name="add-circle-outline"></ion-icon>
+            <span>Add Property</span>
+        </button>
+        <div class="dropdown-divider"></div>
+        <button class="dropdown-item dropdown-item-danger" (click)="logout()">
+            <ion-icon name="log-out-outline"></ion-icon>
+            <span>{{ 'auth.logout' | translate }}</span>
+        </button>
+    </div>
+</div>

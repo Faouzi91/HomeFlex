@@ -1,24 +1,90 @@
 {
     "app": {
         "name": "HomeFlex",
-        "welcome": "Welcome"
+        "welcome": "Welcome",
+        "slogan": "Find Your Perfect Home"
     },
     "auth": {
-        "login": "Login",
-        "register": "Register",
-        "registerWelcome": "Create your account",
+        "login": "Sign In",
+        "register": "Sign Up",
+        "registerWelcome": "Create Account",
+        "registerSubtitle": "Join thousands finding their dream homes",
+        "loginWelcome": "Welcome Back!",
+        "loginSubtitle": "Sign in to continue your property search journey",
         "logout": "Logout",
-        "email": "Email",
+        "email": "Email Address",
         "password": "Password",
         "firstName": "First Name",
         "lastName": "Last Name",
         "phoneNumber": "Phone Number",
         "confirmPassword": "Confirm Password",
-        "forgotPassword": "Forgot Password?",
+        "rememberMe": "Remember me",
         "noAccount": "Don't have an account?",
         "haveAccount": "Already have an account?",
         "signInWithGoogle": "Sign in with Google",
-        "role": "Role"
+        "continueWith": "Or continue with",
+        "role": "I am a",
+        "passwordPlaceholder": "Create strong password",
+        "confirmPasswordPlaceholder": "Re-enter password",
+        "passwordRules": "Use 8+ characters with mix of letters, numbers & symbols",
+        "passwordStrength": {
+            "weak": "Weak password",
+            "medium": "Medium password",
+            "strong": "Strong password"
+        },
+        "roleTenant": "Tenant",
+        "roleLandlord": "Landlord",
+        "roleTenantDesc": "Looking for property",
+        "roleLandlordDesc": "Listing property",
+        "termsAgree": "By creating an account, you agree to our",
+        "termsOfService": "Terms of Service",
+        "and": "and",
+        "privacyPolicy": "Privacy Policy",
+        "createAccountBtn": "Create Account",
+        "forgotPassword": "Forgot password",
+        "forgotTitle": "Reset your password",
+        "forgotSubtitle": "Enter your email and we'll send a password reset link.",
+        "sendResetLink": "Send reset link",
+        "resetPassword": "Reset password",
+        "resetTitle": "Create a new password",
+        "resetSubtitle": "Enter a new password for your account.",
+        "newPassword": "New password",
+        "resetPasswordBtn": "Reset password",
+        "resetEmailSent": "Reset email sent. Check your inbox.",
+        "resetEmailFailed": "Failed to send reset email.",
+        "resetSuccess": "Password updated. You can now login.",
+        "resetFailed": "Failed to reset password.",
+        "resetNoToken": "Invalid or missing reset token.",
+        "features": {
+            "smartSearch": "Smart Search",
+            "smartSearchDesc": "Find properties that match your exact preferences",
+            "instantMessaging": "Instant Messaging",
+            "instantMessagingDesc": "Connect directly with property owners",
+            "verifiedListings": "Verified Listings",
+            "verifiedListingsDesc": "All properties are verified for your safety"
+        }
+    },
+    "errors": {
+        "requiredFirstName": "First name is required",
+        "minName": "Required (min 2 chars)",
+        "requiredLastName": "Last name is required",
+        "minLastName": "Required (min 2 chars)",
+        "requiredEmail": "Email is required",
+        "invalidEmail": "Invalid email format",
+        "validEmailRequired": "Valid email required",
+        "invalidPhone": "Invalid phone number",
+        "requiredPassword": "Password is required",
+        "minPassword": "Password must be at least 6 characters",
+        "weakPassword": "Password does not meet security requirements",
+        "confirmPasswordRequired": "Please confirm your password",
+        "passwordMismatch": "Passwords don't match",
+        "passwordsMatch": "Passwords match",
+        "roleRequired": "Role selection is required",
+        "loginFailed": "Login failed. Please check your credentials.",
+        "registrationFailed": "Registration failed. Please try again.",
+        "passwordRequired": "Password is required",
+        "minFirstName": "Required (min 2 chars)",
+        "passwordMinLength": "Password must be at least {{min}} characters"
     },
     "header": {
         "buy": "Buy",
@@ -27,32 +93,129 @@
         "agents": "Agents",
         "contact": "Contact"
     },
+    "landing": {
+        "hero": {
+            "title": "Find Your Perfect Home in Cameroon",
+            "subtitle": "Discover thousands of verified properties for rent and sale across major cities",
+            "searchPlaceholder": "Enter city (e.g., Douala, Yaoundé)",
+            "searchBtn": "Search"
+        },
+        "quickFilters": {
+            "bedrooms": "1-2 Bedrooms",
+            "price": "Under 200K XAF",
+            "nearMe": "Near Me"
+        },
+        "stats": {
+            "properties": "Properties Listed",
+            "users": "Active Users",
+            "cities": "Cities Covered",
+            "transactions": "Successful Deals"
+        },
+        "featured": {
+            "title": "Featured Properties",
+            "subtitle": "Handpicked properties for you",
+            "viewAll": "View All"
+        },
+        "features": {
+            "title": "Why Choose Us",
+            "subtitle": "Everything you need to find your dream home",
+            "smartSearch": {
+                "title": "Smart Search",
+                "description": "Find your perfect property with advanced filters and AI-powered recommendations"
+            },
+            "verified": {
+                "title": "Verified Listings",
+                "description": "All properties are verified by our team for authenticity and quality"
+            },
+            "instantChat": {
+                "title": "Instant Chat",
+                "description": "Connect with landlords instantly through our real-time messaging system"
+            },
+            "favorites": {
+                "title": "Save Favorites",
+                "description": "Create collections of your favorite properties and get instant alerts"
+            }
+        },
+        "cta": {
+            "title": "Ready to Find Your Home?",
+            "subtitle": "Join thousands of satisfied users who found their perfect property",
+            "getStarted": "Get Started Free",
+            "browseProperties": "Browse Properties"
+        },
+        "footer": {
+            "terms": "Terms",
+            "privacy": "Privacy",
+            "help": "Help"
+        }
+    },
     "property": {
         "title": "Properties",
+        "propertiesFor": "Properties for",
+        "propertiesFound": "properties found",
+        "forRent": "For Rent",
+        "forSale": "For Sale",
+        "perMonth": "/month",
         "search": "Search Properties",
         "addNew": "Add Property",
         "details": "Property Details",
         "price": "Price",
         "bedrooms": "Bedrooms",
+        "beds": "Beds",
         "bathrooms": "Bathrooms",
-        "area": "Area (m²)",
+        "baths": "Baths",
+        "area": "Area",
+        "sqm": "m²",
         "location": "Location",
         "amenities": "Amenities",
         "description": "Description",
         "contactLandlord": "Contact Landlord",
         "requestViewing": "Request Viewing",
         "addToFavorites": "Add to Favorites",
-        "removeFromFavorites": "Remove from Favorites"
+        "removeFromFavorites": "Remove from Favorites",
+        "views": "Views",
+        "images": "Images",
+        "type": {
+            "APARTMENT": "Apartment",
+            "HOUSE": "House",
+            "STUDIO": "Studio",
+            "VILLA": "Villa",
+            "ROOM": "Room",
+            "OFFICE": "Office",
+            "LAND": "Land"
+        },
+        "noResults": {
+            "title": "No properties found",
+            "subtitle": "Try adjusting your filters",
+            "clearBtn": "Clear Filters"
+        }
     },
     "filters": {
         "filters": "Filters",
         "propertyType": "Property Type",
+        "allTypes": "All Types",
         "priceRange": "Price Range",
-        "minPrice": "Min Price",
-        "maxPrice": "Max Price",
+        "priceRangeXAF": "Price Range (XAF)",
+        "minPrice": "Min",
+        "maxPrice": "Max",
         "city": "City",
+        "cityOrArea": "City or area",
+        "location": "Location",
+        "bedrooms": "Bedrooms",
+        "any": "Any",
         "apply": "Apply Filters",
-        "clear": "Clear Filters"
+        "clear": "Clear",
+        "clearAll": "Clear All",
+        "quickFilters": {
+            "studioBeds": "Studio",
+            "onePlusBeds": "1+",
+            "twoPlusBeds": "2+",
+            "threePlusBeds": "3+",
+            "fourPlusBeds": "4+",
+            "under100k": "Under 100K",
+            "100to200k": "100K - 200K",
+            "200to500k": "200K - 500K",
+            "over500k": "500K+"
+        }
     },
     "common": {
         "save": "Save",
@@ -61,7 +224,10 @@
         "edit": "Edit",
         "submit": "Submit",
         "loading": "Loading...",
+        "loadingMore": "Loading more...",
         "error": "Error",
-        "success": "Success"
+        "success": "Success",
+        "viewToggle": "Toggle View",
+        "close": "Close"
     }
 }
