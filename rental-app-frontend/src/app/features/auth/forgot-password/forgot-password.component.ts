@@ -10,6 +10,7 @@ import { AuthService } from "src/app/core/services/auth/auth.service";
 import { ToastService } from "src/app/core/services/toast/toast.service";
 import { Router } from "@angular/router";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { LoadingService } from "src/app/core/services/loading/loading.service";
 
 @Component({
   selector: "app-forgot-password",
@@ -27,7 +28,8 @@ export class ForgotPasswordComponent {
     private auth: AuthService,
     private toast: ToastService,
     private router: Router,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private loadingService: LoadingService
   ) {
     this.form = this.fb.group({
       email: ["", [Validators.required, Validators.email]],
@@ -40,24 +42,25 @@ export class ForgotPasswordComponent {
 
   onSubmit(): void {
     if (this.form.invalid) return;
-    this.loading = true;
+
+    this.loadingService.show(this.translate.instant("auth.sendingResetLink"));
+
     const email = this.email.value;
 
     this.auth.forgotPassword(email).subscribe({
-      next: (res: any) => {
-        this.loading = false;
+      next: (res) => {
+        this.loadingService.hide();
         const msg =
           res?.message || this.translate.instant("auth.resetEmailSent");
         this.toast.success(msg);
-        // Optionally navigate to login or show instructions
         this.router.navigate(["/auth/login"]);
       },
       error: (err) => {
-        this.loading = false;
-        const message =
+        this.loadingService.hide();
+        const msg =
           err?.error?.message ||
           this.translate.instant("auth.resetEmailFailed");
-        this.toast.error(message);
+        this.toast.error(msg);
       },
     });
   }

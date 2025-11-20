@@ -16,6 +16,13 @@ export interface PagedResponse<T> {
   size: number;
 }
 
+export interface Stats {
+  properties: number;
+  users: number;
+  cities: number;
+  transactions: number;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -60,10 +67,14 @@ export class PropertyService {
   }
 
   getFeaturedProperties(limit: number = 8): Observable<Property[]> {
+    let params = new HttpParams()
+      .set("page", "0")
+      .set("size", limit.toString())
+      .set("sortBy", "viewCount") // Correct parameter
+      .set("sortDirection", "DESC");
+
     return this.http
-      .get<PagedResponse<Property>>(
-        `${this.apiUrl}/search?size=${limit}&sortBy=viewCount&sortDirection=desc`
-      )
+      .get<PagedResponse<Property>>(`${this.apiUrl}/search`, { params })
       .pipe(map((response) => response.content));
   }
 
@@ -100,9 +111,17 @@ export class PropertyService {
     return this.http.post<void>(`${this.apiUrl}/${id}/view`, {});
   }
 
+  getStats(): Observable<Stats> {
+    return this.http.get<Stats>(`${environment.apiUrl}/stats`);
+  }
+
   getSimilarProperties(id: string): Observable<Property[]> {
     return this.http.get<Property[]>(`${this.apiUrl}/${id}/similar`);
   }
+
+  // getFeaturedProperties() {
+  //   return this.http.get<Property[]>("/api/properties/search?featured=true");
+  // }
 
   uploadImage(propertyId: string, file: File): Observable<string> {
     const formData = new FormData();

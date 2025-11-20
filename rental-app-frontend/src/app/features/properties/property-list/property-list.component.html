@@ -122,17 +122,29 @@
     <div class="max-w-7xl mx-auto px-4 py-6">
 
         <!-- Loading -->
-        <div *ngIf="loading && properties.length === 0" class="loading-skeleton">
-            <ion-skeleton-text animated class="h-64 rounded-lg mb-4" *ngFor="let i of [1,2,3,4]"></ion-skeleton-text>
+        <div *ngIf="loading && properties.length === 0"
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="loading-skeleton" *ngFor="let i of [1,2,3,4]">
+                <ion-skeleton-text animated class="h-64 rounded-lg mb-4"></ion-skeleton-text>
+            </div>
         </div>
 
         <!-- Grid View -->
-        <div *ngIf="!loading || properties.length > 0" [class.grid]="viewMode === 'grid'"
-            [class.grid-cols-1]="viewMode === 'grid'" [class.md:grid-cols-2]="viewMode === 'grid'"
-            [class.lg:grid-cols-3]="viewMode === 'grid'" [class.xl:grid-cols-4]="viewMode === 'grid'" class="gap-6">
-            <app-property-card *ngFor="let property of properties" [property]="property"
-                (cardClick)="navigateToPropertyDetail($event.id)">
-            </app-property-card>
+        <div *ngIf="!loading || properties.length > 0">
+            <!-- Grid Mode -->
+            <div *ngIf="viewMode === 'grid'"
+                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <app-property-card *ngFor="let property of properties" [property]="property"
+                    (cardClick)="navigateToPropertyDetail(property.id)">
+                </app-property-card>
+            </div>
+
+            <!-- List Mode -->
+            <div *ngIf="viewMode === 'list'" class="space-y-4">
+                <app-property-card *ngFor="let property of properties" [property]="property"
+                    (cardClick)="navigateToPropertyDetail(property.id)">
+                </app-property-card>
+            </div>
         </div>
 
         <!-- No Results -->
@@ -144,7 +156,8 @@
         </div>
 
         <!-- Infinite Scroll -->
-        <ion-infinite-scroll (ionInfinite)="loadMore($event)" threshold="100px">
+        <ion-infinite-scroll (ionInfinite)="loadMore($event)" threshold="100px"
+            [disabled]="currentPage >= totalPages - 1">
             <ion-infinite-scroll-content loadingSpinner="bubbles" [loadingText]="'common.loadingMore' | translate">
             </ion-infinite-scroll-content>
         </ion-infinite-scroll>

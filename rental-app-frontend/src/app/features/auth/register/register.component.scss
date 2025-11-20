@@ -16,7 +16,7 @@ ion-content.auth-page {
 .auth-container {
     min-height: 100vh;
     display: flex;
-    padding-top: 4rem;
+    // padding-top: 4rem;
 
     @media (max-width: 1023px) {
         flex-direction: column;

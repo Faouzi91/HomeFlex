@@ -89,6 +89,11 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+  updateCurrentUser(user: User): void {
+    this.currentUserSubject.next(user);
+    localStorage.setItem("current_user", JSON.stringify(user));
+  }
+
   refreshToken(): Observable<AuthResponse> {
     const refreshToken = this.getRefreshToken();
     return this.http

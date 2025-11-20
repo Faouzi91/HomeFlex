@@ -4,24 +4,22 @@ import { IonicModule } from "@ionic/angular";
 import { FavoriteService } from "src/app/core/services/favorite/favorite.service";
 import { AuthService } from "src/app/core/services/auth/auth.service";
 import { TranslateModule } from "@ngx-translate/core";
+import { CommonModule } from "@angular/common";
 
 @Component({
   selector: "app-property-card",
   standalone: true,
-  imports: [IonicModule, TranslateModule],
+  imports: [IonicModule, TranslateModule, CommonModule],
   templateUrl: "./property-card.component.html",
-  styleUrl: "./property-card.component.scss",
+  styleUrls: ["./property-card.component.scss"],
 })
 export class PropertyCardComponent {
   @Input() property!: Property;
-  @Input() isFavorite = false;
+  @Input() showFavoriteButton = true;
+  @Output() cardClick = new EventEmitter<Property>();
   @Output() favoriteToggled = new EventEmitter<void>();
 
-  onFavoriteClick(event: Event): void {
-    event.stopPropagation();
-    this.favoriteToggled.emit();
-  }
-
+  isFavorite = false;
   isAuthenticated = false;
 
   constructor(
@@ -49,7 +47,6 @@ export class PropertyCardComponent {
     event.stopPropagation();
 
     if (!this.isAuthenticated) {
-      // Navigate to login
       return;
     }
 
@@ -57,20 +54,22 @@ export class PropertyCardComponent {
       this.favoriteService.removeFromFavorites(this.property.id).subscribe({
         next: () => {
           this.isFavorite = false;
+          this.favoriteToggled.emit();
         },
       });
     } else {
       this.favoriteService.addToFavorites(this.property.id).subscribe({
         next: () => {
           this.isFavorite = true;
+          this.favoriteToggled.emit();
         },
       });
     }
   }
 
-  // onCardClick(): void {
-  //   this.favoriteToggled.emit(this.property);
-  // }
+  onCardClick(event: Event): void {
+    this.cardClick.emit(this.property);
+  }
 
   formatPrice(price: number, currency: string): string {
     return new Intl.NumberFormat("en-US", {

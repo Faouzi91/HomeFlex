@@ -1,9 +1,8 @@
 package com.realestate.rental.utils.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -22,6 +21,9 @@ public class PropertyImage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id", nullable = false)
+    @JsonIgnoreProperties("images")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Property property;
 
     @Column(name = "image_url", nullable = false, columnDefinition = "TEXT")

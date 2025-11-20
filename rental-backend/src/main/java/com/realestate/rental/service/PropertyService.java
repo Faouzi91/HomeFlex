@@ -13,6 +13,7 @@ import com.realestate.rental.utils.enumeration.PropertyStatus;
 import com.realestate.rental.utils.enumeration.PropertyType;
 import com.realestate.rental.utils.enumeration.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,7 +28,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
@@ -36,7 +36,9 @@ public class PropertyService {
     private final PropertyImageRepository propertyImageRepository;
     private final StorageService storageService;
     private final NotificationService notificationService;
+    private final BookingRepository bookingRepository;
 
+    @Transactional(readOnly = true)
     public Page<PropertyDto> searchProperties(PropertySearchParams params, Pageable pageable) {
         Specification<Property> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -45,9 +47,9 @@ public class PropertyService {
             predicates.add(cb.equal(root.get("status"), PropertyStatus.APPROVED));
             predicates.add(cb.equal(root.get("isAvailable"), true));
 
-            if (params.getCity() != null) {
+            if (params.getCity() != null && !params.getCity().trim().isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("city")),
-                        "%" + params.getCity().toLowerCase() + "%"));
+                        "%" + params.getCity().toLowerCase().trim() + "%"));
             }
 
             if (params.getMinPrice() != null) {
@@ -60,9 +62,13 @@ public class PropertyService {
                         BigDecimal.valueOf(params.getMaxPrice())));
             }
 
-            if (params.getPropertyType() != null) {
-                predicates.add(cb.equal(root.get("propertyType"),
-                        PropertyType.valueOf(params.getPropertyType())));
+            if (params.getPropertyType() != null && !params.getPropertyType().trim().isEmpty()) {
+                try {
+                    predicates.add(cb.equal(root.get("propertyType"),
+                            PropertyType.valueOf(params.getPropertyType().toUpperCase())));
+                } catch (IllegalArgumentException e) {
+                    // Ignore invalid property type
+                }
             }
 
             if (params.getBedrooms() != null) {
@@ -78,16 +84,42 @@ public class PropertyService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return propertyRepository.findAll(spec, pageable)
-                .map(this::mapToPropertyDto);
+        Page<Property> properties = propertyRepository.findAll(spec, pageable);
+
+        // Eagerly fetch all relationships within transaction
+//        properties.forEach(property -> {
+//            Hibernate.initialize(property.getImages());
+//            Hibernate.initialize(property.getVideos());
+//            Hibernate.initialize(property.getAmenities());
+////            Hibernate.initialize(property.getLandlord());
+//            property.getLandlord().getEmail();
+//
+//            // Defensive copies to avoid ConcurrentModificationException
+//            List<PropertyImage> imagesCopy = new ArrayList<>(property.getImages());
+//            List<Amenity> amenitiesCopy = new ArrayList<>(property.getAmenities());
+//
+//            imagesCopy.forEach(img -> {});
+//            amenitiesCopy.forEach(am -> {});
+//        });
+
+        return properties.map(this::mapToPropertyDto);
     }
 
+    @Transactional(readOnly = true)
     public PropertyDto getPropertyById(UUID id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
+
+        // Force initialization of lazy collections
+        property.getImages().size();
+        property.getVideos().size();
+        property.getAmenities().size();
+        property.getLandlord().getEmail();
+
         return mapToPropertyDto(property);
     }
 
+    @Transactional
     public PropertyDto createProperty(PropertyCreateRequest request,
                                       List<MultipartFile> images,
                                       List<MultipartFile> videos,
@@ -150,16 +182,20 @@ public class PropertyService {
             }
         }
 
-        // Upload videos (similar to images)
-
         property = propertyRepository.save(property);
 
         // Notify admin for approval
         notificationService.notifyAdminsNewProperty(property);
 
+        // Force initialization before returning
+        property.getImages().size();
+        property.getVideos().size();
+        property.getAmenities().size();
+
         return mapToPropertyDto(property);
     }
 
+    @Transactional
     public PropertyDto updateProperty(UUID id, PropertyUpdateRequest request,
                                       List<MultipartFile> images,
                                       List<MultipartFile> videos,
@@ -177,13 +213,18 @@ public class PropertyService {
         if (request.getDescription() != null) property.setDescription(request.getDescription());
         if (request.getPrice() != null) property.setPrice(request.getPrice());
         if (request.getIsAvailable() != null) property.setIsAvailable(request.getIsAvailable());
-        // Update other fields...
 
         property = propertyRepository.save(property);
+
+        // Force initialization
+        property.getImages().size();
+        property.getVideos().size();
+        property.getAmenities().size();
 
         return mapToPropertyDto(property);
     }
 
+    @Transactional
     public void deleteProperty(UUID id, UUID landlordId) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
@@ -195,12 +236,33 @@ public class PropertyService {
         propertyRepository.delete(property);
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyDto> getPropertiesByLandlord(UUID landlordId) {
-        return propertyRepository.findByLandlordId(landlordId).stream()
+        List<Property> properties = propertyRepository.findByLandlordId(landlordId);
+
+        // Force initialization
+        properties.forEach(property -> {
+            property.getImages().size();
+            property.getVideos().size();
+            property.getAmenities().size();
+        });
+
+        return properties.stream()
                 .map(this::mapToPropertyDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public Map<String, Long> getStats() {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("properties", propertyRepository.count());
+        stats.put("users", userRepository.count());
+        stats.put("cities", propertyRepository.findDistinctCitiesCount());
+        stats.put("transactions", bookingRepository.count());
+        return stats;
+    }
+
+    @Transactional
     public void incrementViewCount(UUID propertyId) {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
@@ -208,18 +270,28 @@ public class PropertyService {
         propertyRepository.save(property);
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyDto> getSimilarProperties(UUID propertyId) {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
-        // Find similar properties based on type, city, and price range
-        return propertyRepository.findSimilarProperties(
-                        property.getCity(),
-                        property.getPropertyType(),
-                        property.getPrice().multiply(BigDecimal.valueOf(0.8)),
-                        property.getPrice().multiply(BigDecimal.valueOf(1.2)),
-                        propertyId
-                ).stream()
+        List<Property> similarProperties = propertyRepository.findSimilarProperties(
+                property.getCity(),
+                property.getPropertyType(),
+                property.getPrice().multiply(BigDecimal.valueOf(0.8)),
+                property.getPrice().multiply(BigDecimal.valueOf(1.2)),
+                propertyId
+        );
+
+        // Force initialization
+        similarProperties.forEach(p -> {
+            p.getImages().size();
+            p.getVideos().size();
+            p.getAmenities().size();
+            p.getLandlord().getEmail();
+        });
+
+        return similarProperties.stream()
                 .limit(5)
                 .map(this::mapToPropertyDto)
                 .collect(Collectors.toList());
@@ -236,30 +308,43 @@ public class PropertyService {
         dto.setCurrency(property.getCurrency());
         dto.setAddress(property.getAddress());
         dto.setCity(property.getCity());
+        dto.setStateProvince(property.getStateProvince());
         dto.setCountry(property.getCountry());
+        dto.setPostalCode(property.getPostalCode());
         dto.setLatitude(property.getLatitude());
         dto.setLongitude(property.getLongitude());
         dto.setBedrooms(property.getBedrooms());
         dto.setBathrooms(property.getBathrooms());
         dto.setAreaSqm(property.getAreaSqm());
+        dto.setFloorNumber(property.getFloorNumber());
+        dto.setTotalFloors(property.getTotalFloors());
         dto.setIsAvailable(property.getIsAvailable());
+        dto.setAvailableFrom(property.getAvailableFrom());
         dto.setStatus(property.getStatus().name());
         dto.setViewCount(property.getViewCount());
+        dto.setFavoriteCount(property.getFavoriteCount());
         dto.setCreatedAt(property.getCreatedAt());
+        dto.setUpdatedAt(property.getUpdatedAt());
 
         // Map images
-        dto.setImages(property.getImages().stream()
-                .sorted(Comparator.comparing(PropertyImage::getDisplayOrder))
-                .map(this::mapToImageDto)
-                .collect(Collectors.toList()));
+        if (property.getImages() != null) {
+            dto.setImages(property.getImages().stream()
+                    .sorted(Comparator.comparing(PropertyImage::getDisplayOrder))
+                    .map(this::mapToImageDto)
+                    .collect(Collectors.toList()));
+        }
 
         // Map amenities
-        dto.setAmenities(property.getAmenities().stream()
-                .map(this::mapToAmenityDto)
-                .collect(Collectors.toList()));
+        if (property.getAmenities() != null) {
+            dto.setAmenities(property.getAmenities().stream()
+                    .map(this::mapToAmenityDto)
+                    .collect(Collectors.toList()));
+        }
 
         // Map landlord
-        dto.setLandlord(mapToUserDto(property.getLandlord()));
+        if (property.getLandlord() != null) {
+            dto.setLandlord(mapToUserDto(property.getLandlord()));
+        }
 
         return dto;
     }
@@ -269,6 +354,7 @@ public class PropertyService {
         dto.setId(image.getId());
         dto.setImageUrl(image.getImageUrl());
         dto.setThumbnailUrl(image.getThumbnailUrl());
+        dto.setDisplayOrder(image.getDisplayOrder());
         dto.setIsPrimary(image.getIsPrimary());
         return dto;
     }

@@ -9,7 +9,7 @@ import { LandingComponent } from "./features/landing/landing.component";
 const routes: Routes = [
   {
     path: "",
-    component: LandingComponent, // New landing page
+    component: LandingComponent,
   },
   {
     path: "auth",
@@ -19,8 +19,8 @@ const routes: Routes = [
   {
     path: "properties",
     loadChildren: () =>
-      import("./features/properties/properties.module").then(
-        (m) => m.PropertiesModule
+      import("./features/properties/properties.routes").then(
+        (m) => m.PROPERTY_ROUTES
       ),
   },
   {

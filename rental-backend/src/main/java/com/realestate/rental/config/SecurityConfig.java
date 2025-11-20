@@ -48,6 +48,9 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
 
+                        .requestMatchers(HttpMethod.GET, "/api/stats").permitAll() // Allow Landing page stats
+                        .requestMatchers(HttpMethod.GET, "/api/properties/*/similar").permitAll() // Allow Similar properties
+
                         // Public property search
                         .requestMatchers(HttpMethod.GET, "/api/properties/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/properties/{id}").permitAll()

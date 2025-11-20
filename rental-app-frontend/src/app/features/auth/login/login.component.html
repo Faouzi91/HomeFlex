@@ -84,7 +84,7 @@
                         <div class="form-group">
                             <div class="form-label-row">
                                 <label class="form-label">{{ 'auth.password' | translate }}</label>
-                                <a routerLink="/auth/forgot-password" class="forgot-link">
+                                <a (click)="goToForgotPassword()" class="forgot-link">
                                     {{ 'auth.forgotPassword' | translate }}
                                 </a>
                             </div>

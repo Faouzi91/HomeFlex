@@ -15,6 +15,8 @@ export interface User {
   phoneNumber?: string;
   profilePictureUrl?: string;
   role: UserRole;
+  avatarUrl?: string; // Avatar image URL
+  language?: string; // User's preferred language
   isActive: boolean;
   isVerified: boolean;
   languagePreference: string;

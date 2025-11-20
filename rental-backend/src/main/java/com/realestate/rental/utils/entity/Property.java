@@ -1,12 +1,11 @@
 package com.realestate.rental.utils.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.realestate.rental.utils.enumeration.ListingType;
 import com.realestate.rental.utils.enumeration.PropertyStatus;
 import com.realestate.rental.utils.enumeration.PropertyType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -22,6 +21,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Property {
 
     @Id
@@ -30,6 +30,9 @@ public class Property {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "landlord_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "properties"})
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User landlord;
 
     @Column(nullable = false)
@@ -109,9 +112,15 @@ public class Property {
 
     // Relationships
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"property"})
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<PropertyImage> images = new HashSet<>();
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"property"})
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<PropertyVideo> videos = new HashSet<>();
 
     @ManyToMany
@@ -120,6 +129,9 @@ public class Property {
             joinColumns = @JoinColumn(name = "property_id"),
             inverseJoinColumns = @JoinColumn(name = "amenity_id")
     )
+    @JsonIgnoreProperties({"properties"})
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Set<Amenity> amenities = new HashSet<>();
 
     @CreationTimestamp

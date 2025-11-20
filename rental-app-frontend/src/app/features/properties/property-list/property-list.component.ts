@@ -14,7 +14,7 @@ import {
 } from "src/app/models/property.model";
 import { PropertyCardComponent } from "../property-card/property-card.component";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { PropertyFiltersComponent } from "../property-filters/property-filters.component";
+import { CommonModule } from "@angular/common";
 
 @Component({
   selector: "app-property-list",
@@ -22,12 +22,13 @@ import { PropertyFiltersComponent } from "../property-filters/property-filters.c
   imports: [
     IonicModule,
     PropertyCardComponent,
-    ReactiveFormsModule, // Needed for [formGroup]
+    ReactiveFormsModule,
     TranslateModule,
     FormsModule,
+    CommonModule,
   ],
   templateUrl: "./property-list.component.html",
-  styleUrl: "./property-list.component.scss",
+  styleUrls: ["./property-list.component.scss"],
 })
 export class PropertyListComponent implements OnInit {
   @ViewChild(IonInfiniteScroll) infiniteScroll!: IonInfiniteScroll;
@@ -78,13 +79,26 @@ export class PropertyListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Get query params from URL
+    // Subscribe to query params
     this.route.queryParams.subscribe((params) => {
+      // Merge query params with default search params
       this.searchParams = {
-        ...this.searchParams,
-        ...params,
-        page: 0, // Reset to first page on new search
+        page: 0,
+        size: 20,
+        sortBy: params["sortBy"] || "createdAt",
+        sortDirection: params["sortDirection"] || "desc",
+        city: params["city"] || undefined,
+        propertyType: params["propertyType"] || undefined,
+        listingType: params["listingType"] || undefined,
+        minPrice: params["minPrice"] ? Number(params["minPrice"]) : undefined,
+        maxPrice: params["maxPrice"] ? Number(params["maxPrice"]) : undefined,
+        bedrooms: params["bedrooms"] ? Number(params["bedrooms"]) : undefined,
+        bathrooms: params["bathrooms"]
+          ? Number(params["bathrooms"])
+          : undefined,
       };
+
+      // Always load properties when params change (or on init)
       this.loadProperties();
     });
   }
@@ -96,8 +110,12 @@ export class PropertyListComponent implements OnInit {
       this.searchParams.page = 0;
     }
 
+    console.log("Loading properties with params:", this.searchParams);
+
     this.propertyService.searchProperties(this.searchParams).subscribe({
       next: (response: PagedResponse<Property>) => {
+        console.log("Properties loaded:", response);
+
         if (append) {
           this.properties = [...this.properties, ...response.content];
         } else {
@@ -133,6 +151,7 @@ export class PropertyListComponent implements OnInit {
 
   toggleViewMode(): void {
     this.viewMode = this.viewMode === "grid" ? "list" : "grid";
+    console.log("View mode changed to:", this.viewMode);
   }
 
   toggleFilters(): void {
@@ -141,7 +160,6 @@ export class PropertyListComponent implements OnInit {
 
   applyFilters(): void {
     this.updateQueryParams();
-    this.loadProperties();
     this.showFilters = false;
   }
 
@@ -153,7 +171,6 @@ export class PropertyListComponent implements OnInit {
       sortDirection: "desc",
     };
     this.updateQueryParams();
-    this.loadProperties();
   }
 
   setSortBy(sortBy: string, sortDirection: "asc" | "desc" = "desc"): void {

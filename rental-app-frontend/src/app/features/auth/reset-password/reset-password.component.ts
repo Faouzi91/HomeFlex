@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { AuthService } from "src/app/core/services/auth/auth.service";
 import { ToastService } from "src/app/core/services/toast/toast.service";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { LoadingService } from "src/app/core/services/loading/loading.service";
 
 function matchPasswords(control: AbstractControl) {
   const pw = control.get("password")?.value;
@@ -36,7 +37,8 @@ export class ResetPasswordComponent implements OnInit {
     private router: Router,
     private auth: AuthService,
     private toast: ToastService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private loadingService: LoadingService
   ) {
     this.form = this.fb.group(
       {
@@ -67,21 +69,21 @@ export class ResetPasswordComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid || !this.token) return;
-    this.loading = true;
-    const newPassword = this.password.value;
 
-    this.auth.resetPassword(this.token, newPassword).subscribe({
-      next: (res: any) => {
-        this.loading = false;
+    this.loadingService.show(this.translate.instant("auth.resettingPassword"));
+
+    this.auth.resetPassword(this.token, this.password.value).subscribe({
+      next: (res) => {
+        this.loadingService.hide();
         const msg = res?.message || this.translate.instant("auth.resetSuccess");
         this.toast.success(msg);
         this.router.navigate(["/auth/login"]);
       },
       error: (err) => {
-        this.loading = false;
-        const message =
+        this.loadingService.hide();
+        const msg =
           err?.error?.message || this.translate.instant("auth.resetFailed");
-        this.toast.error(message);
+        this.toast.error(msg);
       },
     });
   }

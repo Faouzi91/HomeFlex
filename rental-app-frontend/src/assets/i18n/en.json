@@ -55,6 +55,12 @@
         "resetSuccess": "Password updated. You can now login.",
         "resetFailed": "Failed to reset password.",
         "resetNoToken": "Invalid or missing reset token.",
+        "loggingIn": "Signing you in...",
+        "loginSuccess": "Logged in successfully!",
+        "creatingAccount": "Creating your account...",
+        "registrationSuccess": "Account created successfully!",
+        "sendingResetLink": "Sending reset link...",
+        "resettingPassword": "Updating your password...",
         "features": {
             "smartSearch": "Smart Search",
             "smartSearchDesc": "Find properties that match your exact preferences",
@@ -63,6 +69,32 @@
             "verifiedListings": "Verified Listings",
             "verifiedListingsDesc": "All properties are verified for your safety"
         }
+    },
+    "profile": {
+        "title": "Profile",
+        "editProfile": "Edit Profile",
+        "changePassword": "Change Password",
+        "changeAvatar": "Take Photo",
+        "uploadAvatar": "Upload Photo",
+        "registered": "Registered",
+        "actions": "Actions",
+        "deleteAccount": "Delete Account",
+        "accountDetails": "Account Details",
+        "manageInfo": "Manage your personal information",
+        "language": "Language",
+        "saveChanges": "Save Changes",
+        "security": "Security",
+        "passwordSubtitle": "Update your password to keep your account secure",
+        "currentPassword": "Current Password",
+        "updatePassword": "Update Password",
+        "saved": "Profile updated successfully",
+        "saveFailed": "Failed to update profile",
+        "avatarUpdated": "Avatar updated successfully",
+        "avatarError": "Failed to update avatar",
+        "passwordUpdated": "Password updated successfully",
+        "passwordFailed": "Failed to update password",
+        "deleteConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
+        "deleteContactAdmin": "Please contact support to delete your account"
     },
     "errors": {
         "requiredFirstName": "First name is required",
@@ -84,7 +116,11 @@
         "registrationFailed": "Registration failed. Please try again.",
         "passwordRequired": "Password is required",
         "minFirstName": "Required (min 2 chars)",
-        "passwordMinLength": "Password must be at least {{min}} characters"
+        "passwordMinLength": "Password must be at least {{min}} characters",
+        "fileTooLarge": "File size must be less than 5MB",
+        "invalidFileType": "Please select a valid image file",
+        "loadUserFailed": "Failed to load user information",
+        "default": "An unexpected error occurred. Please try again."
     },
     "header": {
         "buy": "Buy",

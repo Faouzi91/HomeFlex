@@ -5,6 +5,8 @@ import com.realestate.rental.utils.enumeration.PropertyStatus;
 import com.realestate.rental.utils.enumeration.PropertyType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +22,12 @@ import java.util.UUID;
 @Repository
 public interface PropertyRepository extends JpaRepository<Property, UUID>,
         JpaSpecificationExecutor<Property> {
+
+    // Override findAll to eagerly fetch data in ONE query
+    @Override
+    @EntityGraph(attributePaths = {"images", "amenities", "landlord", "videos"})
+    Page<Property> findAll(Specification<Property> spec, Pageable pageable);
+
     List<Property> findByLandlordId(UUID landlordId);
 
     List<Property> findByStatus(PropertyStatus status);
@@ -53,4 +61,8 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>,
 
     List<Property> findTop10ByOrderByViewCountDesc();
     List<Property> findTop10ByOrderByFavoriteCountDesc();
+
+    @Query("SELECT COUNT(DISTINCT p.city) FROM Property p")
+    Long findDistinctCitiesCount();
+
 }

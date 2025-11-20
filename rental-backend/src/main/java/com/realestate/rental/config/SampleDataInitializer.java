@@ -25,6 +25,7 @@ import java.util.*;
 @Profile("dev")
 @RequiredArgsConstructor
 @Slf4j
+//@Order(2)
 public class SampleDataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -313,27 +314,35 @@ public class SampleDataInitializer implements CommandLineRunner {
         property.setTotalFloors(totalFloors);
         property.setIsAvailable(true);
         property.setAvailableFrom(LocalDate.now().plusDays(7));
-        property.setStatus(PropertyStatus.APPROVED); // Auto-approve for demo
+        property.setStatus(PropertyStatus.APPROVED);
         property.setViewCount(new Random().nextInt(100));
         property.setFavoriteCount(0);
+        property.setCreatedAt(LocalDateTime.now()); // Ensure timestamp is set
 
-        Property savedProperty = propertyRepository.save(property);
-
-        // Add images
-        for (int i = 0; i < imageUrls.size(); i++) {
-            PropertyImage image = new PropertyImage();
-            image.setProperty(savedProperty);
-            image.setImageUrl(imageUrls.get(i));
-            image.setDisplayOrder(i);
-            image.setIsPrimary(i == 0);
-            propertyImageRepository.save(image);
-        }
-
-        // Add amenities
+        // 1. Add Amenities (if any)
         if (amenities != null && !amenities.isEmpty()) {
-            savedProperty.setAmenities(new HashSet<>(amenities));
-            propertyRepository.save(savedProperty);
+            property.setAmenities(new HashSet<>(amenities));
         }
+
+        // 2. Add Images (Link both sides of the relationship)
+        // We do NOT save the property yet. We build the full object first.
+        if (imageUrls != null) {
+            for (int i = 0; i < imageUrls.size(); i++) {
+                PropertyImage image = new PropertyImage();
+                image.setImageUrl(imageUrls.get(i));
+                image.setDisplayOrder(i);
+                image.setIsPrimary(i == 0);
+
+                // CRITICAL: Link the relationship on BOTH sides
+                image.setProperty(property); // Child knows Parent
+                property.getImages().add(image); // Parent knows Child
+            }
+        }
+
+        // 3. Save ONLY the property
+        // Because Property.java has 'cascade = CascadeType.ALL' on images,
+        // this will automatically save all the images too.
+        propertyRepository.save(property);
     }
 
     private List<Amenity> getRandomAmenities(List<Amenity> allAmenities, int count) {

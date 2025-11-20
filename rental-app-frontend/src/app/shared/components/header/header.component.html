@@ -61,7 +61,11 @@
                     <!-- User Menu -->
                     <div class="user-menu">
                         <button class="user-avatar" (click)="toggleUserMenu()">
-                            <span class="avatar-initials">{{ getUserInitials() }}</span>
+                            <img *ngIf="user?.avatarUrl; else initials" [src]="user.avatarUrl" class="avatar-image"
+                                alt="User avatar" />
+                            <ng-template #initials>
+                                <span class="avatar-initials">{{ getUserInitials() }}</span>
+                            </ng-template>
                         </button>
                     </div>
                 </ng-container>
@@ -77,13 +81,53 @@
     </ion-toolbar>
 </ion-header>
 
+
+<!-- Mobile Menu -->
+<nav class="mobile-nav" *ngIf="mobileMenuOpen">
+    <button class="nav-btn" (click)="navigate('/properties?type=buy')">
+        <span>{{ 'header.buy' | translate }}</span>
+    </button>
+    <button class="nav-btn" (click)="navigate('/properties?type=rent')">
+        <span>{{ 'header.rent' | translate }}</span>
+    </button>
+    <button class="nav-btn" (click)="navigate('/properties?type=sell')">
+        <span>{{ 'header.sell' | translate }}</span>
+    </button>
+    <button class="nav-btn" (click)="navigate('/agents')">
+        <span>{{ 'header.agents' | translate }}</span>
+    </button>
+    <button class="nav-btn" (click)="navigate('/contact')">
+        <span>{{ 'header.contact' | translate }}</span>
+    </button>
+
+    <!-- Auth Buttons -->
+    <ng-container *ngIf="!user">
+        <button class="btn-text" (click)="navigate('/auth/login')">
+            {{ 'auth.login' | translate }}
+        </button>
+        <button class="btn-signup" (click)="navigate('/auth/register')">
+            {{ 'auth.register' | translate }}
+        </button>
+    </ng-container>
+</nav>
+
+
 <!-- Dropdown Menu OUTSIDE header (Portal Pattern) -->
 <div class="dropdown-portal" *ngIf="user && userMenuOpen" (click)="closeUserMenu()">
     <div class="user-dropdown" (click)="$event.stopPropagation()" [style.top.px]="dropdownTop"
         [style.right.px]="dropdownRight">
         <div class="dropdown-header">
-            <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
-            <div class="user-email">{{ user.email }}</div>
+            <div class="dropdown-avatar">
+                <img *ngIf="user?.avatarUrl; else dropdownInitials" [src]="user.avatarUrl" class="dropdown-avatar-image"
+                    alt="User avatar" />
+                <ng-template #dropdownInitials>
+                    <span class="dropdown-avatar-initials">{{ getUserInitials() }}</span>
+                </ng-template>
+            </div>
+            <div class="dropdown-user-info">
+                <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
+                <div class="user-email">{{ user.email }}</div>
+            </div>
         </div>
         <div class="dropdown-divider"></div>
         <button class="dropdown-item" (click)="navigate('/profile')">

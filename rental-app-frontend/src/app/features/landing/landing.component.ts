@@ -7,6 +7,7 @@ import { PropertyCardComponent } from "../properties/property-card/property-card
 import { CommonModule } from "@angular/common";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { TranslateModule } from "@ngx-translate/core";
+import { SharedModule } from "src/app/shared/shared.module";
 
 @Component({
   selector: "app-landing",
@@ -18,48 +19,29 @@ import { TranslateModule } from "@ngx-translate/core";
     ReactiveFormsModule,
     FormsModule,
     TranslateModule,
+    SharedModule,
   ],
   templateUrl: "./landing.component.html",
   styleUrl: "./landing.component.scss",
 })
 export class LandingComponent implements OnInit {
   featuredProperties: Property[] = [];
+  isLoading = true;
   searchCity = "";
   selectedType: ListingType = ListingType.RENT;
+  searchType: "buy" | "rent" = "rent";
 
-  stats = {
-    properties: "10,000+",
-    users: "50,000+",
-    cities: "25+",
-    transactions: "5,000+",
+  stats: {
+    properties?: number;
+    users?: number;
+    cities?: number;
+    transactions?: number;
+  } = {
+    properties: 0,
+    users: 0,
+    cities: 0,
+    transactions: 0,
   };
-
-  features = [
-    {
-      icon: "search",
-      title: "Smart Search",
-      description:
-        "Find your perfect property with advanced filters and AI-powered recommendations",
-    },
-    {
-      icon: "shield-checkmark",
-      title: "Verified Listings",
-      description:
-        "All properties are verified by our team for authenticity and quality",
-    },
-    {
-      icon: "chatbubbles",
-      title: "Instant Chat",
-      description:
-        "Connect with landlords instantly through our real-time messaging system",
-    },
-    {
-      icon: "heart",
-      title: "Save Favorites",
-      description:
-        "Create collections of your favorite properties and get instant alerts",
-    },
-  ];
 
   constructor(
     private router: Router,
@@ -68,33 +50,60 @@ export class LandingComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadFeaturedProperties();
+    this.loadStats();
   }
 
   loadFeaturedProperties(): void {
-    this.propertyService.getMyProperties().subscribe({
+    this.isLoading = true; // Start loading
+    this.propertyService.getFeaturedProperties().subscribe({
       next: (properties) => {
-        this.featuredProperties = properties.content.slice(0, 4);
+        this.featuredProperties = properties;
+        this.isLoading = false; // Stop loading
       },
-      error: (error) => {
-        console.error("Error loading featured properties:", error);
+      error: (err) => {
+        console.error("Error fetching featured properties:", err);
+        this.isLoading = false; // Stop loading even on error
       },
+    });
+  }
+
+  // Add logic for the chips
+  applyQuickFilter(type: string) {
+    const queryParams: any = {};
+    if (type === "bedrooms") queryParams.bedrooms = 2; // Example default
+    if (type === "price") queryParams.sort = "price_asc";
+    // Navigate to search page with these params
+    this.router.navigate(["/properties"], { queryParams });
+  }
+
+  loadStats(): void {
+    this.propertyService.getStats().subscribe({
+      next: (res) => (this.stats = res),
+      error: (err) => console.error("Error fetching stats", err),
     });
   }
 
   onSearch(): void {
     const queryParams: any = {};
+    if (this.searchCity) queryParams.city = this.searchCity;
 
-    if (this.searchCity) {
-      queryParams.city = this.searchCity;
-    }
+    this.propertyService.searchProperties(queryParams).subscribe({
+      next: (res) => (this.featuredProperties = res.content),
+      error: (err) => console.error("Search error", err),
+    });
+  }
 
-    queryParams.listingType = this.selectedType;
-
-    this.router.navigate(["/properties"], { queryParams });
+  setSearchType(type: "buy" | "rent"): void {
+    this.searchType = type;
+    // Optional: You can pass this type to your search parameters later
   }
 
   setListingType(type: ListingType): void {
     this.selectedType = type;
+  }
+
+  navigate(path: string): void {
+    this.router.navigate([path]);
   }
 
   navigateToProperties(): void {

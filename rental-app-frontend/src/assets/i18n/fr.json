@@ -55,6 +55,12 @@
         "resetSuccess": "Mot de passe mis à jour. Vous pouvez maintenant vous connecter.",
         "resetFailed": "Échec de la réinitialisation du mot de passe.",
         "resetNoToken": "Jeton de réinitialisation invalide ou manquant.",
+        "loggingIn": "Connexion en cours...",
+        "loginSuccess": "Connexion réussie !",
+        "creatingAccount": "Création du compte...",
+        "registrationSuccess": "Compte créé avec succès !",
+        "sendingResetLink": "Envoi du lien...",
+        "resettingPassword": "Mise à jour du mot de passe...",
         "features": {
             "smartSearch": "Recherche Intelligente",
             "smartSearchDesc": "Trouvez des propriétés qui correspondent à vos préférences exactes",
@@ -63,6 +69,32 @@
             "verifiedListings": "Annonces Vérifiées",
             "verifiedListingsDesc": "Toutes les propriétés sont vérifiées pour votre sécurité"
         }
+    },
+    "profile": {
+        "title": "Profil",
+        "editProfile": "Modifier le Profil",
+        "changePassword": "Changer le Mot de Passe",
+        "changeAvatar": "Prendre une Photo",
+        "uploadAvatar": "Télécharger une Photo",
+        "registered": "Inscrit le",
+        "actions": "Actions",
+        "deleteAccount": "Supprimer le Compte",
+        "accountDetails": "Détails du Compte",
+        "manageInfo": "Gérez vos informations personnelles",
+        "language": "Langue",
+        "saveChanges": "Enregistrer les Modifications",
+        "security": "Sécurité",
+        "passwordSubtitle": "Mettez à jour votre mot de passe pour sécuriser votre compte",
+        "currentPassword": "Mot de Passe Actuel",
+        "updatePassword": "Mettre à Jour le Mot de Passe",
+        "saved": "Profil mis à jour avec succès",
+        "saveFailed": "Échec de la mise à jour du profil",
+        "avatarUpdated": "Avatar mis à jour avec succès",
+        "avatarError": "Échec de la mise à jour de l'avatar",
+        "passwordUpdated": "Mot de passe mis à jour avec succès",
+        "passwordFailed": "Échec de la mise à jour du mot de passe",
+        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible.",
+        "deleteContactAdmin": "Veuillez contacter le support pour supprimer votre compte"
     },
     "errors": {
         "requiredFirstName": "Le prénom est obligatoire",
@@ -83,7 +115,11 @@
         "loginFailed": "Échec de la connexion. Vérifiez vos identifiants.",
         "registrationFailed": "Échec de l'inscription. Veuillez réessayer.",
         "minFirstName": "Obligatoire (min 2 caractères)",
-        "passwordMinLength": "Le mot de passe doit contenir au moins {{min}} caractères"
+        "passwordMinLength": "Le mot de passe doit contenir au moins {{min}} caractères",
+        "fileTooLarge": "La taille du fichier doit être inférieure à 5 Mo",
+        "invalidFileType": "Veuillez sélectionner un fichier image valide",
+        "loadUserFailed": "Échec du chargement des informations utilisateur",
+        "default": "Une erreur inattendue s'est produite. Veuillez réessayer."
     },
     "header": {
         "buy": "Acheter",
