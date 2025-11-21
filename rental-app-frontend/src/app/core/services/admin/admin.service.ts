@@ -1,31 +1,16 @@
-// ====================================
-// core/services/admin.service.ts
-// ====================================
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
-
-export interface Property {
-  id: string;
-  title: string;
-  status: string;
-  [key: string]: any;
-}
-
-export interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-}
+// 👇 IMPORT CENTRAL MODELS INSTEAD OF DEFINING LOCAL ONES
+import { Property } from "src/app/models/property.model";
+import { User } from "src/app/models/user.model";
+import { environment } from "src/app/environments/environment";
 
 export interface Analytics {
   totalUsers: number;
   totalProperties: number;
   totalBookings: number;
+  pendingProperties: number;
   [key: string]: any;
 }
 
@@ -45,14 +30,12 @@ export class AdminService {
 
   constructor(private http: HttpClient) {}
 
-  getPendingProperties(
-    page: number = 0,
-    size: number = 20
-  ): Observable<Property[]> {
+  getPendingProperties(page: number = 0, size: number = 20) {
     const params = new HttpParams().set("page", page).set("size", size);
-    return this.http.get<Property[]>(`${this.apiUrl}/properties/pending`, {
-      params,
-    });
+    return this.http.get<{ content: Property[] }>(
+      `${this.apiUrl}/properties/pending`,
+      { params }
+    );
   }
 
   approveProperty(id: string): Observable<Property> {
@@ -68,9 +51,11 @@ export class AdminService {
     });
   }
 
-  getUsers(page: number = 0, size: number = 20): Observable<User[]> {
+  getUsers(page: number = 0, size: number = 20) {
     const params = new HttpParams().set("page", page).set("size", size);
-    return this.http.get<User[]>(`${this.apiUrl}/users`, { params });
+    return this.http.get<{ content: User[] }>(`${this.apiUrl}/users`, {
+      params,
+    });
   }
 
   suspendUser(id: string): Observable<User> {
@@ -85,9 +70,11 @@ export class AdminService {
     return this.http.get<Analytics>(`${this.apiUrl}/analytics`);
   }
 
-  getReports(page: number = 0, size: number = 20): Observable<Report[]> {
+  getReports(page: number = 0, size: number = 20) {
     const params = new HttpParams().set("page", page).set("size", size);
-    return this.http.get<Report[]>(`${this.apiUrl}/reports`, { params });
+    return this.http.get<{ content: Report[] }>(`${this.apiUrl}/reports`, {
+      params,
+    });
   }
 
   resolveReport(id: string): Observable<Report> {

@@ -210,6 +210,23 @@
         "removeFromFavorites": "Remove from Favorites",
         "views": "Views",
         "images": "Images",
+        "messageOwner": "Message Owner",
+        "bookViewing": "Book Viewing",
+        "moreDetails": "More Details",
+        "noAmenities": "No amenities listed",
+        "reviews": "Reviews",
+        "averageRating": "average rating",
+        "addReview": "Add Review",
+        "noReviewsYet": "No reviews yet",
+        "contactOwner": "Contact Owner",
+        "posted": "Posted",
+        "features": "Features",
+        "similar": "Similar Properties",
+        "noSimilar": "No similar properties",
+        "selectDate": "Select Date & Time",
+        "message": "Message (optional)",
+        "bookingSuccess": "Booking request sent successfully",
+        "bookingError": "Failed to send booking request",
         "type": {
             "APARTMENT": "Apartment",
             "HOUSE": "House",
@@ -265,5 +282,112 @@
         "success": "Success",
         "viewToggle": "Toggle View",
         "close": "Close"
+    },
+    "admin": {
+        "dashboard": {
+            "title": "Admin Dashboard",
+            "welcome": "Welcome to Admin Panel",
+            "subtitle": "Manage your platform from here"
+        },
+        "stats": {
+            "totalProperties": "Total Properties",
+            "totalUsers": "Total Users",
+            "totalBookings": "Total Bookings",
+            "pendingApprovals": "Pending Approvals"
+        },
+        "management": {
+            "title": "Management",
+            "pendingProperties": {
+                "title": "Pending Properties",
+                "subtitle": "Review and approve listings"
+            },
+            "userManagement": {
+                "title": "User Management",
+                "subtitle": "Manage user accounts and access"
+            },
+            "reports": {
+                "title": "Reports & Issues",
+                "subtitle": "Handle user reports and complaints"
+            },
+            "analytics": {
+                "title": "Analytics",
+                "subtitle": "View platform statistics and insights"
+            }
+        },
+        "quickActions": {
+            "title": "Quick Actions",
+            "approveProperties": "Approve Properties",
+            "manageUsers": "Manage Users",
+            "viewReports": "View Reports"
+        },
+        "properties": {
+            "title": "Pending Approvals",
+            "noPending": {
+                "title": "All caught up!",
+                "subtitle": "No properties pending review at the moment"
+            },
+            "owner": "Owner",
+            "approve": "Approve",
+            "reject": "Reject",
+            "viewDetails": "View Details",
+            "approveConfirm": {
+                "title": "Approve Property",
+                "message": "Are you sure you want to approve '{{title}}'? This will make it visible to all users."
+            },
+            "rejectConfirm": {
+                "title": "Reject Property",
+                "message": "Please provide a reason for rejection. This will be sent to the property owner."
+            },
+            "rejectReason": "Reason for rejection",
+            "defaultRejectReason": "Does not meet platform guidelines",
+            "approveSuccess": "Property approved successfully",
+            "approveError": "Failed to approve property",
+            "rejectSuccess": "Property rejected",
+            "rejectError": "Failed to reject property"
+        },
+        "users": {
+            "title": "User Management",
+            "searchPlaceholder": "Search users by name or email",
+            "joined": "Joined",
+            "role": {
+                "ADMIN": "Admin",
+                "LANDLORD": "Landlord",
+                "TENANT": "Tenant"
+            },
+            "status": {
+                "active": "Active",
+                "suspended": "Suspended"
+            },
+            "suspend": "Suspend",
+            "activate": "Activate",
+            "suspendConfirm": {
+                "title": "Suspend User",
+                "message": "Are you sure you want to suspend {{name}}? They will not be able to access the platform."
+            },
+            "activateConfirm": {
+                "title": "Activate User",
+                "message": "Are you sure you want to activate {{name}}? They will regain full access to the platform."
+            },
+            "suspendSuccess": "User suspended successfully",
+            "suspendError": "Failed to suspend user",
+            "activateSuccess": "User activated successfully",
+            "activateError": "Failed to activate user",
+            "noUsers": {
+                "title": "No Users Found",
+                "subtitle": "There are no users matching your criteria"
+            }
+        },
+        "reports": {
+            "title": "Reports & Issues",
+            "reported": "Reported",
+            "resolve": "Resolve",
+            "viewDetails": "View Details",
+            "resolveSuccess": "Report resolved successfully",
+            "resolveError": "Failed to resolve report",
+            "noReports": {
+                "title": "No Reports",
+                "subtitle": "All reports have been handled"
+            }
+        }
     }
 }

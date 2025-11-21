@@ -5,10 +5,12 @@ import { NgModule } from "@angular/core";
 import { PreloadAllModules, RouterModule, Routes } from "@angular/router";
 import { AuthGuard } from "./core/guards/auth.guard";
 import { LandingComponent } from "./features/landing/landing.component";
+import { PublicAccessGuard } from "./core/guards/public-access.guard";
 
 const routes: Routes = [
   {
     path: "",
+    canActivate: [PublicAccessGuard],
     component: LandingComponent,
   },
   {
@@ -27,7 +29,7 @@ const routes: Routes = [
     path: "bookings",
     loadChildren: () =>
       import("./bookings/bookings.module").then((m) => m.BookingsModule),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, PublicAccessGuard],
   },
   {
     path: "chat",
@@ -38,7 +40,7 @@ const routes: Routes = [
     path: "favorites",
     loadChildren: () =>
       import("./favorites/favorites.module").then((m) => m.FavoritesModule),
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, PublicAccessGuard],
   },
   {
     path: "profile",
@@ -46,13 +48,12 @@ const routes: Routes = [
       import("./profile/profile.module").then((m) => m.ProfileModule),
     canActivate: [AuthGuard],
   },
-  // {
-  //   path: "admin",
-  //   loadChildren: () =>
-  //     // @ts-ignore: Admin module may be absent in some builds; keep route for future/optional feature
-  //     import("./features/admin/admin.module").then((m) => m.AdminModule),
-  //   canActivate: [AuthGuard],
-  // },
+  {
+    path: "admin",
+    loadChildren: () =>
+      import("./features/admin/admin.routes").then((m) => m.ADMIN_ROUTES),
+    canActivate: [AuthGuard],
+  },
   {
     path: "**",
     redirectTo: "",

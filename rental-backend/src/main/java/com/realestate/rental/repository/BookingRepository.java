@@ -27,7 +27,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     // Analytics methods
     long countByStatus(BookingStatus status);
 
-    @Query("SELECT b.status as status, COUNT(b) as count FROM Booking b " +
-            "GROUP BY b.status")
-    Map<String, Long> countByStatusGrouped();
+    @Query("SELECT b.status, COUNT(b) FROM Booking b GROUP BY b.status")
+    List<Object[]> countByStatusGrouped();
 }

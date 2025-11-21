@@ -119,10 +119,6 @@ export class PropertyService {
     return this.http.get<Property[]>(`${this.apiUrl}/${id}/similar`);
   }
 
-  // getFeaturedProperties() {
-  //   return this.http.get<Property[]>("/api/properties/search?featured=true");
-  // }
-
   uploadImage(propertyId: string, file: File): Observable<string> {
     const formData = new FormData();
     formData.append("file", file);

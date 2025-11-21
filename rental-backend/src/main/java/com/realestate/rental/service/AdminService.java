@@ -85,6 +85,17 @@ public class AdminService {
         return mapToUserDto(user);
     }
 
+    // helper to convert List<Object[]> to Map<String, Long>
+    private Map<String, Long> toMapFromObjectArray(List<Object[]> rows) {
+        if (rows == null) return Collections.emptyMap();
+        return rows.stream()
+                .filter(r -> r != null && r.length >= 2)
+                .collect(Collectors.toMap(
+                        r -> String.valueOf(r[0]),                      // group key as string
+                        r -> ((Number) r[1]).longValue()               // count as long
+                ));
+    }
+
     public AnalyticsDto getAnalytics() {
         // User statistics
         long totalUsers = userRepository.count();
@@ -105,13 +116,18 @@ public class AdminService {
         long totalMessages = messageRepository.count();
 
         // Properties by type
-        Map<String, Long> propertiesByType = propertyRepository.countByPropertyType();
+        // Properties by type
+        List<Object[]> propsByTypeRows = propertyRepository.countByPropertyType();
+        Map<String, Long> propertiesByType = toMapFromObjectArray(propsByTypeRows);
 
         // Properties by city
-        Map<String, Long> propertiesByCity = propertyRepository.countByCity();
+        List<Object[]> propsByCityRows = propertyRepository.countByCity();
+        Map<String, Long> propertiesByCity = toMapFromObjectArray(propsByCityRows);
 
         // Bookings by status
-        Map<String, Long> bookingsByStatus = bookingRepository.countByStatusGrouped();
+        List<Object[]> bookingsByStatusRows = bookingRepository.countByStatusGrouped();
+        Map<String, Long> bookingsByStatus = toMapFromObjectArray(bookingsByStatusRows);
+
 
         // Top viewed properties
         List<TopPropertyDto> topViewedProperties = propertyRepository

@@ -58,18 +58,18 @@ export class PropertyListComponent implements OnInit {
 
   // Filter options
   bedroomOptions = [
-    { label: "Studio", value: 0 },
-    { label: "1+", value: 1 },
-    { label: "2+", value: 2 },
-    { label: "3+", value: 3 },
-    { label: "4+", value: 4 },
+    { key: "studioBeds", value: 0 }, // maps to filters.quickFilters.studioBeds
+    { key: "onePlusBeds", value: 1 }, // maps to filters.quickFilters.onePlusBeds
+    { key: "twoPlusBeds", value: 2 },
+    { key: "threePlusBeds", value: 3 },
+    { key: "fourPlusBeds", value: 4 },
   ];
 
   priceRanges = [
-    { label: "Under 100K", min: 0, max: 100000 },
-    { label: "100K - 200K", min: 100000, max: 200000 },
-    { label: "200K - 500K", min: 200000, max: 500000 },
-    { label: "500K+", min: 500000, max: null },
+    { key: "under100k", min: 0, max: 100000 },
+    { key: "100to200k", min: 100000, max: 200000 },
+    { key: "200to500k", min: 200000, max: 500000 },
+    { key: "over500k", min: 500000, max: null },
   ];
 
   constructor(
@@ -177,6 +177,33 @@ export class PropertyListComponent implements OnInit {
     this.searchParams.sortBy = sortBy;
     this.searchParams.sortDirection = sortDirection;
     this.loadProperties();
+  }
+
+  /**
+   * Return the translation key for the listing type shown in the header.
+   * The template pipes the result to | translate, so we return a translation key.
+   */
+  getListingTypeKey(): string {
+    const lt = this.searchParams?.listingType;
+    if (!lt) {
+      return "property.forRent"; // default fallback
+    }
+
+    // Normalize common enum values and map to the translation keys in your JSON
+    const normalized = String(lt).toUpperCase();
+
+    switch (normalized) {
+      case "RENT":
+      case "SHORT_TERM":
+        return "property.forRent";
+      case "SALE":
+      case "SELL":
+        return "property.forSale";
+      default:
+        // If your listingType already contains a translation key, return it directly.
+        // Fallback to forRent if unknown.
+        return "property.forRent";
+    }
   }
 
   private updateQueryParams(): void {

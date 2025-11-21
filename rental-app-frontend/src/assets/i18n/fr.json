@@ -209,6 +209,23 @@
         "removeFromFavorites": "Retirer des Favoris",
         "views": "Vues",
         "images": "Images",
+        "messageOwner": "Contacter le Propriétaire",
+        "bookViewing": "Réserver une Visite",
+        "moreDetails": "Plus de Détails",
+        "noAmenities": "Aucune commodité listée",
+        "reviews": "Avis",
+        "averageRating": "note moyenne",
+        "addReview": "Ajouter un Avis",
+        "noReviewsYet": "Pas encore d'avis",
+        "contactOwner": "Contacter le Propriétaire",
+        "posted": "Publié",
+        "features": "Caractéristiques",
+        "similar": "Propriétés Similaires",
+        "noSimilar": "Aucune propriété similaire",
+        "selectDate": "Sélectionner Date et Heure",
+        "message": "Message (optionnel)",
+        "bookingSuccess": "Demande de réservation envoyée avec succès",
+        "bookingError": "Échec de l'envoi de la demande",
         "type": {
             "APARTMENT": "Appartement",
             "HOUSE": "Maison",
@@ -264,5 +281,112 @@
         "success": "Succès",
         "viewToggle": "Changer de Vue",
         "close": "Fermer"
+    },
+    "admin": {
+        "dashboard": {
+            "title": "Tableau de Bord Admin",
+            "welcome": "Bienvenue dans le Panneau d'Administration",
+            "subtitle": "Gérez votre plateforme à partir d'ici"
+        },
+        "stats": {
+            "totalProperties": "Total des Propriétés",
+            "totalUsers": "Total des Utilisateurs",
+            "totalBookings": "Total des Réservations",
+            "pendingApprovals": "Approbations en Attente"
+        },
+        "management": {
+            "title": "Gestion",
+            "pendingProperties": {
+                "title": "Propriétés en Attente",
+                "subtitle": "Examiner et approuver les annonces"
+            },
+            "userManagement": {
+                "title": "Gestion des Utilisateurs",
+                "subtitle": "Gérer les comptes et les accès utilisateurs"
+            },
+            "reports": {
+                "title": "Rapports et Problèmes",
+                "subtitle": "Traiter les rapports et plaintes des utilisateurs"
+            },
+            "analytics": {
+                "title": "Analytiques",
+                "subtitle": "Voir les statistiques et insights de la plateforme"
+            }
+        },
+        "quickActions": {
+            "title": "Actions Rapides",
+            "approveProperties": "Approuver les Propriétés",
+            "manageUsers": "Gérer les Utilisateurs",
+            "viewReports": "Voir les Rapports"
+        },
+        "properties": {
+            "title": "Approbations en Attente",
+            "noPending": {
+                "title": "Tout est à jour!",
+                "subtitle": "Aucune propriété en attente d'examen pour le moment"
+            },
+            "owner": "Propriétaire",
+            "approve": "Approuver",
+            "reject": "Rejeter",
+            "viewDetails": "Voir Détails",
+            "approveConfirm": {
+                "title": "Approuver la Propriété",
+                "message": "Êtes-vous sûr de vouloir approuver '{{title}}'? Cela la rendra visible à tous les utilisateurs."
+            },
+            "rejectConfirm": {
+                "title": "Rejeter la Propriété",
+                "message": "Veuillez fournir une raison pour le rejet. Cela sera envoyé au propriétaire."
+            },
+            "rejectReason": "Raison du rejet",
+            "defaultRejectReason": "Ne répond pas aux directives de la plateforme",
+            "approveSuccess": "Propriété approuvée avec succès",
+            "approveError": "Échec de l'approbation de la propriété",
+            "rejectSuccess": "Propriété rejetée",
+            "rejectError": "Échec du rejet de la propriété"
+        },
+        "users": {
+            "title": "Gestion des Utilisateurs",
+            "searchPlaceholder": "Rechercher par nom ou email",
+            "joined": "Inscrit",
+            "role": {
+                "ADMIN": "Administrateur",
+                "LANDLORD": "Propriétaire",
+                "TENANT": "Locataire"
+            },
+            "status": {
+                "active": "Actif",
+                "suspended": "Suspendu"
+            },
+            "suspend": "Suspendre",
+            "activate": "Activer",
+            "suspendConfirm": {
+                "title": "Suspendre l'Utilisateur",
+                "message": "Êtes-vous sûr de vouloir suspendre {{name}}? Ils ne pourront plus accéder à la plateforme."
+            },
+            "activateConfirm": {
+                "title": "Activer l'Utilisateur",
+                "message": "Êtes-vous sûr de vouloir activer {{name}}? Ils retrouveront un accès complet à la plateforme."
+            },
+            "suspendSuccess": "Utilisateur suspendu avec succès",
+            "suspendError": "Échec de la suspension de l'utilisateur",
+            "activateSuccess": "Utilisateur activé avec succès",
+            "activateError": "Échec de l'activation de l'utilisateur",
+            "noUsers": {
+                "title": "Aucun Utilisateur Trouvé",
+                "subtitle": "Aucun utilisateur ne correspond à vos critères"
+            }
+        },
+        "reports": {
+            "title": "Rapports et Problèmes",
+            "reported": "Signalé",
+            "resolve": "Résoudre",
+            "viewDetails": "Voir Détails",
+            "resolveSuccess": "Rapport résolu avec succès",
+            "resolveError": "Échec de la résolution du rapport",
+            "noReports": {
+                "title": "Aucun Rapport",
+                "subtitle": "Tous les rapports ont été traités"
+            }
+        }
     }
 }

@@ -51,13 +51,12 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>,
     // Analytics methods
     long countByStatus(PropertyStatus status);
 
-    @Query("SELECT p.propertyType as type, COUNT(p) as count FROM Property p " +
-            "GROUP BY p.propertyType")
-    Map<String, Long> countByPropertyType();
+    @Query("SELECT p.propertyType, COUNT(p) FROM Property p GROUP BY p.propertyType")
+    List<Object[]> countByPropertyType();
 
-    @Query("SELECT p.city as city, COUNT(p) as count FROM Property p " +
-            "GROUP BY p.city ORDER BY count DESC")
-    Map<String, Long> countByCity();
+    @Query("SELECT p.city, COUNT(p) FROM Property p GROUP BY p.city ORDER BY COUNT(p) DESC")
+    List<Object[]> countByCity();
+
 
     List<Property> findTop10ByOrderByViewCountDesc();
     List<Property> findTop10ByOrderByFavoriteCountDesc();

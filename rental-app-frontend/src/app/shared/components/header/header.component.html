@@ -4,12 +4,12 @@
 
             <!-- Left: Logo -->
             <div class="header-left">
-                <div class="logo" (click)="navigate('/')">
+                <div class="logo" (click)="navigate(isUserAdmin ? '/admin' : '/')">
                     <span class="logo-text">{{ 'app.name' | translate }}</span>
                 </div>
 
                 <!-- Desktop Nav -->
-                <nav class="desktop-nav">
+                <nav class="desktop-nav" *ngIf="!isUserAdmin">
                     <button class="nav-btn" (click)="navigate('/properties?type=buy')">
                         <span>{{ 'header.buy' | translate }}</span>
                         <div class="nav-underline"></div>
@@ -53,7 +53,7 @@
                 </ng-container>
 
                 <!-- Logged In -->
-                <ng-container *ngIf="user">
+                <ng-container *ngIf="user && !isUserAdmin">
                     <button class="icon-btn" (click)="navigate('/favorites')">
                         <ion-icon name="heart-outline"></ion-icon>
                     </button>
@@ -71,7 +71,8 @@
                 </ng-container>
 
                 <!-- Mobile Menu Toggle -->
-                <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+                <button class="mobile-menu-btn" *ngIf="isMobile"
+                    (click)="$event.stopPropagation(); toggleMobileMenu($event)">
                     <ion-icon name="menu-outline"></ion-icon>
                 </button>
 
@@ -83,7 +84,7 @@
 
 
 <!-- Mobile Menu -->
-<nav class="mobile-nav" *ngIf="mobileMenuOpen">
+<nav class="mobile-nav" *ngIf="mobileMenuOpen && !isAdminRoute" (click)="$event.stopPropagation()">
     <button class="nav-btn" (click)="navigate('/properties?type=buy')">
         <span>{{ 'header.buy' | translate }}</span>
     </button>
@@ -110,6 +111,32 @@
         </button>
     </ng-container>
 </nav>
+
+
+
+<!-- ADMIN MOBILE MENU -->
+<nav class="mobile-nav" *ngIf="mobileMenuOpen && isAdminRoute" (click)="$event.stopPropagation()">
+    <button class="nav-btn" (click)="navigate('/admin')">
+        Dashboard
+    </button>
+
+    <button class="nav-btn" (click)="navigate('/admin/properties')">
+        Properties
+    </button>
+
+    <button class="nav-btn" (click)="navigate('/admin/users')">
+        Users
+    </button>
+
+    <button class="nav-btn" (click)="navigate('/admin/settings')">
+        Settings
+    </button>
+
+    <button class="nav-btn dropdown-item-danger" (click)="logout()">
+        Logout
+    </button>
+</nav>
+
 
 
 <!-- Dropdown Menu OUTSIDE header (Portal Pattern) -->
