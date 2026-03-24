@@ -14,10 +14,12 @@
 - Property delete flow moved to soft-delete baseline.
 - Frontend websocket ownership converged on a single gateway service.
 
-### In Progress
-- Convert DTOs to Java records.
-- Remove manual mapping and switch to generated mapper-based conversion.
-- Retire remaining legacy layered architecture entry points.
+### Completed
+- Converted core backend DTOs to Java records.
+- Switched key mapping paths to MapStruct (`UserMapper`, `PropertyMapper`, `BookingMapper`).
+- Retired legacy auth/booking/property controllers in favor of `/api/v1`.
+- Added architecture guardrails (ArchUnit baseline + ADR documentation).
+- Added outbox/event scaffolding and domain-layer exception baseline.
 
 ### DTO/Mapping Refactor Update
 - Converted core DTOs to Java records:
@@ -38,3 +40,7 @@
 - Converted additional DTOs to records:
   - `FavoriteDto`, `NotificationDto`, `MessageDto`, `ChatRoomDto`, `ReviewDto`, `ReportDto`, `TopPropertyDto`, `AuthResponse`, `AnalyticsDto`
 - Updated service constructors/mapping calls to instantiate record DTOs directly where mapper coverage is pending.
+
+### Status Note
+- Backend compile path is green after record + mapper migration.
+- Frontend migration remains partially blocked by deeper Angular/Ionic compatibility issues and requires a dedicated stabilization pass.

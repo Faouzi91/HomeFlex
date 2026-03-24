@@ -1,7 +1,7 @@
-# HomeFlex Migration Guide: Maven → Gradle & Java 17 → Java 21 & Angular 17 → Angular 18
+# HomeFlex Migration Guide: Platform Refactor Baseline
 
 ## Overview
-This document outlines the complete migration from Maven to Gradle, Java 17 to Java 21, and Angular 17 to Angular 18 LTS.
+This guide reflects the current refactor baseline: Gradle + Java 21 backend modernization, DDD/EDA scaffolding, and frontend migration progress with remaining stabilization work.
 
 ## Backend Migration: Maven → Gradle with Java 21
 
@@ -98,15 +98,13 @@ This will download and cache the specified Gradle version for the project.
 
 ---
 
-## Frontend Migration: Angular 17 → Angular 18 LTS
+## Frontend Migration Status
 
 ### What's Changed
-1. **Angular**: ^17.0.0 → **^18.0.0** (LTS)
-2. **TypeScript**: ~5.2.2 → **~5.4.0**
-3. **Angular Material**: ^17.0.0 → **^18.0.0**
-4. **Angular CDK**: ^17.0.0 → **^18.0.0**
-5. **Angular DevKit**: ^17.3.0 → **^18.0.0**
-6. **zone.js**: ~0.14.0 → **~0.15.0**
+1. Frontend architecture migration toward standalone-first routing/state patterns has started.
+2. Duplicate realtime connection ownership is being consolidated.
+3. Environment path/config alignment was corrected for Angular workspace builds.
+4. Additional stabilization is required due to Angular/Ionic dependency compatibility constraints.
 
 ### Updated Dependencies
 ```json
@@ -161,41 +159,10 @@ This will download and cache the specified Gradle version for the project.
    # Application runs at http://localhost:4200
    ```
 
-### Breaking Changes & Notes
+### Compatibility Notes
 
-#### Typed FormGroups (Optional but Recommended)
-Angular 18 encourages strong typing for reactive forms. If your code uses `FormGroup<T>`, ensure types are properly defined:
-
-```typescript
-// Before (Angular 17)
-bookingForm = this.fb.group({
-  requestedDate: [null, Validators.required],
-  message: ["", Validators.maxLength(500)]
-});
-
-// After (Angular 18 - with proper typing)
-bookingForm: FormGroup<{
-  requestedDate: FormControl<Date | null>;
-  message: FormControl<string>;
-}> = this.fb.group({
-  requestedDate: [null, Validators.required],
-  message: ["", Validators.maxLength(500)]
-});
-```
-
-#### Standalone Component Changes
-Angular 18 continues support for standalone components (already in use). No changes required unless you're combining old module-based and standalone components.
-
-#### Signal-Based APIs (Optional)
-Angular 18 introduces signals (new reactive primitive). Your existing RxJS code will continue to work, but consider migrating over time.
-
-#### Capacitor Plugin Updates
-Mobile build commands remain the same:
-```bash
-npm run build:mobile     # Build and sync to Capacitor
-npm run android:build    # Build Android app
-npm run ios:build        # Build iOS app
-```
+#### Key Point
+The remaining frontend issues are not simple syntax migrations; they are dependency/runtime compatibility mismatches that need a focused stabilization pass.
 
 ### Verification
 
@@ -343,5 +310,5 @@ spring:
 
 ---
 
-**Last Updated**: March 2026
-**Status**: Complete Migration Ready for Testing
+**Last Updated**: 2026-03-24
+**Status**: Backend largely stabilized; frontend stabilization in progress

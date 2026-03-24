@@ -1,4 +1,4 @@
-# IDE Setup Instructions for Gradle & Java 21
+# IDE Setup Instructions for HomeFlex Refactor Baseline
 
 ## IntelliJ IDEA
 
@@ -166,7 +166,7 @@ REM Output: build\libs\rental-backend.jar
 
 ---
 
-## Frontend (Angular 18) Setup
+## Frontend Setup
 
 ### VSCode Setup
 
@@ -312,9 +312,9 @@ org.gradle.build.cache=true
 
 ### Angular Development
 
-Use Ivy compiler (default in Angular 18):
+Use the workspace defaults and keep app/env paths aligned with Angular config:
 ```bash
-npm start  # Uses Ivy by default
+npm start
 ```
 
 For faster rebuilds during development:
@@ -324,4 +324,12 @@ npm start -- --poll=5000  # Reduces file polling
 
 ---
 
-**Last Updated**: March 2026
+## Environment File Paths
+
+Use:
+- `rental-app-frontend/src/app/environments/environment.ts`
+- `rental-app-frontend/src/app/environments/environment.prod.ts`
+
+These paths are wired in `angular.json` file replacements.
+
+**Last Updated**: 2026-03-24
