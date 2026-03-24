@@ -3,11 +3,9 @@
 // ====================================
 import { Injectable } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
-import { Observable, Subject } from "rxjs";
-import { Client, Message as StompMessage } from "@stomp/stompjs";
-import * as SockJS from "sockjs-client";
+import { Observable, Subject, Subscription } from "rxjs";
 import { environment } from "../../../environments/environment";
-import { AuthService } from "../auth/auth.service";
+import { WebSocketService } from "../websocket/websocket.service";
 
 export interface ChatRoom {
   id: string;
@@ -34,54 +32,32 @@ export interface Message {
 })
 export class ChatService {
   private apiUrl = `${environment.apiUrl}/chat`;
-  private stompClient?: Client;
+  private roomSubscriptions = new Map<string, Subscription>();
   private messageSubject = new Subject<Message>();
   public messages$ = this.messageSubject.asObservable();
 
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  constructor(private http: HttpClient, private webSocketService: WebSocketService) {}
 
   connectWebSocket(): void {
-    const token = this.authService.getToken();
-    if (!token) return;
-
-    this.stompClient = new Client({
-      webSocketFactory: () => new SockJS(environment.wsUrl),
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-      debug: (str) => console.log("STOMP:", str),
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-    });
-
-    this.stompClient.onConnect = () => {
-      console.log("WebSocket connected");
-    };
-
-    this.stompClient.onStompError = (frame) => {
-      console.error("STOMP error:", frame);
-    };
-
-    this.stompClient.activate();
+    if (!this.webSocketService.isConnected()) {
+      this.webSocketService.connect();
+    }
   }
 
   subscribeToRoom(roomId: string): void {
-    if (!this.stompClient) return;
-
-    this.stompClient.subscribe(
-      `/topic/chat.${roomId}`,
-      (message: StompMessage) => {
-        const receivedMessage = JSON.parse(message.body);
-        this.messageSubject.next(receivedMessage);
-      }
-    );
+    if (this.roomSubscriptions.has(roomId)) {
+      return;
+    }
+    const subscription = this.webSocketService
+      .subscribe(`/topic/chat.${roomId}`)
+      .subscribe((message: Message) => this.messageSubject.next(message));
+    this.roomSubscriptions.set(roomId, subscription);
   }
 
   disconnectWebSocket(): void {
-    if (this.stompClient) {
-      this.stompClient.deactivate();
-    }
+    this.roomSubscriptions.forEach((sub) => sub.unsubscribe());
+    this.roomSubscriptions.clear();
+    this.webSocketService.disconnect();
   }
 
   createOrGetChatRoom(request: {

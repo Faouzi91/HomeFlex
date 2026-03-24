@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Deprecated(forRemoval = true)
 public class NotificationServiceComplete {
 
     private final NotificationRepository notificationRepository;

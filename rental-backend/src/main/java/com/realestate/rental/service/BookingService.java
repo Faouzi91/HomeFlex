@@ -1,5 +1,6 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.BookingMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.BookingCreateRequest;
 import com.realestate.rental.utils.entity.*;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,6 +30,7 @@ public class BookingService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final BookingMapper bookingMapper;
 
     public BookingDto createBooking(BookingCreateRequest request, UUID tenantId) {
         // Get property
@@ -42,6 +45,9 @@ public class BookingService {
         if (tenant.getRole() != UserRole.TENANT) {
             throw new RuntimeException("Only tenants can create bookings");
         }
+
+        validateBookingDates(request);
+        validateNoDateOverlap(request);
 
         // Create booking
         Booking booking = new Booking();
@@ -64,13 +70,36 @@ public class BookingService {
                 property
         );
 
-        return mapToBookingDto(booking);
+        return bookingMapper.toDto(booking);
+    }
+
+    private void validateBookingDates(BookingCreateRequest request) {
+        if (request.getStartDate() != null
+                && request.getEndDate() != null
+                && request.getEndDate().isBefore(request.getStartDate())) {
+            throw new RuntimeException("End date must be on or after start date");
+        }
+    }
+
+    private void validateNoDateOverlap(BookingCreateRequest request) {
+        if (request.getStartDate() == null || request.getEndDate() == null) {
+            return;
+        }
+
+        boolean overlaps = bookingRepository.existsDateOverlapForProperty(
+                request.getPropertyId(),
+                request.getStartDate(),
+                request.getEndDate(),
+                Arrays.asList(BookingStatus.PENDING, BookingStatus.APPROVED, BookingStatus.COMPLETED)
+        );
+
+        if (overlaps) {
+            throw new RuntimeException("Selected dates overlap with an existing booking");
+        }
     }
 
     public List<BookingDto> getBookingsByTenant(UUID tenantId) {
-        return bookingRepository.findByTenantIdOrderByCreatedAtDesc(tenantId).stream()
-                .map(this::mapToBookingDto)
-                .collect(Collectors.toList());
+        return bookingMapper.toDto(bookingRepository.findByTenantIdOrderByCreatedAtDesc(tenantId));
     }
 
     public List<BookingDto> getBookingsByProperty(UUID propertyId, UUID landlordId) {
@@ -82,9 +111,7 @@ public class BookingService {
             throw new RuntimeException("Not authorized to view these bookings");
         }
 
-        return bookingRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId).stream()
-                .map(this::mapToBookingDto)
-                .collect(Collectors.toList());
+        return bookingMapper.toDto(bookingRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId));
     }
 
     public BookingDto getBookingById(UUID bookingId, UUID userId) {
@@ -97,7 +124,7 @@ public class BookingService {
             throw new RuntimeException("Not authorized to view this booking");
         }
 
-        return mapToBookingDto(booking);
+        return bookingMapper.toDto(booking);
     }
 
     public BookingDto approveBooking(UUID bookingId, UUID landlordId, String response) {
@@ -121,7 +148,7 @@ public class BookingService {
                 true
         );
 
-        return mapToBookingDto(booking);
+        return bookingMapper.toDto(booking);
     }
 
     public BookingDto rejectBooking(UUID bookingId, UUID landlordId, String reason) {
@@ -145,7 +172,7 @@ public class BookingService {
                 false
         );
 
-        return mapToBookingDto(booking);
+        return bookingMapper.toDto(booking);
     }
 
     public BookingDto cancelBooking(UUID bookingId, UUID tenantId) {
@@ -160,43 +187,6 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         booking = bookingRepository.save(booking);
 
-        return mapToBookingDto(booking);
-    }
-
-    private BookingDto mapToBookingDto(Booking booking) {
-        BookingDto dto = new BookingDto();
-        dto.setId(booking.getId());
-        dto.setProperty(mapToPropertyDto(booking.getProperty()));
-        dto.setTenant(mapToUserDto(booking.getTenant()));
-        dto.setBookingType(booking.getBookingType().name());
-        dto.setRequestedDate(booking.getRequestedDate());
-        dto.setStartDate(booking.getStartDate());
-        dto.setEndDate(booking.getEndDate());
-        dto.setStatus(booking.getStatus().name());
-        dto.setMessage(booking.getMessage());
-        dto.setNumberOfOccupants(booking.getNumberOfOccupants());
-        dto.setLandlordResponse(booking.getLandlordResponse());
-        dto.setRespondedAt(booking.getRespondedAt());
-        dto.setCreatedAt(booking.getCreatedAt());
-        return dto;
-    }
-
-    private PropertyDto mapToPropertyDto(Property property) {
-        PropertyDto dto = new PropertyDto();
-        dto.setId(property.getId());
-        dto.setTitle(property.getTitle());
-        dto.setCity(property.getCity());
-        dto.setPrice(property.getPrice());
-        return dto;
-    }
-
-    private UserDto mapToUserDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phoneNumber(user.getPhoneNumber())
-                .build();
+        return bookingMapper.toDto(booking);
     }
 }

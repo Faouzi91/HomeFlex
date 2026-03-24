@@ -1,5 +1,7 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.PropertyMapper;
+import com.realestate.rental.application.mapper.UserMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.repository.*;
@@ -28,6 +30,8 @@ public class AdminService {
     private final MessageRepository messageRepository;
     private final ReportedListingRepository reportedListingRepository;
     private final NotificationServiceExtension notificationService;
+    private final PropertyMapper propertyMapper;
+    private final UserMapper userMapper;
 
     public Page<PropertyDto> getPendingProperties(Pageable pageable) {
         return propertyRepository.findByStatus(PropertyStatus.PENDING, pageable)
@@ -141,23 +145,23 @@ public class AdminService {
                 .map(this::mapToTopPropertyDto)
                 .collect(Collectors.toList());
 
-        return AnalyticsDto.builder()
-                .totalUsers(totalUsers)
-                .totalTenants(totalTenants)
-                .totalLandlords(totalLandlords)
-                .totalProperties(totalProperties)
-                .pendingProperties(pendingProperties)
-                .approvedProperties(approvedProperties)
-                .totalBookings(totalBookings)
-                .pendingBookings(pendingBookings)
-                .approvedBookings(approvedBookings)
-                .totalMessages(totalMessages)
-                .propertiesByType(propertiesByType)
-                .propertiesByCity(propertiesByCity)
-                .bookingsByStatus(bookingsByStatus)
-                .topViewedProperties(topViewedProperties)
-                .topFavoritedProperties(topFavoritedProperties)
-                .build();
+        return new AnalyticsDto(
+                totalUsers,
+                totalTenants,
+                totalLandlords,
+                totalProperties,
+                pendingProperties,
+                approvedProperties,
+                totalBookings,
+                pendingBookings,
+                approvedBookings,
+                totalMessages,
+                propertiesByType,
+                propertiesByCity,
+                bookingsByStatus,
+                topViewedProperties,
+                topFavoritedProperties
+        );
     }
 
     public Page<ReportDto> getReports(Pageable pageable) {
@@ -176,54 +180,63 @@ public class AdminService {
         return mapToReportDto(report);
     }
 
+    public ReportDto createReport(UUID propertyId, UUID reporterId, com.realestate.rental.dto.request.ReportListingRequest request) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
+
+        User reporter = userRepository.findById(reporterId)
+                .orElseThrow(() -> new RuntimeException("Reporter not found"));
+
+        ReportedListing report = new ReportedListing();
+        report.setProperty(property);
+        report.setReporter(reporter);
+        report.setReason(request.getReason());
+        report.setDescription(request.getDescription());
+        report.setStatus("PENDING");
+
+        report = reportedListingRepository.save(report);
+
+        return mapToReportDto(report);
+    }
+
+    public List<ReportDto> getReportsByProperty(UUID propertyId) {
+        return reportedListingRepository.findByPropertyId(propertyId)
+                .stream()
+                .map(this::mapToReportDto)
+                .collect(Collectors.toList());
+    }
+
     // Mapping methods
     private PropertyDto mapToPropertyDto(Property property) {
-        PropertyDto dto = new PropertyDto();
-        dto.setId(property.getId());
-        dto.setTitle(property.getTitle());
-        dto.setDescription(property.getDescription());
-        dto.setPropertyType(property.getPropertyType().name());
-        dto.setPrice(property.getPrice());
-        dto.setCity(property.getCity());
-        dto.setStatus(property.getStatus().name());
-        dto.setCreatedAt(property.getCreatedAt());
-        return dto;
+        return propertyMapper.toDto(property);
     }
 
     private UserDto mapToUserDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .role(user.getRole().name())
-                .isActive(user.getIsActive())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return userMapper.toDto(user);
     }
 
     private TopPropertyDto mapToTopPropertyDto(Property property) {
-        return TopPropertyDto.builder()
-                .id(property.getId())
-                .title(property.getTitle())
-                .city(property.getCity())
-                .viewCount(property.getViewCount())
-                .favoriteCount(property.getFavoriteCount())
-                .build();
+        return new TopPropertyDto(
+                property.getId(),
+                property.getTitle(),
+                property.getCity(),
+                property.getViewCount(),
+                property.getFavoriteCount()
+        );
     }
 
     private ReportDto mapToReportDto(ReportedListing report) {
-        return ReportDto.builder()
-                .id(report.getId())
-                .propertyId(report.getProperty().getId())
-                .propertyTitle(report.getProperty().getTitle())
-                .reporter(mapToUserDto(report.getReporter()))
-                .reason(report.getReason())
-                .description(report.getDescription())
-                .status(report.getStatus())
-                .createdAt(report.getCreatedAt())
-                .resolvedAt(report.getResolvedAt())
-                .resolvedBy(report.getResolvedBy() != null ? mapToUserDto(report.getResolvedBy()) : null)
-                .build();
+        return new ReportDto(
+                report.getId(),
+                report.getProperty().getId(),
+                report.getProperty().getTitle(),
+                mapToUserDto(report.getReporter()),
+                report.getReason(),
+                report.getDescription(),
+                report.getStatus(),
+                report.getCreatedAt(),
+                report.getResolvedAt(),
+                report.getResolvedBy() != null ? mapToUserDto(report.getResolvedBy()) : null
+        );
     }
 }

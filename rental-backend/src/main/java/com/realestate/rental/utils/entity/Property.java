@@ -28,6 +28,10 @@ public class Property {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Version
+    @Column(name = "entity_version")
+    private Long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "landlord_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "properties"})
@@ -141,4 +145,7 @@ public class Property {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

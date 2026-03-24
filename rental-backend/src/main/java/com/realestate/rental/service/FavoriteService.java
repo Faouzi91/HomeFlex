@@ -1,5 +1,6 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.PropertyMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.repository.*;
@@ -22,6 +23,7 @@ public class FavoriteService {
     private final FavoriteRepository favoriteRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final PropertyMapper propertyMapper;
 
     public FavoriteDto addToFavorites(UUID userId, UUID propertyId) {
         // Check if already favorited
@@ -71,27 +73,16 @@ public class FavoriteService {
     }
 
     private FavoriteDto mapToFavoriteDto(Favorite favorite) {
-        return FavoriteDto.builder()
-                .id(favorite.getId())
-                .userId(favorite.getUser().getId())
-                .propertyId(favorite.getProperty().getId())
-                .createdAt(favorite.getCreatedAt())
-                .build();
+        return new FavoriteDto(
+                favorite.getId(),
+                favorite.getUser().getId(),
+                favorite.getProperty().getId(),
+                null,
+                favorite.getCreatedAt()
+        );
     }
 
     private PropertyDto mapToPropertyDto(Property property) {
-        PropertyDto dto = new PropertyDto();
-        dto.setId(property.getId());
-        dto.setTitle(property.getTitle());
-        dto.setDescription(property.getDescription());
-        dto.setPropertyType(property.getPropertyType().name());
-        dto.setPrice(property.getPrice());
-        dto.setCity(property.getCity());
-        dto.setCountry(property.getCountry());
-        dto.setBedrooms(property.getBedrooms());
-        dto.setBathrooms(property.getBathrooms());
-        dto.setIsAvailable(property.getIsAvailable());
-        dto.setCreatedAt(property.getCreatedAt());
-        return dto;
+        return propertyMapper.toDto(property);
     }
 }

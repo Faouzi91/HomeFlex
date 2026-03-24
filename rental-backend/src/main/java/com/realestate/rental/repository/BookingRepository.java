@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
 import java.util.UUID;
 
 // BookingRepository.java
@@ -29,4 +29,21 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     @Query("SELECT b.status, COUNT(b) FROM Booking b GROUP BY b.status")
     List<Object[]> countByStatusGrouped();
+
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM Booking b
+            WHERE b.property.id = :propertyId
+              AND b.status IN :statuses
+              AND b.startDate IS NOT NULL
+              AND b.endDate IS NOT NULL
+              AND b.startDate <= :endDate
+              AND b.endDate >= :startDate
+            """)
+    boolean existsDateOverlapForProperty(
+            @Param("propertyId") UUID propertyId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<BookingStatus> statuses
+    );
 }

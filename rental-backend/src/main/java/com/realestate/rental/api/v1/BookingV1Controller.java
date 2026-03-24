@@ -1,9 +1,9 @@
-package com.realestate.rental.controller;
+package com.realestate.rental.api.v1;
 
-import com.realestate.rental.dto.*;
+import com.realestate.rental.application.booking.BookingApplicationService;
+import com.realestate.rental.dto.BookingDto;
 import com.realestate.rental.dto.request.BookingCreateRequest;
 import com.realestate.rental.dto.request.BookingResponseRequest;
-import com.realestate.rental.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,21 +16,19 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/bookings")
+@RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
-public class BookingController {
+public class BookingV1Controller {
 
-    private final BookingService bookingService;
+    private final BookingApplicationService bookingApplicationService;
 
     @PostMapping
     @PreAuthorize("hasRole('TENANT')")
     public ResponseEntity<BookingDto> createBooking(
             @Valid @RequestBody BookingCreateRequest request,
             Authentication authentication) {
-
         UUID tenantId = UUID.fromString(authentication.getName());
-        BookingDto created = bookingService.createBooking(request, tenantId);
+        BookingDto created = bookingApplicationService.createBooking(request, tenantId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -38,7 +36,7 @@ public class BookingController {
     @PreAuthorize("hasRole('TENANT')")
     public ResponseEntity<List<BookingDto>> getMyBookings(Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.getBookingsByTenant(tenantId));
+        return ResponseEntity.ok(bookingApplicationService.getBookingsByTenant(tenantId));
     }
 
     @GetMapping("/property/{propertyId}")
@@ -46,18 +44,14 @@ public class BookingController {
     public ResponseEntity<List<BookingDto>> getPropertyBookings(
             @PathVariable UUID propertyId,
             Authentication authentication) {
-
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.getBookingsByProperty(propertyId, landlordId));
+        return ResponseEntity.ok(bookingApplicationService.getBookingsByProperty(propertyId, landlordId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookingDto> getBookingById(
-            @PathVariable UUID id,
-            Authentication authentication) {
-
+    public ResponseEntity<BookingDto> getBookingById(@PathVariable UUID id, Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.getBookingById(id, userId));
+        return ResponseEntity.ok(bookingApplicationService.getBookingById(id, userId));
     }
 
     @PatchMapping("/{id}/approve")
@@ -66,10 +60,9 @@ public class BookingController {
             @PathVariable UUID id,
             @RequestBody(required = false) BookingResponseRequest request,
             Authentication authentication) {
-
         UUID landlordId = UUID.fromString(authentication.getName());
         String response = request != null ? request.getMessage() : null;
-        return ResponseEntity.ok(bookingService.approveBooking(id, landlordId, response));
+        return ResponseEntity.ok(bookingApplicationService.approveBooking(id, landlordId, response));
     }
 
     @PatchMapping("/{id}/reject")
@@ -78,9 +71,8 @@ public class BookingController {
             @PathVariable UUID id,
             @RequestBody BookingResponseRequest request,
             Authentication authentication) {
-
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.rejectBooking(id, landlordId, request.getMessage()));
+        return ResponseEntity.ok(bookingApplicationService.rejectBooking(id, landlordId, request.getMessage()));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -88,8 +80,7 @@ public class BookingController {
     public ResponseEntity<BookingDto> cancelBooking(
             @PathVariable UUID id,
             Authentication authentication) {
-
         UUID tenantId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.cancelBooking(id, tenantId));
+        return ResponseEntity.ok(bookingApplicationService.cancelBooking(id, tenantId));
     }
 }

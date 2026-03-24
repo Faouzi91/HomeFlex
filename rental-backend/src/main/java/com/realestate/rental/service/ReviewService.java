@@ -66,22 +66,29 @@ public class ReviewService {
     }
 
     private ReviewDto mapToReviewDto(Review review) {
-        return ReviewDto.builder()
-                .id(review.getId())
-                .propertyId(review.getProperty().getId())
-                .reviewer(mapToUserDto(review.getReviewer()))
-                .rating(review.getRating())
-                .comment(review.getComment())
-                .createdAt(review.getCreatedAt())
-                .build();
+        return new ReviewDto(
+                review.getId(),
+                review.getProperty().getId(),
+                mapToUserDto(review.getReviewer()),
+                review.getRating(),
+                review.getComment(),
+                review.getCreatedAt()
+        );
     }
 
     private UserDto mapToUserDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .build();
+        return new UserDto(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhoneNumber(),
+                user.getProfilePictureUrl(),
+                user.getRole() != null ? user.getRole().name() : null,
+                user.getIsActive(),
+                user.getIsVerified(),
+                user.getLanguagePreference(),
+                user.getCreatedAt()
+        );
     }
 }

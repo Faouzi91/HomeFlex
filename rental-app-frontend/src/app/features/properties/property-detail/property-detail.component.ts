@@ -237,6 +237,33 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  reportListing(): void {
+    if (!this.authService.isAuthenticated() || !this.property) {
+      this.router.navigate(["/auth/login"]);
+      return;
+    }
+
+    const reason = prompt(this.translate.instant("property.reportReasonPrompt"));
+    if (!reason || reason.trim().length === 0) {
+      alert(this.translate.instant("property.reportReasonRequired"));
+      return;
+    }
+
+    const description = prompt(this.translate.instant("property.reportDescriptionPrompt"));
+
+    this.propertyService
+      .reportProperty(this.property.id, { reason: reason.trim(), description })
+      .subscribe({
+        next: () => {
+          alert(this.translate.instant("property.reportSuccess"));
+        },
+        error: (err) => {
+          console.error("Report error", err);
+          alert(this.translate.instant("property.reportError"));
+        },
+      });
+  }
+
   navigateToProperty(id: string): void {
     this.router.navigate(["/properties", id]);
     // scroll to top

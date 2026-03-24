@@ -22,6 +22,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Version
+    @Column(name = "entity_version")
+    private Long version;
+
     @Column(unique = true, nullable = false)
     private String email;
 

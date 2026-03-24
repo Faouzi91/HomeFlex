@@ -193,15 +193,15 @@ public class NotificationService {
     }
 
     private NotificationDto mapToNotificationDto(Notification notification) {
-        NotificationDto dto = new NotificationDto();
-        dto.setId(notification.getId());
-        dto.setTitle(notification.getTitle());
-        dto.setMessage(notification.getMessage());
-        dto.setType(notification.getNotificationType().name());
-        dto.setRelatedEntityType(notification.getRelatedEntityType());
-        dto.setRelatedEntityId(notification.getRelatedEntityId());
-        dto.setIsRead(notification.getIsRead());
-        dto.setCreatedAt(notification.getCreatedAt());
-        return dto;
+        return new NotificationDto(
+                notification.getId(),
+                notification.getTitle(),
+                notification.getMessage(),
+                notification.getNotificationType().name(),
+                notification.getRelatedEntityType(),
+                notification.getRelatedEntityId(),
+                notification.getIsRead(),
+                notification.getCreatedAt()
+        );
     }
 }

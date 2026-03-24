@@ -24,6 +24,10 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Version
+    @Column(name = "entity_version")
+    private Long version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;

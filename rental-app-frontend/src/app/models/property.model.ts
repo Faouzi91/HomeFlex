@@ -91,6 +91,24 @@ export interface Amenity {
   category: string;
 }
 
+export interface PropertyReport {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  reporterId: string;
+  reason: string;
+  description?: string;
+  status: string;
+  createdAt: Date;
+  resolvedAt?: Date;
+  resolvedById?: string;
+}
+
+export interface PropertyReportRequest {
+  reason: string;
+  description?: string;
+}
+
 export interface PropertySearchParams {
   [x: string]: any;
   city?: string;

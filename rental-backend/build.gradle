@@ -1,0 +1,78 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.4'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.realestate'
+version = '1.0.0'
+description = 'Backend API for Real Estate Rental Platform'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencies {
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // Database
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+
+    // AWS SDK for S3
+    implementation 'software.amazon.awssdk:s3:2.42.18'
+
+    // Firebase Admin SDK
+    implementation 'com.google.firebase:firebase-admin:9.8.0'
+
+    // Google OAuth
+    implementation 'com.google.api-client:google-api-client:2.9.0'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // ModelMapper
+    implementation 'org.modelmapper:modelmapper:3.2.6'
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+
+    // Swagger/OpenAPI
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('bootJar') {
+    archiveFileName = 'rental-backend.jar'
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Deprecated(forRemoval = true)
 public class NotificationServiceExtension {
 
     private final NotificationServiceComplete notificationService;

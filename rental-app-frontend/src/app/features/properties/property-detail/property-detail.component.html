@@ -81,6 +81,11 @@
                     <ion-button fill="outline" (click)="scrollToSection('details')">
                         {{ 'property.moreDetails' | translate }}
                     </ion-button>
+
+                    <ion-button fill="outline" color="danger" (click)="reportListing()">
+                        <ion-icon name="flag-outline" slot="start"></ion-icon>
+                        {{ 'property.reportListing' | translate }}
+                    </ion-button>
                 </div>
             </div>
         </div>

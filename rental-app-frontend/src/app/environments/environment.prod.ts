@@ -1,3 +1,14 @@
 export const environment = {
-  production: true
+  production: true,
+  apiUrl: "https://api.homeflex.com/api",
+  wsUrl: "wss://api.homeflex.com/ws",
+  googleClientId: "",
+  firebaseConfig: {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: "",
+  },
 };

@@ -7,6 +7,7 @@ import { Observable, BehaviorSubject } from "rxjs";
 import { tap, map } from "rxjs/operators";
 import { environment } from "src/app/environments/environment";
 import { Property, PropertySearchParams } from "src/app/models/property.model";
+import { PropertyState } from "../../state/property.state";
 
 export interface PagedResponse<T> {
   content: T[];
@@ -33,7 +34,7 @@ export class PropertyService {
   private propertiesSubject = new BehaviorSubject<Property[]>([]);
   public properties$ = this.propertiesSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private propertyState: PropertyState) {}
 
   searchProperties(
     params: PropertySearchParams
@@ -54,9 +55,11 @@ export class PropertyService {
         tap((response) => {
           if (params.page === 0) {
             this.propertiesSubject.next(response.content);
+            this.propertyState.setProperties(response.content);
           } else {
             const current = this.propertiesSubject.value;
             this.propertiesSubject.next([...current, ...response.content]);
+            this.propertyState.setProperties([...current, ...response.content]);
           }
         })
       );
@@ -117,6 +120,20 @@ export class PropertyService {
 
   getSimilarProperties(id: string): Observable<Property[]> {
     return this.http.get<Property[]>(`${this.apiUrl}/${id}/similar`);
+  }
+
+  reportProperty(
+    propertyId: string,
+    payload: { reason: string; description?: string }
+  ): Observable<PropertyReport> {
+    return this.http.post<PropertyReport>(
+      `${this.apiUrl}/${propertyId}/report`,
+      payload
+    );
+  }
+
+  getPropertyReports(propertyId: string): Observable<PropertyReport[]> {
+    return this.http.get<PropertyReport[]>(`${this.apiUrl}/${propertyId}/reports`);
   }
 
   uploadImage(propertyId: string, file: File): Observable<string> {

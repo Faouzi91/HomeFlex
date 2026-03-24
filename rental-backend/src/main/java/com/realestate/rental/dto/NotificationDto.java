@@ -1,19 +1,15 @@
 package com.realestate.rental.dto;
 
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-// NotificationDto.java
-@Data
-public class NotificationDto {
-    private UUID id;
-    private String title;
-    private String message;
-    private String type;
-    private String relatedEntityType;
-    private UUID relatedEntityId;
-    private Boolean isRead;
-    private LocalDateTime createdAt;
-}
+public record NotificationDto(
+        UUID id,
+        String title,
+        String message,
+        String type,
+        String relatedEntityType,
+        UUID relatedEntityId,
+        Boolean isRead,
+        LocalDateTime createdAt
+) {}

@@ -98,18 +98,18 @@ public class UserService {
     }
 
     private UserDto mapToUserDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phoneNumber(user.getPhoneNumber())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .role(user.getRole().name())
-                .isActive(user.getIsActive())
-                .isVerified(user.getIsVerified())
-                .languagePreference(user.getLanguagePreference())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return new UserDto(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhoneNumber(),
+                user.getProfilePictureUrl(),
+                user.getRole() != null ? user.getRole().name() : null,
+                user.getIsActive(),
+                user.getIsVerified(),
+                user.getLanguagePreference(),
+                user.getCreatedAt()
+        );
     }
 }

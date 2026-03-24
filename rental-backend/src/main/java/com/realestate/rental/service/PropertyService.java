@@ -1,5 +1,6 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.PropertyMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.PropertyCreateRequest;
 import com.realestate.rental.dto.request.PropertyUpdateRequest;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,6 +39,7 @@ public class PropertyService {
     private final StorageService storageService;
     private final NotificationService notificationService;
     private final BookingRepository bookingRepository;
+    private final PropertyMapper propertyMapper;
 
     @Transactional(readOnly = true)
     public Page<PropertyDto> searchProperties(PropertySearchParams params, Pageable pageable) {
@@ -102,7 +105,7 @@ public class PropertyService {
 //            amenitiesCopy.forEach(am -> {});
 //        });
 
-        return properties.map(this::mapToPropertyDto);
+        return properties.map(propertyMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -110,13 +113,17 @@ public class PropertyService {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
+        if (property.getDeletedAt() != null) {
+            throw new RuntimeException("Property not found");
+        }
+
         // Force initialization of lazy collections
         property.getImages().size();
         property.getVideos().size();
         property.getAmenities().size();
         property.getLandlord().getEmail();
 
-        return mapToPropertyDto(property);
+        return propertyMapper.toDto(property);
     }
 
     @Transactional
@@ -192,7 +199,7 @@ public class PropertyService {
         property.getVideos().size();
         property.getAmenities().size();
 
-        return mapToPropertyDto(property);
+        return propertyMapper.toDto(property);
     }
 
     @Transactional
@@ -221,7 +228,7 @@ public class PropertyService {
         property.getVideos().size();
         property.getAmenities().size();
 
-        return mapToPropertyDto(property);
+        return propertyMapper.toDto(property);
     }
 
     @Transactional
@@ -233,7 +240,9 @@ public class PropertyService {
             throw new RuntimeException("Not authorized to delete this property");
         }
 
-        propertyRepository.delete(property);
+        property.setDeletedAt(LocalDateTime.now());
+        property.setIsAvailable(false);
+        propertyRepository.save(property);
     }
 
     @Transactional(readOnly = true)
@@ -247,9 +256,7 @@ public class PropertyService {
             property.getAmenities().size();
         });
 
-        return properties.stream()
-                .map(this::mapToPropertyDto)
-                .collect(Collectors.toList());
+        return properties.stream().map(propertyMapper::toDto).collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -291,97 +298,6 @@ public class PropertyService {
             p.getLandlord().getEmail();
         });
 
-        return similarProperties.stream()
-                .limit(5)
-                .map(this::mapToPropertyDto)
-                .collect(Collectors.toList());
-    }
-
-    private PropertyDto mapToPropertyDto(Property property) {
-        PropertyDto dto = new PropertyDto();
-        dto.setId(property.getId());
-        dto.setTitle(property.getTitle());
-        dto.setDescription(property.getDescription());
-        dto.setPropertyType(property.getPropertyType().name());
-        dto.setListingType(property.getListingType().name());
-        dto.setPrice(property.getPrice());
-        dto.setCurrency(property.getCurrency());
-        dto.setAddress(property.getAddress());
-        dto.setCity(property.getCity());
-        dto.setStateProvince(property.getStateProvince());
-        dto.setCountry(property.getCountry());
-        dto.setPostalCode(property.getPostalCode());
-        dto.setLatitude(property.getLatitude());
-        dto.setLongitude(property.getLongitude());
-        dto.setBedrooms(property.getBedrooms());
-        dto.setBathrooms(property.getBathrooms());
-        dto.setAreaSqm(property.getAreaSqm());
-        dto.setFloorNumber(property.getFloorNumber());
-        dto.setTotalFloors(property.getTotalFloors());
-        dto.setIsAvailable(property.getIsAvailable());
-        dto.setAvailableFrom(property.getAvailableFrom());
-        dto.setStatus(property.getStatus().name());
-        dto.setViewCount(property.getViewCount());
-        dto.setFavoriteCount(property.getFavoriteCount());
-        dto.setCreatedAt(property.getCreatedAt());
-        dto.setUpdatedAt(property.getUpdatedAt());
-
-        // Map images
-        if (property.getImages() != null) {
-            dto.setImages(property.getImages().stream()
-                    .sorted(Comparator.comparing(PropertyImage::getDisplayOrder))
-                    .map(this::mapToImageDto)
-                    .collect(Collectors.toList()));
-        }
-
-        // Map amenities
-        if (property.getAmenities() != null) {
-            dto.setAmenities(property.getAmenities().stream()
-                    .map(this::mapToAmenityDto)
-                    .collect(Collectors.toList()));
-        }
-
-        // Map landlord
-        if (property.getLandlord() != null) {
-            dto.setLandlord(mapToUserDto(property.getLandlord()));
-        }
-
-        return dto;
-    }
-
-    private PropertyImageDto mapToImageDto(PropertyImage image) {
-        PropertyImageDto dto = new PropertyImageDto();
-        dto.setId(image.getId());
-        dto.setImageUrl(image.getImageUrl());
-        dto.setThumbnailUrl(image.getThumbnailUrl());
-        dto.setDisplayOrder(image.getDisplayOrder());
-        dto.setIsPrimary(image.getIsPrimary());
-        return dto;
-    }
-
-    private AmenityDto mapToAmenityDto(Amenity amenity) {
-        AmenityDto dto = new AmenityDto();
-        dto.setId(amenity.getId());
-        dto.setName(amenity.getName());
-        dto.setNameFr(amenity.getNameFr());
-        dto.setIcon(amenity.getIcon());
-        dto.setCategory(amenity.getCategory().name());
-        return dto;
-    }
-
-    private UserDto mapToUserDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phoneNumber(user.getPhoneNumber())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .role(user.getRole().name())
-                .isActive(user.getIsActive())
-                .isVerified(user.getIsVerified())
-                .languagePreference(user.getLanguagePreference())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return similarProperties.stream().limit(5).map(propertyMapper::toDto).collect(Collectors.toList());
     }
 }

@@ -138,43 +138,42 @@ public class ChatService {
     }
 
     private ChatRoomDto mapToChatRoomDto(ChatRoom chatRoom) {
-        ChatRoomDto dto = new ChatRoomDto();
-        dto.setId(chatRoom.getId());
-        dto.setPropertyId(chatRoom.getProperty().getId());
-        dto.setPropertyTitle(chatRoom.getProperty().getTitle());
-        dto.setTenant(mapToUserDto(chatRoom.getTenant()));
-        dto.setLandlord(mapToUserDto(chatRoom.getLandlord()));
-        dto.setLastMessageAt(chatRoom.getLastMessageAt());
-        dto.setUnreadCount(messageRepository.countUnreadInRoom(chatRoom.getId()));
-        return dto;
+        return new ChatRoomDto(
+                chatRoom.getId(),
+                chatRoom.getProperty().getId(),
+                chatRoom.getProperty().getTitle(),
+                mapToUserDto(chatRoom.getTenant()),
+                mapToUserDto(chatRoom.getLandlord()),
+                chatRoom.getLastMessageAt(),
+                messageRepository.countUnreadInRoom(chatRoom.getId())
+        );
     }
 
     private MessageDto mapToMessageDto(Message message) {
-        MessageDto dto = new MessageDto();
-        dto.setId(message.getId());
-        dto.setChatRoomId(message.getChatRoom().getId());
-        dto.setSenderId(message.getSender().getId());
-        dto.setSenderName(message.getSender().getFirstName() + " " +
-                message.getSender().getLastName());
-        dto.setMessageText(message.getMessageText());
-        dto.setIsRead(message.getIsRead());
-        dto.setCreatedAt(message.getCreatedAt());
-        return dto;
+        return new MessageDto(
+                message.getId(),
+                message.getChatRoom().getId(),
+                message.getSender().getId(),
+                message.getSender().getFirstName() + " " + message.getSender().getLastName(),
+                message.getMessageText(),
+                message.getIsRead(),
+                message.getCreatedAt()
+        );
     }
 
     private UserDto mapToUserDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phoneNumber(user.getPhoneNumber())
-                .profilePictureUrl(user.getProfilePictureUrl())
-                .role(user.getRole().name())
-                .isActive(user.getIsActive())
-                .isVerified(user.getIsVerified())
-                .languagePreference(user.getLanguagePreference())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return new UserDto(
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhoneNumber(),
+                user.getProfilePictureUrl(),
+                user.getRole() != null ? user.getRole().name() : null,
+                user.getIsActive(),
+                user.getIsVerified(),
+                user.getLanguagePreference(),
+                user.getCreatedAt()
+        );
     }
 }

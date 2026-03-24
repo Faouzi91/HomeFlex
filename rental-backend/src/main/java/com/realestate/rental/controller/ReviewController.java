@@ -16,7 +16,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ReviewController {
 
     private final ReviewService reviewService;
