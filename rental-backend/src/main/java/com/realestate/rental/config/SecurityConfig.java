@@ -2,7 +2,6 @@ package com.realestate.rental.config;
 
 import com.realestate.rental.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -26,8 +25,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.realestate.rental.repository.UserRepository;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -36,18 +33,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserRepository userRepository;
-    @Value("${app.cors.allowed-origins}")
-    private List<String> allowedOrigins;
-    @Value("${app.cors.allowed-methods}")
-    private List<String> allowedMethods;
-    @Value("${app.cors.allowed-headers}")
-    private List<String> allowedHeaders;
-    @Value("${app.cors.exposed-headers}")
-    private List<String> exposedHeaders;
-    @Value("${app.cors.allow-credentials}")
-    private boolean allowCredentials;
-    @Value("${app.cors.max-age}")
-    private long maxAge;
+    private final AppProperties appProperties;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -72,6 +58,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/webhooks/**").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
@@ -85,6 +72,30 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/*/similar").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/properties/*/view").permitAll()
+
+                        // Vehicle public endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/*/view").permitAll()
+
+                        // Vehicle owner endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/my-vehicles")
+                                .hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/vehicles").hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/vehicles/**").hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/vehicles/**").hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/*/images").hasAnyRole("LANDLORD", "ADMIN")
+
+                        // Vehicle admin endpoints
+                        .requestMatchers("/api/v1/vehicles/admin/**").hasRole("ADMIN")
+
+                        // KYC endpoints
+                        .requestMatchers("/api/v1/kyc/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/kyc/**").authenticated()
+
+                        // Payment endpoints
+                        .requestMatchers("/api/v1/payments/refund").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/payments/**").authenticated()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews/property/**").permitAll()
 
@@ -109,12 +120,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(allowedMethods);
-        configuration.setAllowedHeaders(allowedHeaders);
-        configuration.setExposedHeaders(exposedHeaders);
-        configuration.setAllowCredentials(allowCredentials);
-        configuration.setMaxAge(maxAge);
+        var corsConfig = appProperties.getCors();
+        configuration.setAllowedOrigins(corsConfig.getAllowedOrigins());
+        configuration.setAllowedMethods(corsConfig.getAllowedMethods());
+        configuration.setAllowedHeaders(corsConfig.getAllowedHeaders());
+        configuration.setExposedHeaders(corsConfig.getExposedHeaders());
+        configuration.setAllowCredentials(corsConfig.isAllowCredentials());
+        configuration.setMaxAge(corsConfig.getMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

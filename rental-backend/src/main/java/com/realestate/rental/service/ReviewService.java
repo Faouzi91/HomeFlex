@@ -1,9 +1,13 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.ReviewMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.ReviewCreateRequest;
-import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.repository.*;
+import com.realestate.rental.shared.exception.ConflictException;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.shared.exception.UnauthorizedException;
+import com.realestate.rental.utils.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,33 +24,34 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final ReviewMapper reviewMapper;
 
     public ReviewDto createReview(ReviewCreateRequest request, UUID reviewerId) {
         // Check if user already reviewed this property
-        if (reviewRepository.findByPropertyIdAndReviewerId(request.getPropertyId(), reviewerId).isPresent()) {
-            throw new RuntimeException("You have already reviewed this property");
+        if (reviewRepository.findByPropertyIdAndReviewerId(request.propertyId(), reviewerId).isPresent()) {
+            throw new ConflictException("You have already reviewed this property");
         }
 
-        Property property = propertyRepository.findById(request.getPropertyId())
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+        Property property = propertyRepository.findById(request.propertyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         User reviewer = userRepository.findById(reviewerId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Review review = new Review();
         review.setProperty(property);
         review.setReviewer(reviewer);
-        review.setRating(request.getRating());
-        review.setComment(request.getComment());
+        review.setRating(request.rating());
+        review.setComment(request.comment());
 
         review = reviewRepository.save(review);
 
-        return mapToReviewDto(review);
+        return reviewMapper.toDto(review);
     }
 
     public List<ReviewDto> getPropertyReviews(UUID propertyId) {
         return reviewRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId).stream()
-                .map(this::mapToReviewDto)
+                .map(reviewMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -56,39 +61,13 @@ public class ReviewService {
 
     public void deleteReview(UUID reviewId, UUID userId) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
 
         if (!review.getReviewer().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized to delete this review");
+            throw new UnauthorizedException("Not authorized to delete this review");
         }
 
         reviewRepository.delete(review);
     }
 
-    private ReviewDto mapToReviewDto(Review review) {
-        return new ReviewDto(
-                review.getId(),
-                review.getProperty().getId(),
-                mapToUserDto(review.getReviewer()),
-                review.getRating(),
-                review.getComment(),
-                review.getCreatedAt()
-        );
-    }
-
-    private UserDto mapToUserDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getPhoneNumber(),
-                user.getProfilePictureUrl(),
-                user.getRole() != null ? user.getRole().name() : null,
-                user.getIsActive(),
-                user.getIsVerified(),
-                user.getLanguagePreference(),
-                user.getCreatedAt()
-        );
-    }
 }

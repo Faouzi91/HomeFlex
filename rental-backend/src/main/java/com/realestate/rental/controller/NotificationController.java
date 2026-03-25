@@ -2,8 +2,8 @@ package com.realestate.rental.controller;
 
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.api.ApiListResponse;
+import com.realestate.rental.dto.api.ApiValueResponse;
 import com.realestate.rental.dto.request.FCMTokenRequest;
-import com.realestate.rental.dto.request.MessageResponse;
 import com.realestate.rental.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -59,12 +59,12 @@ public class NotificationController {
     }
 
     @PostMapping("/fcm-token")
-    public ResponseEntity<MessageResponse> registerFCMToken(
+    public ResponseEntity<ApiValueResponse<String>> registerFCMToken(
             @RequestBody FCMTokenRequest request,
             Authentication authentication) {
 
         UUID userId = UUID.fromString(authentication.getName());
-        notificationService.registerFCMToken(userId, request.getToken(), request.getDeviceType());
-        return ResponseEntity.ok(new MessageResponse("FCM token registered"));
+        notificationService.registerFCMToken(userId, request.token(), request.deviceType());
+        return ResponseEntity.ok(new ApiValueResponse<>("FCM token registered"));
     }
 }

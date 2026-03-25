@@ -5,8 +5,11 @@ import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.SendResponse;
+import com.realestate.rental.application.mapper.NotificationMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.repository.*;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.shared.exception.UnauthorizedException;
 import com.realestate.rental.utils.entity.FcmToken;
 import com.realestate.rental.utils.entity.Notification;
 import com.realestate.rental.utils.entity.Property;
@@ -14,6 +17,7 @@ import com.realestate.rental.utils.entity.User;
 import com.realestate.rental.utils.enumeration.NotificationType;
 import com.realestate.rental.utils.enumeration.UserRole;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -30,6 +35,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final FcmTokenRepository fcmTokenRepository;
     private final UserRepository userRepository;
+    private final NotificationMapper notificationMapper;
 
     public void sendNewMessageNotification(UUID recipientId, User sender, Property property) {
         String title = "New Message";
@@ -80,7 +86,7 @@ public class NotificationService {
     private void createNotification(UUID userId, String title, String message,
                                     NotificationType type, String entityType, UUID entityId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Notification notification = new Notification();
         notification.setUser(user);
@@ -113,7 +119,7 @@ public class NotificationService {
 
         try {
             BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
-            System.out.println(response.getSuccessCount() + " messages sent successfully");
+            log.info("{} messages sent successfully", response.getSuccessCount());
 
             // Remove invalid tokens
             if (response.getFailureCount() > 0) {
@@ -125,14 +131,14 @@ public class NotificationService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error sending push notification: " + e.getMessage());
+            log.error("Error sending push notification: {}", e.getMessage());
         }
     }
 
 
     public void registerFCMToken(UUID userId, String token, String deviceType) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         FcmToken fcmToken = fcmTokenRepository.findByToken(token)
                 .orElse(new FcmToken());
@@ -146,22 +152,22 @@ public class NotificationService {
 
     public List<NotificationDto> getAllNotifications(UUID userId) {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .map(this::mapToNotificationDto)
+                .map(notificationMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public List<NotificationDto> getUnreadNotifications(UUID userId) {
         return notificationRepository.findByUserIdAndIsReadFalseOrderByCreatedAtDesc(userId).stream()
-                .map(this::mapToNotificationDto)
+                .map(notificationMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public void markAsRead(UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
 
         if (!notification.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized");
+            throw new UnauthorizedException("Not authorized");
         }
 
         notification.setIsRead(true);
@@ -183,25 +189,13 @@ public class NotificationService {
 
     public void deleteNotification(UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
 
         if (!notification.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized");
+            throw new UnauthorizedException("Not authorized");
         }
 
         notificationRepository.delete(notification);
     }
 
-    private NotificationDto mapToNotificationDto(Notification notification) {
-        return new NotificationDto(
-                notification.getId(),
-                notification.getTitle(),
-                notification.getMessage(),
-                notification.getNotificationType().name(),
-                notification.getRelatedEntityType(),
-                notification.getRelatedEntityId(),
-                notification.getIsRead(),
-                notification.getCreatedAt()
-        );
-    }
 }

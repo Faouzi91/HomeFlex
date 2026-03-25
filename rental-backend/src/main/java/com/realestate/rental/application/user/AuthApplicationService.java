@@ -24,11 +24,11 @@ public class AuthApplicationService {
     }
 
     public AuthResponse googleLogin(GoogleLoginRequest request) {
-        return authService.googleLogin(request.getIdToken());
+        return authService.googleLogin(request.idToken());
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        return authService.refreshToken(request.getRefreshToken());
+        return authService.refreshToken(request.refreshToken());
     }
 
     public void logout(String authHeader) {

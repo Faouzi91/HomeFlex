@@ -15,11 +15,16 @@ import { AuthService } from "src/app/core/services/auth/auth.service";
 import { TranslateService } from "@ngx-translate/core";
 import { User } from "src/app/models/user.model";
 import { filter } from "rxjs/operators";
+import { CommonModule } from "@angular/common";
+import { IonicModule } from "@ionic/angular";
+import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
   selector: "app-header",
   templateUrl: "./header.component.html",
   styleUrls: ["./header.component.scss"],
+  standalone: true,
+  imports: [CommonModule, IonicModule, TranslateModule]
 })
 export class HeaderComponent implements OnInit {
   user: User | null = null;

@@ -45,16 +45,19 @@ dependencies {
     // Google OAuth
     implementation 'com.google.api-client:google-api-client:2.9.0'
 
+    // Stripe payments (FR-400)
+    implementation 'com.stripe:stripe-java:28.3.0'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
 
-    // ModelMapper
-    implementation 'org.modelmapper:modelmapper:3.2.6'
+    // MapStruct (AGENT.md — use MapStruct exclusively, never manual mapping)
     implementation 'org.mapstruct:mapstruct:1.6.3'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
     testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
     // Swagger/OpenAPI

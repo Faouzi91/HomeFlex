@@ -31,7 +31,7 @@ export function HttpLoaderFactory(http: HttpClient) {
 }
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

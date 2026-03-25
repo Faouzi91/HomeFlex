@@ -1,7 +1,10 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.ChatMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.repository.*;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.shared.exception.UnauthorizedException;
 import com.realestate.rental.utils.entity.ChatRoom;
 import com.realestate.rental.utils.entity.Message;
 import com.realestate.rental.utils.entity.Property;
@@ -25,12 +28,13 @@ public class ChatService {
     private final UserRepository userRepository;
     private final PropertyRepository propertyRepository;
     private final NotificationService notificationService;
+    private final ChatMapper chatMapper;
 
     public ChatRoomDto createOrGetChatRoom(UUID propertyId, UUID tenantId,
                                            UUID landlordId, UUID requesterId) {
         // Verify requester is either tenant or landlord
         if (!requesterId.equals(tenantId) && !requesterId.equals(landlordId)) {
-            throw new RuntimeException("Not authorized to create this chat room");
+            throw new UnauthorizedException("Not authorized to create this chat room");
         }
 
         // Check if chat room already exists
@@ -38,11 +42,11 @@ public class ChatService {
                 .findByPropertyIdAndTenantIdAndLandlordId(propertyId, tenantId, landlordId)
                 .orElseGet(() -> {
                     Property property = propertyRepository.findById(propertyId)
-                            .orElseThrow(() -> new RuntimeException("Property not found"));
+                            .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
                     User tenant = userRepository.findById(tenantId)
-                            .orElseThrow(() -> new RuntimeException("Tenant not found"));
+                            .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
                     User landlord = userRepository.findById(landlordId)
-                            .orElseThrow(() -> new RuntimeException("Landlord not found"));
+                            .orElseThrow(() -> new ResourceNotFoundException("Landlord not found"));
 
                     ChatRoom newRoom = new ChatRoom();
                     newRoom.setProperty(property);
@@ -51,43 +55,43 @@ public class ChatService {
                     return chatRoomRepository.save(newRoom);
                 });
 
-        return mapToChatRoomDto(chatRoom);
+        return chatMapper.toDto(chatRoom, messageRepository.countUnreadInRoom(chatRoom.getId()));
     }
 
     public List<ChatRoomDto> getChatRoomsByUser(UUID userId) {
         List<ChatRoom> chatRooms = chatRoomRepository.findByTenantIdOrLandlordId(userId, userId);
         return chatRooms.stream()
-                .map(this::mapToChatRoomDto)
+                .map(room -> chatMapper.toDto(room, messageRepository.countUnreadInRoom(room.getId())))
                 .collect(Collectors.toList());
     }
 
     public List<MessageDto> getMessagesByRoom(UUID roomId, UUID userId) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Chat room not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Chat room not found"));
 
         // Verify user is part of this chat
         if (!chatRoom.getTenant().getId().equals(userId) &&
                 !chatRoom.getLandlord().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized to view this chat");
+            throw new UnauthorizedException("Not authorized to view this chat");
         }
 
         List<Message> messages = messageRepository.findByChatRoomIdOrderByCreatedAtAsc(roomId);
         return messages.stream()
-                .map(this::mapToMessageDto)
+                .map(chatMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public MessageDto saveMessage(UUID roomId, UUID senderId, String messageText) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Chat room not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Chat room not found"));
 
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("Sender not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
 
         // Verify sender is part of this chat
         if (!chatRoom.getTenant().getId().equals(senderId) &&
                 !chatRoom.getLandlord().getId().equals(senderId)) {
-            throw new RuntimeException("Not authorized to send messages in this chat");
+            throw new UnauthorizedException("Not authorized to send messages in this chat");
         }
 
         // Create message
@@ -110,12 +114,12 @@ public class ChatService {
 
         notificationService.sendNewMessageNotification(recipientId, sender, chatRoom.getProperty());
 
-        return mapToMessageDto(message);
+        return chatMapper.toDto(message);
     }
 
     public void markMessageAsRead(UUID messageId, UUID userId) {
         Message message = messageRepository.findById(messageId)
-                .orElseThrow(() -> new RuntimeException("Message not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
 
         // Verify user is the recipient
         if (message.getSender().getId().equals(userId)) {
@@ -125,7 +129,7 @@ public class ChatService {
         ChatRoom chatRoom = message.getChatRoom();
         if (!chatRoom.getTenant().getId().equals(userId) &&
                 !chatRoom.getLandlord().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized");
+            throw new UnauthorizedException("Not authorized");
         }
 
         message.setIsRead(true);
@@ -137,43 +141,4 @@ public class ChatService {
         return messageRepository.countUnreadMessagesForUser(userId);
     }
 
-    private ChatRoomDto mapToChatRoomDto(ChatRoom chatRoom) {
-        return new ChatRoomDto(
-                chatRoom.getId(),
-                chatRoom.getProperty().getId(),
-                chatRoom.getProperty().getTitle(),
-                mapToUserDto(chatRoom.getTenant()),
-                mapToUserDto(chatRoom.getLandlord()),
-                chatRoom.getLastMessageAt(),
-                messageRepository.countUnreadInRoom(chatRoom.getId())
-        );
-    }
-
-    private MessageDto mapToMessageDto(Message message) {
-        return new MessageDto(
-                message.getId(),
-                message.getChatRoom().getId(),
-                message.getSender().getId(),
-                message.getSender().getFirstName() + " " + message.getSender().getLastName(),
-                message.getMessageText(),
-                message.getIsRead(),
-                message.getCreatedAt()
-        );
-    }
-
-    private UserDto mapToUserDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getPhoneNumber(),
-                user.getProfilePictureUrl(),
-                user.getRole() != null ? user.getRole().name() : null,
-                user.getIsActive(),
-                user.getIsVerified(),
-                user.getLanguagePreference(),
-                user.getCreatedAt()
-        );
-    }
 }

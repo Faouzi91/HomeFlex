@@ -1,9 +1,9 @@
 package com.realestate.rental.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.realestate.rental.shared.exception.ConflictException;
+import com.realestate.rental.shared.exception.DomainException;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.shared.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,153 +15,79 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.time.Instant;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+/**
+ * Single unified exception handler (AGENT.md — never leak stack traces to clients).
+ */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
-    // -------------------------------
-    // Unified Error Response Object
-    // -------------------------------
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ErrorResponse {
-        @Builder.Default
-        private LocalDateTime timestamp = LocalDateTime.now();
-        private String message;
-        private int status;
-        private String path;
-        private Map<String, String> errors;
-    }
-
-    // -------------------------------------------------------
-    // 401 - BAD CREDENTIALS
-    // -------------------------------------------------------
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentialsException(
-            BadCredentialsException ex,
-            WebRequest request
-    ) {
-        return buildError(
-                HttpStatus.UNAUTHORIZED,
-                "Invalid email or password",
-                request,
-                null
-        );
-    }
-
-    // -------------------------------------------------------
-    // 403 - ACCESS DENIED
-    // -------------------------------------------------------
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
-            AccessDeniedException ex,
-            WebRequest request
-    ) {
-        return buildError(
-                HttpStatus.FORBIDDEN,
-                "Access denied",
-                request,
-                null
-        );
-    }
-
-    // -------------------------------------------------------
-    // 400 - VALIDATION ERRORS (Single Unified Handler)
-    // -------------------------------------------------------
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException ex,
-            WebRequest request
-    ) {
-        Map<String, String> errors = new HashMap<>();
-
-        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-            errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-        }
-
-        return buildError(
-                HttpStatus.BAD_REQUEST,
-                "Validation failed",
-                request,
-                errors
-        );
-    }
-
-    // -------------------------------------------------------
-    // 400 - ILLEGAL ARGUMENT
-    // -------------------------------------------------------
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException ex,
-            WebRequest request
-    ) {
-        return buildError(
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
-                request,
-                null
-        );
-    }
-
-    // -------------------------------------------------------
-    // 400 - RUNTIME EXCEPTIONS
-    // -------------------------------------------------------
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
-            RuntimeException ex,
-            WebRequest request
-    ) {
-        log.error("Runtime exception occurred", ex);
-        return buildError(
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage() != null ? ex.getMessage() : "A runtime error occurred",
-                request,
-                null
-        );
-    }
-
-    // -------------------------------------------------------
-    // 500 - GENERIC CATCH-ALL
-    // -------------------------------------------------------
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
-            Exception ex,
-            WebRequest request
-    ) {
-        log.error("Unhandled exception occurred", ex);
-        return buildError(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                ex.getMessage() != null ? ex.getMessage() : "An internal error occurred",
-                request,
-                null
-        );
-    }
-
-    // -------------------------------------------------------
-    // UTILITY - BUILD ERROR RESPONSE
-    // -------------------------------------------------------
-    private ResponseEntity<ErrorResponse> buildError(
-            HttpStatus status,
+    public record ErrorResponse(
+            Instant timestamp,
+            int status,
+            String code,
             String message,
-            WebRequest request,
-            Map<String, String> fieldErrors
-    ) {
+            String path,
+            Map<String, String> errors
+    ) {}
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, WebRequest request) {
+        return buildError(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex, WebRequest request) {
+        return buildError(HttpStatus.FORBIDDEN, "FORBIDDEN", ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, WebRequest request) {
+        return buildError(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDomain(DomainException ex, WebRequest request) {
+        return buildError(HttpStatus.BAD_REQUEST, "DOMAIN_ERROR", ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
+        return buildError(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Invalid email or password", request, null);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
+        return buildError(HttpStatus.FORBIDDEN, "FORBIDDEN", "Access denied", request, null);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, WebRequest request) {
+        Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage, (a, b) -> a));
+        return buildError(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "Validation failed", request, fieldErrors);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex, WebRequest request) {
+        return buildError(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, WebRequest request) {
+        log.error("Unhandled exception", ex);
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
+                "An internal error occurred", request, null);
+    }
+
+    private ResponseEntity<ErrorResponse> buildError(
+            HttpStatus status, String code, String message, WebRequest request, Map<String, String> fieldErrors) {
         String path = request.getDescription(false).replace("uri=", "");
-
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
-                .status(status.value())
-                .message(message)
-                .path(path)
-                .errors(fieldErrors)
-                .build();
-
-        return ResponseEntity.status(status).body(errorResponse);
+        ErrorResponse error = new ErrorResponse(Instant.now(), status.value(), code, message, path, fieldErrors);
+        return ResponseEntity.status(status).body(error);
     }
 }

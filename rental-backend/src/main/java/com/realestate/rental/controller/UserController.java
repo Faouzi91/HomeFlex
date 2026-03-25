@@ -2,8 +2,8 @@ package com.realestate.rental.controller;
 
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.ChangePasswordRequest;
+import com.realestate.rental.dto.api.ApiValueResponse;
 import com.realestate.rental.dto.request.LanguageUpdateRequest;
-import com.realestate.rental.dto.request.MessageResponse;
 import com.realestate.rental.dto.request.UserUpdateRequest;
 import com.realestate.rental.service.UserService;
 import jakarta.validation.Valid;
@@ -47,13 +47,13 @@ public class UserController {
     }
 
     @PutMapping("/me/password")
-    public ResponseEntity<MessageResponse> changePassword(
+    public ResponseEntity<ApiValueResponse<String>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             Authentication authentication) {
 
         UUID userId = UUID.fromString(authentication.getName());
-        userService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword());
-        return ResponseEntity.ok(new MessageResponse("Password changed successfully"));
+        userService.changePassword(userId, request.currentPassword(), request.newPassword());
+        return ResponseEntity.ok(new ApiValueResponse<>("Password changed successfully"));
     }
 
     @PutMapping("/me/language")
@@ -62,7 +62,7 @@ public class UserController {
             Authentication authentication) {
 
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(userService.updateLanguage(userId, request.getLanguage()));
+        return ResponseEntity.ok(userService.updateLanguage(userId, request.language()));
     }
 
     @GetMapping("/{id}")

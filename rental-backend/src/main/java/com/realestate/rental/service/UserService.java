@@ -1,8 +1,11 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.UserMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.UserUpdateRequest;
 import com.realestate.rental.repository.UserRepository;
+import com.realestate.rental.shared.exception.DomainException;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
 import com.realestate.rental.utils.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,46 +23,47 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
+    private final UserMapper userMapper;
 
     public UserDto getUserById(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return mapToUserDto(user);
+        return userMapper.toDto(user);
     }
 
     public UserDto updateUser(UUID userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (request.getFirstName() != null) {
-            user.setFirstName(request.getFirstName());
+        if (request.firstName() != null) {
+            user.setFirstName(request.firstName());
         }
 
-        if (request.getLastName() != null) {
-            user.setLastName(request.getLastName());
+        if (request.lastName() != null) {
+            user.setLastName(request.lastName());
         }
 
-        if (request.getPhoneNumber() != null) {
-            user.setPhoneNumber(request.getPhoneNumber());
+        if (request.phoneNumber() != null) {
+            user.setPhoneNumber(request.phoneNumber());
         }
 
-        if (request.getLanguagePreference() != null) {
-            user.setLanguagePreference(request.getLanguagePreference());
+        if (request.languagePreference() != null) {
+            user.setLanguagePreference(request.languagePreference());
         }
 
         user = userRepository.save(user);
 
-        return mapToUserDto(user);
+        return userMapper.toDto(user);
     }
 
     public UserDto updateAvatar(UUID userId, MultipartFile file) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Validate file
         if (!file.getContentType().startsWith("image/")) {
-            throw new RuntimeException("File must be an image");
+            throw new DomainException("File must be an image");
         }
 
         // Upload to storage
@@ -69,17 +73,17 @@ public class UserService {
         user.setProfilePictureUrl(avatarUrl);
         user = userRepository.save(user);
 
-        return mapToUserDto(user);
+        return userMapper.toDto(user);
     }
 
     public void changePassword(UUID userId, String currentPassword, String newPassword) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Verify current password
         if (user.getPasswordHash() == null ||
                 !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-            throw new RuntimeException("Current password is incorrect");
+            throw new DomainException("Current password is incorrect");
         }
 
         // Update password
@@ -89,27 +93,12 @@ public class UserService {
 
     public UserDto updateLanguage(UUID userId, String language) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         user.setLanguagePreference(language);
         user = userRepository.save(user);
 
-        return mapToUserDto(user);
+        return userMapper.toDto(user);
     }
 
-    private UserDto mapToUserDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getPhoneNumber(),
-                user.getProfilePictureUrl(),
-                user.getRole() != null ? user.getRole().name() : null,
-                user.getIsActive(),
-                user.getIsVerified(),
-                user.getLanguagePreference(),
-                user.getCreatedAt()
-        );
-    }
 }

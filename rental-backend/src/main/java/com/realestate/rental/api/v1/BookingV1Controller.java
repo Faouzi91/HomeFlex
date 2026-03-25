@@ -62,7 +62,7 @@ public class BookingV1Controller {
             @RequestBody(required = false) BookingResponseRequest request,
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        String response = request != null ? request.getMessage() : null;
+        String response = request != null ? request.message() : null;
         return ResponseEntity.ok(bookingApplicationService.approveBooking(id, landlordId, response));
     }
 
@@ -73,7 +73,7 @@ public class BookingV1Controller {
             @RequestBody BookingResponseRequest request,
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingApplicationService.rejectBooking(id, landlordId, request.getMessage()));
+        return ResponseEntity.ok(bookingApplicationService.rejectBooking(id, landlordId, request.message()));
     }
 
     @PatchMapping("/{id}/cancel")

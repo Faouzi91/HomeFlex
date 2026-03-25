@@ -1,33 +1,69 @@
 // ====================================
 // error.interceptor.ts
 // ====================================
-import { Injectable } from "@angular/core";
 import {
-  HttpInterceptor,
+  HttpInterceptorFn,
   HttpRequest,
-  HttpHandler,
-  HttpEvent,
+  HttpHandlerFn,
   HttpErrorResponse,
 } from "@angular/common/http";
+import { inject } from "@angular/core";
 import { Observable, throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
 import { Router } from "@angular/router";
 import { ToastController } from "@ionic/angular";
 
-@Injectable()
-export class ErrorInterceptor implements HttpInterceptor {
-  constructor(
-    private router: Router,
-    private toastController: ToastController
-  ) {}
+export const errorInterceptor: HttpInterceptorFn = (
+  request: HttpRequest<any>,
+  next: HttpHandlerFn
+): Observable<any> => {
+  const router = inject(Router);
+  const toastController = inject(ToastController);
 
-  intercept(
-    request: HttpRequest<any>,
-    next: HttpHandler
-  ): Observable<HttpEvent<any>> {
-    return next.handle(request).pipe(
-      catchError((error: HttpErrorResponse) => {
-        let errorMessage = "An error occurred";
+  return next(request).pipe(
+    catchError(async (error: HttpErrorResponse) => {
+      let errorMessage = "An error occurred";
+
+      if (error.error instanceof ErrorEvent) {
+        // Client-side error
+        errorMessage = error.error.message;
+      } else {
+        // Server-side error
+        switch (error.status) {
+          case 400:
+            errorMessage = "Bad request";
+            break;
+          case 401:
+            errorMessage = "Unauthorized";
+            router.navigate(["/auth/login"]);
+            break;
+          case 403:
+            errorMessage = "Forbidden";
+            break;
+          case 404:
+            errorMessage = "Not found";
+            break;
+          case 500:
+            errorMessage = "Internal server error";
+            break;
+          default:
+            errorMessage = `Error ${error.status}`;
+        }
+      }
+
+      // Show toast notification
+      const toast = await toastController.create({
+        message: errorMessage,
+        duration: 3000,
+        position: "top",
+        color: "danger",
+      });
+      await toast.present();
+
+      return throwError(() => error);
+    })
+  );
+};
 
         if (error.error instanceof ErrorEvent) {
           // Client-side error

@@ -28,9 +28,9 @@ public class ChatController {
 
         UUID userId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(chatService.createOrGetChatRoom(
-                request.getPropertyId(),
-                request.getTenantId(),
-                request.getLandlordId(),
+                request.propertyId(),
+                request.tenantId(),
+                request.landlordId(),
                 userId
         ));
     }
@@ -57,7 +57,7 @@ public class ChatController {
             Authentication authentication) {
 
         UUID senderId = UUID.fromString(authentication.getName());
-        MessageDto message = chatService.saveMessage(roomId, senderId, request.getMessage());
+        MessageDto message = chatService.saveMessage(roomId, senderId, request.message());
 
         // Send via WebSocket
         messagingTemplate.convertAndSend(

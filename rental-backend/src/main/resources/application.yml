@@ -21,6 +21,10 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
+  # Jackson Configuration
+  jackson:
+    default-property-inclusion: non_null
+
   # JPA Configuration
   jpa:
     hibernate:
@@ -69,9 +73,9 @@ spring:
 server:
   port: 8080
   error:
-    include-message: always
-    include-binding-errors: always
-    include-stacktrace: on_param
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
@@ -85,11 +89,24 @@ app:
     first-name: ${ADMIN_FIRST_NAME:Admin}
     last-name: ${ADMIN_LAST_NAME:User}
 
-  # JWT Configuration
+  # JWT Configuration (SRS FR-101: 15-min access, 7-day refresh)
   jwt:
     secret: ${JWT_SECRET}
-    expiration: 86400000 # 24 hours in milliseconds
+    expiration: 900000 # 15 minutes in milliseconds
     refresh-expiration: 604800000 # 7 days in milliseconds
+    cookie:
+      refresh-token-name: refreshToken
+      secure: ${JWT_COOKIE_SECURE:false}
+      same-site: Strict
+      max-age-seconds: 604800 # 7 days
+
+  # Stripe Payment Configuration (FR-400)
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:pk_test_placeholder}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+    platform-commission: 0.15 # 15% platform commission
+    currency: ${STRIPE_DEFAULT_CURRENCY:xaf}
 
   # AWS S3 Configuration
   aws:
@@ -139,11 +156,10 @@ logging:
     root: INFO
     com.realestate: DEBUG
     org.springframework.web: INFO
-    org.springframework.security: DEBUG
+    org.springframework.security: INFO
     org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
-    console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
     file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
   file:
     name: logs/application.log

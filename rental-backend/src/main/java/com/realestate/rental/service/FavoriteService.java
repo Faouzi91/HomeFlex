@@ -1,9 +1,12 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.FavoriteMapper;
 import com.realestate.rental.application.mapper.PropertyMapper;
 import com.realestate.rental.dto.*;
-import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.repository.*;
+import com.realestate.rental.shared.exception.ConflictException;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.utils.entity.Favorite;
 import com.realestate.rental.utils.entity.Property;
 import com.realestate.rental.utils.entity.User;
@@ -24,18 +27,19 @@ public class FavoriteService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final PropertyMapper propertyMapper;
+    private final FavoriteMapper favoriteMapper;
 
     public FavoriteDto addToFavorites(UUID userId, UUID propertyId) {
         // Check if already favorited
         if (favoriteRepository.existsByUserIdAndPropertyId(userId, propertyId)) {
-            throw new RuntimeException("Property already in favorites");
+            throw new ConflictException("Property already in favorites");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         // Create favorite
         Favorite favorite = new Favorite();
@@ -47,12 +51,12 @@ public class FavoriteService {
         property.setFavoriteCount(property.getFavoriteCount() + 1);
         propertyRepository.save(property);
 
-        return mapToFavoriteDto(favorite);
+        return favoriteMapper.toDto(favorite);
     }
 
     public void removeFromFavorites(UUID userId, UUID propertyId) {
         Favorite favorite = favoriteRepository.findByUserIdAndPropertyId(userId, propertyId)
-                .orElseThrow(() -> new RuntimeException("Favorite not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Favorite not found"));
 
         favoriteRepository.delete(favorite);
 
@@ -64,7 +68,7 @@ public class FavoriteService {
 
     public List<PropertyDto> getUserFavorites(UUID userId) {
         return favoriteRepository.findByUserId(userId).stream()
-                .map(favorite -> mapToPropertyDto(favorite.getProperty()))
+                .map(favorite -> propertyMapper.toDto(favorite.getProperty()))
                 .collect(Collectors.toList());
     }
 
@@ -72,17 +76,4 @@ public class FavoriteService {
         return favoriteRepository.existsByUserIdAndPropertyId(userId, propertyId);
     }
 
-    private FavoriteDto mapToFavoriteDto(Favorite favorite) {
-        return new FavoriteDto(
-                favorite.getId(),
-                favorite.getUser().getId(),
-                favorite.getProperty().getId(),
-                null,
-                favorite.getCreatedAt()
-        );
-    }
-
-    private PropertyDto mapToPropertyDto(Property property) {
-        return propertyMapper.toDto(property);
-    }
 }

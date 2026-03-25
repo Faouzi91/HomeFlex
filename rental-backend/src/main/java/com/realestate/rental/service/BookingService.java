@@ -3,6 +3,10 @@ package com.realestate.rental.service;
 import com.realestate.rental.application.mapper.BookingMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.BookingCreateRequest;
+import com.realestate.rental.shared.exception.ConflictException;
+import com.realestate.rental.shared.exception.DomainException;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.shared.exception.UnauthorizedException;
 import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.repository.*;
 import com.realestate.rental.utils.entity.Booking;
@@ -34,16 +38,16 @@ public class BookingService {
 
     public BookingDto createBooking(BookingCreateRequest request, UUID tenantId) {
         // Get property
-        Property property = propertyRepository.findById(request.getPropertyId())
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+        Property property = propertyRepository.findById(request.propertyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         // Get tenant
         User tenant = userRepository.findById(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
 
         // Validate tenant role
         if (tenant.getRole() != UserRole.TENANT) {
-            throw new RuntimeException("Only tenants can create bookings");
+            throw new UnauthorizedException("Only tenants can create bookings");
         }
 
         validateBookingDates(request);
@@ -53,12 +57,12 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setProperty(property);
         booking.setTenant(tenant);
-        booking.setBookingType(BookingType.valueOf(request.getBookingType()));
-        booking.setRequestedDate(request.getRequestedDate());
-        booking.setStartDate(request.getStartDate());
-        booking.setEndDate(request.getEndDate());
-        booking.setMessage(request.getMessage());
-        booking.setNumberOfOccupants(request.getNumberOfOccupants());
+        booking.setBookingType(BookingType.valueOf(request.bookingType()));
+        booking.setRequestedDate(request.requestedDate());
+        booking.setStartDate(request.startDate());
+        booking.setEndDate(request.endDate());
+        booking.setMessage(request.message());
+        booking.setNumberOfOccupants(request.numberOfOccupants());
         booking.setStatus(BookingStatus.PENDING);
 
         booking = bookingRepository.save(booking);
@@ -74,27 +78,27 @@ public class BookingService {
     }
 
     private void validateBookingDates(BookingCreateRequest request) {
-        if (request.getStartDate() != null
-                && request.getEndDate() != null
-                && request.getEndDate().isBefore(request.getStartDate())) {
-            throw new RuntimeException("End date must be on or after start date");
+        if (request.startDate() != null
+                && request.endDate() != null
+                && request.endDate().isBefore(request.startDate())) {
+            throw new DomainException("End date must be on or after start date");
         }
     }
 
     private void validateNoDateOverlap(BookingCreateRequest request) {
-        if (request.getStartDate() == null || request.getEndDate() == null) {
+        if (request.startDate() == null || request.endDate() == null) {
             return;
         }
 
         boolean overlaps = bookingRepository.existsDateOverlapForProperty(
-                request.getPropertyId(),
-                request.getStartDate(),
-                request.getEndDate(),
+                request.propertyId(),
+                request.startDate(),
+                request.endDate(),
                 Arrays.asList(BookingStatus.PENDING, BookingStatus.APPROVED, BookingStatus.COMPLETED)
         );
 
         if (overlaps) {
-            throw new RuntimeException("Selected dates overlap with an existing booking");
+            throw new ConflictException("Selected dates overlap with an existing booking");
         }
     }
 
@@ -104,11 +108,11 @@ public class BookingService {
 
     public List<BookingDto> getBookingsByProperty(UUID propertyId, UUID landlordId) {
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         // Verify ownership
         if (!property.getLandlord().getId().equals(landlordId)) {
-            throw new RuntimeException("Not authorized to view these bookings");
+            throw new UnauthorizedException("Not authorized to view these bookings");
         }
 
         return bookingMapper.toDto(bookingRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId));
@@ -116,12 +120,12 @@ public class BookingService {
 
     public BookingDto getBookingById(UUID bookingId, UUID userId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         // Verify user is either tenant or landlord
         if (!booking.getTenant().getId().equals(userId) &&
                 !booking.getProperty().getLandlord().getId().equals(userId)) {
-            throw new RuntimeException("Not authorized to view this booking");
+            throw new UnauthorizedException("Not authorized to view this booking");
         }
 
         return bookingMapper.toDto(booking);
@@ -129,11 +133,11 @@ public class BookingService {
 
     public BookingDto approveBooking(UUID bookingId, UUID landlordId, String response) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         // Verify landlord owns the property
         if (!booking.getProperty().getLandlord().getId().equals(landlordId)) {
-            throw new RuntimeException("Not authorized to approve this booking");
+            throw new UnauthorizedException("Not authorized to approve this booking");
         }
 
         booking.setStatus(BookingStatus.APPROVED);
@@ -153,11 +157,11 @@ public class BookingService {
 
     public BookingDto rejectBooking(UUID bookingId, UUID landlordId, String reason) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         // Verify landlord owns the property
         if (!booking.getProperty().getLandlord().getId().equals(landlordId)) {
-            throw new RuntimeException("Not authorized to reject this booking");
+            throw new UnauthorizedException("Not authorized to reject this booking");
         }
 
         booking.setStatus(BookingStatus.REJECTED);
@@ -177,11 +181,11 @@ public class BookingService {
 
     public BookingDto cancelBooking(UUID bookingId, UUID tenantId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         // Verify tenant owns the booking
         if (!booking.getTenant().getId().equals(tenantId)) {
-            throw new RuntimeException("Not authorized to cancel this booking");
+            throw new UnauthorizedException("Not authorized to cancel this booking");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);

@@ -5,6 +5,8 @@ import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.PropertyCreateRequest;
 import com.realestate.rental.dto.request.PropertyUpdateRequest;
 import com.realestate.rental.repository.*;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.shared.exception.UnauthorizedException;
 import com.realestate.rental.utils.entity.Amenity;
 import com.realestate.rental.utils.entity.Property;
 import com.realestate.rental.utils.entity.PropertyImage;
@@ -50,38 +52,38 @@ public class PropertyService {
             predicates.add(cb.equal(root.get("status"), PropertyStatus.APPROVED));
             predicates.add(cb.equal(root.get("isAvailable"), true));
 
-            if (params.getCity() != null && !params.getCity().trim().isEmpty()) {
+            if (params.city() != null && !params.city().trim().isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("city")),
-                        "%" + params.getCity().toLowerCase().trim() + "%"));
+                        "%" + params.city().toLowerCase().trim() + "%"));
             }
 
-            if (params.getMinPrice() != null) {
+            if (params.minPrice() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("price"),
-                        BigDecimal.valueOf(params.getMinPrice())));
+                        BigDecimal.valueOf(params.minPrice())));
             }
 
-            if (params.getMaxPrice() != null) {
+            if (params.maxPrice() != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("price"),
-                        BigDecimal.valueOf(params.getMaxPrice())));
+                        BigDecimal.valueOf(params.maxPrice())));
             }
 
-            if (params.getPropertyType() != null && !params.getPropertyType().trim().isEmpty()) {
+            if (params.propertyType() != null && !params.propertyType().trim().isEmpty()) {
                 try {
                     predicates.add(cb.equal(root.get("propertyType"),
-                            PropertyType.valueOf(params.getPropertyType().toUpperCase())));
+                            PropertyType.valueOf(params.propertyType().toUpperCase())));
                 } catch (IllegalArgumentException e) {
                     // Ignore invalid property type
                 }
             }
 
-            if (params.getBedrooms() != null) {
+            if (params.bedrooms() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("bedrooms"),
-                        params.getBedrooms()));
+                        params.bedrooms()));
             }
 
-            if (params.getBathrooms() != null) {
+            if (params.bathrooms() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("bathrooms"),
-                        params.getBathrooms()));
+                        params.bathrooms()));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
@@ -111,10 +113,10 @@ public class PropertyService {
     @Transactional(readOnly = true)
     public PropertyDto getPropertyById(UUID id) {
         Property property = propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         if (property.getDeletedAt() != null) {
-            throw new RuntimeException("Property not found");
+            throw new ResourceNotFoundException("Property not found");
         }
 
         // Force initialization of lazy collections
@@ -132,43 +134,43 @@ public class PropertyService {
                                       List<MultipartFile> videos,
                                       UUID landlordId) {
         User landlord = userRepository.findById(landlordId)
-                .orElseThrow(() -> new RuntimeException("Landlord not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Landlord not found"));
 
         if (landlord.getRole() != UserRole.LANDLORD && landlord.getRole() != UserRole.ADMIN) {
-            throw new RuntimeException("Only landlords can create properties");
+            throw new UnauthorizedException("Only landlords can create properties");
         }
 
         // Create property
         Property property = new Property();
         property.setLandlord(landlord);
-        property.setTitle(request.getTitle());
-        property.setDescription(request.getDescription());
-        property.setPropertyType(PropertyType.valueOf(request.getPropertyType()));
-        property.setListingType(ListingType.valueOf(request.getListingType()));
-        property.setPrice(request.getPrice());
-        property.setCurrency(request.getCurrency());
-        property.setAddress(request.getAddress());
-        property.setCity(request.getCity());
-        property.setStateProvince(request.getStateProvince());
-        property.setCountry(request.getCountry());
-        property.setPostalCode(request.getPostalCode());
-        property.setLatitude(request.getLatitude());
-        property.setLongitude(request.getLongitude());
-        property.setBedrooms(request.getBedrooms());
-        property.setBathrooms(request.getBathrooms());
-        property.setAreaSqm(request.getAreaSqm());
-        property.setFloorNumber(request.getFloorNumber());
-        property.setTotalFloors(request.getTotalFloors());
+        property.setTitle(request.title());
+        property.setDescription(request.description());
+        property.setPropertyType(PropertyType.valueOf(request.propertyType()));
+        property.setListingType(ListingType.valueOf(request.listingType()));
+        property.setPrice(request.price());
+        property.setCurrency(request.currency());
+        property.setAddress(request.address());
+        property.setCity(request.city());
+        property.setStateProvince(request.stateProvince());
+        property.setCountry(request.country());
+        property.setPostalCode(request.postalCode());
+        property.setLatitude(request.latitude());
+        property.setLongitude(request.longitude());
+        property.setBedrooms(request.bedrooms());
+        property.setBathrooms(request.bathrooms());
+        property.setAreaSqm(request.areaSqm());
+        property.setFloorNumber(request.floorNumber());
+        property.setTotalFloors(request.totalFloors());
         property.setIsAvailable(true);
-        property.setAvailableFrom(request.getAvailableFrom());
+        property.setAvailableFrom(request.availableFrom());
         property.setStatus(PropertyStatus.PENDING);
 
         property = propertyRepository.save(property);
 
         // Handle amenities
-        if (request.getAmenityIds() != null && !request.getAmenityIds().isEmpty()) {
+        if (request.amenityIds() != null && !request.amenityIds().isEmpty()) {
             Set<Amenity> amenities = new HashSet<>(
-                    amenityRepository.findAllById(request.getAmenityIds())
+                    amenityRepository.findAllById(request.amenityIds())
             );
             property.setAmenities(amenities);
         }
@@ -208,18 +210,18 @@ public class PropertyService {
                                       List<MultipartFile> videos,
                                       UUID landlordId) {
         Property property = propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         // Check ownership
         if (!property.getLandlord().getId().equals(landlordId)) {
-            throw new RuntimeException("Not authorized to update this property");
+            throw new UnauthorizedException("Not authorized to update this property");
         }
 
         // Update fields
-        if (request.getTitle() != null) property.setTitle(request.getTitle());
-        if (request.getDescription() != null) property.setDescription(request.getDescription());
-        if (request.getPrice() != null) property.setPrice(request.getPrice());
-        if (request.getIsAvailable() != null) property.setIsAvailable(request.getIsAvailable());
+        if (request.title() != null) property.setTitle(request.title());
+        if (request.description() != null) property.setDescription(request.description());
+        if (request.price() != null) property.setPrice(request.price());
+        if (request.isAvailable() != null) property.setIsAvailable(request.isAvailable());
 
         property = propertyRepository.save(property);
 
@@ -234,10 +236,10 @@ public class PropertyService {
     @Transactional
     public void deleteProperty(UUID id, UUID landlordId) {
         Property property = propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         if (!property.getLandlord().getId().equals(landlordId)) {
-            throw new RuntimeException("Not authorized to delete this property");
+            throw new UnauthorizedException("Not authorized to delete this property");
         }
 
         property.setDeletedAt(LocalDateTime.now());
@@ -272,7 +274,7 @@ public class PropertyService {
     @Transactional
     public void incrementViewCount(UUID propertyId) {
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
         property.setViewCount(property.getViewCount() + 1);
         propertyRepository.save(property);
     }
@@ -280,7 +282,7 @@ public class PropertyService {
     @Transactional(readOnly = true)
     public List<PropertyDto> getSimilarProperties(UUID propertyId) {
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         List<Property> similarProperties = propertyRepository.findSimilarProperties(
                 property.getCity(),

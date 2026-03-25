@@ -34,7 +34,7 @@ public class AdminController {
     public ResponseEntity<PropertyDto> rejectProperty(
             @PathVariable UUID id,
             @RequestBody RejectReasonRequest request) {
-        return ResponseEntity.ok(adminService.rejectProperty(id, request.getReason()));
+        return ResponseEntity.ok(adminService.rejectProperty(id, request.reason()));
     }
 
     @GetMapping("/users")

@@ -3,6 +3,7 @@ package com.realestate.rental.security;
 import com.realestate.rental.utils.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@Slf4j
 @Component
 public class JwtTokenProvider {
 
@@ -19,54 +21,51 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration}")
     private Long jwtExpiration;
 
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
     public String generateToken(User user) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-
         return Jwts.builder()
-                .setSubject(user.getId().toString())
+                .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole().name())
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(key, SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public String getUserIdFromToken(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-
         Claims claims = Jwts.parser()
-                .setSigningKey(key)
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims.getSubject();
     }
 
     public boolean validateToken(String authToken) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-
             Jwts.parser()
-                    .setSigningKey(key)
+                    .verifyWith(getSigningKey())
                     .build()
-                    .parseClaimsJws(authToken);
-
+                    .parseSignedClaims(authToken);
             return true;
         } catch (SecurityException ex) {
-            System.err.println("Invalid JWT signature");
+            log.warn("Invalid JWT signature");
         } catch (MalformedJwtException ex) {
-            System.err.println("Invalid JWT token");
+            log.warn("Invalid JWT token");
         } catch (ExpiredJwtException ex) {
-            System.err.println("Expired JWT token");
+            log.warn("Expired JWT token");
         } catch (UnsupportedJwtException ex) {
-            System.err.println("Unsupported JWT token");
+            log.warn("Unsupported JWT token");
         } catch (IllegalArgumentException ex) {
-            System.err.println("JWT claims string is empty");
+            log.warn("JWT claims string is empty");
         }
         return false;
     }

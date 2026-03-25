@@ -8,16 +8,21 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.realestate.rental.application.mapper.UserMapper;
 import com.realestate.rental.dto.*;
 import com.realestate.rental.dto.request.LoginRequest;
 import com.realestate.rental.dto.request.RegisterRequest;
 import com.realestate.rental.repository.*;
 import com.realestate.rental.security.JwtTokenProvider;
+import com.realestate.rental.shared.exception.ConflictException;
+import com.realestate.rental.shared.exception.DomainException;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
 import com.realestate.rental.utils.entity.OAuthProvider;
 import com.realestate.rental.utils.entity.RefreshToken;
 import com.realestate.rental.utils.entity.User;
 import com.realestate.rental.utils.enumeration.UserRole;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +34,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -41,6 +47,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
+    private final UserMapper userMapper;
 
     // FIXED: Add default value to make it optional
     @Value("${app.google.client-id:dummy-client-id-for-development}")
@@ -51,18 +58,18 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         // Check if user exists
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+        if (userRepository.existsByEmail(request.email())) {
+            throw new ConflictException("Email already registered");
         }
 
         // Create user
         User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setRole(request.getRole());
+        user.setEmail(request.email());
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setPhoneNumber(request.phoneNumber());
+        user.setRole(request.role());
         user.setIsActive(true);
         user.setIsVerified(false);
         user.setLanguagePreference("en");
@@ -73,31 +80,31 @@ public class AuthService {
         try {
             emailService.sendVerificationEmail(user);
         } catch (Exception e) {
-            System.err.println("Failed to send verification email: " + e.getMessage());
+            log.warn("Failed to send verification email: {}", e.getMessage());
         }
 
         // Generate tokens
         String accessToken = jwtTokenProvider.generateToken(user);
         String refreshToken = createRefreshToken(user);
 
-        return new AuthResponse(accessToken, refreshToken, mapToUserDto(user));
+        return new AuthResponse(accessToken, refreshToken, userMapper.toDto(user));
     }
 
     public AuthResponse login(LoginRequest request) {
         // Authenticate
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
+                        request.email(),
+                        request.password()
                 )
         );
 
         // Get user
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!user.getIsActive()) {
-            throw new RuntimeException("Account is suspended");
+            throw new DomainException("Account is suspended");
         }
 
         // Update last login
@@ -108,13 +115,13 @@ public class AuthService {
         String accessToken = jwtTokenProvider.generateToken(user);
         String refreshToken = createRefreshToken(user);
 
-        return new AuthResponse(accessToken, refreshToken, mapToUserDto(user));
+        return new AuthResponse(accessToken, refreshToken, userMapper.toDto(user));
     }
 
     public AuthResponse googleLogin(String idTokenString) {
         // FIXED: Check if Google OAuth is properly configured
         if ("dummy-client-id-for-development".equals(googleClientId)) {
-            throw new RuntimeException("Google OAuth is not configured. Please set GOOGLE_CLIENT_ID environment variable.");
+            throw new DomainException("Google OAuth is not configured. Please set GOOGLE_CLIENT_ID environment variable.");
         }
 
         try {
@@ -126,7 +133,7 @@ public class AuthService {
 
             GoogleIdToken idToken = verifier.verify(idTokenString);
             if (idToken == null) {
-                throw new RuntimeException("Invalid Google token");
+                throw new DomainException("Invalid Google token");
             }
 
             GoogleIdToken.Payload payload = idToken.getPayload();
@@ -168,26 +175,26 @@ public class AuthService {
             String accessToken = jwtTokenProvider.generateToken(user);
             String refreshToken = createRefreshToken(user);
 
-            return new AuthResponse(accessToken, refreshToken, mapToUserDto(user));
+            return new AuthResponse(accessToken, refreshToken, userMapper.toDto(user));
 
         } catch (Exception e) {
-            throw new RuntimeException("Google authentication failed: " + e.getMessage());
+            throw new DomainException("Google authentication failed: " + e.getMessage());
         }
     }
 
     public AuthResponse refreshToken(String refreshTokenString) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenString)
-                .orElseThrow(() -> new RuntimeException("Invalid refresh token"));
+                .orElseThrow(() -> new DomainException("Invalid refresh token"));
 
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(refreshToken);
-            throw new RuntimeException("Refresh token expired");
+            throw new DomainException("Refresh token expired");
         }
 
         User user = refreshToken.getUser();
         String newAccessToken = jwtTokenProvider.generateToken(user);
 
-        return new AuthResponse(newAccessToken, refreshTokenString, mapToUserDto(user));
+        return new AuthResponse(newAccessToken, refreshTokenString, userMapper.toDto(user));
     }
 
     public void logout(String token) {
@@ -200,7 +207,7 @@ public class AuthService {
 
     public void sendPasswordResetEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         String resetToken = UUID.randomUUID().toString();
 
@@ -208,15 +215,15 @@ public class AuthService {
         try {
             emailService.sendPasswordResetEmail(user, resetToken);
         } catch (Exception e) {
-            System.err.println("Failed to send password reset email: " + e.getMessage());
-            throw new RuntimeException("Failed to send password reset email");
+            log.error("Failed to send password reset email: {}", e.getMessage());
+            throw new DomainException("Failed to send password reset email");
         }
     }
 
     public void resetPassword(String token, String newPassword) {
         // Verify token and update password
         // Implementation depends on how you store reset tokens
-        throw new RuntimeException("Password reset not yet implemented");
+        throw new DomainException("Password reset not yet implemented");
     }
 
     private String createRefreshToken(User user) {
@@ -229,20 +236,5 @@ public class AuthService {
         return refreshToken.getToken();
     }
 
-    private UserDto mapToUserDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getPhoneNumber(),
-                user.getProfilePictureUrl(),
-                user.getRole() != null ? user.getRole().name() : null,
-                user.getIsActive(),
-                user.getIsVerified(),
-                user.getLanguagePreference(),
-                user.getCreatedAt()
-        );
-    }
 }
 

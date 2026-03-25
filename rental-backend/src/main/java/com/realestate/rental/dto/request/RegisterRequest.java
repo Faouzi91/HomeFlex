@@ -5,27 +5,12 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
-// RegisterRequest.java
-@Data
-public class RegisterRequest {
-    @NotBlank
-    @Email
-    private String email;
-
-    @NotBlank
-    @Size(min = 6)
-    private String password;
-
-    @NotBlank
-    private String firstName;
-
-    @NotBlank
-    private String lastName;
-
-    private String phoneNumber;
-
-    @NotNull
-    private UserRole role;
-}
+public record RegisterRequest(
+        @NotBlank @Email String email,
+        @NotBlank @Size(min = 8, message = "Password must be at least 8 characters") String password,
+        @NotBlank String firstName,
+        @NotBlank String lastName,
+        String phoneNumber,
+        @NotNull UserRole role
+) {}

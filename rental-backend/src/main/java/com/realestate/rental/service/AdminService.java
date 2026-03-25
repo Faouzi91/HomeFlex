@@ -1,10 +1,13 @@
 package com.realestate.rental.service;
 
+import com.realestate.rental.application.mapper.AdminMapper;
 import com.realestate.rental.application.mapper.PropertyMapper;
+import com.realestate.rental.application.mapper.ReportMapper;
 import com.realestate.rental.application.mapper.UserMapper;
 import com.realestate.rental.dto.*;
-import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.repository.*;
+import com.realestate.rental.shared.exception.ResourceNotFoundException;
+import com.realestate.rental.utils.entity.*;
 import com.realestate.rental.utils.entity.Property;
 import com.realestate.rental.utils.enumeration.BookingStatus;
 import com.realestate.rental.utils.enumeration.PropertyStatus;
@@ -32,15 +35,17 @@ public class AdminService {
     private final NotificationServiceExtension notificationService;
     private final PropertyMapper propertyMapper;
     private final UserMapper userMapper;
+    private final ReportMapper reportMapper;
+    private final AdminMapper adminMapper;
 
     public Page<PropertyDto> getPendingProperties(Pageable pageable) {
         return propertyRepository.findByStatus(PropertyStatus.PENDING, pageable)
-                .map(this::mapToPropertyDto);
+                .map(propertyMapper::toDto);
     }
 
     public PropertyDto approveProperty(UUID propertyId) {
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         property.setStatus(PropertyStatus.APPROVED);
         property = propertyRepository.save(property);
@@ -48,12 +53,12 @@ public class AdminService {
         // Notify landlord
         notificationService.sendPropertyApprovedNotification(property.getLandlord(), property);
 
-        return mapToPropertyDto(property);
+        return propertyMapper.toDto(property);
     }
 
     public PropertyDto rejectProperty(UUID propertyId, String reason) {
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         property.setStatus(PropertyStatus.REJECTED);
         property = propertyRepository.save(property);
@@ -61,32 +66,32 @@ public class AdminService {
         // Notify landlord with reason
         notificationService.sendPropertyRejectedNotification(property.getLandlord(), property, reason);
 
-        return mapToPropertyDto(property);
+        return propertyMapper.toDto(property);
     }
 
     public Page<UserDto> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
-                .map(this::mapToUserDto);
+                .map(userMapper::toDto);
     }
 
     public UserDto suspendUser(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         user.setIsActive(false);
         user = userRepository.save(user);
 
-        return mapToUserDto(user);
+        return userMapper.toDto(user);
     }
 
     public UserDto activateUser(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         user.setIsActive(true);
         user = userRepository.save(user);
 
-        return mapToUserDto(user);
+        return userMapper.toDto(user);
     }
 
     // helper to convert List<Object[]> to Map<String, Long>
@@ -134,16 +139,12 @@ public class AdminService {
 
 
         // Top viewed properties
-        List<TopPropertyDto> topViewedProperties = propertyRepository
-                .findTop10ByOrderByViewCountDesc().stream()
-                .map(this::mapToTopPropertyDto)
-                .collect(Collectors.toList());
+        List<TopPropertyDto> topViewedProperties = adminMapper.toTopPropertyDtoList(
+                propertyRepository.findTop10ByOrderByViewCountDesc());
 
         // Top favorited properties
-        List<TopPropertyDto> topFavoritedProperties = propertyRepository
-                .findTop10ByOrderByFavoriteCountDesc().stream()
-                .map(this::mapToTopPropertyDto)
-                .collect(Collectors.toList());
+        List<TopPropertyDto> topFavoritedProperties = adminMapper.toTopPropertyDtoList(
+                propertyRepository.findTop10ByOrderByFavoriteCountDesc());
 
         return new AnalyticsDto(
                 totalUsers,
@@ -166,77 +167,43 @@ public class AdminService {
 
     public Page<ReportDto> getReports(Pageable pageable) {
         return reportedListingRepository.findByStatus("PENDING", pageable)
-                .map(this::mapToReportDto);
+                .map(reportMapper::toDto);
     }
 
     public ReportDto resolveReport(UUID reportId) {
         ReportedListing report = reportedListingRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("Report not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
 
         report.setStatus("RESOLVED");
         report.setResolvedAt(LocalDateTime.now());
         report = reportedListingRepository.save(report);
 
-        return mapToReportDto(report);
+        return reportMapper.toDto(report);
     }
 
     public ReportDto createReport(UUID propertyId, UUID reporterId, com.realestate.rental.dto.request.ReportListingRequest request) {
         Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         User reporter = userRepository.findById(reporterId)
-                .orElseThrow(() -> new RuntimeException("Reporter not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Reporter not found"));
 
         ReportedListing report = new ReportedListing();
         report.setProperty(property);
         report.setReporter(reporter);
-        report.setReason(request.getReason());
-        report.setDescription(request.getDescription());
+        report.setReason(request.reason());
+        report.setDescription(request.description());
         report.setStatus("PENDING");
 
         report = reportedListingRepository.save(report);
 
-        return mapToReportDto(report);
+        return reportMapper.toDto(report);
     }
 
     public List<ReportDto> getReportsByProperty(UUID propertyId) {
         return reportedListingRepository.findByPropertyId(propertyId)
                 .stream()
-                .map(this::mapToReportDto)
+                .map(reportMapper::toDto)
                 .collect(Collectors.toList());
-    }
-
-    // Mapping methods
-    private PropertyDto mapToPropertyDto(Property property) {
-        return propertyMapper.toDto(property);
-    }
-
-    private UserDto mapToUserDto(User user) {
-        return userMapper.toDto(user);
-    }
-
-    private TopPropertyDto mapToTopPropertyDto(Property property) {
-        return new TopPropertyDto(
-                property.getId(),
-                property.getTitle(),
-                property.getCity(),
-                property.getViewCount(),
-                property.getFavoriteCount()
-        );
-    }
-
-    private ReportDto mapToReportDto(ReportedListing report) {
-        return new ReportDto(
-                report.getId(),
-                report.getProperty().getId(),
-                report.getProperty().getTitle(),
-                mapToUserDto(report.getReporter()),
-                report.getReason(),
-                report.getDescription(),
-                report.getStatus(),
-                report.getCreatedAt(),
-                report.getResolvedAt(),
-                report.getResolvedBy() != null ? mapToUserDto(report.getResolvedBy()) : null
-        );
     }
 }

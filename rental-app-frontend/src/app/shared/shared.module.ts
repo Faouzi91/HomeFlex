@@ -10,13 +10,15 @@ import { LoaderComponent } from "./components/loader/loader.component";
 import { FormsModule } from "@angular/forms";
 
 @NgModule({
-  declarations: [HeaderComponent, FooterComponent, LoaderComponent],
   imports: [
     CommonModule,
     IonicModule,
     RouterModule,
     TranslateModule,
     FormsModule,
+    HeaderComponent,
+    FooterComponent,
+    LoaderComponent,
   ],
   exports: [HeaderComponent, FooterComponent, LoaderComponent],
 })
