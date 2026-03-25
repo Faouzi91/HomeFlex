@@ -1,14 +1,16 @@
 // ====================================
 // favorite.service.ts
 // ====================================
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
-import { Property } from "../../../models/property.model";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { ApiListResponse, ApiValueResponse } from 'src/app/types/api.types';
+import { Property } from '../../../models/property.model';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class FavoriteService {
   private apiUrl = `${environment.apiUrl}/favorites`;
@@ -24,10 +26,12 @@ export class FavoriteService {
   }
 
   getMyFavorites(): Observable<Property[]> {
-    return this.http.get<Property[]>(this.apiUrl);
+    return this.http.get<ApiListResponse<Property>>(this.apiUrl).pipe(map((r) => r.data));
   }
 
   isFavorite(propertyId: string): Observable<boolean> {
-    return this.http.get<boolean>(`${this.apiUrl}/check/${propertyId}`);
+    return this.http
+      .get<ApiValueResponse<boolean>>(`${this.apiUrl}/check/${propertyId}`)
+      .pipe(map((r) => r.data));
   }
 }

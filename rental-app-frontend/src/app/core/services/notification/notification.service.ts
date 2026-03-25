@@ -1,11 +1,12 @@
 // ====================================
 // notification.service.ts
 // ====================================
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Observable, BehaviorSubject } from "rxjs";
-import { tap } from "rxjs/operators";
-import { environment } from "../../../environments/environment";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { ApiListResponse } from 'src/app/types/api.types';
 
 export interface Notification {
   id: string;
@@ -19,7 +20,7 @@ export interface Notification {
 }
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class NotificationService {
   private apiUrl = `${environment.apiUrl}/notifications`;
@@ -29,9 +30,11 @@ export class NotificationService {
   constructor(private http: HttpClient) {}
 
   getNotifications(unreadOnly: boolean = false): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`${this.apiUrl}`, {
-      params: { unreadOnly: unreadOnly.toString() },
-    });
+    return this.http
+      .get<ApiListResponse<Notification>>(`${this.apiUrl}`, {
+        params: { unreadOnly: unreadOnly.toString() },
+      })
+      .pipe(map((r) => r.data));
   }
 
   markAsRead(id: string): Observable<void> {

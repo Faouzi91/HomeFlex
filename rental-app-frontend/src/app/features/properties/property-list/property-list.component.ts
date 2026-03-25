@@ -1,23 +1,20 @@
-import { Component, OnInit, ViewChild } from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { IonInfiniteScroll, IonicModule } from "@ionic/angular";
-import { TranslateModule, TranslateService } from "@ngx-translate/core";
-import {
-  PagedResponse,
-  PropertyService,
-} from "src/app/core/services/property/property.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { IonInfiniteScroll, IonicModule } from '@ionic/angular';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { PagedResponse, PropertyService } from 'src/app/core/services/property/property.service';
 import {
   ListingType,
   Property,
   PropertySearchParams,
   PropertyType,
-} from "src/app/models/property.model";
-import { PropertyCardComponent } from "../property-card/property-card.component";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { CommonModule } from "@angular/common";
+} from 'src/app/models/property.model';
+import { PropertyCardComponent } from '../property-card/property-card.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: "app-property-list",
+  selector: 'app-property-list',
   standalone: true,
   imports: [
     IonicModule,
@@ -27,15 +24,15 @@ import { CommonModule } from "@angular/common";
     FormsModule,
     CommonModule,
   ],
-  templateUrl: "./property-list.component.html",
-  styleUrls: ["./property-list.component.scss"],
+  templateUrl: './property-list.component.html',
+  styleUrls: ['./property-list.component.scss'],
 })
 export class PropertyListComponent implements OnInit {
   @ViewChild(IonInfiniteScroll) infiniteScroll!: IonInfiniteScroll;
 
   properties: Property[] = [];
   loading = false;
-  viewMode: "grid" | "list" = "grid";
+  viewMode: 'grid' | 'list' = 'grid';
 
   // Pagination
   currentPage = 0;
@@ -47,8 +44,8 @@ export class PropertyListComponent implements OnInit {
   searchParams: PropertySearchParams = {
     page: 0,
     size: 20,
-    sortBy: "createdAt",
-    sortDirection: "desc",
+    sortBy: 'createdAt',
+    sortDirection: 'desc',
   };
 
   showFilters = false;
@@ -58,18 +55,18 @@ export class PropertyListComponent implements OnInit {
 
   // Filter options
   bedroomOptions = [
-    { key: "studioBeds", value: 0 }, // maps to filters.quickFilters.studioBeds
-    { key: "onePlusBeds", value: 1 }, // maps to filters.quickFilters.onePlusBeds
-    { key: "twoPlusBeds", value: 2 },
-    { key: "threePlusBeds", value: 3 },
-    { key: "fourPlusBeds", value: 4 },
+    { key: 'studioBeds', value: 0 }, // maps to filters.quickFilters.studioBeds
+    { key: 'onePlusBeds', value: 1 }, // maps to filters.quickFilters.onePlusBeds
+    { key: 'twoPlusBeds', value: 2 },
+    { key: 'threePlusBeds', value: 3 },
+    { key: 'fourPlusBeds', value: 4 },
   ];
 
   priceRanges = [
-    { key: "under100k", min: 0, max: 100000 },
-    { key: "100to200k", min: 100000, max: 200000 },
-    { key: "200to500k", min: 200000, max: 500000 },
-    { key: "over500k", min: 500000, max: null },
+    { key: 'under100k', min: 0, max: 100000 },
+    { key: '100to200k', min: 100000, max: 200000 },
+    { key: '200to500k', min: 200000, max: 500000 },
+    { key: 'over500k', min: 500000, max: null },
   ];
 
   constructor(
@@ -85,17 +82,15 @@ export class PropertyListComponent implements OnInit {
       this.searchParams = {
         page: 0,
         size: 20,
-        sortBy: params["sortBy"] || "createdAt",
-        sortDirection: params["sortDirection"] || "desc",
-        city: params["city"] || undefined,
-        propertyType: params["propertyType"] || undefined,
-        listingType: params["listingType"] || undefined,
-        minPrice: params["minPrice"] ? Number(params["minPrice"]) : undefined,
-        maxPrice: params["maxPrice"] ? Number(params["maxPrice"]) : undefined,
-        bedrooms: params["bedrooms"] ? Number(params["bedrooms"]) : undefined,
-        bathrooms: params["bathrooms"]
-          ? Number(params["bathrooms"])
-          : undefined,
+        sortBy: params['sortBy'] || 'createdAt',
+        sortDirection: params['sortDirection'] || 'desc',
+        city: params['city'] || undefined,
+        propertyType: params['propertyType'] || undefined,
+        listingType: params['listingType'] || undefined,
+        minPrice: params['minPrice'] ? Number(params['minPrice']) : undefined,
+        maxPrice: params['maxPrice'] ? Number(params['maxPrice']) : undefined,
+        bedrooms: params['bedrooms'] ? Number(params['bedrooms']) : undefined,
+        bathrooms: params['bathrooms'] ? Number(params['bathrooms']) : undefined,
       };
 
       // Always load properties when params change (or on init)
@@ -110,16 +105,16 @@ export class PropertyListComponent implements OnInit {
       this.searchParams.page = 0;
     }
 
-    console.log("Loading properties with params:", this.searchParams);
+    console.log('Loading properties with params:', this.searchParams);
 
     this.propertyService.searchProperties(this.searchParams).subscribe({
       next: (response: PagedResponse<Property>) => {
-        console.log("Properties loaded:", response);
+        console.log('Properties loaded:', response);
 
         if (append) {
-          this.properties = [...this.properties, ...response.content];
+          this.properties = [...this.properties, ...response.data];
         } else {
-          this.properties = response.content;
+          this.properties = response.data;
         }
 
         this.totalElements = response.totalElements;
@@ -135,7 +130,7 @@ export class PropertyListComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error("Error loading properties:", error);
+        console.error('Error loading properties:', error);
         this.loading = false;
         if (this.infiniteScroll) {
           this.infiniteScroll.complete();
@@ -150,8 +145,8 @@ export class PropertyListComponent implements OnInit {
   }
 
   toggleViewMode(): void {
-    this.viewMode = this.viewMode === "grid" ? "list" : "grid";
-    console.log("View mode changed to:", this.viewMode);
+    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+    console.log('View mode changed to:', this.viewMode);
   }
 
   toggleFilters(): void {
@@ -167,13 +162,13 @@ export class PropertyListComponent implements OnInit {
     this.searchParams = {
       page: 0,
       size: 20,
-      sortBy: "createdAt",
-      sortDirection: "desc",
+      sortBy: 'createdAt',
+      sortDirection: 'desc',
     };
     this.updateQueryParams();
   }
 
-  setSortBy(sortBy: string, sortDirection: "asc" | "desc" = "desc"): void {
+  setSortBy(sortBy: string, sortDirection: 'asc' | 'desc' = 'desc'): void {
     this.searchParams.sortBy = sortBy;
     this.searchParams.sortDirection = sortDirection;
     this.loadProperties();
@@ -186,23 +181,23 @@ export class PropertyListComponent implements OnInit {
   getListingTypeKey(): string {
     const lt = this.searchParams?.listingType;
     if (!lt) {
-      return "property.forRent"; // default fallback
+      return 'property.forRent'; // default fallback
     }
 
     // Normalize common enum values and map to the translation keys in your JSON
     const normalized = String(lt).toUpperCase();
 
     switch (normalized) {
-      case "RENT":
-      case "SHORT_TERM":
-        return "property.forRent";
-      case "SALE":
-      case "SELL":
-        return "property.forSale";
+      case 'RENT':
+      case 'SHORT_TERM':
+        return 'property.forRent';
+      case 'SALE':
+      case 'SELL':
+        return 'property.forSale';
       default:
         // If your listingType already contains a translation key, return it directly.
         // Fallback to forRent if unknown.
-        return "property.forRent";
+        return 'property.forRent';
     }
   }
 
@@ -212,9 +207,9 @@ export class PropertyListComponent implements OnInit {
       if (
         value !== null &&
         value !== undefined &&
-        value !== "" &&
-        key !== "page" &&
-        key !== "size"
+        value !== '' &&
+        key !== 'page' &&
+        key !== 'size'
       ) {
         params[key] = value;
       }
@@ -223,11 +218,11 @@ export class PropertyListComponent implements OnInit {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: params,
-      queryParamsHandling: "merge",
+      queryParamsHandling: 'merge',
     });
   }
 
   navigateToPropertyDetail(propertyId: string): void {
-    this.router.navigate(["/properties", propertyId]);
+    this.router.navigate(['/properties', propertyId]);
   }
 }

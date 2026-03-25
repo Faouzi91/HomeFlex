@@ -2,6 +2,7 @@ package com.realestate.rental.api.v1;
 
 import com.realestate.rental.application.booking.BookingApplicationService;
 import com.realestate.rental.dto.BookingDto;
+import com.realestate.rental.dto.api.ApiListResponse;
 import com.realestate.rental.dto.request.BookingCreateRequest;
 import com.realestate.rental.dto.request.BookingResponseRequest;
 import jakarta.validation.Valid;
@@ -12,7 +13,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -34,18 +34,19 @@ public class BookingV1Controller {
 
     @GetMapping("/my-bookings")
     @PreAuthorize("hasRole('TENANT')")
-    public ResponseEntity<List<BookingDto>> getMyBookings(Authentication authentication) {
+    public ResponseEntity<ApiListResponse<BookingDto>> getMyBookings(Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingApplicationService.getBookingsByTenant(tenantId));
+        return ResponseEntity.ok(new ApiListResponse<>(bookingApplicationService.getBookingsByTenant(tenantId)));
     }
 
     @GetMapping("/property/{propertyId}")
     @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
-    public ResponseEntity<List<BookingDto>> getPropertyBookings(
+    public ResponseEntity<ApiListResponse<BookingDto>> getPropertyBookings(
             @PathVariable UUID propertyId,
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingApplicationService.getBookingsByProperty(propertyId, landlordId));
+        return ResponseEntity.ok(new ApiListResponse<>(
+                bookingApplicationService.getBookingsByProperty(propertyId, landlordId)));
     }
 
     @GetMapping("/{id}")

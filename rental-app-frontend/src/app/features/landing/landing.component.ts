@@ -1,16 +1,16 @@
-import { Component, OnInit } from "@angular/core";
-import { Router } from "@angular/router";
-import { PropertyService } from "src/app/core/services/property/property.service";
-import { Property, ListingType } from "src/app/models/property.model";
-import { IonicModule } from "@ionic/angular";
-import { PropertyCardComponent } from "../properties/property-card/property-card.component";
-import { CommonModule } from "@angular/common";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { TranslateModule } from "@ngx-translate/core";
-import { SharedModule } from "src/app/shared/shared.module";
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { PropertyService } from 'src/app/core/services/property/property.service';
+import { Property, ListingType } from 'src/app/models/property.model';
+import { IonicModule } from '@ionic/angular';
+import { PropertyCardComponent } from '../properties/property-card/property-card.component';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from 'src/app/shared/shared.module';
 
 @Component({
-  selector: "app-landing",
+  selector: 'app-landing',
   standalone: true,
   imports: [
     IonicModule,
@@ -21,15 +21,15 @@ import { SharedModule } from "src/app/shared/shared.module";
     TranslateModule,
     SharedModule,
   ],
-  templateUrl: "./landing.component.html",
-  styleUrl: "./landing.component.scss",
+  templateUrl: './landing.component.html',
+  styleUrl: './landing.component.scss',
 })
 export class LandingComponent implements OnInit {
   featuredProperties: Property[] = [];
   isLoading = true;
-  searchCity = "";
+  searchCity = '';
   selectedType: ListingType = ListingType.RENT;
-  searchType: "buy" | "rent" = "rent";
+  searchType: 'buy' | 'rent' = 'rent';
 
   stats: {
     properties?: number;
@@ -61,7 +61,7 @@ export class LandingComponent implements OnInit {
         this.isLoading = false; // Stop loading
       },
       error: (err) => {
-        console.error("Error fetching featured properties:", err);
+        console.error('Error fetching featured properties:', err);
         this.isLoading = false; // Stop loading even on error
       },
     });
@@ -70,16 +70,16 @@ export class LandingComponent implements OnInit {
   // Add logic for the chips
   applyQuickFilter(type: string) {
     const queryParams: any = {};
-    if (type === "bedrooms") queryParams.bedrooms = 2; // Example default
-    if (type === "price") queryParams.sort = "price_asc";
+    if (type === 'bedrooms') queryParams.bedrooms = 2; // Example default
+    if (type === 'price') queryParams.sort = 'price_asc';
     // Navigate to search page with these params
-    this.router.navigate(["/properties"], { queryParams });
+    this.router.navigate(['/properties'], { queryParams });
   }
 
   loadStats(): void {
     this.propertyService.getStats().subscribe({
       next: (res) => (this.stats = res),
-      error: (err) => console.error("Error fetching stats", err),
+      error: (err) => console.error('Error fetching stats', err),
     });
   }
 
@@ -88,12 +88,12 @@ export class LandingComponent implements OnInit {
     if (this.searchCity) queryParams.city = this.searchCity;
 
     this.propertyService.searchProperties(queryParams).subscribe({
-      next: (res) => (this.featuredProperties = res.content),
-      error: (err) => console.error("Search error", err),
+      next: (res) => (this.featuredProperties = res.data),
+      error: (err) => console.error('Search error', err),
     });
   }
 
-  setSearchType(type: "buy" | "rent"): void {
+  setSearchType(type: 'buy' | 'rent'): void {
     this.searchType = type;
     // Optional: You can pass this type to your search parameters later
   }
@@ -107,17 +107,17 @@ export class LandingComponent implements OnInit {
   }
 
   navigateToProperties(): void {
-    this.router.navigate(["/properties"]);
+    this.router.navigate(['/properties']);
   }
 
   navigateToPropertyDetail(propertyId: string): void {
-    this.router.navigate(["/properties", propertyId]);
+    this.router.navigate(['/properties', propertyId]);
   }
 
   formatPrice(price: number, currency: string): string {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "XAF",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'XAF',
       minimumFractionDigits: 0,
     }).format(price);
   }

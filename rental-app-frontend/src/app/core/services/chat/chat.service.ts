@@ -1,11 +1,13 @@
 // ====================================
 // chat.service.ts
 // ====================================
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Observable, Subject, Subscription } from "rxjs";
-import { environment } from "../../../environments/environment";
-import { WebSocketService } from "../websocket/websocket.service";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, Subject, Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { ApiListResponse } from 'src/app/types/api.types';
+import { WebSocketService } from '../websocket/websocket.service';
 
 export interface ChatRoom {
   id: string;
@@ -28,7 +30,7 @@ export interface Message {
 }
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class ChatService {
   private apiUrl = `${environment.apiUrl}/chat`;
@@ -36,7 +38,10 @@ export class ChatService {
   private messageSubject = new Subject<Message>();
   public messages$ = this.messageSubject.asObservable();
 
-  constructor(private http: HttpClient, private webSocketService: WebSocketService) {}
+  constructor(
+    private http: HttpClient,
+    private webSocketService: WebSocketService
+  ) {}
 
   connectWebSocket(): void {
     if (!this.webSocketService.isConnected()) {
@@ -69,11 +74,15 @@ export class ChatService {
   }
 
   getMyChatRooms(): Observable<ChatRoom[]> {
-    return this.http.get<ChatRoom[]>(`${this.apiUrl}/rooms`);
+    return this.http
+      .get<ApiListResponse<ChatRoom>>(`${this.apiUrl}/rooms`)
+      .pipe(map((r) => r.data));
   }
 
   getChatMessages(roomId: string): Observable<Message[]> {
-    return this.http.get<Message[]>(`${this.apiUrl}/rooms/${roomId}/messages`);
+    return this.http
+      .get<ApiListResponse<Message>>(`${this.apiUrl}/rooms/${roomId}/messages`)
+      .pipe(map((r) => r.data));
   }
 
   sendMessage(roomId: string, message: string): Observable<Message> {
@@ -83,9 +92,6 @@ export class ChatService {
   }
 
   markMessageAsRead(messageId: string): Observable<void> {
-    return this.http.patch<void>(
-      `${this.apiUrl}/messages/${messageId}/read`,
-      {}
-    );
+    return this.http.patch<void>(`${this.apiUrl}/messages/${messageId}/read`, {});
   }
 }

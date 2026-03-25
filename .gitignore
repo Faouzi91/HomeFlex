@@ -80,3 +80,9 @@ build/
 ### VS Code ###
 .vscode/
 
+# Secrets and local env
+.env
+*.env
+**/firebase-adminsdk.json
+**/google-services.json
+

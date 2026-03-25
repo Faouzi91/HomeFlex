@@ -1,6 +1,8 @@
 package com.realestate.rental.controller;
 
 import com.realestate.rental.dto.*;
+import com.realestate.rental.dto.api.ApiListResponse;
+import com.realestate.rental.dto.api.ApiValueResponse;
 import com.realestate.rental.service.FavoriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -8,11 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/favorites")
+@RequestMapping("/api/v1/favorites")
 @RequiredArgsConstructor
 public class FavoriteController {
 
@@ -39,17 +40,17 @@ public class FavoriteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PropertyDto>> getMyFavorites(Authentication authentication) {
+    public ResponseEntity<ApiListResponse<PropertyDto>> getMyFavorites(Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(favoriteService.getUserFavorites(userId));
+        return ResponseEntity.ok(new ApiListResponse<>(favoriteService.getUserFavorites(userId)));
     }
 
     @GetMapping("/check/{propertyId}")
-    public ResponseEntity<Boolean> isFavorite(
+    public ResponseEntity<ApiValueResponse<Boolean>> isFavorite(
             @PathVariable UUID propertyId,
             Authentication authentication) {
 
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(favoriteService.isFavorite(userId, propertyId));
+        return ResponseEntity.ok(new ApiValueResponse<>(favoriteService.isFavorite(userId, propertyId)));
     }
 }

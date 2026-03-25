@@ -1,10 +1,12 @@
 // ====================================
 // booking.service.ts
 // ====================================
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+import { ApiListResponse } from 'src/app/types/api.types';
 
 export interface Booking {
   id: string;
@@ -22,7 +24,7 @@ export interface Booking {
 
 export interface BookingRequest {
   propertyId: string;
-  bookingType: "VIEWING" | "RENTAL" | "PURCHASE";
+  bookingType: 'VIEWING' | 'RENTAL' | 'PURCHASE';
   requestedDate?: Date;
   startDate?: Date;
   endDate?: Date;
@@ -31,7 +33,7 @@ export interface BookingRequest {
 }
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class BookingService {
   private apiUrl = `${environment.apiUrl}/bookings`;
@@ -43,11 +45,15 @@ export class BookingService {
   }
 
   getMyBookings(): Observable<Booking[]> {
-    return this.http.get<Booking[]>(`${this.apiUrl}/my-bookings`);
+    return this.http
+      .get<ApiListResponse<Booking>>(`${this.apiUrl}/my-bookings`)
+      .pipe(map((r) => r.data));
   }
 
   getPropertyBookings(propertyId: string): Observable<Booking[]> {
-    return this.http.get<Booking[]>(`${this.apiUrl}/property/${propertyId}`);
+    return this.http
+      .get<ApiListResponse<Booking>>(`${this.apiUrl}/property/${propertyId}`)
+      .pipe(map((r) => r.data));
   }
 
   getBookingById(id: string): Observable<Booking> {

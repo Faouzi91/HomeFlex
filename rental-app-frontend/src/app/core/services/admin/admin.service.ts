@@ -1,10 +1,10 @@
-import { Injectable } from "@angular/core";
-import { HttpClient, HttpParams } from "@angular/common/http";
-import { Observable } from "rxjs";
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 // 👇 IMPORT CENTRAL MODELS INSTEAD OF DEFINING LOCAL ONES
-import { Property } from "src/app/models/property.model";
-import { User } from "src/app/models/user.model";
-import { environment } from "src/app/environments/environment";
+import { Property } from 'src/app/models/property.model';
+import { User } from 'src/app/models/user.model';
+import { environment } from 'src/app/environments/environment';
 
 export interface Analytics {
   totalUsers: number;
@@ -23,7 +23,7 @@ export interface Report {
 }
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class AdminService {
   private apiUrl = `${environment.apiUrl}/admin`;
@@ -31,18 +31,12 @@ export class AdminService {
   constructor(private http: HttpClient) {}
 
   getPendingProperties(page: number = 0, size: number = 20) {
-    const params = new HttpParams().set("page", page).set("size", size);
-    return this.http.get<{ content: Property[] }>(
-      `${this.apiUrl}/properties/pending`,
-      { params }
-    );
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<{ data: Property[] }>(`${this.apiUrl}/properties/pending`, { params });
   }
 
   approveProperty(id: string): Observable<Property> {
-    return this.http.patch<Property>(
-      `${this.apiUrl}/properties/${id}/approve`,
-      {}
-    );
+    return this.http.patch<Property>(`${this.apiUrl}/properties/${id}/approve`, {});
   }
 
   rejectProperty(id: string, reason: string): Observable<Property> {
@@ -52,8 +46,8 @@ export class AdminService {
   }
 
   getUsers(page: number = 0, size: number = 20) {
-    const params = new HttpParams().set("page", page).set("size", size);
-    return this.http.get<{ content: User[] }>(`${this.apiUrl}/users`, {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<{ data: User[] }>(`${this.apiUrl}/users`, {
       params,
     });
   }
@@ -71,8 +65,8 @@ export class AdminService {
   }
 
   getReports(page: number = 0, size: number = 20) {
-    const params = new HttpParams().set("page", page).set("size", size);
-    return this.http.get<{ content: Report[] }>(`${this.apiUrl}/reports`, {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<{ data: Report[] }>(`${this.apiUrl}/reports`, {
       params,
     });
   }

@@ -71,34 +71,30 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/stats").permitAll() // Allow Landing page stats
-                        .requestMatchers(HttpMethod.GET, "/api/properties/*/similar").permitAll() // Allow Similar properties
-                        .requestMatchers(HttpMethod.GET, "/api/v1/properties/*/similar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/stats").permitAll()
 
-                        // Public property search
-                        .requestMatchers(HttpMethod.GET, "/api/properties/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/properties/{id}").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/properties/{id}/view").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/properties/my-properties")
+                                .hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/properties/*/reports").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/search").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/properties/{id}").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/properties/{id}/view").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/properties/*/similar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/properties/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/properties/*/view").permitAll()
 
-                        // Admin endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reviews/property/**").permitAll()
 
-                        // Landlord endpoints
-                        .requestMatchers(HttpMethod.POST, "/api/properties").hasAnyRole("LANDLORD", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/properties/**").hasAnyRole("LANDLORD", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/properties/**").hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                        // All other endpoints require authentication
+                        .requestMatchers(HttpMethod.POST, "/api/v1/properties").hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/properties/json").hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/properties/**").hasAnyRole("LANDLORD", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/properties/**").hasAnyRole("LANDLORD", "ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->

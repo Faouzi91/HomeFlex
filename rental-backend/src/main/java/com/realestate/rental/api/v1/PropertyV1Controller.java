@@ -4,6 +4,8 @@ import com.realestate.rental.application.property.PropertyApplicationService;
 import com.realestate.rental.dto.PropertyDto;
 import com.realestate.rental.dto.PropertySearchParams;
 import com.realestate.rental.dto.ReportDto;
+import com.realestate.rental.dto.api.ApiListResponse;
+import com.realestate.rental.dto.api.ApiPageResponse;
 import com.realestate.rental.dto.request.PropertyCreateRequest;
 import com.realestate.rental.dto.request.PropertyUpdateRequest;
 import com.realestate.rental.dto.request.ReportListingRequest;
@@ -31,7 +33,7 @@ public class PropertyV1Controller {
     private final AdminService adminService;
 
     @GetMapping("/search")
-    public ResponseEntity<Page<PropertyDto>> searchProperties(
+    public ResponseEntity<ApiPageResponse<PropertyDto>> searchProperties(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
@@ -49,7 +51,8 @@ public class PropertyV1Controller {
                 .bathrooms(bathrooms)
                 .amenities(amenities)
                 .build();
-        return ResponseEntity.ok(propertyApplicationService.searchProperties(params, pageable));
+        Page<PropertyDto> page = propertyApplicationService.searchProperties(params, pageable);
+        return ResponseEntity.ok(ApiPageResponse.from(page));
     }
 
     @GetMapping("/{id}")
@@ -101,9 +104,9 @@ public class PropertyV1Controller {
 
     @GetMapping("/my-properties")
     @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
-    public ResponseEntity<List<PropertyDto>> getMyProperties(Authentication authentication) {
+    public ResponseEntity<ApiListResponse<PropertyDto>> getMyProperties(Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(propertyApplicationService.getPropertiesByLandlord(landlordId));
+        return ResponseEntity.ok(new ApiListResponse<>(propertyApplicationService.getPropertiesByLandlord(landlordId)));
     }
 
     @PostMapping("/{id}/view")
@@ -113,8 +116,8 @@ public class PropertyV1Controller {
     }
 
     @GetMapping("/{id}/similar")
-    public ResponseEntity<List<PropertyDto>> getSimilarProperties(@PathVariable UUID id) {
-        return ResponseEntity.ok(propertyApplicationService.getSimilarProperties(id));
+    public ResponseEntity<ApiListResponse<PropertyDto>> getSimilarProperties(@PathVariable UUID id) {
+        return ResponseEntity.ok(new ApiListResponse<>(propertyApplicationService.getSimilarProperties(id)));
     }
 
     @PostMapping("/{id}/report")
@@ -130,7 +133,7 @@ public class PropertyV1Controller {
 
     @GetMapping("/{id}/reports")
     @PreAuthorize("hasAnyRole('TENANT', 'LANDLORD', 'ADMIN')")
-    public ResponseEntity<List<ReportDto>> getReportsByProperty(@PathVariable UUID id) {
-        return ResponseEntity.ok(adminService.getReportsByProperty(id));
+    public ResponseEntity<ApiListResponse<ReportDto>> getReportsByProperty(@PathVariable UUID id) {
+        return ResponseEntity.ok(new ApiListResponse<>(adminService.getReportsByProperty(id)));
     }
 }

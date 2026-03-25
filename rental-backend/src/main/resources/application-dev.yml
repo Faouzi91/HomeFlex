@@ -3,10 +3,9 @@
 spring:
   application:
     name: real-estate-rental-api
-#  config:
-#    import: optional:file:.env
+  #  config:
+  #    import: optional:file:.env
 
-  
   # Database Configuration
   datasource:
     url: jdbc:postgresql://localhost:5432/rental_db
@@ -19,7 +18,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-  
+
   # JPA Configuration
   jpa:
     hibernate:
@@ -34,14 +33,14 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
-  
+
   # File Upload
   servlet:
     multipart:
       enabled: true
       max-file-size: 10MB
       max-request-size: 50MB
-  
+
   # Email Configuration
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
@@ -54,7 +53,7 @@ spring:
           auth: true
           starttls:
             enable: true
-  
+
   # WebSocket Configuration
   websocket:
     allowed-origins:
@@ -84,28 +83,28 @@ app:
   # JWT Configuration
   jwt:
     secret: ${JWT_SECRET}
-    expiration: 86400000  # 24 hours in milliseconds
-    refresh-expiration: 604800000  # 7 days in milliseconds
-  
+    expiration: 86400000 # 24 hours in milliseconds
+    refresh-expiration: 604800000 # 7 days in milliseconds
+
   # AWS S3 Configuration
   aws:
     s3:
-      access-key: ${AWS_ACCESS_KEY:dummy-access-key}
-      secret-key: ${AWS_SECRET_KEY:dummy-secret-key}
+      access-key: ${AWS_ACCESS_KEY:}
+      secret-key: ${AWS_SECRET_KEY:}
       region: ${AWS_REGION:us-east-1}
       bucket-name: ${AWS_S3_BUCKET:rental-app-media}
       endpoint: ${AWS_S3_ENDPOINT:}
-  
+
   # Firebase Configuration
   firebase:
-    enabled: true  # Set to true when you have the credentials file
-    credentials-path: src/main/resources/firebase-adminsdk.json
-  
+    enabled: ${FIREBASE_ENABLED:false}
+    credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
+
   # Google OAuth Configuration
   google:
-    client-id: ${GOOGLE_CLIENT_ID:dummy-client-id-for-development}
-    client-secret: ${GOOGLE_CLIENT_SECRET:dummy-client-secret-for-development}
-  
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+
   # CORS Configuration
   cors:
     allowed-origins:
@@ -138,8 +137,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
   file:
     name: logs/application.log
     max-size: 10MB
@@ -169,4 +168,3 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
   show-actuator: false
-

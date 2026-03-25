@@ -1,6 +1,8 @@
 package com.realestate.rental.controller;
 
 import com.realestate.rental.dto.*;
+import com.realestate.rental.dto.api.ApiListResponse;
+import com.realestate.rental.dto.api.ApiValueResponse;
 import com.realestate.rental.dto.request.ReviewCreateRequest;
 import com.realestate.rental.service.ReviewService;
 import jakarta.validation.Valid;
@@ -10,11 +12,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/reviews")
+@RequestMapping("/api/v1/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
@@ -31,13 +32,13 @@ public class ReviewController {
     }
 
     @GetMapping("/property/{propertyId}")
-    public ResponseEntity<List<ReviewDto>> getPropertyReviews(@PathVariable UUID propertyId) {
-        return ResponseEntity.ok(reviewService.getPropertyReviews(propertyId));
+    public ResponseEntity<ApiListResponse<ReviewDto>> getPropertyReviews(@PathVariable UUID propertyId) {
+        return ResponseEntity.ok(new ApiListResponse<>(reviewService.getPropertyReviews(propertyId)));
     }
 
     @GetMapping("/property/{propertyId}/average")
-    public ResponseEntity<Double> getAverageRating(@PathVariable UUID propertyId) {
-        return ResponseEntity.ok(reviewService.getAverageRating(propertyId));
+    public ResponseEntity<ApiValueResponse<Double>> getAverageRating(@PathVariable UUID propertyId) {
+        return ResponseEntity.ok(new ApiValueResponse<>(reviewService.getAverageRating(propertyId)));
     }
 
     @DeleteMapping("/{id}")

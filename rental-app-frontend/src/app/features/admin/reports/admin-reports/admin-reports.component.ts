@@ -1,18 +1,15 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
-import { IonicModule, ToastController } from "@ionic/angular";
-import { TranslateModule, TranslateService } from "@ngx-translate/core";
-import {
-  AdminService,
-  Report,
-} from "src/app/core/services/admin/admin.service";
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { IonicModule, ToastController } from '@ionic/angular';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AdminService, Report } from 'src/app/core/services/admin/admin.service';
 
 @Component({
-  selector: "app-admin-reports",
+  selector: 'app-admin-reports',
   standalone: true,
   imports: [IonicModule, CommonModule, TranslateModule],
-  templateUrl: "./admin-reports.component.html",
-  styleUrls: ["./admin-reports.component.scss"],
+  templateUrl: './admin-reports.component.html',
+  styleUrls: ['./admin-reports.component.scss'],
 })
 export class AdminReportsComponent implements OnInit {
   reports: Report[] = [];
@@ -37,9 +34,9 @@ export class AdminReportsComponent implements OnInit {
     this.adminService.getReports(this.page).subscribe({
       next: (res) => {
         if (this.page === 0) {
-          this.reports = res.content;
+          this.reports = res.data;
         } else {
-          this.reports = [...this.reports, ...res.content];
+          this.reports = [...this.reports, ...res.data];
         }
         this.loading = false;
         if (event) event.target.complete();
@@ -55,14 +52,11 @@ export class AdminReportsComponent implements OnInit {
   resolveReport(report: Report) {
     this.adminService.resolveReport(report.id).subscribe({
       next: () => {
-        report.status = "RESOLVED";
-        this.showToast(this.translate.instant("admin.reports.resolveSuccess"));
+        report.status = 'RESOLVED';
+        this.showToast(this.translate.instant('admin.reports.resolveSuccess'));
       },
       error: () => {
-        this.showToast(
-          this.translate.instant("admin.reports.resolveError"),
-          "danger"
-        );
+        this.showToast(this.translate.instant('admin.reports.resolveError'), 'danger');
       },
     });
   }
@@ -79,29 +73,29 @@ export class AdminReportsComponent implements OnInit {
 
   getStatusColor(status: string): string {
     const colors: any = {
-      PENDING: "warning",
-      RESOLVED: "success",
-      DISMISSED: "medium",
+      PENDING: 'warning',
+      RESOLVED: 'success',
+      DISMISSED: 'medium',
     };
-    return colors[status] || "medium";
+    return colors[status] || 'medium';
   }
 
   getTypeIcon(type: string): string {
     const icons: any = {
-      SPAM: "alert-circle",
-      INAPPROPRIATE: "warning",
-      FRAUD: "shield-half",
-      OTHER: "help-circle",
+      SPAM: 'alert-circle',
+      INAPPROPRIATE: 'warning',
+      FRAUD: 'shield-half',
+      OTHER: 'help-circle',
     };
-    return icons[type] || "flag";
+    return icons[type] || 'flag';
   }
 
-  async showToast(msg: string, color: string = "success") {
+  async showToast(msg: string, color: string = 'success') {
     const toast = await this.toastCtrl.create({
       message: msg,
       duration: 2000,
       color,
-      position: "bottom",
+      position: 'bottom',
     });
     toast.present();
   }

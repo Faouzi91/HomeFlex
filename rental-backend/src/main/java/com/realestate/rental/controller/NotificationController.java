@@ -1,6 +1,7 @@
 package com.realestate.rental.controller;
 
 import com.realestate.rental.dto.*;
+import com.realestate.rental.dto.api.ApiListResponse;
 import com.realestate.rental.dto.request.FCMTokenRequest;
 import com.realestate.rental.dto.request.MessageResponse;
 import com.realestate.rental.service.NotificationService;
@@ -9,26 +10,25 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationService notificationService;
 
     @GetMapping
-    public ResponseEntity<List<NotificationDto>> getMyNotifications(
+    public ResponseEntity<ApiListResponse<NotificationDto>> getMyNotifications(
             @RequestParam(defaultValue = "false") boolean unreadOnly,
             Authentication authentication) {
 
         UUID userId = UUID.fromString(authentication.getName());
-        List<NotificationDto> notifications = unreadOnly
+        var notifications = unreadOnly
                 ? notificationService.getUnreadNotifications(userId)
                 : notificationService.getAllNotifications(userId);
-        return ResponseEntity.ok(notifications);
+        return ResponseEntity.ok(new ApiListResponse<>(notifications));
     }
 
     @PatchMapping("/{id}/read")

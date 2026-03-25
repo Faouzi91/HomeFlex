@@ -1,10 +1,10 @@
 package com.realestate.rental.controller;
 
 import com.realestate.rental.dto.*;
+import com.realestate.rental.dto.api.ApiPageResponse;
 import com.realestate.rental.dto.request.RejectReasonRequest;
 import com.realestate.rental.service.AdminService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
@@ -21,8 +21,8 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/properties/pending")
-    public ResponseEntity<Page<PropertyDto>> getPendingProperties(Pageable pageable) {
-        return ResponseEntity.ok(adminService.getPendingProperties(pageable));
+    public ResponseEntity<ApiPageResponse<PropertyDto>> getPendingProperties(Pageable pageable) {
+        return ResponseEntity.ok(ApiPageResponse.from(adminService.getPendingProperties(pageable)));
     }
 
     @PatchMapping("/properties/{id}/approve")
@@ -38,8 +38,8 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public ResponseEntity<Page<UserDto>> getAllUsers(Pageable pageable) {
-        return ResponseEntity.ok(adminService.getAllUsers(pageable));
+    public ResponseEntity<ApiPageResponse<UserDto>> getAllUsers(Pageable pageable) {
+        return ResponseEntity.ok(ApiPageResponse.from(adminService.getAllUsers(pageable)));
     }
 
     @PatchMapping("/users/{id}/suspend")
@@ -58,8 +58,8 @@ public class AdminController {
     }
 
     @GetMapping("/reports")
-    public ResponseEntity<Page<ReportDto>> getReports(Pageable pageable) {
-        return ResponseEntity.ok(adminService.getReports(pageable));
+    public ResponseEntity<ApiPageResponse<ReportDto>> getReports(Pageable pageable) {
+        return ResponseEntity.ok(ApiPageResponse.from(adminService.getReports(pageable)));
     }
 
     @PatchMapping("/reports/{id}/resolve")

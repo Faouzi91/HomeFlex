@@ -7,16 +7,16 @@
 // ====================================
 export const environment = {
   production: false,
-  apiUrl: "http://localhost:8080/api",
-  wsUrl: "ws://localhost:8080/ws",
-  googleClientId: "YOUR_GOOGLE_CLIENT_ID",
+  apiUrl: 'http://localhost:8080/api/v1',
+  wsUrl: 'ws://localhost:8080/ws',
+  googleClientId: 'YOUR_GOOGLE_CLIENT_ID',
   firebaseConfig: {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID",
+    apiKey: 'YOUR_FIREBASE_API_KEY',
+    authDomain: 'YOUR_AUTH_DOMAIN',
+    projectId: 'YOUR_PROJECT_ID',
+    storageBucket: 'YOUR_STORAGE_BUCKET',
+    messagingSenderId: 'YOUR_SENDER_ID',
+    appId: 'YOUR_APP_ID',
   },
 };
 

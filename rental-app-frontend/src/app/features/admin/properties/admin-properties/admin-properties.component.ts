@@ -1,17 +1,17 @@
-import { CommonModule } from "@angular/common";
-import { Component, OnInit } from "@angular/core";
-import { Router } from "@angular/router";
-import { AlertController, ToastController, IonicModule } from "@ionic/angular";
-import { AdminService } from "src/app/core/services/admin/admin.service";
-import { Property } from "src/app/models/property.model";
-import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { AlertController, ToastController, IonicModule } from '@ionic/angular';
+import { AdminService } from 'src/app/core/services/admin/admin.service';
+import { Property } from 'src/app/models/property.model';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: "app-admin-properties",
+  selector: 'app-admin-properties',
   standalone: true,
   imports: [IonicModule, CommonModule, TranslateModule],
-  templateUrl: "./admin-properties.component.html",
-  styleUrls: ["./admin-properties.component.scss"],
+  templateUrl: './admin-properties.component.html',
+  styleUrls: ['./admin-properties.component.scss'],
 })
 export class AdminPropertiesComponent implements OnInit {
   pendingProperties: Property[] = [];
@@ -38,9 +38,9 @@ export class AdminPropertiesComponent implements OnInit {
     this.adminService.getPendingProperties(this.page).subscribe({
       next: (res) => {
         if (this.page === 0) {
-          this.pendingProperties = res.content;
+          this.pendingProperties = res.data;
         } else {
-          this.pendingProperties = [...this.pendingProperties, ...res.content];
+          this.pendingProperties = [...this.pendingProperties, ...res.data];
         }
         this.loading = false;
         if (event) event.target.complete();
@@ -55,31 +55,30 @@ export class AdminPropertiesComponent implements OnInit {
 
   async approve(property: Property) {
     const alert = await this.alertCtrl.create({
-      header: this.translate.instant("admin.properties.approveConfirm.title"),
-      message: this.translate.instant(
-        "admin.properties.approveConfirm.message",
-        { title: property.title }
-      ),
+      header: this.translate.instant('admin.properties.approveConfirm.title'),
+      message: this.translate.instant('admin.properties.approveConfirm.message', {
+        title: property.title,
+      }),
       buttons: [
         {
-          text: this.translate.instant("common.cancel"),
-          role: "cancel",
+          text: this.translate.instant('common.cancel'),
+          role: 'cancel',
         },
         {
-          text: this.translate.instant("admin.properties.approve"),
+          text: this.translate.instant('admin.properties.approve'),
           handler: () => {
             this.adminService.approveProperty(property.id).subscribe({
               next: () => {
                 this.presentToast(
-                  this.translate.instant("admin.properties.approveSuccess"),
-                  "success"
+                  this.translate.instant('admin.properties.approveSuccess'),
+                  'success'
                 );
                 this.loadPending();
               },
               error: () =>
                 this.presentToast(
-                  this.translate.instant("admin.properties.approveError"),
-                  "danger"
+                  this.translate.instant('admin.properties.approveError'),
+                  'danger'
                 ),
             });
           },
@@ -92,39 +91,35 @@ export class AdminPropertiesComponent implements OnInit {
 
   async reject(property: Property) {
     const alert = await this.alertCtrl.create({
-      header: this.translate.instant("admin.properties.rejectConfirm.title"),
-      message: this.translate.instant("admin.properties.rejectConfirm.message"),
+      header: this.translate.instant('admin.properties.rejectConfirm.title'),
+      message: this.translate.instant('admin.properties.rejectConfirm.message'),
       inputs: [
         {
-          name: "reason",
-          type: "textarea",
-          placeholder: this.translate.instant("admin.properties.rejectReason"),
+          name: 'reason',
+          type: 'textarea',
+          placeholder: this.translate.instant('admin.properties.rejectReason'),
         },
       ],
       buttons: [
         {
-          text: this.translate.instant("common.cancel"),
-          role: "cancel",
+          text: this.translate.instant('common.cancel'),
+          role: 'cancel',
         },
         {
-          text: this.translate.instant("admin.properties.reject"),
+          text: this.translate.instant('admin.properties.reject'),
           handler: (data) => {
             const reason =
-              data.reason ||
-              this.translate.instant("admin.properties.defaultRejectReason");
+              data.reason || this.translate.instant('admin.properties.defaultRejectReason');
             this.adminService.rejectProperty(property.id, reason).subscribe({
               next: () => {
                 this.presentToast(
-                  this.translate.instant("admin.properties.rejectSuccess"),
-                  "medium"
+                  this.translate.instant('admin.properties.rejectSuccess'),
+                  'medium'
                 );
                 this.loadPending();
               },
               error: () =>
-                this.presentToast(
-                  this.translate.instant("admin.properties.rejectError"),
-                  "danger"
-                ),
+                this.presentToast(this.translate.instant('admin.properties.rejectError'), 'danger'),
             });
           },
         },
@@ -135,7 +130,7 @@ export class AdminPropertiesComponent implements OnInit {
   }
 
   viewDetails(id: string) {
-    this.router.navigate(["/properties", id]);
+    this.router.navigate(['/properties', id]);
   }
 
   loadMore(event: any) {
@@ -148,15 +143,15 @@ export class AdminPropertiesComponent implements OnInit {
       message,
       duration: 2000,
       color,
-      position: "bottom",
+      position: 'bottom',
     });
     toast.present();
   }
 
   formatPrice(price: number, currency: string): string {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency || "XAF",
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'XAF',
       minimumFractionDigits: 0,
     }).format(price);
   }
@@ -166,7 +161,7 @@ export class AdminPropertiesComponent implements OnInit {
     return (
       primary?.imageUrl ||
       property.images?.[0]?.imageUrl ||
-      "/assets/images/placeholder-property.jpg"
+      '/assets/images/placeholder-property.jpg'
     );
   }
 }

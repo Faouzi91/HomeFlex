@@ -1,6 +1,7 @@
 package com.realestate.rental.controller;
 
 import com.realestate.rental.dto.*;
+import com.realestate.rental.dto.api.ApiListResponse;
 import com.realestate.rental.dto.request.ChatRoomCreateRequest;
 import com.realestate.rental.dto.request.MessageSendRequest;
 import com.realestate.rental.service.ChatService;
@@ -10,11 +11,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class ChatController {
 
@@ -36,18 +36,18 @@ public class ChatController {
     }
 
     @GetMapping("/rooms")
-    public ResponseEntity<List<ChatRoomDto>> getMyChatRooms(Authentication authentication) {
+    public ResponseEntity<ApiListResponse<ChatRoomDto>> getMyChatRooms(Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(chatService.getChatRoomsByUser(userId));
+        return ResponseEntity.ok(new ApiListResponse<>(chatService.getChatRoomsByUser(userId)));
     }
 
     @GetMapping("/rooms/{roomId}/messages")
-    public ResponseEntity<List<MessageDto>> getChatMessages(
+    public ResponseEntity<ApiListResponse<MessageDto>> getChatMessages(
             @PathVariable UUID roomId,
             Authentication authentication) {
 
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(chatService.getMessagesByRoom(roomId, userId));
+        return ResponseEntity.ok(new ApiListResponse<>(chatService.getMessagesByRoom(roomId, userId)));
     }
 
     @PostMapping("/rooms/{roomId}/messages")
