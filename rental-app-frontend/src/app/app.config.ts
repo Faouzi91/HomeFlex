@@ -7,12 +7,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { importProvidersFrom } from '@angular/core';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { HttpClient } from '@angular/common/http';
-
-export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http, "./assets/i18n/", ".json");
-}
+import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 export const config: ApplicationConfig = {
   providers: [
@@ -21,13 +16,16 @@ export const config: ApplicationConfig = {
       withInterceptors([authInterceptor, errorInterceptor])
     ),
     provideIonicAngular({}),
+    provideTranslateHttpLoader({
+      prefix: "./assets/i18n/",
+      suffix: ".json",
+    }),
     importProvidersFrom(
       TranslateModule.forRoot({
         defaultLanguage: 'en',
         loader: {
           provide: TranslateLoader,
-          useFactory: HttpLoaderFactory,
-          deps: [HttpClient]
+          useClass: TranslateHttpLoader
         }
       })
     )

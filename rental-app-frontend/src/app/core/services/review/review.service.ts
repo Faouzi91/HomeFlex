@@ -38,13 +38,13 @@ export class ReviewService {
   getPropertyReviews(propertyId: string): Observable<Review[]> {
     return this.http
       .get<ApiListResponse<Review>>(`${this.apiUrl}/property/${propertyId}`)
-      .pipe(map((r) => r.data));
+      .pipe(map((r: ApiListResponse<Review>) => r.data));
   }
 
   getAverageRating(propertyId: string): Observable<number> {
     return this.http
       .get<ApiValueResponse<number>>(`${this.apiUrl}/property/${propertyId}/average`)
-      .pipe(map((r) => r.data));
+      .pipe(map((r: ApiValueResponse<number>) => r.data));
   }
 
   deleteReview(id: string): Observable<void> {

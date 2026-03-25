@@ -75,13 +75,13 @@ export class PropertyService {
 
     return this.http
       .get<ApiPageResponse<Property>>(`${this.apiUrl}/search`, { params })
-      .pipe(map((response) => response.data));
+      .pipe(map((response: ApiPageResponse<Property>) => response.data));
   }
 
   getMyProperties(): Observable<Property[]> {
     return this.http
       .get<ApiListResponse<Property>>(`${this.apiUrl}/my-properties`)
-      .pipe(map((r) => r.data));
+      .pipe(map((r: ApiListResponse<Property>) => r.data));
   }
 
   createProperty(property: Partial<Property>): Observable<Property> {
@@ -103,13 +103,13 @@ export class PropertyService {
   getStats(): Observable<Stats> {
     return this.http
       .get<ApiValueResponse<Stats>>(`${environment.apiUrl}/stats`)
-      .pipe(map((r) => r.data));
+      .pipe(map((r: ApiValueResponse<Stats>) => r.data));
   }
 
   getSimilarProperties(id: string): Observable<Property[]> {
     return this.http
       .get<ApiListResponse<Property>>(`${this.apiUrl}/${id}/similar`)
-      .pipe(map((r) => r.data));
+      .pipe(map((r: ApiListResponse<Property>) => r.data));
   }
 
   reportProperty(
@@ -122,7 +122,7 @@ export class PropertyService {
   getPropertyReports(propertyId: string): Observable<PropertyReport[]> {
     return this.http
       .get<ApiListResponse<PropertyReport>>(`${this.apiUrl}/${propertyId}/reports`)
-      .pipe(map((r) => r.data));
+      .pipe(map((r: ApiListResponse<PropertyReport>) => r.data));
   }
 
   uploadImage(propertyId: string, file: File): Observable<string> {
@@ -131,7 +131,7 @@ export class PropertyService {
 
     return this.http
       .post<{ imageUrl: string }>(`${this.apiUrl}/${propertyId}/images`, formData)
-      .pipe(map((response) => response.imageUrl));
+      .pipe(map((response: { imageUrl: string }) => response.imageUrl));
   }
 
   deleteImage(propertyId: string, imageId: string): Observable<void> {

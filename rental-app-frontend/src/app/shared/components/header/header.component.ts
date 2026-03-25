@@ -18,13 +18,14 @@ import { filter } from "rxjs/operators";
 import { CommonModule } from "@angular/common";
 import { IonicModule } from "@ionic/angular";
 import { TranslateModule } from "@ngx-translate/core";
+import { FormsModule } from "@angular/forms";
 
 @Component({
   selector: "app-header",
   templateUrl: "./header.component.html",
   styleUrls: ["./header.component.scss"],
   standalone: true,
-  imports: [CommonModule, IonicModule, TranslateModule]
+  imports: [CommonModule, IonicModule, TranslateModule, FormsModule]
 })
 export class HeaderComponent implements OnInit {
   user: User | null = null;
