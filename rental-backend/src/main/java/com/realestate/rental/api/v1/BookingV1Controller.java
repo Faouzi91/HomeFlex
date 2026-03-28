@@ -1,8 +1,8 @@
 package com.realestate.rental.api.v1;
 
-import com.realestate.rental.application.booking.BookingApplicationService;
-import com.realestate.rental.dto.BookingDto;
-import com.realestate.rental.dto.api.ApiListResponse;
+import com.realestate.rental.service.BookingService;
+import com.realestate.rental.dto.response.BookingDto;
+import com.realestate.rental.dto.common.ApiListResponse;
 import com.realestate.rental.dto.request.BookingCreateRequest;
 import com.realestate.rental.dto.request.BookingResponseRequest;
 import jakarta.validation.Valid;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BookingV1Controller {
 
-    private final BookingApplicationService bookingApplicationService;
+    private final BookingService bookingService;
 
     @PostMapping
     @PreAuthorize("hasRole('TENANT')")
@@ -28,7 +28,7 @@ public class BookingV1Controller {
             @Valid @RequestBody BookingCreateRequest request,
             Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
-        BookingDto created = bookingApplicationService.createBooking(request, tenantId);
+        BookingDto created = bookingService.createBooking(request, tenantId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -36,7 +36,7 @@ public class BookingV1Controller {
     @PreAuthorize("hasRole('TENANT')")
     public ResponseEntity<ApiListResponse<BookingDto>> getMyBookings(Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(new ApiListResponse<>(bookingApplicationService.getBookingsByTenant(tenantId)));
+        return ResponseEntity.ok(new ApiListResponse<>(bookingService.getBookingsByTenant(tenantId)));
     }
 
     @GetMapping("/property/{propertyId}")
@@ -46,13 +46,13 @@ public class BookingV1Controller {
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(new ApiListResponse<>(
-                bookingApplicationService.getBookingsByProperty(propertyId, landlordId)));
+                bookingService.getBookingsByProperty(propertyId, landlordId)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BookingDto> getBookingById(@PathVariable UUID id, Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingApplicationService.getBookingById(id, userId));
+        return ResponseEntity.ok(bookingService.getBookingById(id, userId));
     }
 
     @PatchMapping("/{id}/approve")
@@ -63,7 +63,7 @@ public class BookingV1Controller {
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
         String response = request != null ? request.message() : null;
-        return ResponseEntity.ok(bookingApplicationService.approveBooking(id, landlordId, response));
+        return ResponseEntity.ok(bookingService.approveBooking(id, landlordId, response));
     }
 
     @PatchMapping("/{id}/reject")
@@ -73,7 +73,7 @@ public class BookingV1Controller {
             @RequestBody BookingResponseRequest request,
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingApplicationService.rejectBooking(id, landlordId, request.message()));
+        return ResponseEntity.ok(bookingService.rejectBooking(id, landlordId, request.message()));
     }
 
     @PatchMapping("/{id}/cancel")
@@ -82,6 +82,6 @@ public class BookingV1Controller {
             @PathVariable UUID id,
             Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingApplicationService.cancelBooking(id, tenantId));
+        return ResponseEntity.ok(bookingService.cancelBooking(id, tenantId));
     }
 }

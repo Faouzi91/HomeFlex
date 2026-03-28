@@ -1,15 +1,15 @@
 // ====================================
 // websocket.service.ts
 // ====================================
-import { Injectable } from "@angular/core";
-import { Client } from "@stomp/stompjs";
-import * as SockJS from "sockjs-client";
-import { Subject, Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
-import { AuthService } from "../auth/auth.service";
+import { Injectable } from '@angular/core';
+import { Client } from '@stomp/stompjs';
+import * as SockJS from 'sockjs-client';
+import { Subject, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class WebSocketService {
   private stompClient?: Client;
@@ -21,7 +21,7 @@ export class WebSocketService {
   connect(): void {
     const token = this.authService.getToken();
     if (!token) {
-      console.error("No auth token available");
+      console.error('No auth token available');
       return;
     }
 
@@ -32,7 +32,7 @@ export class WebSocketService {
       },
       debug: (str) => {
         if (environment.production) return;
-        console.log("STOMP Debug:", str);
+        console.log('STOMP Debug:', str);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
@@ -40,17 +40,17 @@ export class WebSocketService {
     });
 
     this.stompClient.onConnect = () => {
-      console.log("WebSocket connected");
+      console.log('WebSocket connected');
       this.connectionStatus.next(true);
     };
 
     this.stompClient.onDisconnect = () => {
-      console.log("WebSocket disconnected");
+      console.log('WebSocket disconnected');
       this.connectionStatus.next(false);
     };
 
     this.stompClient.onStompError = (frame) => {
-      console.error("STOMP error:", frame.headers["message"]);
+      console.error('STOMP error:', frame.headers['message']);
       this.connectionStatus.next(false);
     };
 
@@ -67,16 +67,18 @@ export class WebSocketService {
   subscribe(destination: string): Observable<any> {
     return new Observable((observer) => {
       if (!this.stompClient) {
-        observer.error("WebSocket not connected");
+        observer.error('WebSocket not connected');
         return;
       }
 
-      const subscription = this.stompClient.subscribe(
-        destination,
-        (message) => {
+      const subscription = this.stompClient.subscribe(destination, (message) => {
+        try {
           observer.next(JSON.parse(message.body));
+        } catch {
+          // Guard against non-JSON payloads coming from proxies or text frames.
+          observer.next(message.body);
         }
-      );
+      });
 
       return () => subscription.unsubscribe();
     });
@@ -84,7 +86,7 @@ export class WebSocketService {
 
   send(destination: string, body: any): void {
     if (!this.stompClient || !this.stompClient.connected) {
-      console.error("Cannot send message: WebSocket not connected");
+      console.error('Cannot send message: WebSocket not connected');
       return;
     }
 

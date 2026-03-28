@@ -1,6 +1,6 @@
 package com.realestate.rental.dto.request;
 
-import com.realestate.rental.utils.enumeration.UserRole;
+import com.realestate.rental.domain.enums.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

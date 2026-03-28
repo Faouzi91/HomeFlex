@@ -1,6 +1,6 @@
 package com.realestate.rental.security;
 
-import com.realestate.rental.utils.entity.User;
+import com.realestate.rental.domain.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;

@@ -1,0 +1,23 @@
+# Build artifacts
+dist/
+target/
+build/
+coverage/
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Logs
+logs/
+*.log
+
+# Backend specific
+mvnw
+mvnw.cmd

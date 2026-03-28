@@ -12,7 +12,7 @@ class ArchitectureGuardrailsTest {
     void controllersShouldNotAccessRepositoriesDirectly() {
         var classes = new ClassFileImporter().importPackages("com.realestate.rental");
         ArchRule rule = noClasses()
-                .that().resideInAPackage("..controller..")
+                .that().resideInAPackage("..api..")
                 .should().dependOnClassesThat().resideInAPackage("..repository..");
         rule.check(classes);
     }

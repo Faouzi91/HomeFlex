@@ -1,6 +1,6 @@
 package com.realestate.rental.service;
 
-import com.realestate.rental.utils.entity.User;
+import com.realestate.rental.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;

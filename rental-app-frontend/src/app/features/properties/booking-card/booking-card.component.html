@@ -1,0 +1,74 @@
+<div class="booking-card" *ngIf="property">
+  <div class="price-header">
+    <span class="price">\${{ property.price }}</span>
+    <span class="period" *ngIf="property.listingType === 'RENT'">{{
+      'property.perMonth' | translate
+    }}</span>
+    <span class="period" *ngIf="property.listingType !== 'RENT'">{{
+      'property.perNight' | translate
+    }}</span>
+    <!-- Note: listingType logic might need adjustment if perNight is standard for booking, assuming perNight for now if not RENT or just showing price -->
+  </div>
+
+  <div class="booking-form">
+    <div class="date-inputs">
+      <div class="input-group">
+        <label for="check-in-date">{{ 'property.checkIn' | translate }}</label>
+        <input
+          id="check-in-date"
+          type="date"
+          [(ngModel)]="startDate"
+          [min]="startDate"
+          [attr.aria-label]="'property.checkIn' | translate"
+          title="{{ 'property.checkIn' | translate }}"
+        />
+      </div>
+      <div class="input-group">
+        <label for="check-out-date">{{ 'property.checkOut' | translate }}</label>
+        <input
+          id="check-out-date"
+          type="date"
+          [(ngModel)]="endDate"
+          [min]="startDate"
+          [attr.aria-label]="'property.checkOut' | translate"
+          title="{{ 'property.checkOut' | translate }}"
+        />
+      </div>
+    </div>
+
+    <div class="guests-input">
+      <label>{{ 'property.guests' | translate }}</label>
+      <div class="stepper">
+        <button
+          (click)="guests = guests > 1 ? guests - 1 : 1"
+          type="button"
+          [title]="'common.decrease' | translate"
+          aria-label="Decrease guests"
+        >
+          -
+        </button>
+        <span>{{ guests }}</span>
+        <button
+          (click)="guests = guests + 1"
+          type="button"
+          [title]="'common.increase' | translate"
+          aria-label="Increase guests"
+        >
+          +
+        </button>
+      </div>
+    </div>
+
+    <div class="summary" *ngIf="totalPrice > 0">
+      <div class="row">
+        <span>{{ 'property.total' | translate }}</span>
+        <span class="total-price">\${{ totalPrice }}</span>
+      </div>
+    </div>
+
+    <button class="btn-book" (click)="onBook()" [disabled]="isLoading || totalPrice <= 0">
+      <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+      <span *ngIf="!isLoading">{{ 'property.reserve' | translate }}</span>
+    </button>
+  </div>
+</div>

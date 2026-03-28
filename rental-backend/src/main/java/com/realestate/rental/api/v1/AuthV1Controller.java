@@ -1,8 +1,7 @@
 package com.realestate.rental.api.v1;
 
-import com.realestate.rental.application.user.AuthApplicationService;
-import com.realestate.rental.dto.AuthResponse;
-import com.realestate.rental.dto.api.ApiValueResponse;
+import com.realestate.rental.dto.response.AuthResponse;
+import com.realestate.rental.dto.common.ApiValueResponse;
 import com.realestate.rental.dto.request.ForgotPasswordRequest;
 import com.realestate.rental.dto.request.GoogleLoginRequest;
 import com.realestate.rental.dto.request.LoginRequest;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthV1Controller {
 
-    private final AuthApplicationService authApplicationService;
     private final AuthService authService;
 
     @Value("${app.jwt.cookie.refresh-token-name:refreshToken}")
@@ -41,7 +39,7 @@ public class AuthV1Controller {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
                                                   HttpServletResponse response) {
-        AuthResponse auth = authApplicationService.register(request);
+        AuthResponse auth = authService.register(request);
         addRefreshTokenCookie(response, auth.refreshToken());
         return ResponseEntity.ok(withoutRefreshToken(auth));
     }
@@ -49,7 +47,7 @@ public class AuthV1Controller {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
                                                HttpServletResponse response) {
-        AuthResponse auth = authApplicationService.login(request);
+        AuthResponse auth = authService.login(request);
         addRefreshTokenCookie(response, auth.refreshToken());
         return ResponseEntity.ok(withoutRefreshToken(auth));
     }
@@ -57,7 +55,7 @@ public class AuthV1Controller {
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request,
                                                      HttpServletResponse response) {
-        AuthResponse auth = authApplicationService.googleLogin(request);
+        AuthResponse auth = authService.googleLogin(request.idToken());
         addRefreshTokenCookie(response, auth.refreshToken());
         return ResponseEntity.ok(withoutRefreshToken(auth));
     }
@@ -80,7 +78,7 @@ public class AuthV1Controller {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestHeader("Authorization") String token,
                                         HttpServletResponse response) {
-        authApplicationService.logout(token);
+        authService.logout(token);
         clearRefreshTokenCookie(response);
         return ResponseEntity.ok().build();
     }

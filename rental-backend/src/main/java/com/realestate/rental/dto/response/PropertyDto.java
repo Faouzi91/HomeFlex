@@ -1,0 +1,40 @@
+package com.realestate.rental.dto.response;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+public record PropertyDto(
+        UUID id,
+        String title,
+        String description,
+        String propertyType,
+        String listingType,
+        BigDecimal price,
+        String currency,
+        String address,
+        String city,
+        String stateProvince,
+        String country,
+        String postalCode,
+        BigDecimal latitude,
+        BigDecimal longitude,
+        Integer bedrooms,
+        Integer bathrooms,
+        BigDecimal areaSqm,
+        Integer floorNumber,
+        Integer totalFloors,
+        Boolean isAvailable,
+        LocalDate availableFrom,
+        String status,
+        Integer viewCount,
+        Integer favoriteCount,
+        List<PropertyImageDto> images,
+        List<PropertyVideoDto> videos,
+        List<AmenityDto> amenities,
+        UserDto landlord,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
+) {}

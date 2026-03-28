@@ -1,13 +1,13 @@
 package com.realestate.rental.service;
 
-import com.realestate.rental.application.mapper.ReviewMapper;
-import com.realestate.rental.dto.*;
+import com.realestate.rental.mapper.ReviewMapper;
+import com.realestate.rental.dto.response.*;
 import com.realestate.rental.dto.request.ReviewCreateRequest;
-import com.realestate.rental.repository.*;
-import com.realestate.rental.shared.exception.ConflictException;
-import com.realestate.rental.shared.exception.ResourceNotFoundException;
-import com.realestate.rental.shared.exception.UnauthorizedException;
-import com.realestate.rental.utils.entity.*;
+import com.realestate.rental.domain.repository.*;
+import com.realestate.rental.exception.ConflictException;
+import com.realestate.rental.exception.ResourceNotFoundException;
+import com.realestate.rental.exception.UnauthorizedException;
+import com.realestate.rental.domain.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

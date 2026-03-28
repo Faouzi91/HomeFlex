@@ -1,11 +1,11 @@
 package com.realestate.rental.api.v1;
 
-import com.realestate.rental.application.property.PropertyApplicationService;
-import com.realestate.rental.dto.PropertyDto;
-import com.realestate.rental.dto.PropertySearchParams;
-import com.realestate.rental.dto.ReportDto;
-import com.realestate.rental.dto.api.ApiListResponse;
-import com.realestate.rental.dto.api.ApiPageResponse;
+import com.realestate.rental.service.PropertyService;
+import com.realestate.rental.dto.response.PropertyDto;
+import com.realestate.rental.dto.response.PropertySearchParams;
+import com.realestate.rental.dto.response.ReportDto;
+import com.realestate.rental.dto.common.ApiListResponse;
+import com.realestate.rental.dto.common.ApiPageResponse;
 import com.realestate.rental.dto.request.PropertyCreateRequest;
 import com.realestate.rental.dto.request.PropertyUpdateRequest;
 import com.realestate.rental.dto.request.ReportListingRequest;
@@ -29,7 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PropertyV1Controller {
 
-    private final PropertyApplicationService propertyApplicationService;
+    private final PropertyService propertyService;
     private final AdminService adminService;
 
     @GetMapping("/search")
@@ -51,13 +51,13 @@ public class PropertyV1Controller {
                 .bathrooms(bathrooms)
                 .amenities(amenities)
                 .build();
-        Page<PropertyDto> page = propertyApplicationService.searchProperties(params, pageable);
+        Page<PropertyDto> page = propertyService.searchProperties(params, pageable);
         return ResponseEntity.ok(ApiPageResponse.from(page));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PropertyDto> getPropertyById(@PathVariable UUID id) {
-        return ResponseEntity.ok(propertyApplicationService.getPropertyById(id));
+        return ResponseEntity.ok(propertyService.getPropertyById(id));
     }
 
     @PostMapping
@@ -68,7 +68,7 @@ public class PropertyV1Controller {
             @RequestPart(value = "videos", required = false) List<MultipartFile> videos,
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        PropertyDto created = propertyApplicationService.createProperty(request, images, videos, landlordId);
+        PropertyDto created = propertyService.createProperty(request, images, videos, landlordId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -78,7 +78,7 @@ public class PropertyV1Controller {
             @Valid @RequestBody PropertyCreateRequest request,
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        PropertyDto created = propertyApplicationService.createPropertyJson(request, landlordId);
+        PropertyDto created = propertyService.createProperty(request, null, null, landlordId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -91,14 +91,14 @@ public class PropertyV1Controller {
             @RequestPart(value = "videos", required = false) List<MultipartFile> videos,
             Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(propertyApplicationService.updateProperty(id, request, images, videos, landlordId));
+        return ResponseEntity.ok(propertyService.updateProperty(id, request, images, videos, landlordId));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
     public ResponseEntity<Void> deleteProperty(@PathVariable UUID id, Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        propertyApplicationService.deleteProperty(id, landlordId);
+        propertyService.deleteProperty(id, landlordId);
         return ResponseEntity.noContent().build();
     }
 
@@ -106,18 +106,18 @@ public class PropertyV1Controller {
     @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
     public ResponseEntity<ApiListResponse<PropertyDto>> getMyProperties(Authentication authentication) {
         UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(new ApiListResponse<>(propertyApplicationService.getPropertiesByLandlord(landlordId)));
+        return ResponseEntity.ok(new ApiListResponse<>(propertyService.getPropertiesByLandlord(landlordId)));
     }
 
     @PostMapping("/{id}/view")
     public ResponseEntity<Void> incrementViewCount(@PathVariable UUID id) {
-        propertyApplicationService.incrementViewCount(id);
+        propertyService.incrementViewCount(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}/similar")
     public ResponseEntity<ApiListResponse<PropertyDto>> getSimilarProperties(@PathVariable UUID id) {
-        return ResponseEntity.ok(new ApiListResponse<>(propertyApplicationService.getSimilarProperties(id)));
+        return ResponseEntity.ok(new ApiListResponse<>(propertyService.getSimilarProperties(id)));
     }
 
     @PostMapping("/{id}/report")

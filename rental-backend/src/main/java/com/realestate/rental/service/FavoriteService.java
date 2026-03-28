@@ -1,15 +1,15 @@
 package com.realestate.rental.service;
 
-import com.realestate.rental.application.mapper.FavoriteMapper;
-import com.realestate.rental.application.mapper.PropertyMapper;
-import com.realestate.rental.dto.*;
-import com.realestate.rental.repository.*;
-import com.realestate.rental.shared.exception.ConflictException;
-import com.realestate.rental.shared.exception.ResourceNotFoundException;
-import com.realestate.rental.utils.entity.*;
-import com.realestate.rental.utils.entity.Favorite;
-import com.realestate.rental.utils.entity.Property;
-import com.realestate.rental.utils.entity.User;
+import com.realestate.rental.mapper.FavoriteMapper;
+import com.realestate.rental.mapper.PropertyMapper;
+import com.realestate.rental.dto.response.*;
+import com.realestate.rental.domain.repository.*;
+import com.realestate.rental.exception.ConflictException;
+import com.realestate.rental.exception.ResourceNotFoundException;
+import com.realestate.rental.domain.entity.*;
+import com.realestate.rental.domain.entity.Favorite;
+import com.realestate.rental.domain.entity.Property;
+import com.realestate.rental.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

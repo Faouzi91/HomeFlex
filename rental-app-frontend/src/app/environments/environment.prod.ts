@@ -1,7 +1,8 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.homeflex.com/api/v1',
-  wsUrl: 'wss://api.homeflex.com/ws',
+  // Use same-origin paths so nginx can proxy to backend in Docker/local deployments.
+  apiUrl: '/api/v1',
+  wsUrl: '/ws',
   googleClientId: '',
   firebaseConfig: {
     apiKey: '',

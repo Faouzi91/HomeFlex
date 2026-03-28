@@ -19,6 +19,8 @@ export interface Booking {
   status: string;
   message?: string;
   landlordResponse?: string;
+  numberOfOccupants?: number;
+  totalPrice?: number;
   createdAt: Date;
 }
 

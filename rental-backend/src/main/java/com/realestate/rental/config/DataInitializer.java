@@ -1,8 +1,8 @@
 package com.realestate.rental.config;
 
-import com.realestate.rental.repository.UserRepository;
-import com.realestate.rental.utils.entity.User;
-import com.realestate.rental.utils.enumeration.UserRole;
+import com.realestate.rental.domain.repository.UserRepository;
+import com.realestate.rental.domain.entity.User;
+import com.realestate.rental.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

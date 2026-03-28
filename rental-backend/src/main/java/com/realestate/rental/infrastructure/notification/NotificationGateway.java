@@ -1,7 +1,7 @@
 package com.realestate.rental.infrastructure.notification;
 
-import com.realestate.rental.utils.entity.Property;
-import com.realestate.rental.utils.entity.User;
+import com.realestate.rental.domain.entity.Property;
+import com.realestate.rental.domain.entity.User;
 
 import java.util.UUID;
 

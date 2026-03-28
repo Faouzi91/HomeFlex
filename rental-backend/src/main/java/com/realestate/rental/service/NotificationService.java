@@ -5,17 +5,17 @@ import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.SendResponse;
-import com.realestate.rental.application.mapper.NotificationMapper;
-import com.realestate.rental.dto.*;
-import com.realestate.rental.repository.*;
-import com.realestate.rental.shared.exception.ResourceNotFoundException;
-import com.realestate.rental.shared.exception.UnauthorizedException;
-import com.realestate.rental.utils.entity.FcmToken;
-import com.realestate.rental.utils.entity.Notification;
-import com.realestate.rental.utils.entity.Property;
-import com.realestate.rental.utils.entity.User;
-import com.realestate.rental.utils.enumeration.NotificationType;
-import com.realestate.rental.utils.enumeration.UserRole;
+import com.realestate.rental.mapper.NotificationMapper;
+import com.realestate.rental.dto.response.*;
+import com.realestate.rental.domain.repository.*;
+import com.realestate.rental.exception.ResourceNotFoundException;
+import com.realestate.rental.exception.UnauthorizedException;
+import com.realestate.rental.domain.entity.FcmToken;
+import com.realestate.rental.domain.entity.Notification;
+import com.realestate.rental.domain.entity.Property;
+import com.realestate.rental.domain.entity.User;
+import com.realestate.rental.domain.enums.NotificationType;
+import com.realestate.rental.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -196,6 +196,26 @@ public class NotificationService {
         }
 
         notificationRepository.delete(notification);
+    }
+
+    public void sendPropertyApprovedNotification(User landlord, Property property) {
+        String title = "Property Approved";
+        String message = "Your property '" + property.getTitle() + "' has been approved and is now visible to tenants.";
+
+        createNotification(landlord.getId(), title, message,
+                NotificationType.SYSTEM, "PROPERTY", property.getId());
+
+        sendPushNotification(landlord.getId(), title, message);
+    }
+
+    public void sendPropertyRejectedNotification(User landlord, Property property, String reason) {
+        String title = "Property Rejected";
+        String message = "Your property '" + property.getTitle() + "' was rejected. Reason: " + reason;
+
+        createNotification(landlord.getId(), title, message,
+                NotificationType.SYSTEM, "PROPERTY", property.getId());
+
+        sendPushNotification(landlord.getId(), title, message);
     }
 
 }

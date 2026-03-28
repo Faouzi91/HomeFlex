@@ -1,0 +1,122 @@
+<ion-header class="ion-no-border bg-white shadow-sm">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" color="dark"></ion-back-button>
+    </ion-buttons>
+    <ion-title class="text-xl font-bold text-slate-900">{{
+      'booking.title' | translate
+    }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="flex justify-center items-center h-64">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && bookings.length === 0" class="text-center py-20">
+      <div class="bg-white rounded-full p-6 inline-flex mb-4 shadow-sm">
+        <ion-icon name="calendar-outline" class="text-4xl text-slate-400"></ion-icon>
+      </div>
+      <h3 class="text-lg font-medium text-slate-900">
+        {{ 'booking.noBookingsTitle' | translate }}
+      </h3>
+      <p class="text-slate-500 mt-1">{{ 'booking.noBookingsSubtitle' | translate }}</p>
+    </div>
+
+    <!-- Booking Grid -->
+    <div
+      *ngIf="!loading && bookings.length > 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      <div
+        *ngFor="let b of bookings"
+        class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-slate-100 flex flex-col"
+      >
+        <!-- Image Section -->
+        <div class="relative h-48 bg-slate-200">
+          <img
+            [src]="b.property?.images?.[0]?.url || 'assets/placeholder-property.jpg'"
+            alt="Property Image"
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute top-3 right-3">
+            <span
+              [ngClass]="{
+                'bg-green-100 text-green-800': b.status === 'APPROVED',
+                'bg-yellow-100 text-yellow-800': b.status === 'PENDING',
+                'bg-red-100 text-red-800': b.status === 'REJECTED' || b.status === 'CANCELLED',
+              }"
+              class="px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-md bg-opacity-90 shadow-sm border border-white/20"
+            >
+              {{ b.status }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="p-5 flex-1 flex flex-col">
+          <h3 class="text-lg font-bold text-slate-900 line-clamp-1 mb-1">
+            {{ b.property?.title || ('booking.unknownProperty' | translate) }}
+          </h3>
+
+          <div class="flex items-center text-slate-500 text-sm mb-4">
+            <ion-icon name="location-outline" class="mr-1"></ion-icon>
+            <span class="line-clamp-1">{{
+              b.property?.city || ('booking.locationUnavailable' | translate)
+            }}</span>
+          </div>
+
+          <div class="space-y-2 mb-6">
+            <div class="flex items-center text-sm text-slate-600 bg-slate-50 p-2 rounded-lg">
+              <ion-icon name="calendar-clear-outline" class="mr-2 text-blue-500"></ion-icon>
+              <span
+                >{{ b.startDate | date: 'mediumDate' }} - {{ b.endDate | date: 'mediumDate' }}</span
+              >
+            </div>
+
+            <div class="flex justify-between items-center text-sm bg-slate-50 p-2 rounded-lg">
+              <span class="text-slate-500">{{ 'booking.totalPrice' | translate }}</span>
+              <span class="font-bold text-slate-900">{{ b.totalPrice | currency }}</span>
+            </div>
+          </div>
+
+          <div class="mt-auto space-y-2">
+            <button
+              (click)="viewDetail(b.id)"
+              class="w-full py-2.5 px-4 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-colors focus:ring-4 focus:ring-slate-200"
+            >
+              {{ 'booking.viewDetails' | translate }}
+            </button>
+
+            <div *ngIf="isLandlord && b.status === 'PENDING'" class="grid grid-cols-2 gap-2">
+              <button
+                (click)="approve(b.id)"
+                class="py-2 px-4 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+              >
+                {{ 'booking.acceptRequest' | translate }}
+              </button>
+              <button
+                (click)="reject(b.id)"
+                class="py-2 px-4 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors border border-red-200"
+              >
+                {{ 'booking.rejectRequest' | translate }}
+              </button>
+            </div>
+
+            <button
+              *ngIf="!isLandlord && b.status === 'PENDING'"
+              (click)="cancel(b.id)"
+              class="w-full py-2 px-4 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors border border-transparent hover:border-red-200"
+            >
+              {{ 'booking.cancelRequest' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

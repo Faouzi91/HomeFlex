@@ -4,9 +4,9 @@
 // ====================================
 package com.realestate.rental.config;
 
-import com.realestate.rental.repository.*;
-import com.realestate.rental.utils.entity.*;
-import com.realestate.rental.utils.enumeration.*;
+import com.realestate.rental.domain.repository.*;
+import com.realestate.rental.domain.entity.*;
+import com.realestate.rental.domain.enums.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,8 +1,8 @@
 package com.realestate.rental.infrastructure.notification;
 
 import com.realestate.rental.service.NotificationService;
-import com.realestate.rental.utils.entity.Property;
-import com.realestate.rental.utils.entity.User;
+import com.realestate.rental.domain.entity.Property;
+import com.realestate.rental.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

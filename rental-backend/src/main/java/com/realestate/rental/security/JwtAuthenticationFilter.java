@@ -1,7 +1,7 @@
 package com.realestate.rental.security;
 
-import com.realestate.rental.repository.UserRepository;
-import com.realestate.rental.utils.entity.User;
+import com.realestate.rental.domain.repository.UserRepository;
+import com.realestate.rental.domain.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

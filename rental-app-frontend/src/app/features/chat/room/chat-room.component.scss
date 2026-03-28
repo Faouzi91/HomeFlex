@@ -1,0 +1,26 @@
+/* Chat Room Component Styles */
+:host {
+  display: block;
+  --ion-padding: 1rem;
+}
+
+.messages {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-bottom: 1rem;
+}
+
+ion-item {
+  --padding-start: 0;
+  --padding-end: 0;
+  margin-bottom: 0.5rem;
+}
+
+ion-list {
+  padding: 0;
+}
+
+ion-note {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium);
+}

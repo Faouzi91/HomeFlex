@@ -1,9 +1,9 @@
 package com.realestate.rental.exception;
 
-import com.realestate.rental.shared.exception.ConflictException;
-import com.realestate.rental.shared.exception.DomainException;
-import com.realestate.rental.shared.exception.ResourceNotFoundException;
-import com.realestate.rental.shared.exception.UnauthorizedException;
+import com.realestate.rental.exception.ConflictException;
+import com.realestate.rental.exception.DomainException;
+import com.realestate.rental.exception.ResourceNotFoundException;
+import com.realestate.rental.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
  */
 @RestControllerAdvice
 @Slf4j
-public class GlobalExceptionHandler {
+public class    GlobalExceptionHandler {
 
     public record ErrorResponse(
             Instant timestamp,

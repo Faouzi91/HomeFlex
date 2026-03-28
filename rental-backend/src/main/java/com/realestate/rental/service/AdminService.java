@@ -1,17 +1,17 @@
 package com.realestate.rental.service;
 
-import com.realestate.rental.application.mapper.AdminMapper;
-import com.realestate.rental.application.mapper.PropertyMapper;
-import com.realestate.rental.application.mapper.ReportMapper;
-import com.realestate.rental.application.mapper.UserMapper;
-import com.realestate.rental.dto.*;
-import com.realestate.rental.repository.*;
-import com.realestate.rental.shared.exception.ResourceNotFoundException;
-import com.realestate.rental.utils.entity.*;
-import com.realestate.rental.utils.entity.Property;
-import com.realestate.rental.utils.enumeration.BookingStatus;
-import com.realestate.rental.utils.enumeration.PropertyStatus;
-import com.realestate.rental.utils.enumeration.UserRole;
+import com.realestate.rental.mapper.AdminMapper;
+import com.realestate.rental.mapper.PropertyMapper;
+import com.realestate.rental.mapper.ReportMapper;
+import com.realestate.rental.mapper.UserMapper;
+import com.realestate.rental.dto.response.*;
+import com.realestate.rental.domain.repository.*;
+import com.realestate.rental.exception.ResourceNotFoundException;
+import com.realestate.rental.domain.entity.*;
+import com.realestate.rental.domain.entity.Property;
+import com.realestate.rental.domain.enums.BookingStatus;
+import com.realestate.rental.domain.enums.PropertyStatus;
+import com.realestate.rental.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +32,7 @@ public class AdminService {
     private final BookingRepository bookingRepository;
     private final MessageRepository messageRepository;
     private final ReportedListingRepository reportedListingRepository;
-    private final NotificationServiceExtension notificationService;
+    private final NotificationService notificationService;
     private final PropertyMapper propertyMapper;
     private final UserMapper userMapper;
     private final ReportMapper reportMapper;

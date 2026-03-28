@@ -1,0 +1,16 @@
+/* Booking Detail Component Styles */
+:host {
+  display: block;
+  --ion-padding: 1rem;
+}
+
+ion-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+/* Styles handled by Tailwind CSS */
+
+ion-button {
+  margin-top: 0.5rem;
+}

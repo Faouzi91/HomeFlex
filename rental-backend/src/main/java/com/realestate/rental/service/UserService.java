@@ -1,12 +1,12 @@
 package com.realestate.rental.service;
 
-import com.realestate.rental.application.mapper.UserMapper;
-import com.realestate.rental.dto.*;
+import com.realestate.rental.mapper.UserMapper;
+import com.realestate.rental.dto.response.*;
 import com.realestate.rental.dto.request.UserUpdateRequest;
-import com.realestate.rental.repository.UserRepository;
-import com.realestate.rental.shared.exception.DomainException;
-import com.realestate.rental.shared.exception.ResourceNotFoundException;
-import com.realestate.rental.utils.entity.User;
+import com.realestate.rental.domain.repository.UserRepository;
+import com.realestate.rental.exception.DomainException;
+import com.realestate.rental.exception.ResourceNotFoundException;
+import com.realestate.rental.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
