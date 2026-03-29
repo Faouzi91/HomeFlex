@@ -63,6 +63,16 @@ spring:
           starttls:
             enable: true
 
+  # Redis Configuration
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+  # Elasticsearch Configuration
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
+
   # RabbitMQ Configuration
   rabbitmq:
     host: ${SPRING_RABBITMQ_HOST:localhost}
@@ -109,10 +119,11 @@ app:
     expiration: 900000 # 15 minutes in milliseconds
     refresh-expiration: 604800000 # 7 days in milliseconds
     cookie:
-      refresh-token-name: refreshToken
+      access-token-name: ACCESS_TOKEN
+      refresh-token-name: REFRESH_TOKEN
       secure: ${JWT_COOKIE_SECURE:false}
       same-site: Strict
-      max-age-seconds: 604800 # 7 days
+      max-age-seconds: 604800 # 7 days (refresh token)
 
   # Stripe Payment Configuration (FR-400)
   stripe:
@@ -151,6 +162,12 @@ app:
     base-backoff-seconds: 2
     exchange-name: homeflex.events
 
+  # Rate Limiting
+  rate-limit:
+    authenticated-requests-per-minute: 100
+    public-requests-per-minute: 20
+    window-seconds: 60
+
   # CORS Configuration
   cors:
     allowed-origins:
@@ -164,12 +181,11 @@ app:
       - PATCH
       - OPTIONS
     allowed-headers:
-      - Authorization
       - Content-Type
       - Accept
       - X-Requested-With
-    exposed-headers:
-      - Authorization
+      - X-XSRF-TOKEN
+    exposed-headers: []
     allow-credentials: true
     max-age: 3600
 

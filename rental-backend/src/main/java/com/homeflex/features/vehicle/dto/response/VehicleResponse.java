@@ -2,6 +2,7 @@ package com.homeflex.features.vehicle.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record VehicleResponse(
@@ -23,6 +24,7 @@ public record VehicleResponse(
         String pickupCity,
         String pickupAddress,
         int viewCount,
+        List<VehicleImageDto> images,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {}

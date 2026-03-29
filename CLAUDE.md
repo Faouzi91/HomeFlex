@@ -14,8 +14,8 @@ HomeFlex is a real estate rental platform with an Angular frontend, Spring Boot 
 ./gradlew build              # Build + run all tests
 ./gradlew bootRun            # Start dev server (port 8080)
 ./gradlew test               # Run all tests
-./gradlew test --tests "com.realestate.rental.SomeTest"  # Single test class
-./gradlew test --tests "com.realestate.rental.SomeTest.someMethod"  # Single test method
+./gradlew test --tests "com.homeflex.SomeTest"  # Single test class
+./gradlew test --tests "com.homeflex.SomeTest.someMethod"  # Single test method
 ```
 
 ### Frontend (from `rental-app-frontend/`)
@@ -85,7 +85,7 @@ com.homeflex/
 │   │                                     # ResourceNotFoundException, UnauthorizedException
 │   ├── infrastructure/notification/      # NotificationGateway, FirebaseNotificationGateway
 │   ├── mapper/                           # UserMapper, ChatMapper, NotificationMapper
-│   ├── security/                         # JwtAuthenticationFilter, JwtTokenProvider
+│   ├── security/                         # JwtAuthenticationFilter, JwtTokenProvider, RateLimitFilter
 │   └── service/                          # AdminService, AuthService, ChatService, EmailService,
 │                                         # NotificationService, StorageService, PaymentService,
 │                                         # UserService, EventOutboxService, OutboxRelayService
@@ -94,31 +94,36 @@ com.homeflex/
 │   │   ├── PropertyModuleConfig.java
 │   │   ├── api/v1/                       # PropertyV1Controller, BookingV1Controller, FavoriteController,
 │   │   │                                 # ReviewController, StatsController
+│   │   ├── config/                       # PropertySearchConfig (RabbitMQ queue/binding for ES indexing)
 │   │   ├── domain/
+│   │   │   ├── document/                 # PropertyDocument (@Document for Elasticsearch)
 │   │   │   ├── entity/                   # Property, PropertyImage, PropertyVideo, Amenity,
 │   │   │   │                             # Booking, Favorite, Review, ReportedListing
 │   │   │   ├── enums/                    # PropertyType, PropertyStatus, ListingType,
 │   │   │   │                             # BookingStatus, BookingType, AmenityCategory
 │   │   │   └── repository/              # PropertyRepository, BookingRepository, FavoriteRepository,
-│   │   │                                 # ReviewRepository, AmenityRepository, + 3 more
+│   │   │                                 # ReviewRepository, AmenityRepository, PropertySearchRepository, + more
 │   │   ├── dto/
 │   │   │   ├── request/                  # PropertyCreateRequest, BookingCreateRequest, ReviewCreateRequest, etc.
 │   │   │   └── response/                # PropertyDto, BookingDto, FavoriteDto, ReviewDto, ReportDto, etc.
 │   │   ├── mapper/                       # PropertyMapper, BookingMapper, FavoriteMapper,
 │   │   │                                 # ReviewMapper, ReportMapper, AdminMapper
-│   │   └── service/                      # PropertyService, BookingService, FavoriteService, ReviewService
+│   │   └── service/                      # PropertyService, PropertySearchService, PropertyIndexConsumer,
+│   │                                     # BookingService, FavoriteService, ReviewService
 │   └── vehicle/
 │       ├── VehicleModuleConfig.java
 │       ├── api/v1/                       # VehicleV1Controller
 │       ├── domain/
-│       │   ├── entity/                   # Vehicle
-│       │   ├── enums/                    # FuelType, Transmission, VehicleStatus
-│       │   └── repository/              # VehicleRepository
+│       │   ├── entity/                   # Vehicle, VehicleImage, VehicleBooking, ConditionReport
+│       │   ├── enums/                    # FuelType, Transmission, VehicleStatus, VehicleBookingStatus
+│       │   └── repository/              # VehicleRepository, VehicleImageRepository,
+│       │                                 # VehicleBookingRepository, ConditionReportRepository
 │       ├── dto/
-│       │   ├── request/                  # VehicleCreateRequest
-│       │   └── response/                # VehicleResponse, VehicleSearchParams
+│       │   ├── request/                  # VehicleCreateRequest, VehicleUpdateRequest
+│       │   └── response/                # VehicleResponse, VehicleImageDto, VehicleSearchParams,
+│       │                                 # ConditionReportResponse
 │       ├── mapper/                       # VehicleMapper
-│       └── service/                      # VehicleService
+│       └── service/                      # VehicleService, VehicleAvailabilityService
 ```
 
 ### Frontend: `rental-app-frontend/`
@@ -229,6 +234,7 @@ com.homeflex/
 - **Transactions:** `@Transactional` on service methods (write), `@Transactional(readOnly = true)` for reads. Never on controllers or repositories.
 - **Date/time:** `java.time` exclusively. Store as `TIMESTAMPTZ` in PostgreSQL. Never `java.util.Date`.
 - **Flyway migrations** are immutable and versioned (`V1__`, `V2__`, etc.). Hibernate `ddl-auto: validate` in production.
+- **Outbox pattern:** `EventOutboxService.enqueue()` writes events to `outbox_events`; `OutboxRelayService` polls with `FOR UPDATE SKIP LOCKED`, publishes to RabbitMQ, marks processed on ACK. Consumers (e.g. `PropertyIndexConsumer`) react to domain events.
 - **Logging:** SLF4J via Lombok `@Slf4j`. Never log sensitive data.
 - **API versioning:** `/api/v1/` prefix. See `docs/adr/ADR-002` for rationale.
 - **Frontend forms:** Reactive Forms for complex forms (never template-driven).
@@ -237,9 +243,12 @@ com.homeflex/
 
 ## Auth & Security
 
-- JWT: 15min access token (Bearer header), 7-day refresh token
+- JWT: 15min access token in `ACCESS_TOKEN` httpOnly/Secure/SameSite=Strict cookie, 7-day refresh token in `REFRESH_TOKEN` cookie (scoped to `/api/v1/auth`)
+- **No Authorization header** — JwtAuthenticationFilter reads exclusively from cookies (XSS-safe)
+- **CSRF protection** — `CookieCsrfTokenRepository.withHttpOnlyFalse()` + `SpaCsrfTokenRequestHandler` for Angular 21 compatibility; auth/webhook/ws endpoints exempted
+- **Rate limiting** — Redis-backed `RateLimitFilter` (Lua atomic INCR+EXPIRE): 100 req/min authenticated, 20 req/min public. Returns 429 with `Retry-After` header. Fails open on Redis unavailability.
 - Roles: TENANT, LANDLORD, ADMIN
-- Public endpoints: `/api/v1/auth/**`, property GET (search), Swagger, actuator (dev only)
+- Public endpoints: `/api/v1/auth/**`, property GET (search), vehicle GET (search/detail), Swagger, actuator (dev only)
 - Protected: bookings, chat, payments require authentication; admin endpoints require ADMIN role
 - CORS: localhost:4200 (dev), configurable for production
 

@@ -1,8 +1,8 @@
 package com.homeflex.features.property.api.v1;
 
+import com.homeflex.features.property.service.PropertySearchService;
 import com.homeflex.features.property.service.PropertyService;
 import com.homeflex.features.property.dto.response.PropertyDto;
-import com.homeflex.features.property.dto.response.PropertySearchParams;
 import com.homeflex.features.property.dto.response.ReportDto;
 import com.homeflex.core.dto.common.ApiListResponse;
 import com.homeflex.core.dto.common.ApiPageResponse;
@@ -12,7 +12,6 @@ import com.homeflex.features.property.dto.request.ReportListingRequest;
 import com.homeflex.core.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,29 +29,24 @@ import java.util.UUID;
 public class PropertyV1Controller {
 
     private final PropertyService propertyService;
+    private final PropertySearchService propertySearchService;
     private final AdminService adminService;
 
     @GetMapping("/search")
     public ResponseEntity<ApiPageResponse<PropertyDto>> searchProperties(
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) String propertyType,
             @RequestParam(required = false) Integer bedrooms,
             @RequestParam(required = false) Integer bathrooms,
-            @RequestParam(required = false) List<String> amenities,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
             Pageable pageable) {
-        PropertySearchParams params = PropertySearchParams.builder()
-                .city(city)
-                .minPrice(minPrice)
-                .maxPrice(maxPrice)
-                .propertyType(propertyType)
-                .bedrooms(bedrooms)
-                .bathrooms(bathrooms)
-                .amenities(amenities)
-                .build();
-        Page<PropertyDto> page = propertyService.searchProperties(params, pageable);
-        return ResponseEntity.ok(ApiPageResponse.from(page));
+        return ResponseEntity.ok(propertySearchService.search(
+                q, propertyType, city, minPrice, maxPrice,
+                bedrooms, bathrooms, lat, lng, pageable));
     }
 
     @GetMapping("/{id}")

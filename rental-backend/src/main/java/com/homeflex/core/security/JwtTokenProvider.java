@@ -69,4 +69,11 @@ public class JwtTokenProvider {
         }
         return false;
     }
+
+    /**
+     * Returns access-token lifetime in seconds (for cookie Max-Age).
+     */
+    public int getAccessTokenMaxAgeSeconds() {
+        return (int) (jwtExpiration / 1000);
+    }
 }

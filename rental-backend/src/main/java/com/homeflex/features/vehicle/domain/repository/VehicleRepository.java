@@ -17,7 +17,8 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     @Query("""
             SELECT v FROM Vehicle v
-            WHERE (:brand IS NULL OR LOWER(v.brand) = LOWER(:brand))
+            WHERE v.deletedAt IS NULL
+              AND (:brand IS NULL OR LOWER(v.brand) = LOWER(:brand))
               AND (:model IS NULL OR LOWER(v.model) = LOWER(:model))
               AND (:city IS NULL OR LOWER(v.pickupCity) = LOWER(:city))
               AND (:transmission IS NULL OR v.transmission = :transmission)
@@ -38,5 +39,6 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
             Pageable pageable
     );
 
-    Page<Vehicle> findByOwnerId(UUID ownerId, Pageable pageable);
+    @Query("SELECT v FROM Vehicle v WHERE v.ownerId = :ownerId AND v.deletedAt IS NULL")
+    Page<Vehicle> findByOwnerId(@Param("ownerId") UUID ownerId, Pageable pageable);
 }

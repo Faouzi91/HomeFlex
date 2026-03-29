@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 2.1
-**Date:** March 28, 2026
+**Version:** 2.2
+**Date:** March 29, 2026
 **Classification:** Confidential
 **Status:** Draft — Aligned with implemented codebase
 
@@ -11,11 +11,12 @@
 
 ## Document Control
 
-| Version | Date       | Author        | Description                                                                 |
-| ------- | ---------- | ------------- | --------------------------------------------------------------------------- |
-| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                |
-| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                            |
-| 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned |
+| Version | Date       | Author        | Description                                                                                              |
+| ------- | ---------- | ------------- | -------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                             |
+| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                         |
+| 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned                              |
+| 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion |
 
 ---
 
@@ -75,27 +76,31 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 Docker Compose deployment (6 services)
 - 🟢 GitHub Actions CI pipeline
 
-### Partially Implemented (v2.1)
+### Implemented since v2.1
 
-- 🟡 Transactional outbox pattern (EventOutboxService writes events to DB, but no consumer/worker processes them)
-- 🟡 Redis, RabbitMQ, Elasticsearch (provisioned in Docker Compose, but not consumed by application code)
+- 🟢 Transactional outbox relay (OutboxRelayService polls with FOR UPDATE SKIP LOCKED, publishes to RabbitMQ, marks processed on ACK)
+- 🟢 Redis rate limiting (Lua atomic INCR+EXPIRE, 100 req/min auth, 20 req/min public, 429 responses)
+- 🟢 Elasticsearch property search (fuzzy matching, faceted filtering by type/city, geo-distance sorting)
+- 🟢 RabbitMQ async event processing (PropertyIndexConsumer indexes properties to ES via outbox events)
+- 🟢 httpOnly cookie token storage (ACCESS_TOKEN + REFRESH_TOKEN as Secure/SameSite=Strict cookies)
+- 🟢 CSRF protection (CookieCsrfTokenRepository + SpaCsrfTokenRequestHandler for Angular 21)
+- 🟢 Vehicle rentals vertical (full CRUD, image uploads, soft-delete, condition reports, availability/double-booking prevention)
+
+### Partially Implemented (v2.2)
+
 - 🟡 AWS S3 storage (StorageService exists with dev fallback, not fully wired in production)
+- 🟡 Redis caching and distributed locking (Redis connected for rate limiting; caching and Redlock not yet used)
 
 ### Planned (not yet built)
 
-- 🟡 Vehicle rentals vertical (skeleton: entity, repo, service, controller, migration — missing: update, delete, images, availability)
 - 🔴 KYC verification for owners
 - 🔴 SMS notifications (Twilio)
-- 🔴 Advanced search via Elasticsearch/OpenSearch
-- 🔴 Redis caching, rate limiting, distributed locking
-- 🔴 RabbitMQ async messaging and event workers
 - 🔴 Document management (leases, insurance)
 - 🔴 Maintenance request system
 - 🔴 Multi-region deployment
 - 🔴 Arabic and Spanish i18n
 - 🔴 Apple / Facebook social login
 - 🔴 Centralized state management (NgRx Signal Store)
-- 🔴 httpOnly cookie token storage (currently localStorage)
 - 🔴 Circuit breakers (Resilience4j)
 - 🔴 Prometheus / Grafana / ELK monitoring stack
 - 🔴 AI-powered price recommendations (v3.0)
@@ -107,15 +112,15 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 
 This SRS is based on explicit product and architecture decisions. The "Status" column indicates what is implemented.
 
-| Decision Area      | Approved Direction                            | Rationale                         | Status                                |
-| ------------------ | --------------------------------------------- | --------------------------------- | ------------------------------------- |
-| Product scope      | Real estate rental marketplace                | Focus on core vertical first      | 🟢 Implemented                        |
-| Payments           | Stripe integration                            | Native marketplace support        | 🟢 Implemented (PaymentService)       |
-| Deployment model   | Docker Compose (local/single-server)          | Simplicity for current scale      | 🟢 Implemented                        |
-| Cloud provider     | AWS (planned)                                 | Best fit for managed services     | 🔴 Planned — currently Docker Compose |
-| Trust & safety     | Admin moderation                              | Fraud reduction via manual review | 🟢 Implemented                        |
-| KYC verification   | Mandatory owner/landlord KYC                  | Fraud reduction and compliance    | 🔴 Planned                            |
-| Platform verticals | Real estate (full) + vehicles (skeleton CRUD) | Complete vehicle feature set      | 🟡 RE implemented, vehicles skeleton  |
+| Decision Area      | Approved Direction                        | Rationale                         | Status                                |
+| ------------------ | ----------------------------------------- | --------------------------------- | ------------------------------------- |
+| Product scope      | Real estate rental marketplace            | Focus on core vertical first      | 🟢 Implemented                        |
+| Payments           | Stripe integration                        | Native marketplace support        | 🟢 Implemented (PaymentService)       |
+| Deployment model   | Docker Compose (local/single-server)      | Simplicity for current scale      | 🟢 Implemented                        |
+| Cloud provider     | AWS (planned)                             | Best fit for managed services     | 🔴 Planned — currently Docker Compose |
+| Trust & safety     | Admin moderation                          | Fraud reduction via manual review | 🟢 Implemented                        |
+| KYC verification   | Mandatory owner/landlord KYC              | Fraud reduction and compliance    | 🔴 Planned                            |
+| Platform verticals | Real estate (full) + vehicles (full CRUD) | Complete vehicle feature set      | 🟢 Both verticals implemented         |
 
 ## 1.4 Definitions & Acronyms
 

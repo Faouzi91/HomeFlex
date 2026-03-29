@@ -22,6 +22,7 @@ public class AppProperties {
     private Google google = new Google();
     private Stripe stripe = new Stripe();
     private Outbox outbox = new Outbox();
+    private RateLimit rateLimit = new RateLimit();
 
     @Data
     public static class Jwt {
@@ -32,10 +33,11 @@ public class AppProperties {
 
         @Data
         public static class Cookie {
-            private String refreshTokenName;
+            private String accessTokenName = "ACCESS_TOKEN";
+            private String refreshTokenName = "REFRESH_TOKEN";
             private boolean secure;
-            private String sameSite;
-            private int maxAgeSeconds;
+            private String sameSite = "Strict";
+            private int maxAgeSeconds = 604800;
         }
     }
 
@@ -91,6 +93,13 @@ public class AppProperties {
         private String webhookSecret;
         private double platformCommission;
         private String currency;
+    }
+
+    @Data
+    public static class RateLimit {
+        private int authenticatedRequestsPerMinute = 100;
+        private int publicRequestsPerMinute = 20;
+        private int windowSeconds = 60;
     }
 
     @Data

@@ -38,11 +38,11 @@
               | PostgreSQL   |   | Redis  | | |RabbitMQ|  |Elastic     |
               | (db:5432)    |   | (:6379)| | |(:5672) |  |search      |
               |              |   |        | | |        |  |(:9200)     |
-              | - users      |   | (not   | | |(not    |  |(not        |
-              | - properties |   |  used  | | | used   |  | used       |
-              | - bookings   |   |  yet)  | | | yet)   |  | yet)       |
-              | - messages   |   |        | | |        |  |            |
-              | - etc.       |   +--------+ | +--------+  +------------+
+              | - users      |   | rate   | | | outbox |  | property   |
+              | - properties |   | limit  | | | relay  |  | full-text  |
+              | - bookings   |   | counters| | | events|  | + geo      |
+              | - vehicles   |   |        | | |        |  | search     |
+              | - messages   |   +--------+ | +--------+  +------------+
               +--------------+              |
                                   +---------v---------+
                                   |  External APIs    |
@@ -65,9 +65,9 @@ rental-network (bridge)
 +-- rental-frontend   (Nginx)           :80   -> serves SPA, proxies API/WS
 +-- rental-backend    (Spring Boot)     :8080 -> REST API + WebSocket
 +-- rental-db         (PostgreSQL 16)   :5432 -> primary data store
-+-- rental-redis      (Redis 7)         :6379 -> reserved for caching
-+-- rental-rabbitmq   (RabbitMQ 3)      :5672 -> reserved for async events
-+-- rental-elasticsearch (ES 9)         :9200 -> reserved for full-text search
++-- rental-redis      (Redis 7)         :6379 -> rate limiting (Lua INCR+EXPIRE)
++-- rental-rabbitmq   (RabbitMQ 3)      :5672 -> outbox relay, ES index events
++-- rental-elasticsearch (ES 9)         :9200 -> property full-text + geo search
 ```
 
 **Startup order** (health-check gated):
@@ -97,22 +97,25 @@ Browser                  Nginx                 Spring Boot            PostgreSQL
   |<-- HTTP 200 + JSON ----|                        |                      |
 ```
 
-### Authenticated Request
+### Authenticated Request (Cookie-based JWT)
 
 ```
-Browser                  Nginx           JwtFilter         Controller        Service
-  |                        |                |                   |               |
-  |-- POST /api/v1/... -->|                |                   |               |
-  |   Authorization:       |-- proxy ----->|                   |               |
-  |   Bearer <token>       |               |                   |               |
-  |                        |               |-- validate JWT    |               |
-  |                        |               |-- set Security -->|               |
-  |                        |               |   Context         |               |
-  |                        |               |                   |-- business -->|
-  |                        |               |                   |   logic       |
-  |                        |               |                   |<-- result ----|
-  |                        |<------------- JSON response ------|               |
-  |<-- HTTP 200 + JSON ----|               |                   |               |
+Browser                  Nginx        JwtFilter  RateLimit    Controller     Service
+  |                        |              |          |             |            |
+  |-- POST /api/v1/... -->|              |          |             |            |
+  |   Cookie: ACCESS_TOKEN |-- proxy --->|          |             |            |
+  |   Cookie: XSRF-TOKEN  |             |-- read   |             |            |
+  |   X-XSRF-TOKEN header |             |   cookie |             |            |
+  |                        |             |-- JWT OK |             |            |
+  |                        |             +--------->|             |            |
+  |                        |                        |-- INCR key  |            |
+  |                        |                        |   (Redis)   |            |
+  |                        |                        |-- under  -->|            |
+  |                        |                        |   limit     |            |
+  |                        |                        |             |-- logic -->|
+  |                        |                        |             |<-- result -|
+  |                        |<------------- JSON response ---------|            |
+  |<-- HTTP 200 + JSON ----|             |          |             |            |
 ```
 
 ### Token Refresh (401 Auto-Retry)
@@ -121,15 +124,15 @@ Browser                  Nginx           JwtFilter         Controller        Ser
 Browser               authInterceptor        Nginx / Backend
   |                        |                        |
   |-- API request -------->|                        |
-  |                        |-- add Bearer token --->|
+  |   (cookies sent auto)  |-- forward request ---->|
   |                        |<-- 401 Unauthorized ---|
   |                        |                        |
   |                        |-- POST /auth/refresh ->|
-  |                        |   (refresh token)      |
-  |                        |<-- new access token ---|
-  |                        |                        |
+  |                        |   (REFRESH_TOKEN cookie)|
+  |                        |<-- Set-Cookie: new ----|
+  |                        |      ACCESS_TOKEN      |
   |                        |-- retry original req ->|
-  |                        |   (new Bearer token)   |
+  |                        |   (new cookie auto)    |
   |                        |<-- 200 OK -------------|
   |<-- response -----------|                        |
 ```
@@ -185,7 +188,8 @@ Browser                 Nginx              WebSocketConfig          ChatService 
     +----------v----------+              +-------------v-----------+
     |   Access Token      |              |   Refresh Token         |
     |   (15 min TTL)      |              |   (7 day TTL)           |
-    |   Bearer header     |              |   httpOnly cookie       |
+    |   httpOnly cookie   |              |   httpOnly cookie       |
+    |   SameSite=Strict   |              |   Path=/api/v1/auth     |
     |   Stateless check   |              |   Stored in DB          |
     +---------------------+              +-------------------------+
 
@@ -222,6 +226,8 @@ Browser                 Nginx              WebSocketConfig          ChatService 
 | Approve/reject booking |        | x        | x     |
 | Create property        |        | x        | x     |
 | Update/delete property |        | x        | x     |
+| Create/update vehicle  |        | x        | x     |
+| Vehicle condition rpt  |        | x        | x     |
 | Chat                   | x      | x        | x     |
 | Favorites              | x      | x        | x     |
 | Admin dashboard        |        |          | x     |
@@ -242,10 +248,11 @@ Browser                 Nginx              WebSocketConfig          ChatService 
 +---------------------------------------------------------------------+
 |                      SERVICE LAYER (service/)                       |
 |  Business logic, @Transactional boundaries, orchestration           |
-|  AuthService, BookingService, PropertyService, ChatService,         |
-|  NotificationService, AdminService, PaymentService, EmailService,   |
-|  FavoriteService, ReviewService, UserService, StorageService,       |
-|  EventOutboxService                                                 |
+|  AuthService, BookingService, PropertyService, PropertySearchService,|
+|  ChatService, NotificationService, AdminService, PaymentService,    |
+|  EmailService, FavoriteService, ReviewService, UserService,         |
+|  StorageService, EventOutboxService, OutboxRelayService,            |
+|  VehicleService, VehicleAvailabilityService                         |
 +----------+----------+----------+----------+-------------------------+
            |          |          |          |
            v          v          v          v
@@ -515,7 +522,7 @@ Backend                         Gmail SMTP
 Component -> HttpClient
                 |
       +---------v---------+
-      | authInterceptor   |  Attaches Bearer token to all requests
+      | authInterceptor   |  Sends withCredentials (cookies auto-attached)
       +---------+---------+
                 |
       +---------v---------+
@@ -529,14 +536,52 @@ Component -> HttpClient
 
 On 401 response, `authInterceptor` automatically attempts token refresh via `POST /auth/refresh` before retrying the original request.
 
-## Infrastructure Not Yet Wired
+## Infrastructure Integration
 
-The following Docker services are provisioned but not consumed by application code:
+| Service           | Status | Usage                                                                         |
+| ----------------- | ------ | ----------------------------------------------------------------------------- |
+| **Redis**         | Active | API rate limiting via Lua atomic INCR+EXPIRE (RateLimitFilter)                |
+| **RabbitMQ**      | Active | Outbox relay publishes domain events; PropertyIndexConsumer indexes to ES     |
+| **Elasticsearch** | Active | Property full-text search (fuzzy match), faceted filtering, geo-distance sort |
 
-| Service           | Status          | Intended Use                                                            |
-| ----------------- | --------------- | ----------------------------------------------------------------------- |
-| **Redis**         | Running, unused | Session cache, rate limiting, distributed locks                         |
-| **RabbitMQ**      | Running, unused | Async event processing (outbox relay), email queue, notification fanout |
-| **Elasticsearch** | Running, unused | Full-text property search, geo-spatial queries                          |
+### Outbox Relay Flow
 
-The **Outbox Events** table is populated by `EventOutboxService` but no consumer reads from it yet. A future RabbitMQ relay would poll unprocessed events and publish them to exchange topics.
+```
+EventOutboxService.enqueue()  →  outbox_events table
+        ↓
+OutboxRelayService (@Scheduled, virtual threads)
+  SELECT ... FOR UPDATE SKIP LOCKED
+        ↓
+  RabbitMQ publish (publisher confirms, ACK)
+        ↓
+  Mark event as processed
+        ↓
+PropertyIndexConsumer (@RabbitListener)
+  → Fetch from PostgreSQL → Index to Elasticsearch
+```
+
+### Vehicle Schema (vehicles.\*)
+
+```
++-------------------+       +-------------------+       +--------------------+
+| vehicles.vehicles |       | vehicles.vehicle_ |       | vehicles.vehicle_  |
++-------------------+       | images            |       | bookings           |
+| id (PK, UUID)    |<--+   +-------------------+       +--------------------+
+| owner_id (FK)    |   |   | id (PK, UUID)    |       | id (PK, UUID)      |
+| brand / model    |   +---| vehicle_id (FK)  |       | vehicle_id (FK)    |
+| daily_price      |   |   | image_url (TEXT) |       | tenant_id (FK)     |
+| transmission     |   |   | display_order    |       | start_date / end   |
+| fuel_type        |   |   | is_primary       |       | total_price        |
+| status           |   |   +-------------------+       | status (enum)      |
+| deleted_at       |   |                               | entity_version     |
++-------------------+   |   +-------------------+       +--------------------+
+                        |   | vehicles.condition|
+                        |   | _reports          |       +--------------------+
+                        |   +-------------------+       | vehicles.condition_|
+                        +---| vehicle_id (FK)  |       | report_images      |
+                            | booking_id (FK)  |       +--------------------+
+                            | reporter_id (FK) |       | report_id (FK)     |
+                            | notes / mileage  |       | image_url          |
+                            | fuel_level       |       +--------------------+
+                            +-------------------+
+```

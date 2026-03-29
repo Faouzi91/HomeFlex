@@ -1,13 +1,16 @@
 package com.homeflex.features.vehicle.api.v1;
 
+import com.homeflex.core.dto.common.ApiListResponse;
+import com.homeflex.core.dto.common.ApiPageResponse;
 import com.homeflex.features.vehicle.domain.enums.FuelType;
 import com.homeflex.features.vehicle.domain.enums.Transmission;
 import com.homeflex.features.vehicle.domain.enums.VehicleStatus;
 import com.homeflex.features.vehicle.dto.request.VehicleCreateRequest;
+import com.homeflex.features.vehicle.dto.request.VehicleUpdateRequest;
+import com.homeflex.features.vehicle.dto.response.ConditionReportResponse;
 import com.homeflex.features.vehicle.dto.response.VehicleResponse;
 import com.homeflex.features.vehicle.dto.response.VehicleSearchParams;
 import com.homeflex.features.vehicle.service.VehicleService;
-import com.homeflex.core.dto.common.ApiPageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,11 +19,12 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -29,6 +33,8 @@ import java.util.UUID;
 public class VehicleV1Controller {
 
     private final VehicleService vehicleService;
+
+    // ── Public search & detail ──────────────────────────────────────────
 
     @GetMapping("/search")
     public ResponseEntity<ApiPageResponse<VehicleResponse>> search(
@@ -54,14 +60,78 @@ public class VehicleV1Controller {
         return ResponseEntity.ok(vehicleService.getById(id));
     }
 
+    @PostMapping("/{id}/view")
+    public ResponseEntity<Void> incrementViewCount(@PathVariable UUID id) {
+        vehicleService.incrementViewCount(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ── Owner CRUD ──────────────────────────────────────────────────────
+
     @PostMapping
     @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
     public ResponseEntity<VehicleResponse> create(
             @Valid @RequestBody VehicleCreateRequest request,
-            @AuthenticationPrincipal UserDetails principal
-    ) {
-        UUID ownerId = UUID.fromString(principal.getUsername());
+            Authentication authentication) {
+        UUID ownerId = UUID.fromString(authentication.getName());
         VehicleResponse response = vehicleService.create(request, ownerId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<VehicleResponse> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody VehicleUpdateRequest request,
+            Authentication authentication) {
+        UUID ownerId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(vehicleService.update(id, request, ownerId));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable UUID id,
+                                       Authentication authentication) {
+        UUID ownerId = UUID.fromString(authentication.getName());
+        vehicleService.softDelete(id, ownerId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Image uploads ───────────────────────────────────────────────────
+
+    @PostMapping("/{id}/images")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<VehicleResponse> uploadImages(
+            @PathVariable UUID id,
+            @RequestPart("images") List<MultipartFile> images,
+            Authentication authentication) {
+        UUID ownerId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(vehicleService.uploadImages(id, images, ownerId));
+    }
+
+    // ── Condition reports ───────────────────────────────────────────────
+
+    @PostMapping("/{id}/condition")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<ConditionReportResponse> createConditionReport(
+            @PathVariable UUID id,
+            @RequestParam String notes,
+            @RequestParam(required = false) Integer mileageAt,
+            @RequestParam(required = false) String fuelLevel,
+            @RequestParam(required = false) UUID bookingId,
+            @RequestPart(value = "photos", required = false) List<MultipartFile> photos,
+            Authentication authentication) {
+        UUID reporterId = UUID.fromString(authentication.getName());
+        ConditionReportResponse report = vehicleService.createConditionReport(
+                id, reporterId, notes, mileageAt, fuelLevel, bookingId, photos);
+        return ResponseEntity.status(HttpStatus.CREATED).body(report);
+    }
+
+    @GetMapping("/{id}/condition")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<ApiListResponse<ConditionReportResponse>> getConditionReports(
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(
+                new ApiListResponse<>(vehicleService.getConditionReports(id)));
     }
 }

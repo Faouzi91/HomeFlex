@@ -60,16 +60,16 @@ public class SampleDataInitializer implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         if (!createSampleProperties) {
-            log.info("⏭️  Sample data creation is disabled");
+            log.info(" Sample data creation is disabled");
             return;
         }
 
         if (propertyRepository.count() > 0) {
-            log.info("✅ Sample properties already exist, skipping...");
+            log.info(" Sample properties already exist, skipping...");
             return;
         }
 
-        log.info("🎨 Creating sample data...");
+        log.info("Creating sample data...");
 
         try {
             createAmenities();
@@ -79,16 +79,16 @@ public class SampleDataInitializer implements CommandLineRunner {
             createSampleReviews();
 
             log.info("═══════════════════════════════════════════════════════");
-            log.info("✅ SAMPLE DATA CREATED SUCCESSFULLY!");
+            log.info("SAMPLE DATA CREATED SUCCESSFULLY!");
             log.info("═══════════════════════════════════════════════════════");
-            log.info("📊 Statistics:");
+            log.info("Statistics:");
             log.info("   - Properties: {}", propertyRepository.count());
             log.info("   - Bookings: {}", bookingRepository.count());
             log.info("   - Favorites: {}", favoriteRepository.count());
             log.info("   - Reviews: {}", reviewRepository.count());
             log.info("═══════════════════════════════════════════════════════");
         } catch (Exception e) {
-            log.error("❌ Failed to create sample data: {}", e.getMessage());
+            log.error(" Failed to create sample data: {}", e.getMessage());
         }
     }
 

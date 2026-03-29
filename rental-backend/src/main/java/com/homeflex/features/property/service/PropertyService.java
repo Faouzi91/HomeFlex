@@ -1,5 +1,6 @@
 package com.homeflex.features.property.service;
 
+import com.homeflex.core.service.EventOutboxService;
 import com.homeflex.core.service.StorageService;
 import com.homeflex.core.service.NotificationService;
 
@@ -50,6 +51,7 @@ public class PropertyService {
     private final NotificationService notificationService;
     private final BookingRepository bookingRepository;
     private final PropertyMapper propertyMapper;
+    private final EventOutboxService eventOutboxService;
 
     @Transactional(readOnly = true)
     public Page<PropertyDto> searchProperties(PropertySearchParams params, Pageable pageable) {
@@ -204,6 +206,10 @@ public class PropertyService {
         // Notify admin for approval
         notificationService.notifyAdminsNewProperty(property);
 
+        // Enqueue for Elasticsearch indexing via the transactional outbox
+        eventOutboxService.enqueue("Property", property.getId(),
+                "PropertyIndexed", Map.of("action", "created"));
+
         // Force initialization before returning
         property.getImages().size();
         property.getVideos().size();
@@ -232,6 +238,10 @@ public class PropertyService {
         if (request.isAvailable() != null) property.setIsAvailable(request.isAvailable());
 
         property = propertyRepository.save(property);
+
+        // Enqueue for Elasticsearch re-indexing via the transactional outbox
+        eventOutboxService.enqueue("Property", property.getId(),
+                "PropertyIndexed", Map.of("action", "updated"));
 
         // Force initialization
         property.getImages().size();

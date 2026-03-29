@@ -1,6 +1,11 @@
 package com.homeflex.core.config;
 
 import com.homeflex.core.security.JwtAuthenticationFilter;
+import com.homeflex.core.security.RateLimitFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,10 +25,20 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 import com.homeflex.core.domain.repository.UserRepository;
+
+import java.io.IOException;
+import java.util.function.Supplier;
 
 @Configuration
 @EnableWebSecurity
@@ -32,13 +47,22 @@ import com.homeflex.core.domain.repository.UserRepository;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final UserRepository userRepository;
     private final AppProperties appProperties;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                        .ignoringRequestMatchers(
+                                "/api/v1/auth/**",
+                                "/api/v1/webhooks/**",
+                                "/ws/**"
+                        )
+                )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp.policyDirectives(
@@ -112,7 +136,9 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class)
+                .addFilterAfter(new CsrfCookieFilter(), RateLimitFilter.class);
 
         return http.build();
     }
@@ -164,5 +190,48 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
             throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    // ── SPA CSRF support (from Spring Security reference docs) ──────────
+
+    /**
+     * Resolves the CSRF token value for single-page applications.
+     * When the token arrives in a header (Angular's X-XSRF-TOKEN), uses the plain
+     * handler so it can be compared directly against the cookie value.
+     * When submitted via a form parameter, delegates to the XOR-encoded handler
+     * for BREACH protection.
+     */
+    static final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeHandler {
+        private final CsrfTokenRequestHandler delegate = new XorCsrfTokenRequestAttributeHandler();
+
+        @Override
+        public void handle(HttpServletRequest request, HttpServletResponse response,
+                           Supplier<CsrfToken> csrfToken) {
+            this.delegate.handle(request, response, csrfToken);
+        }
+
+        @Override
+        public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+            if (StringUtils.hasText(request.getHeader(csrfToken.getHeaderName()))) {
+                return super.resolveCsrfTokenValue(request, csrfToken);
+            }
+            return this.delegate.resolveCsrfTokenValue(request, csrfToken);
+        }
+    }
+
+    /**
+     * Forces the deferred CSRF token to be loaded on every request so
+     * {@link CookieCsrfTokenRepository} always writes the XSRF-TOKEN cookie.
+     */
+    static final class CsrfCookieFilter extends OncePerRequestFilter {
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                        FilterChain filterChain) throws ServletException, IOException {
+            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+            if (csrfToken != null) {
+                csrfToken.getToken();
+            }
+            filterChain.doFilter(request, response);
+        }
     }
 }

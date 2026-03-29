@@ -85,6 +85,12 @@ app:
     secret: ${JWT_SECRET}
     expiration: 86400000 # 24 hours in milliseconds
     refresh-expiration: 604800000 # 7 days in milliseconds
+    cookie:
+      access-token-name: ACCESS_TOKEN
+      refresh-token-name: REFRESH_TOKEN
+      secure: false
+      same-site: Strict
+      max-age-seconds: 604800
 
   # AWS S3 Configuration
   aws:
@@ -118,12 +124,11 @@ app:
       - PATCH
       - OPTIONS
     allowed-headers:
-      - Authorization
       - Content-Type
       - Accept
       - X-Requested-With
-    exposed-headers:
-      - Authorization
+      - X-XSRF-TOKEN
+    exposed-headers: []
     allow-credentials: true
     max-age: 3600
 

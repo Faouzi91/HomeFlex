@@ -20,14 +20,19 @@ A full-stack real estate rental platform where tenants can search and book prope
 
 ## Features
 
-- **Property search** with filters (city, price range, type, bedrooms, bathrooms, amenities) and pagination
+- **Property search** with Elasticsearch-powered fuzzy matching, faceted filtering, and geo-distance sorting
+- **Vehicle rentals** with image uploads, condition reports, availability checking, and double-booking prevention
 - **Role-based access**: Tenant, Landlord, Admin
-- **Booking system** with approve / reject / cancel workflow
+- **Booking system** with approve / reject / cancel workflow (properties and vehicles)
 - **Real-time chat** between tenants and landlords (WebSocket + STOMP)
 - **Favorites** and **reviews** for properties
 - **Admin dashboard** with property moderation, user management, and reports
 - **Push notifications** via Firebase
 - **Stripe payments** for bookings
+- **Cookie-only JWT auth** — httpOnly/Secure/SameSite=Strict cookies (no localStorage tokens)
+- **CSRF protection** compatible with Angular 21
+- **Redis rate limiting** — 100 req/min authenticated, 20 req/min public (429 on excess)
+- **Transactional outbox** — EventOutboxService + OutboxRelayService + RabbitMQ for reliable event processing
 - **i18n** support (English, French)
 - **Dark / light theme** toggle
 - **Mobile-ready** via Capacitor
@@ -163,27 +168,35 @@ HomeFlex/
 
 All endpoints are prefixed with `/api/v1`. Public endpoints don't require authentication.
 
-| Method | Endpoint                  | Auth     | Description                      |
-| ------ | ------------------------- | -------- | -------------------------------- |
-| POST   | `/auth/register`          | Public   | Register a new user              |
-| POST   | `/auth/login`             | Public   | Login, returns JWT               |
-| POST   | `/auth/google`            | Public   | Google OAuth login               |
-| POST   | `/auth/refresh`           | Public   | Refresh access token             |
-| GET    | `/properties/search`      | Public   | Search with filters + pagination |
-| GET    | `/properties/{id}`        | Public   | Property detail                  |
-| POST   | `/properties`             | Landlord | Create property (multipart)      |
-| PUT    | `/properties/{id}`        | Landlord | Update property                  |
-| DELETE | `/properties/{id}`        | Landlord | Delete property                  |
-| POST   | `/bookings`               | Tenant   | Create booking                   |
-| PATCH  | `/bookings/{id}/approve`  | Landlord | Approve booking                  |
-| PATCH  | `/bookings/{id}/reject`   | Landlord | Reject booking                   |
-| PATCH  | `/bookings/{id}/cancel`   | Tenant   | Cancel booking                   |
-| GET    | `/chat/rooms`             | Auth     | List chat rooms                  |
-| POST   | `/chat/rooms`             | Auth     | Create chat room                 |
-| GET    | `/favorites`              | Auth     | List favorites                   |
-| POST   | `/favorites/{propertyId}` | Auth     | Add to favorites                 |
-| GET    | `/admin/users`            | Admin    | List all users                   |
-| GET    | `/admin/properties`       | Admin    | List all properties              |
+| Method | Endpoint                   | Auth     | Description                      |
+| ------ | -------------------------- | -------- | -------------------------------- |
+| POST   | `/auth/register`           | Public   | Register a new user              |
+| POST   | `/auth/login`              | Public   | Login, sets JWT cookies          |
+| POST   | `/auth/google`             | Public   | Google OAuth login               |
+| POST   | `/auth/refresh`            | Public   | Refresh access token             |
+| GET    | `/properties/search`       | Public   | Search with filters + pagination |
+| GET    | `/properties/{id}`         | Public   | Property detail                  |
+| POST   | `/properties`              | Landlord | Create property (multipart)      |
+| PUT    | `/properties/{id}`         | Landlord | Update property                  |
+| DELETE | `/properties/{id}`         | Landlord | Delete property                  |
+| POST   | `/bookings`                | Tenant   | Create booking                   |
+| PATCH  | `/bookings/{id}/approve`   | Landlord | Approve booking                  |
+| PATCH  | `/bookings/{id}/reject`    | Landlord | Reject booking                   |
+| PATCH  | `/bookings/{id}/cancel`    | Tenant   | Cancel booking                   |
+| GET    | `/chat/rooms`              | Auth     | List chat rooms                  |
+| POST   | `/chat/rooms`              | Auth     | Create chat room                 |
+| GET    | `/favorites`               | Auth     | List favorites                   |
+| POST   | `/favorites/{propertyId}`  | Auth     | Add to favorites                 |
+| GET    | `/admin/users`             | Admin    | List all users                   |
+| GET    | `/admin/properties`        | Admin    | List all properties              |
+| GET    | `/vehicles/search`         | Public   | Search vehicles with filters     |
+| GET    | `/vehicles/{id}`           | Public   | Vehicle detail                   |
+| POST   | `/vehicles`                | Landlord | Create vehicle listing           |
+| PUT    | `/vehicles/{id}`           | Landlord | Update vehicle                   |
+| DELETE | `/vehicles/{id}`           | Landlord | Soft-delete vehicle              |
+| POST   | `/vehicles/{id}/images`    | Landlord | Upload vehicle images            |
+| POST   | `/vehicles/{id}/condition` | Landlord | Create condition report          |
+| GET    | `/vehicles/{id}/condition` | Landlord | List condition reports           |
 
 See Swagger UI at `/swagger-ui.html` for the complete API reference.
 
@@ -193,7 +206,7 @@ See Swagger UI at `/swagger-ui.html` for the complete API reference.
 # Backend
 cd rental-backend
 ./gradlew test                                          # all tests
-./gradlew test --tests "com.realestate.rental.SomeTest" # single class
+./gradlew test --tests "com.homeflex.SomeTest"          # single class
 
 # Frontend
 cd rental-app-frontend

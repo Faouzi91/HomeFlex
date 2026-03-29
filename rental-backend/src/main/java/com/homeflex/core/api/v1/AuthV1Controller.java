@@ -1,85 +1,78 @@
 package com.homeflex.core.api.v1;
 
+import com.homeflex.core.config.AppProperties;
 import com.homeflex.core.dto.response.AuthResponse;
+import com.homeflex.core.dto.response.AuthTokens;
 import com.homeflex.core.dto.common.ApiValueResponse;
 import com.homeflex.core.dto.request.ForgotPasswordRequest;
 import com.homeflex.core.dto.request.GoogleLoginRequest;
 import com.homeflex.core.dto.request.LoginRequest;
-import com.homeflex.core.dto.request.RefreshTokenRequest;
 import com.homeflex.core.dto.request.RegisterRequest;
 import com.homeflex.core.dto.request.ResetPasswordRequest;
+import com.homeflex.core.security.JwtTokenProvider;
 import com.homeflex.core.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Auth endpoints — refresh token stored in httpOnly cookie per SRS NFR-SEC1.
- */
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthV1Controller {
 
     private final AuthService authService;
-
-    @Value("${app.jwt.cookie.refresh-token-name:refreshToken}")
-    private String refreshTokenCookieName;
-
-    @Value("${app.jwt.cookie.secure:false}")
-    private boolean cookieSecure;
-
-    @Value("${app.jwt.cookie.max-age-seconds:604800}")
-    private int cookieMaxAge;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final AppProperties appProperties;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
                                                   HttpServletResponse response) {
-        AuthResponse auth = authService.register(request);
-        addRefreshTokenCookie(response, auth.refreshToken());
-        return ResponseEntity.ok(withoutRefreshToken(auth));
+        AuthTokens tokens = authService.register(request);
+        addAuthCookies(response, tokens);
+        return ResponseEntity.ok(new AuthResponse(tokens.user()));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
                                                HttpServletResponse response) {
-        AuthResponse auth = authService.login(request);
-        addRefreshTokenCookie(response, auth.refreshToken());
-        return ResponseEntity.ok(withoutRefreshToken(auth));
+        AuthTokens tokens = authService.login(request);
+        addAuthCookies(response, tokens);
+        return ResponseEntity.ok(new AuthResponse(tokens.user()));
     }
 
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request,
                                                      HttpServletResponse response) {
-        AuthResponse auth = authService.googleLogin(request.idToken());
-        addRefreshTokenCookie(response, auth.refreshToken());
-        return ResponseEntity.ok(withoutRefreshToken(auth));
+        AuthTokens tokens = authService.googleLogin(request.idToken());
+        addAuthCookies(response, tokens);
+        return ResponseEntity.ok(new AuthResponse(tokens.user()));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(
-            @CookieValue(name = "refreshToken", required = false) String cookieToken,
-            @RequestBody(required = false) RefreshTokenRequest bodyRequest,
+            @CookieValue(name = "REFRESH_TOKEN", required = false) String cookieToken,
             HttpServletResponse response) {
-        String token = cookieToken != null ? cookieToken :
-                (bodyRequest != null ? bodyRequest.refreshToken() : null);
-        if (token == null) {
+        if (cookieToken == null) {
             return ResponseEntity.badRequest().build();
         }
-        AuthResponse auth = authService.refreshToken(token);
-        addRefreshTokenCookie(response, auth.refreshToken());
-        return ResponseEntity.ok(withoutRefreshToken(auth));
+        AuthTokens tokens = authService.refreshToken(cookieToken);
+        addAuthCookies(response, tokens);
+        return ResponseEntity.ok(new AuthResponse(tokens.user()));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String token,
-                                        HttpServletResponse response) {
-        authService.logout(token);
-        clearRefreshTokenCookie(response);
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null) {
+            authService.logout(UUID.fromString(auth.getName()));
+        }
+        clearAuthCookies(response);
         return ResponseEntity.ok().build();
     }
 
@@ -97,27 +90,45 @@ public class AuthV1Controller {
         return ResponseEntity.ok(new ApiValueResponse<>("Password reset successful"));
     }
 
-    private void addRefreshTokenCookie(HttpServletResponse response, String token) {
-        Cookie cookie = new Cookie(refreshTokenCookieName, token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(cookieSecure);
-        cookie.setPath("/api/v1/auth");
-        cookie.setMaxAge(cookieMaxAge);
-        cookie.setAttribute("SameSite", "Strict");
-        response.addCookie(cookie);
+    // ── Cookie helpers ──────────────────────────────────────────────────
+
+    private void addAuthCookies(HttpServletResponse response, AuthTokens tokens) {
+        var cookieCfg = appProperties.getJwt().getCookie();
+
+        Cookie access = new Cookie(cookieCfg.getAccessTokenName(), tokens.accessToken());
+        access.setHttpOnly(true);
+        access.setSecure(cookieCfg.isSecure());
+        access.setPath("/");
+        access.setMaxAge(jwtTokenProvider.getAccessTokenMaxAgeSeconds());
+        access.setAttribute("SameSite", cookieCfg.getSameSite());
+        response.addCookie(access);
+
+        Cookie refresh = new Cookie(cookieCfg.getRefreshTokenName(), tokens.refreshToken());
+        refresh.setHttpOnly(true);
+        refresh.setSecure(cookieCfg.isSecure());
+        refresh.setPath("/api/v1/auth");
+        refresh.setMaxAge(cookieCfg.getMaxAgeSeconds());
+        refresh.setAttribute("SameSite", cookieCfg.getSameSite());
+        response.addCookie(refresh);
     }
 
-    private void clearRefreshTokenCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie(refreshTokenCookieName, "");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(cookieSecure);
-        cookie.setPath("/api/v1/auth");
-        cookie.setMaxAge(0);
-        cookie.setAttribute("SameSite", "Strict");
-        response.addCookie(cookie);
-    }
+    private void clearAuthCookies(HttpServletResponse response) {
+        var cookieCfg = appProperties.getJwt().getCookie();
 
-    private AuthResponse withoutRefreshToken(AuthResponse auth) {
-        return new AuthResponse(auth.token(), null, auth.user());
+        Cookie access = new Cookie(cookieCfg.getAccessTokenName(), "");
+        access.setHttpOnly(true);
+        access.setSecure(cookieCfg.isSecure());
+        access.setPath("/");
+        access.setMaxAge(0);
+        access.setAttribute("SameSite", cookieCfg.getSameSite());
+        response.addCookie(access);
+
+        Cookie refresh = new Cookie(cookieCfg.getRefreshTokenName(), "");
+        refresh.setHttpOnly(true);
+        refresh.setSecure(cookieCfg.isSecure());
+        refresh.setPath("/api/v1/auth");
+        refresh.setMaxAge(0);
+        refresh.setAttribute("SameSite", cookieCfg.getSameSite());
+        response.addCookie(refresh);
     }
 }
