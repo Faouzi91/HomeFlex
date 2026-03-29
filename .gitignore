@@ -80,6 +80,18 @@ build/
 ### VS Code ###
 .vscode/
 
+# Gradle
+.gradle/
+**/gradle-app.setting
+
+# Claude Code
+.claude/settings.local.json
+.claude/worktrees/
+.claude/plans/
+
+# Build artifact leaks
+rental-backend/${project.build.directory}/
+
 # Secrets and local env
 .env
 *.env

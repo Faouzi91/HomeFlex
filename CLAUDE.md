@@ -48,90 +48,77 @@ npx prettier --check .       # Check formatting (Husky pre-commit hook runs this
 ### Backend: `rental-backend/`
 
 - **Spring Boot 4.0.4**, Java 21, Gradle (Groovy DSL)
-- **Layered architecture:** Controller → Service → Repository → Database
-- **Package:** `com.realestate.rental`
-  - `api/v1/` — All REST controllers (thin: validate, delegate, return)
-  - `domain/entity/` — JPA entities
-  - `domain/enums/` — Domain enumerations (UserRole, BookingStatus, PropertyType, etc.)
-  - `domain/repository/` — Spring Data JPA repositories
-  - `domain/event/` — Domain events (OutboxEvent)
-  - `service/` — Business logic services
-  - `mapper/` — Object mapping (DTO ↔ Entity)
-  - `dto/request/` — Inbound request DTOs (Java records, Jakarta validation)
-  - `dto/response/` — Outbound response DTOs
-  - `dto/common/` — API response wrappers (ApiPageResponse, ApiListResponse, ApiValueResponse)
-  - `security/` — JWT filter + token provider
-  - `config/` — Spring configuration (Security, WebSocket, Firebase, AppProperties)
-  - `exception/` — Global `@RestControllerAdvice` + custom exceptions
-  - `infrastructure/` — External integrations (notifications)
+- **Package-by-Feature architecture** under `com.homeflex`
+  - `com.homeflex.core` — Cross-cutting concerns (security, config, exceptions, infrastructure, user/chat/notification domain)
+  - `com.homeflex.features.property` — Property rental feature (entities, services, controllers, DTOs, mappers)
+  - `com.homeflex.features.vehicle` — Vehicle rental feature (separate `vehicles` PostgreSQL schema)
+- **Main class:** `com.homeflex.HomeFlexApplication`
 - **Database:** PostgreSQL, Flyway migrations in `src/main/resources/db/migration/`
 - **DI:** Constructor injection via Lombok `@RequiredArgsConstructor` (never `@Autowired` on fields)
 - **All API endpoints** prefixed `/api/v1/`
 - **Swagger UI** at `/swagger-ui.html`
 
-#### Backend Tree (`com.realestate.rental`)
+#### Backend Tree
 
 ```
-├── RealEstateRentalApplication.java
-├── api/v1/
-│   ├── AdminController.java
-│   ├── AuthV1Controller.java
-│   ├── BookingV1Controller.java
-│   ├── ChatController.java
-│   ├── FavoriteController.java
-│   ├── NotificationController.java
-│   ├── PropertyV1Controller.java
-│   ├── ReviewController.java
-│   ├── StatsController.java
-│   ├── UserController.java
-│   └── WebSocketChatController.java
-├── config/
-│   ├── AppProperties.java
-│   ├── DataInitializer.java
-│   ├── FirebaseConfig.java
-│   ├── SampleDataInitializer.java
-│   ├── SecurityConfig.java
-│   └── WebSocketConfig.java
-├── domain/
-│   ├── entity/                      # Amenity, Booking, ChatRoom, Favorite, FcmToken,
-│   │                                # Message, Notification, OAuthProvider, Property,
-│   │                                # PropertyImage, PropertyVideo, RefreshToken,
-│   │                                # ReportedListing, Review, TypingNotification, User
-│   ├── enums/                       # AmenityCategory, BookingStatus, BookingType,
-│   │                                # ListingType, NotificationType, PropertyStatus,
-│   │                                # PropertyType, UserRole
-│   ├── event/                       # OutboxEvent, OutboxEventRepository
-│   └── repository/                  # AmenityRepository, BookingRepository, ChatRoomRepository,
-│                                    # FavoriteRepository, FcmTokenRepository, MessageRepository,
-│                                    # NotificationRepository, OAuthProviderRepository,
-│                                    # PropertyImageRepository, PropertyRepository,
-│                                    # PropertyVideoRepository, RefreshTokenRepository,
-│                                    # ReportedListingRepository, ReviewRepository, UserRepository
-├── dto/
-│   ├── request/                     # BookingCreateRequest, LoginRequest, RegisterRequest,
-│   │                                # PropertyCreateRequest, etc. (20+ request DTOs)
-│   ├── response/                    # AuthResponse, BookingDto, PropertyDto, UserDto,
-│   │                                # ChatRoomDto, MessageDto, NotificationDto, etc.
-│   └── common/                      # ApiListResponse, ApiPageResponse, ApiValueResponse
-├── exception/
-│   ├── GlobalExceptionHandler.java
-│   ├── ConflictException.java
-│   ├── DomainException.java
-│   ├── ResourceNotFoundException.java
-│   └── UnauthorizedException.java
-├── infrastructure/notification/
-│   ├── NotificationGateway.java     # Interface
-│   └── FirebaseNotificationGateway.java
-├── mapper/                          # AdminMapper, BookingMapper, ChatMapper, FavoriteMapper,
-│                                    # NotificationMapper, PropertyMapper, ReportMapper,
-│                                    # ReviewMapper, UserMapper
-├── security/
-│   ├── JwtAuthenticationFilter.java
-│   └── JwtTokenProvider.java
-└── service/                         # AdminService, AuthService, BookingService, ChatService,
-                                     # EmailService, EventOutboxService, FavoriteService,
-                                     # NotificationService, PaymentService, PropertyService,
-                                     # ReviewService, StorageService, UserService
+com.homeflex/
+├── HomeFlexApplication.java
+├── core/
+│   ├── CoreModuleConfig.java
+│   ├── api/v1/                           # AdminController, AuthV1Controller, ChatController,
+│   │                                     # NotificationController, UserController, WebSocketChatController
+│   ├── config/                           # AppProperties, DataInitializer, FirebaseConfig,
+│   │                                     # RabbitMqConfig, SampleDataInitializer, SecurityConfig, WebSocketConfig
+│   ├── domain/
+│   │   ├── entity/                       # User, RefreshToken, OAuthProvider, ChatRoom, Message,
+│   │   │                                 # Notification, FcmToken, TypingNotification
+│   │   ├── enums/                        # UserRole, NotificationType
+│   │   ├── event/                        # OutboxEvent, OutboxEventRepository
+│   │   └── repository/                   # UserRepository, RefreshTokenRepository, OAuthProviderRepository,
+│   │                                     # ChatRoomRepository, MessageRepository, NotificationRepository, FcmTokenRepository
+│   ├── dto/
+│   │   ├── common/                       # ApiListResponse, ApiPageResponse, ApiValueResponse
+│   │   ├── event/                        # OutboxEventMessage
+│   │   ├── request/                      # LoginRequest, RegisterRequest, ChatRoomCreateRequest, etc.
+│   │   └── response/                     # AuthResponse, UserDto, ChatRoomDto, MessageDto, NotificationDto
+│   ├── exception/                        # GlobalExceptionHandler, ConflictException, DomainException,
+│   │                                     # ResourceNotFoundException, UnauthorizedException
+│   ├── infrastructure/notification/      # NotificationGateway, FirebaseNotificationGateway
+│   ├── mapper/                           # UserMapper, ChatMapper, NotificationMapper
+│   ├── security/                         # JwtAuthenticationFilter, JwtTokenProvider
+│   └── service/                          # AdminService, AuthService, ChatService, EmailService,
+│                                         # NotificationService, StorageService, PaymentService,
+│                                         # UserService, EventOutboxService, OutboxRelayService
+├── features/
+│   ├── property/
+│   │   ├── PropertyModuleConfig.java
+│   │   ├── api/v1/                       # PropertyV1Controller, BookingV1Controller, FavoriteController,
+│   │   │                                 # ReviewController, StatsController
+│   │   ├── domain/
+│   │   │   ├── entity/                   # Property, PropertyImage, PropertyVideo, Amenity,
+│   │   │   │                             # Booking, Favorite, Review, ReportedListing
+│   │   │   ├── enums/                    # PropertyType, PropertyStatus, ListingType,
+│   │   │   │                             # BookingStatus, BookingType, AmenityCategory
+│   │   │   └── repository/              # PropertyRepository, BookingRepository, FavoriteRepository,
+│   │   │                                 # ReviewRepository, AmenityRepository, + 3 more
+│   │   ├── dto/
+│   │   │   ├── request/                  # PropertyCreateRequest, BookingCreateRequest, ReviewCreateRequest, etc.
+│   │   │   └── response/                # PropertyDto, BookingDto, FavoriteDto, ReviewDto, ReportDto, etc.
+│   │   ├── mapper/                       # PropertyMapper, BookingMapper, FavoriteMapper,
+│   │   │                                 # ReviewMapper, ReportMapper, AdminMapper
+│   │   └── service/                      # PropertyService, BookingService, FavoriteService, ReviewService
+│   └── vehicle/
+│       ├── VehicleModuleConfig.java
+│       ├── api/v1/                       # VehicleV1Controller
+│       ├── domain/
+│       │   ├── entity/                   # Vehicle
+│       │   ├── enums/                    # FuelType, Transmission, VehicleStatus
+│       │   └── repository/              # VehicleRepository
+│       ├── dto/
+│       │   ├── request/                  # VehicleCreateRequest
+│       │   └── response/                # VehicleResponse, VehicleSearchParams
+│       ├── mapper/                       # VehicleMapper
+│       └── service/                      # VehicleService
 ```
 
 ### Frontend: `rental-app-frontend/`
@@ -230,7 +217,7 @@ npx prettier --check .       # Check formatting (Husky pre-commit hook runs this
   - `db` — PostgreSQL 16 (database: `homeflex`)
   - `redis` — Redis 7 (caching, rate limiting, distributed locking)
   - `rabbitmq` — RabbitMQ 3 (async messaging, event fanout; management UI on :15672)
-  - `elasticsearch` — Elasticsearch 8 (full-text + geo search)
+  - `elasticsearch` — Elasticsearch 9 (full-text + geo search)
 - All services have health checks; backend waits for db, redis, rabbitmq, elasticsearch to be healthy
 - Multi-stage Dockerfiles with layer caching for fast rebuilds
 - Non-root users in both frontend (nginx) and backend containers
