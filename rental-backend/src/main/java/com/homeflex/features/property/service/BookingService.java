@@ -1,6 +1,7 @@
 package com.homeflex.features.property.service;
-import com.homeflex.core.service.NotificationService;
 
+import com.homeflex.core.service.NotificationService;
+import com.homeflex.core.service.PaymentService;
 import com.homeflex.features.property.mapper.BookingMapper;
 import com.homeflex.features.property.dto.response.BookingDto;
 import com.homeflex.features.property.dto.request.BookingCreateRequest;
@@ -17,18 +18,23 @@ import com.homeflex.core.domain.entity.User;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
 import com.homeflex.core.domain.enums.UserRole;
-import lombok.RequiredArgsConstructor;
+import com.stripe.model.PaymentIntent;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class BookingService {
 
@@ -36,7 +42,39 @@ public class BookingService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final PaymentService paymentService;
     private final BookingMapper bookingMapper;
+
+    private final Counter bookingsCreatedCounter;
+    private final Counter paymentsSucceededCounter;
+    private final Counter paymentsFailedCounter;
+
+    public BookingService(BookingRepository bookingRepository,
+                          PropertyRepository propertyRepository,
+                          UserRepository userRepository,
+                          NotificationService notificationService,
+                          PaymentService paymentService,
+                          BookingMapper bookingMapper,
+                          MeterRegistry meterRegistry) {
+        this.bookingRepository = bookingRepository;
+        this.propertyRepository = propertyRepository;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.paymentService = paymentService;
+        this.bookingMapper = bookingMapper;
+
+        this.bookingsCreatedCounter = Counter.builder("homeflex.bookings.created")
+                .description("Total bookings created")
+                .register(meterRegistry);
+        this.paymentsSucceededCounter = Counter.builder("homeflex.bookings.payments")
+                .tag("outcome", "success")
+                .description("Successful booking payment intents")
+                .register(meterRegistry);
+        this.paymentsFailedCounter = Counter.builder("homeflex.bookings.payments")
+                .tag("outcome", "failure")
+                .description("Failed booking payment intents")
+                .register(meterRegistry);
+    }
 
     public BookingDto createBooking(BookingCreateRequest request, UUID tenantId) {
         // Get property
@@ -55,6 +93,15 @@ public class BookingService {
         validateBookingDates(request);
         validateNoDateOverlap(request);
 
+        // Compute total price for rental bookings
+        BigDecimal totalPrice = null;
+        BigDecimal platformFee = null;
+        if (request.startDate() != null && request.endDate() != null && property.getPrice() != null) {
+            long days = ChronoUnit.DAYS.between(request.startDate(), request.endDate()) + 1;
+            totalPrice = property.getPrice().multiply(BigDecimal.valueOf(days));
+            platformFee = paymentService.computePlatformFee(totalPrice);
+        }
+
         // Create booking
         Booking booking = new Booking();
         booking.setProperty(property);
@@ -66,8 +113,29 @@ public class BookingService {
         booking.setMessage(request.message());
         booking.setNumberOfOccupants(request.numberOfOccupants());
         booking.setStatus(BookingStatus.PENDING);
+        booking.setTotalPrice(totalPrice);
+        booking.setPlatformFee(platformFee);
 
         booking = bookingRepository.save(booking);
+        bookingsCreatedCounter.increment();
+
+        // Create PaymentIntent (funds held on platform account as escrow)
+        if (totalPrice != null && totalPrice.compareTo(BigDecimal.ZERO) > 0) {
+            String transferGroup = "property_booking_" + booking.getId();
+            String description = "HomeFlex booking: " + property.getTitle();
+            PaymentIntent pi = paymentService.createBookingPaymentIntent(
+                    totalPrice, property.getCurrency(), description, transferGroup);
+            if (pi != null) {
+                booking.setStripePaymentIntentId(pi.getId());
+                booking = bookingRepository.save(booking);
+                paymentsSucceededCounter.increment();
+                log.info("PaymentIntent created for booking {}: piId={}", booking.getId(), pi.getId());
+            } else {
+                paymentsFailedCounter.increment();
+                log.warn("PaymentIntent creation failed for booking {}; booking saved without payment",
+                        booking.getId());
+            }
+        }
 
         // Notify landlord
         notificationService.sendBookingRequestNotification(

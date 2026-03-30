@@ -1,171 +1,231 @@
 <ion-header class="ion-no-border">
-    <ion-toolbar class="toolbar-custom">
-        <div class="max-w-7xl mx-auto px-4 py-3">
-
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        {{ 'property.propertiesFor' | translate }} {{ searchParams.listingType || ('property.forRent' |
-                        translate) }}
-                    </h1>
-                    <p class="text-gray-600 mt-1 text-sm">
-                        {{ totalElements }} {{ 'property.propertiesFound' | translate }}
-                    </p>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <ion-button fill="clear" class="action-btn" (click)="toggleViewMode()"
-                        [attr.aria-label]="'common.viewToggle' | translate">
-                        <ion-icon [name]="viewMode === 'grid' ? 'list' : 'grid'" slot="icon-only"></ion-icon>
-                    </ion-button>
-
-                    <button class="btn-primary btn-sm" (click)="toggleFilters()">
-                        <ion-icon name="options-outline"></ion-icon>
-                        <span>{{ 'filters.filters' | translate }}</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-                <div *ngFor="let bedOption of bedroomOptions" class="chip"
-                    [class.active]="searchParams.bedrooms === bedOption.value"
-                    (click)="searchParams.bedrooms = bedOption.value; applyFilters()">
-                    {{ ('filters.quickFilters.' + bedOption.key) | translate }} {{ 'property.beds' | translate }}
-                </div>
-
-                <div *ngFor="let range of priceRanges" class="chip"
-                    [class.active]="searchParams.minPrice === range.min && searchParams.maxPrice === range.max"
-                    (click)="searchParams.minPrice = range.min; searchParams.maxPrice = range.max; applyFilters()">
-                    {{ ('filters.quickFilters.' + range.key) | translate }}
-                </div>
-
-                <div class="chip chip-clear" (click)="clearFilters()"
-                    *ngIf="searchParams.city || searchParams.minPrice">
-                    <ion-icon name="close-circle"></ion-icon>
-                    {{ 'filters.clearAll' | translate }}
-                </div>
-            </div>
-
+  <ion-toolbar class="toolbar-custom">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">
+            {{ 'property.propertiesFor' | translate }}
+            {{ store.filters().listingType || ('property.forRent' | translate) }}
+          </h1>
+          <p class="text-gray-600 mt-1 text-sm">
+            {{ store.pagination().totalElements }} {{ 'property.propertiesFound' | translate }}
+          </p>
         </div>
-    </ion-toolbar>
+
+        <div class="flex items-center gap-2">
+          <ion-button
+            fill="clear"
+            class="action-btn"
+            (click)="toggleViewMode()"
+            [attr.aria-label]="'common.viewToggle' | translate"
+          >
+            <ion-icon [name]="viewMode() === 'grid' ? 'list' : 'grid'" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <button class="btn-primary btn-sm" (click)="toggleFilters()">
+            <ion-icon name="options-outline"></ion-icon>
+            <span>{{ 'filters.filters' | translate }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        @for (bedOption of bedroomOptions; track bedOption.value) {
+          <div
+            class="chip"
+            [class.active]="store.filters().bedrooms === bedOption.value"
+            (click)="selectBedrooms(bedOption.value)"
+          >
+            {{ 'filters.quickFilters.' + bedOption.key | translate }}
+            {{ 'property.beds' | translate }}
+          </div>
+        }
+
+        @for (range of priceRanges; track range.key) {
+          <div
+            class="chip"
+            [class.active]="
+              store.filters().minPrice === range.min && store.filters().maxPrice === range.max
+            "
+            (click)="selectPriceRange(range.min, range.max)"
+          >
+            {{ 'filters.quickFilters.' + range.key | translate }}
+          </div>
+        }
+
+        @if (store.hasActiveFilters()) {
+          <div class="chip chip-clear" (click)="clearFilters()">
+            <ion-icon name="close-circle"></ion-icon>
+            {{ 'filters.clearAll' | translate }}
+          </div>
+        }
+      </div>
+    </div>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content class="property-list-content">
-    <div class="max-w-7xl mx-auto px-4 py-6">
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    @if (store.loading() && store.entities().length === 0) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="loading-skeleton">
+            <ion-skeleton-text animated class="h-64 rounded-lg mb-4"></ion-skeleton-text>
+          </div>
+        }
+      </div>
+    }
 
-        <div *ngIf="loading && properties.length === 0"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <div class="loading-skeleton" *ngFor="let i of [1,2,3,4]">
-                <ion-skeleton-text animated class="h-64 rounded-lg mb-4"></ion-skeleton-text>
-            </div>
+    @if (!store.loading() || store.entities().length > 0) {
+      @if (viewMode() === 'grid') {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          @for (property of store.entities(); track property.id) {
+            <app-property-card
+              [property]="property"
+              (cardClick)="navigateToPropertyDetail(property.id)"
+            >
+            </app-property-card>
+          }
         </div>
-
-        <div *ngIf="!loading || properties.length > 0">
-            <div *ngIf="viewMode === 'grid'"
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <app-property-card *ngFor="let property of properties" [property]="property"
-                    (cardClick)="navigateToPropertyDetail(property.id)">
-                </app-property-card>
-            </div>
-
-            <div *ngIf="viewMode === 'list'" class="list-view-container">
-                <app-property-card *ngFor="let property of properties" [property]="property"
-                    (cardClick)="navigateToPropertyDetail(property.id)">
-                </app-property-card>
-            </div>
+      } @else {
+        <div class="list-view-container">
+          @for (property of store.entities(); track property.id) {
+            <app-property-card
+              [property]="property"
+              (cardClick)="navigateToPropertyDetail(property.id)"
+            >
+            </app-property-card>
+          }
         </div>
+      }
+    }
 
-        <div *ngIf="!loading && properties.length === 0" class="empty-state">
-            <div class="empty-icon-wrapper">
-                <ion-icon name="search-outline"></ion-icon>
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ 'property.noResults.title' | translate }}</h3>
-            <p class="text-gray-600 mb-6 text-center max-w-md">{{ 'property.noResults.subtitle' | translate }}</p>
-            <button class="btn-primary" style="max-width: 200px;" (click)="clearFilters()">
-                {{ 'property.noResults.clearBtn' | translate }}
-            </button>
+    @if (store.isEmpty()) {
+      <div class="empty-state">
+        <div class="empty-icon-wrapper">
+          <ion-icon name="search-outline"></ion-icon>
         </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">
+          {{ 'property.noResults.title' | translate }}
+        </h3>
+        <p class="text-gray-600 mb-6 text-center max-w-md">
+          {{ 'property.noResults.subtitle' | translate }}
+        </p>
+        <button class="btn-primary" style="max-width: 200px" (click)="clearFilters()">
+          {{ 'property.noResults.clearBtn' | translate }}
+        </button>
+      </div>
+    }
 
-        <ion-infinite-scroll (ionInfinite)="loadMore($event)" threshold="100px"
-            [disabled]="currentPage >= totalPages - 1">
-            <ion-infinite-scroll-content loadingSpinner="bubbles" [loadingText]="'common.loadingMore' | translate">
-            </ion-infinite-scroll-content>
-        </ion-infinite-scroll>
-
-    </div>
+    <ion-infinite-scroll (ionInfinite)="loadMore()" threshold="100px" [disabled]="!store.hasMore()">
+      <ion-infinite-scroll-content
+        loadingSpinner="bubbles"
+        [loadingText]="'common.loadingMore' | translate"
+      >
+      </ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </div>
 </ion-content>
 
-<div *ngIf="showFilters" class="filters-backdrop" (click)="toggleFilters()"></div>
+@if (showFilters()) {
+  <div class="filters-backdrop" (click)="toggleFilters()"></div>
+}
 
-<div *ngIf="showFilters" class="filters-sidebar">
+@if (showFilters()) {
+  <div class="filters-sidebar">
     <div class="filters-header">
-        <h2 class="text-xl font-bold text-gray-900">{{ 'filters.filters' | translate }}</h2>
-        <button class="icon-btn" (click)="toggleFilters()">
-            <ion-icon name="close-outline"></ion-icon>
-        </button>
+      <h2 class="text-xl font-bold text-gray-900">{{ 'filters.filters' | translate }}</h2>
+      <button class="icon-btn" (click)="toggleFilters()">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
     </div>
 
     <div class="filters-content">
-        <div class="space-y-6">
-
-            <div class="form-group">
-                <label class="form-label">{{ 'filters.location' | translate }}</label>
-                <div class="input-wrapper">
-                    <ion-icon name="location-outline" class="input-icon"></ion-icon>
-                    <input type="text" [(ngModel)]="searchParams.city" [placeholder]="'filters.cityOrArea' | translate"
-                        class="form-input" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ 'filters.propertyType' | translate }}</label>
-                <div class="input-wrapper">
-                    <ion-icon name="home-outline" class="input-icon"></ion-icon>
-                    <ion-select [(ngModel)]="searchParams.propertyType" interface="popover" class="form-select-custom">
-                        <ion-select-option [value]="null">{{ 'filters.allTypes' | translate }}</ion-select-option>
-                        <ion-select-option *ngFor="let type of propertyTypes" [value]="type">
-                            {{ 'property.type.' + type | translate }}
-                        </ion-select-option>
-                    </ion-select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ 'filters.priceRangeXAF' | translate }}</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="input-wrapper">
-                        <input type="number" [(ngModel)]="searchParams.minPrice"
-                            [placeholder]="'filters.minPrice' | translate" class="form-input" />
-                    </div>
-                    <div class="input-wrapper">
-                        <input type="number" [(ngModel)]="searchParams.maxPrice"
-                            [placeholder]="'filters.maxPrice' | translate" class="form-input" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">{{ 'filters.bedrooms' | translate }}</label>
-                <div class="input-wrapper">
-                    <ion-icon name="bed-outline" class="input-icon"></ion-icon>
-                    <ion-select [(ngModel)]="searchParams.bedrooms" interface="popover" class="form-select-custom">
-                        <ion-select-option [value]="null">{{ 'filters.any' | translate }}</ion-select-option>
-                        <ion-select-option *ngFor="let opt of bedroomOptions" [value]="opt.value">
-                            {{ 'filters.quickFilters.' + opt.key | translate }}
-                        </ion-select-option>
-                    </ion-select>
-                </div>
-            </div>
-
+      <div class="space-y-6">
+        <div class="form-group">
+          <label class="form-label">{{ 'filters.location' | translate }}</label>
+          <div class="input-wrapper">
+            <ion-icon name="location-outline" class="input-icon"></ion-icon>
+            <input
+              type="text"
+              [(ngModel)]="filterDraft.city"
+              [placeholder]="'filters.cityOrArea' | translate"
+              class="form-input"
+            />
+          </div>
         </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ 'filters.propertyType' | translate }}</label>
+          <div class="input-wrapper">
+            <ion-icon name="home-outline" class="input-icon"></ion-icon>
+            <ion-select
+              [(ngModel)]="filterDraft.propertyType"
+              interface="popover"
+              class="form-select-custom"
+            >
+              <ion-select-option [value]="null">{{
+                'filters.allTypes' | translate
+              }}</ion-select-option>
+              @for (type of propertyTypes; track type) {
+                <ion-select-option [value]="type">
+                  {{ 'property.type.' + type | translate }}
+                </ion-select-option>
+              }
+            </ion-select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ 'filters.priceRangeXAF' | translate }}</label>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="input-wrapper">
+              <input
+                type="number"
+                [(ngModel)]="filterDraft.minPrice"
+                [placeholder]="'filters.minPrice' | translate"
+                class="form-input"
+              />
+            </div>
+            <div class="input-wrapper">
+              <input
+                type="number"
+                [(ngModel)]="filterDraft.maxPrice"
+                [placeholder]="'filters.maxPrice' | translate"
+                class="form-input"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">{{ 'filters.bedrooms' | translate }}</label>
+          <div class="input-wrapper">
+            <ion-icon name="bed-outline" class="input-icon"></ion-icon>
+            <ion-select
+              [(ngModel)]="filterDraft.bedrooms"
+              interface="popover"
+              class="form-select-custom"
+            >
+              <ion-select-option [value]="null">{{ 'filters.any' | translate }}</ion-select-option>
+              @for (opt of bedroomOptions; track opt.value) {
+                <ion-select-option [value]="opt.value">
+                  {{ 'filters.quickFilters.' + opt.key | translate }}
+                </ion-select-option>
+              }
+            </ion-select>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="filters-footer">
-        <button class="btn-primary" (click)="applyFilters()">
-            {{ 'filters.apply' | translate }}
-        </button>
-        <button class="btn-google mt-3" (click)="clearFilters()">
-            {{ 'filters.clear' | translate }}
-        </button>
+      <button class="btn-primary" (click)="applyFilters()">
+        {{ 'filters.apply' | translate }}
+      </button>
+      <button class="btn-google mt-3" (click)="clearFilters()">
+        {{ 'filters.clear' | translate }}
+      </button>
     </div>
-</div>
+  </div>
+}

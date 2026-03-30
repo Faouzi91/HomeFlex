@@ -49,9 +49,10 @@ npx prettier --check .       # Check formatting (Husky pre-commit hook runs this
 
 - **Spring Boot 4.0.4**, Java 21, Gradle (Groovy DSL)
 - **Package-by-Feature architecture** under `com.homeflex`
-  - `com.homeflex.core` — Cross-cutting concerns (security, config, exceptions, infrastructure, user/chat/notification domain)
+  - `com.homeflex.core` — Cross-cutting concerns (security, config, exceptions, infrastructure, user/chat/notification domain, KYC, payments/escrow)
   - `com.homeflex.features.property` — Property rental feature (entities, services, controllers, DTOs, mappers)
   - `com.homeflex.features.vehicle` — Vehicle rental feature (separate `vehicles` PostgreSQL schema)
+- **Resilience4j** — Programmatic circuit breakers (email, Firebase) and retry with exponential backoff (Stripe). No AOP annotations — uses core library beans directly for Spring Boot 4 compatibility.
 - **Main class:** `com.homeflex.HomeFlexApplication`
 - **Database:** PostgreSQL, Flyway migrations in `src/main/resources/db/migration/`
 - **DI:** Constructor injection via Lombok `@RequiredArgsConstructor` (never `@Autowired` on fields)
@@ -66,16 +67,19 @@ com.homeflex/
 ├── core/
 │   ├── CoreModuleConfig.java
 │   ├── api/v1/                           # AdminController, AuthV1Controller, ChatController,
-│   │                                     # NotificationController, UserController, WebSocketChatController
+│   │                                     # KycController, NotificationController, PayoutController,
+│   │                                     # StripeWebhookController, UserController, WebSocketChatController
 │   ├── config/                           # AppProperties, DataInitializer, FirebaseConfig,
-│   │                                     # RabbitMqConfig, SampleDataInitializer, SecurityConfig, WebSocketConfig
+│   │                                     # RabbitMqConfig, ResilienceConfig, SampleDataInitializer,
+│   │                                     # SecurityConfig, WebSocketConfig
 │   ├── domain/
 │   │   ├── entity/                       # User, RefreshToken, OAuthProvider, ChatRoom, Message,
-│   │   │                                 # Notification, FcmToken, TypingNotification
-│   │   ├── enums/                        # UserRole, NotificationType
+│   │   │                                 # Notification, FcmToken, TypingNotification, KycVerification
+│   │   ├── enums/                        # UserRole, NotificationType, KycStatus
 │   │   ├── event/                        # OutboxEvent, OutboxEventRepository
 │   │   └── repository/                   # UserRepository, RefreshTokenRepository, OAuthProviderRepository,
-│   │                                     # ChatRoomRepository, MessageRepository, NotificationRepository, FcmTokenRepository
+│   │                                     # ChatRoomRepository, MessageRepository, NotificationRepository,
+│   │                                     # FcmTokenRepository, KycVerificationRepository
 │   ├── dto/
 │   │   ├── common/                       # ApiListResponse, ApiPageResponse, ApiValueResponse
 │   │   ├── event/                        # OutboxEventMessage
@@ -85,10 +89,12 @@ com.homeflex/
 │   │                                     # ResourceNotFoundException, UnauthorizedException
 │   ├── infrastructure/notification/      # NotificationGateway, FirebaseNotificationGateway
 │   ├── mapper/                           # UserMapper, ChatMapper, NotificationMapper
-│   ├── security/                         # JwtAuthenticationFilter, JwtTokenProvider, RateLimitFilter
+│   ├── security/                         # JwtAuthenticationFilter, JwtTokenProvider, RateLimitFilter,
+│   │                                     # MetricsTokenFilter
 │   └── service/                          # AdminService, AuthService, ChatService, EmailService,
-│                                         # NotificationService, StorageService, PaymentService,
-│                                         # UserService, EventOutboxService, OutboxRelayService
+│                                         # EscrowService, KycService, NotificationService,
+│                                         # StorageService, PaymentService, UserService,
+│                                         # EventOutboxService, OutboxRelayService
 ├── features/
 │   ├── property/
 │   │   ├── PropertyModuleConfig.java
@@ -133,7 +139,7 @@ com.homeflex/
 - `core/guards/` — AuthGuard, RoleGuard, PublicAccessGuard, AdminGuard
 - `core/interceptors/` — authInterceptor (JWT), errorInterceptor (401 refresh)
 - `core/services/` — Domain services (auth, property, booking, chat, payment, websocket)
-- `core/state/` — Signal-based state management (auth, property)
+- `core/state/` — NgRx Signal Store (`PropertyStore` with `withEntities`, `rxMethod`; `AuthStore`)
 - `environments/` — Dev/prod configs with `apiUrl` and `wsUrl`
 - **Mobile:** Capacitor 8 for Android/iOS
 
@@ -162,7 +168,7 @@ com.homeflex/
 │   │   ├── toast/                   # toast.service
 │   │   ├── user/                    # user.service
 │   │   └── websocket/               # websocket.service
-│   ├── state/                       # auth.state, property.state
+│   ├── state/                       # auth.store, property.store (NgRx Signal Store)
 │   └── utils/                       # currency.utils, validators
 ├── features/
 │   ├── admin/
@@ -228,6 +234,12 @@ com.homeflex/
 - Non-root users in both frontend (nginx) and backend containers
 - Nginx config includes: gzip, security headers, static asset caching (1yr), WebSocket proxy, Swagger proxy
 
+### Monitoring (`docker-compose.monitoring.yml`)
+
+- **Prometheus** (v3.4.0) on `:9090` — scrapes `/actuator/prometheus` every 10s via bearer token auth
+- **Grafana** (v11.6.0) on `:3000` — auto-provisioned Prometheus datasource + pre-built dashboard (JVM, HTTP, HikariCP, booking/payment counters)
+- Joins the main `rental-network`; start with `docker-compose -f docker-compose.monitoring.yml up -d`
+
 ## Key Patterns & Conventions
 
 - **DTOs are Java records** with Jakarta validation annotations on request DTOs. Entities never leak to the API layer.
@@ -237,6 +249,12 @@ com.homeflex/
 - **Outbox pattern:** `EventOutboxService.enqueue()` writes events to `outbox_events`; `OutboxRelayService` polls with `FOR UPDATE SKIP LOCKED`, publishes to RabbitMQ, marks processed on ACK. Consumers (e.g. `PropertyIndexConsumer`) react to domain events.
 - **Logging:** SLF4J via Lombok `@Slf4j`. Never log sensitive data.
 - **API versioning:** `/api/v1/` prefix. See `docs/adr/ADR-002` for rationale.
+- **Resilience4j:** Programmatic circuit breakers (`emailCircuitBreaker`, `firebaseCircuitBreaker`) and retry (`stripeRetry`) defined as beans in `ResilienceConfig`. No annotation-based AOP.
+- **Stripe Connect (Escrow):** Separate Charges and Transfers pattern — PaymentIntent with `transferGroup` collects funds on platform; `EscrowService` releases via `Transfer` to connected account after check-in. 15% platform commission.
+- **KYC:** Stripe Identity Verification Sessions. `KycService.requireVerified(userId)` enforced before property/vehicle creation. Webhook-driven status updates.
+- **Metrics:** Micrometer + Prometheus registry. Custom counters: `homeflex.bookings.created`, `homeflex.bookings.payments{outcome=success|failure}`. `/actuator/prometheus` secured by bearer token (`MetricsTokenFilter` → `ROLE_MONITORING`).
+- **Frontend state:** NgRx Signal Store (`@ngrx/signals`). `PropertyStore` uses `withEntities<Property>()` for entity management and `rxMethod` for debounced/immediate search. `AuthStore` for user session. No BehaviorSubjects for state.
+- **Frontend templates:** `@for` / `@if` control flow (not `*ngFor` / `*ngIf`). Signal reads in templates for zone-less rendering.
 - **Frontend forms:** Reactive Forms for complex forms (never template-driven).
 - **Angular components:** Standalone (no NgModules for new features).
 - **i18n:** ngx-translate with HttpLoader. Translation files in assets.
@@ -248,8 +266,11 @@ com.homeflex/
 - **CSRF protection** — `CookieCsrfTokenRepository.withHttpOnlyFalse()` + `SpaCsrfTokenRequestHandler` for Angular 21 compatibility; auth/webhook/ws endpoints exempted
 - **Rate limiting** — Redis-backed `RateLimitFilter` (Lua atomic INCR+EXPIRE): 100 req/min authenticated, 20 req/min public. Returns 429 with `Retry-After` header. Fails open on Redis unavailability.
 - Roles: TENANT, LANDLORD, ADMIN
-- Public endpoints: `/api/v1/auth/**`, property GET (search), vehicle GET (search/detail), Swagger, actuator (dev only)
+- Public endpoints: `/api/v1/auth/**`, property GET (search), vehicle GET (search/detail), Swagger, `/actuator/health/**`
+- Secured actuator: `/actuator/prometheus` requires ADMIN or MONITORING role; `/actuator/**` requires ADMIN
 - Protected: bookings, chat, payments require authentication; admin endpoints require ADMIN role
+- KYC endpoints: `/api/v1/kyc/**` requires authentication; `/api/v1/kyc/admin/**` requires ADMIN
+- Payouts: `/api/v1/payouts/**` requires LANDLORD or ADMIN role
 - CORS: localhost:4200 (dev), configurable for production
 
 ## Testing

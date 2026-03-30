@@ -1,13 +1,9 @@
-// ====================================
-// features/properties/services/property.service.ts
-// ====================================
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from 'src/app/environments/environment';
 import { Property, PropertyReport, PropertySearchParams } from 'src/app/models/property.model';
-import { PropertyState } from '../../state/property.state';
 import { ApiListResponse, ApiPageResponse, ApiValueResponse } from 'src/app/types/api.types';
 
 /** @deprecated Use ApiPageResponse — kept for templates importing PagedResponse */
@@ -26,14 +22,7 @@ export interface Stats {
 export class PropertyService {
   private apiUrl = `${environment.apiUrl}/properties`;
 
-  // State management
-  private propertiesSubject = new BehaviorSubject<Property[]>([]);
-  public properties$ = this.propertiesSubject.asObservable();
-
-  constructor(
-    private http: HttpClient,
-    private propertyState: PropertyState
-  ) {}
+  constructor(private http: HttpClient) {}
 
   searchProperties(params: PropertySearchParams): Observable<ApiPageResponse<Property>> {
     let httpParams = new HttpParams();
@@ -44,22 +33,9 @@ export class PropertyService {
       }
     });
 
-    return this.http
-      .get<ApiPageResponse<Property>>(`${this.apiUrl}/search`, {
-        params: httpParams,
-      })
-      .pipe(
-        tap((response) => {
-          if (params.page === 0) {
-            this.propertiesSubject.next(response.data);
-            this.propertyState.setProperties(response.data);
-          } else {
-            const current = this.propertiesSubject.value;
-            this.propertiesSubject.next([...current, ...response.data]);
-            this.propertyState.setProperties([...current, ...response.data]);
-          }
-        })
-      );
+    return this.http.get<ApiPageResponse<Property>>(`${this.apiUrl}/search`, {
+      params: httpParams,
+    });
   }
 
   getPropertyById(id: string): Observable<Property> {

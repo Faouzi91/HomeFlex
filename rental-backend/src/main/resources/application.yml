@@ -168,6 +168,10 @@ app:
     public-requests-per-minute: 20
     window-seconds: 60
 
+  # Monitoring / Prometheus scrape token
+  monitoring:
+    metrics-token: ${MONITORING_METRICS_TOKEN:changeme-metrics-token}
+
   # CORS Configuration
   cors:
     allowed-origins:
@@ -214,10 +218,22 @@ management:
   endpoint:
     health:
       show-details: when-authorized
-  metrics:
-    export:
-      prometheus:
+      probes:
         enabled: true
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.90, 0.95, 0.99
 
 # Swagger/OpenAPI Configuration
 springdoc:

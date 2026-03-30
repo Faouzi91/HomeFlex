@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -46,4 +48,51 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             @Param("endDate") LocalDate endDate,
             @Param("statuses") List<BookingStatus> statuses
     );
+
+    /**
+     * Finds approved bookings that have reached check-in date and whose
+     * escrow has not yet been released.
+     */
+    @Query("""
+            SELECT b FROM Booking b
+            JOIN FETCH b.property p
+            JOIN FETCH p.landlord
+            WHERE b.status = :status
+              AND b.stripePaymentIntentId IS NOT NULL
+              AND b.escrowReleasedAt IS NULL
+              AND b.startDate <= :today
+            """)
+    List<Booking> findEscrowReady(
+            @Param("status") BookingStatus status,
+            @Param("today") LocalDate today
+    );
+
+    /**
+     * Sum of total_price minus platform_fee for bookings still in escrow
+     * (approved, paid, not yet released) for a given landlord.
+     */
+    @Query("""
+            SELECT SUM(b.totalPrice - COALESCE(b.platformFee, 0))
+            FROM Booking b
+            WHERE b.property.landlord.id = :landlordId
+              AND b.status = :status
+              AND b.stripePaymentIntentId IS NOT NULL
+              AND b.escrowReleasedAt IS NULL
+            """)
+    Optional<BigDecimal> sumEscrowHeldByLandlord(
+            @Param("landlordId") UUID landlordId,
+            @Param("status") BookingStatus status
+    );
+
+    /**
+     * Sum of total_price minus platform_fee for bookings whose escrow
+     * has been released (total earnings) for a given landlord.
+     */
+    @Query("""
+            SELECT SUM(b.totalPrice - COALESCE(b.platformFee, 0))
+            FROM Booking b
+            WHERE b.property.landlord.id = :landlordId
+              AND b.escrowReleasedAt IS NOT NULL
+            """)
+    Optional<BigDecimal> sumReleasedByLandlord(@Param("landlordId") UUID landlordId);
 }

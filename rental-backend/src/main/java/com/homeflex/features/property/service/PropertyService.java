@@ -1,6 +1,7 @@
 package com.homeflex.features.property.service;
 
 import com.homeflex.core.service.EventOutboxService;
+import com.homeflex.core.service.KycService;
 import com.homeflex.core.service.StorageService;
 import com.homeflex.core.service.NotificationService;
 
@@ -52,6 +53,7 @@ public class PropertyService {
     private final BookingRepository bookingRepository;
     private final PropertyMapper propertyMapper;
     private final EventOutboxService eventOutboxService;
+    private final KycService kycService;
 
     @Transactional(readOnly = true)
     public Page<PropertyDto> searchProperties(PropertySearchParams params, Pageable pageable) {
@@ -149,6 +151,8 @@ public class PropertyService {
         if (landlord.getRole() != UserRole.LANDLORD && landlord.getRole() != UserRole.ADMIN) {
             throw new UnauthorizedException("Only landlords can create properties");
         }
+
+        kycService.requireVerified(landlordId);
 
         // Create property
         Property property = new Property();

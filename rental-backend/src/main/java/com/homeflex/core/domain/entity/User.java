@@ -54,6 +54,9 @@ public class User {
     @Column(name = "is_verified")
     private Boolean isVerified = false;
 
+    @Column(name = "stripe_account_id")
+    private String stripeAccountId;
+
     @Column(name = "language_preference", length = 5)
     private String languagePreference = "en";
 

@@ -2,6 +2,7 @@ package com.homeflex.features.property.dto.response;
 
 import com.homeflex.core.dto.response.UserDto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,6 +18,9 @@ public record BookingDto(
         String status,
         String message,
         Integer numberOfOccupants,
+        BigDecimal totalPrice,
+        BigDecimal platformFee,
+        String stripePaymentIntentId,
         String landlordResponse,
         LocalDateTime respondedAt,
         LocalDateTime createdAt

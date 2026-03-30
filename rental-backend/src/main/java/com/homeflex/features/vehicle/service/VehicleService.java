@@ -2,6 +2,7 @@ package com.homeflex.features.vehicle.service;
 
 import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.exception.UnauthorizedException;
+import com.homeflex.core.service.KycService;
 import com.homeflex.core.service.StorageService;
 import com.homeflex.features.vehicle.domain.entity.ConditionReport;
 import com.homeflex.features.vehicle.domain.entity.Vehicle;
@@ -39,6 +40,7 @@ public class VehicleService {
     private final ConditionReportRepository conditionReportRepository;
     private final StorageService storageService;
     private final VehicleMapper vehicleMapper;
+    private final KycService kycService;
 
     // ── Queries ─────────────────────────────────────────────────────────
 
@@ -67,6 +69,8 @@ public class VehicleService {
 
     @Transactional
     public VehicleResponse create(VehicleCreateRequest request, UUID ownerId) {
+        kycService.requireVerified(ownerId);
+
         Vehicle vehicle = vehicleMapper.toEntity(request);
         vehicle.setOwnerId(ownerId);
         vehicle.setStatus(VehicleStatus.AVAILABLE);

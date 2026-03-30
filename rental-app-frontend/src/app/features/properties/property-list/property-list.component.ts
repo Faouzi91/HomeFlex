@@ -1,62 +1,35 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, inject, signal, effect, ViewChild, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonInfiniteScroll, IonicModule } from '@ionic/angular';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { PagedResponse, PropertyService } from 'src/app/core/services/property/property.service';
-import {
-  ListingType,
-  Property,
-  PropertySearchParams,
-  PropertyType,
-} from 'src/app/models/property.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { FormsModule } from '@angular/forms';
 import { PropertyCardComponent } from '../property-card/property-card.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { PropertyStore, PropertyFilters } from 'src/app/core/state/property.store';
+import { ListingType, PropertyType } from 'src/app/models/property.model';
 
 @Component({
   selector: 'app-property-list',
   standalone: true,
-  imports: [
-    IonicModule,
-    PropertyCardComponent,
-    ReactiveFormsModule,
-    TranslateModule,
-    FormsModule,
-    CommonModule,
-  ],
+  imports: [IonicModule, PropertyCardComponent, TranslateModule, FormsModule],
   templateUrl: './property-list.component.html',
   styleUrls: ['./property-list.component.scss'],
 })
 export class PropertyListComponent implements OnInit {
   @ViewChild(IonInfiniteScroll) infiniteScroll!: IonInfiniteScroll;
 
-  properties: Property[] = [];
-  loading = false;
-  viewMode: 'grid' | 'list' = 'grid';
+  readonly store = inject(PropertyStore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  // Pagination
-  currentPage = 0;
-  pageSize = 20;
-  totalElements = 0;
-  totalPages = 0;
-
-  // Filters
-  searchParams: PropertySearchParams = {
-    page: 0,
-    size: 20,
-    sortBy: 'createdAt',
-    sortDirection: 'desc',
-  };
-
-  showFilters = false;
+  viewMode = signal<'grid' | 'list'>('grid');
+  showFilters = signal(false);
 
   propertyTypes = Object.values(PropertyType);
   listingTypes = Object.values(ListingType);
 
-  // Filter options
   bedroomOptions = [
-    { key: 'studioBeds', value: 0 }, // maps to filters.quickFilters.studioBeds
-    { key: 'onePlusBeds', value: 1 }, // maps to filters.quickFilters.onePlusBeds
+    { key: 'studioBeds', value: 0 },
+    { key: 'onePlusBeds', value: 1 },
     { key: 'twoPlusBeds', value: 2 },
     { key: 'threePlusBeds', value: 3 },
     { key: 'fourPlusBeds', value: 4 },
@@ -66,22 +39,28 @@ export class PropertyListComponent implements OnInit {
     { key: 'under100k', min: 0, max: 100000 },
     { key: '100to200k', min: 100000, max: 200000 },
     { key: '200to500k', min: 200000, max: 500000 },
-    { key: 'over500k', min: 500000, max: null },
+    { key: 'over500k', min: 500000, max: null as number | null },
   ];
 
-  constructor(
-    private propertyService: PropertyService,
-    private route: ActivatedRoute,
-    private router: Router
-  ) {}
+  /** Local mutable copy of filters for ngModel bindings in the sidebar. */
+  filterDraft: PropertyFilters = {
+    sortBy: 'createdAt',
+    sortDirection: 'desc',
+  };
+
+  constructor() {
+    // Sync infinite scroll disabled state with store
+    effect(() => {
+      const hasMore = this.store.hasMore();
+      if (this.infiniteScroll) {
+        this.infiniteScroll.disabled = !hasMore;
+      }
+    });
+  }
 
   ngOnInit(): void {
-    // Subscribe to query params
     this.route.queryParams.subscribe((params) => {
-      // Merge query params with default search params
-      this.searchParams = {
-        page: 0,
-        size: 20,
+      const filters: PropertyFilters = {
         sortBy: params['sortBy'] || 'createdAt',
         sortDirection: params['sortDirection'] || 'desc',
         city: params['city'] || undefined,
@@ -93,100 +72,55 @@ export class PropertyListComponent implements OnInit {
         bathrooms: params['bathrooms'] ? Number(params['bathrooms']) : undefined,
       };
 
-      // Always load properties when params change (or on init)
-      this.loadProperties();
+      this.filterDraft = { ...filters };
+      this.store.load(filters);
     });
   }
 
-  loadProperties(append: boolean = false): void {
-    if (!append) {
-      this.loading = true;
-      this.properties = [];
-      this.searchParams.page = 0;
-    }
-
-    console.log('Loading properties with params:', this.searchParams);
-
-    this.propertyService.searchProperties(this.searchParams).subscribe({
-      next: (response: PagedResponse<Property>) => {
-        console.log('Properties loaded:', response);
-
-        if (append) {
-          this.properties = [...this.properties, ...response.data];
-        } else {
-          this.properties = response.data;
-        }
-
-        this.totalElements = response.totalElements;
-        this.totalPages = response.totalPages;
-        this.currentPage = response.page;
-        this.loading = false;
-
-        if (this.infiniteScroll) {
-          this.infiniteScroll.complete();
-          if (this.currentPage >= this.totalPages - 1) {
-            this.infiniteScroll.disabled = true;
-          }
-        }
-      },
-      error: (error) => {
-        console.error('Error loading properties:', error);
-        this.loading = false;
-        if (this.infiniteScroll) {
-          this.infiniteScroll.complete();
-        }
-      },
-    });
-  }
-
-  loadMore(event: any): void {
-    this.searchParams.page = (this.searchParams.page || 0) + 1;
-    this.loadProperties(true);
+  loadMore(): void {
+    this.store.loadMore();
   }
 
   toggleViewMode(): void {
-    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
-    console.log('View mode changed to:', this.viewMode);
+    this.viewMode.update((v) => (v === 'grid' ? 'list' : 'grid'));
   }
 
   toggleFilters(): void {
-    this.showFilters = !this.showFilters;
+    this.showFilters.update((v) => !v);
   }
 
   applyFilters(): void {
-    this.updateQueryParams();
-    this.showFilters = false;
+    this.updateQueryParams(this.filterDraft);
+    this.showFilters.set(false);
   }
 
   clearFilters(): void {
-    this.searchParams = {
-      page: 0,
-      size: 20,
-      sortBy: 'createdAt',
-      sortDirection: 'desc',
-    };
-    this.updateQueryParams();
+    this.store.clearFilters();
+    this.filterDraft = { sortBy: 'createdAt', sortDirection: 'desc' };
+    this.updateQueryParams(this.filterDraft);
+  }
+
+  selectBedrooms(value: number): void {
+    this.filterDraft.bedrooms = value;
+    this.applyFilters();
+  }
+
+  selectPriceRange(min: number, max: number | null): void {
+    this.filterDraft.minPrice = min;
+    this.filterDraft.maxPrice = max ?? undefined;
+    this.applyFilters();
   }
 
   setSortBy(sortBy: string, sortDirection: 'asc' | 'desc' = 'desc'): void {
-    this.searchParams.sortBy = sortBy;
-    this.searchParams.sortDirection = sortDirection;
-    this.loadProperties();
+    this.filterDraft.sortBy = sortBy;
+    this.filterDraft.sortDirection = sortDirection;
+    this.applyFilters();
   }
 
-  /**
-   * Return the translation key for the listing type shown in the header.
-   * The template pipes the result to | translate, so we return a translation key.
-   */
   getListingTypeKey(): string {
-    const lt = this.searchParams?.listingType;
-    if (!lt) {
-      return 'property.forRent'; // default fallback
-    }
-
-    // Normalize common enum values and map to the translation keys in your JSON
+    const lt = this.store.filters()?.listingType;
+    if (!lt) return 'property.forRent';
     const normalized = String(lt).toUpperCase();
-
     switch (normalized) {
       case 'RENT':
       case 'SHORT_TERM':
@@ -195,15 +129,17 @@ export class PropertyListComponent implements OnInit {
       case 'SELL':
         return 'property.forSale';
       default:
-        // If your listingType already contains a translation key, return it directly.
-        // Fallback to forRent if unknown.
         return 'property.forRent';
     }
   }
 
-  private updateQueryParams(): void {
-    const params: any = {};
-    Object.entries(this.searchParams).forEach(([key, value]) => {
+  navigateToPropertyDetail(propertyId: string): void {
+    this.router.navigate(['/properties', propertyId]);
+  }
+
+  private updateQueryParams(filters: PropertyFilters): void {
+    const params: Record<string, string | number> = {};
+    for (const [key, value] of Object.entries(filters)) {
       if (
         value !== null &&
         value !== undefined &&
@@ -211,18 +147,14 @@ export class PropertyListComponent implements OnInit {
         key !== 'page' &&
         key !== 'size'
       ) {
-        params[key] = value;
+        params[key] = value as string | number;
       }
-    });
+    }
 
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: params,
       queryParamsHandling: 'merge',
     });
-  }
-
-  navigateToPropertyDetail(propertyId: string): void {
-    this.router.navigate(['/properties', propertyId]);
   }
 }

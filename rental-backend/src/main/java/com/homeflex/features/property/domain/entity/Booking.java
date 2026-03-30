@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -60,6 +61,18 @@ public class Booking {
 
     @Column(name = "number_of_occupants")
     private Integer numberOfOccupants;
+
+    @Column(name = "total_price", precision = 12, scale = 2)
+    private BigDecimal totalPrice;
+
+    @Column(name = "platform_fee", precision = 12, scale = 2)
+    private BigDecimal platformFee;
+
+    @Column(name = "stripe_payment_intent_id")
+    private String stripePaymentIntentId;
+
+    @Column(name = "escrow_released_at")
+    private LocalDateTime escrowReleasedAt;
 
     @Column(name = "landlord_response", columnDefinition = "TEXT")
     private String landlordResponse;

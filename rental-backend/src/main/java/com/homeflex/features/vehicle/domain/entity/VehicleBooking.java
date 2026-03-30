@@ -44,6 +44,15 @@ public class VehicleBooking {
     @Column(nullable = false, length = 20)
     private VehicleBookingStatus status = VehicleBookingStatus.PENDING;
 
+    @Column(name = "platform_fee", precision = 12, scale = 2)
+    private BigDecimal platformFee;
+
+    @Column(name = "stripe_payment_intent_id")
+    private String stripePaymentIntentId;
+
+    @Column(name = "escrow_released_at")
+    private LocalDateTime escrowReleasedAt;
+
     @Column(columnDefinition = "TEXT")
     private String message;
 

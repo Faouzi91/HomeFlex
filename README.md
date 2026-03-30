@@ -13,9 +13,13 @@ A full-stack real estate rental platform where tenants can search and book prope
 | Messaging     | RabbitMQ 3                                       |
 | Search        | Elasticsearch 9                                  |
 | Mobile        | Capacitor 8 (Android / iOS)                      |
+| State         | NgRx Signal Store (`@ngrx/signals` 21)           |
 | Auth          | JWT (access + refresh tokens), Google OAuth      |
-| Payments      | Stripe                                           |
+| Payments      | Stripe Connect (escrow, destination charges)     |
+| KYC           | Stripe Identity Verification                     |
 | Notifications | Firebase Cloud Messaging                         |
+| Resilience    | Resilience4j (circuit breaker, retry)            |
+| Monitoring    | Micrometer, Prometheus, Grafana                  |
 | CI            | GitHub Actions                                   |
 
 ## Features
@@ -28,10 +32,14 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Favorites** and **reviews** for properties
 - **Admin dashboard** with property moderation, user management, and reports
 - **Push notifications** via Firebase
-- **Stripe payments** for bookings
+- **Stripe Connect payments** with platform escrow — funds held until check-in, 15% commission, automatic payout release
+- **Landlord KYC** via Stripe Identity — document verification required before listing
 - **Cookie-only JWT auth** — httpOnly/Secure/SameSite=Strict cookies (no localStorage tokens)
 - **CSRF protection** compatible with Angular 21
 - **Redis rate limiting** — 100 req/min authenticated, 20 req/min public (429 on excess)
+- **Resilience4j** circuit breakers on email/Firebase, retry with exponential backoff on Stripe API calls
+- **Prometheus + Grafana monitoring** with custom booking/payment metrics and pre-built dashboards
+- **NgRx Signal Store** for frontend state — entity management, debounced search via `rxMethod`, zone-less rendering
 - **Transactional outbox** — EventOutboxService + OutboxRelayService + RabbitMQ for reliable event processing
 - **i18n** support (English, French)
 - **Dark / light theme** toggle
@@ -60,6 +68,17 @@ Once all containers are healthy (~60s):
 | Backend API         | http://localhost:8080/api/v1           |
 | Swagger UI          | http://localhost:8080/swagger-ui.html  |
 | RabbitMQ Management | http://localhost:15672 (guest / guest) |
+
+### Monitoring (optional)
+
+```bash
+docker-compose -f docker-compose.monitoring.yml up -d
+```
+
+| Service    | URL                                   |
+| ---------- | ------------------------------------- |
+| Prometheus | http://localhost:9090                 |
+| Grafana    | http://localhost:3000 (admin / admin) |
 
 ### Stop
 
@@ -160,6 +179,8 @@ HomeFlex/
 │   └── Dockerfile                # Multi-stage build (JDK -> JRE)
 │
 ├── docker-compose.yml            # 6-service orchestration
+├── docker-compose.monitoring.yml # Prometheus + Grafana
+├── monitoring/                   # Prometheus config, Grafana dashboards
 ├── .github/workflows/ci.yml     # CI pipeline
 └── CLAUDE.md                     # AI assistant context
 ```
@@ -168,35 +189,40 @@ HomeFlex/
 
 All endpoints are prefixed with `/api/v1`. Public endpoints don't require authentication.
 
-| Method | Endpoint                   | Auth     | Description                      |
-| ------ | -------------------------- | -------- | -------------------------------- |
-| POST   | `/auth/register`           | Public   | Register a new user              |
-| POST   | `/auth/login`              | Public   | Login, sets JWT cookies          |
-| POST   | `/auth/google`             | Public   | Google OAuth login               |
-| POST   | `/auth/refresh`            | Public   | Refresh access token             |
-| GET    | `/properties/search`       | Public   | Search with filters + pagination |
-| GET    | `/properties/{id}`         | Public   | Property detail                  |
-| POST   | `/properties`              | Landlord | Create property (multipart)      |
-| PUT    | `/properties/{id}`         | Landlord | Update property                  |
-| DELETE | `/properties/{id}`         | Landlord | Delete property                  |
-| POST   | `/bookings`                | Tenant   | Create booking                   |
-| PATCH  | `/bookings/{id}/approve`   | Landlord | Approve booking                  |
-| PATCH  | `/bookings/{id}/reject`    | Landlord | Reject booking                   |
-| PATCH  | `/bookings/{id}/cancel`    | Tenant   | Cancel booking                   |
-| GET    | `/chat/rooms`              | Auth     | List chat rooms                  |
-| POST   | `/chat/rooms`              | Auth     | Create chat room                 |
-| GET    | `/favorites`               | Auth     | List favorites                   |
-| POST   | `/favorites/{propertyId}`  | Auth     | Add to favorites                 |
-| GET    | `/admin/users`             | Admin    | List all users                   |
-| GET    | `/admin/properties`        | Admin    | List all properties              |
-| GET    | `/vehicles/search`         | Public   | Search vehicles with filters     |
-| GET    | `/vehicles/{id}`           | Public   | Vehicle detail                   |
-| POST   | `/vehicles`                | Landlord | Create vehicle listing           |
-| PUT    | `/vehicles/{id}`           | Landlord | Update vehicle                   |
-| DELETE | `/vehicles/{id}`           | Landlord | Soft-delete vehicle              |
-| POST   | `/vehicles/{id}/images`    | Landlord | Upload vehicle images            |
-| POST   | `/vehicles/{id}/condition` | Landlord | Create condition report          |
-| GET    | `/vehicles/{id}/condition` | Landlord | List condition reports           |
+| Method | Endpoint                   | Auth     | Description                         |
+| ------ | -------------------------- | -------- | ----------------------------------- |
+| POST   | `/auth/register`           | Public   | Register a new user                 |
+| POST   | `/auth/login`              | Public   | Login, sets JWT cookies             |
+| POST   | `/auth/google`             | Public   | Google OAuth login                  |
+| POST   | `/auth/refresh`            | Public   | Refresh access token                |
+| GET    | `/properties/search`       | Public   | Search with filters + pagination    |
+| GET    | `/properties/{id}`         | Public   | Property detail                     |
+| POST   | `/properties`              | Landlord | Create property (multipart)         |
+| PUT    | `/properties/{id}`         | Landlord | Update property                     |
+| DELETE | `/properties/{id}`         | Landlord | Delete property                     |
+| POST   | `/bookings`                | Tenant   | Create booking                      |
+| PATCH  | `/bookings/{id}/approve`   | Landlord | Approve booking                     |
+| PATCH  | `/bookings/{id}/reject`    | Landlord | Reject booking                      |
+| PATCH  | `/bookings/{id}/cancel`    | Tenant   | Cancel booking                      |
+| GET    | `/chat/rooms`              | Auth     | List chat rooms                     |
+| POST   | `/chat/rooms`              | Auth     | Create chat room                    |
+| GET    | `/favorites`               | Auth     | List favorites                      |
+| POST   | `/favorites/{propertyId}`  | Auth     | Add to favorites                    |
+| GET    | `/admin/users`             | Admin    | List all users                      |
+| GET    | `/admin/properties`        | Admin    | List all properties                 |
+| GET    | `/vehicles/search`         | Public   | Search vehicles with filters        |
+| GET    | `/vehicles/{id}`           | Public   | Vehicle detail                      |
+| POST   | `/vehicles`                | Landlord | Create vehicle listing              |
+| PUT    | `/vehicles/{id}`           | Landlord | Update vehicle                      |
+| DELETE | `/vehicles/{id}`           | Landlord | Soft-delete vehicle                 |
+| POST   | `/vehicles/{id}/images`    | Landlord | Upload vehicle images               |
+| POST   | `/vehicles/{id}/condition` | Landlord | Create condition report             |
+| GET    | `/vehicles/{id}/condition` | Landlord | List condition reports              |
+| POST   | `/kyc/session`             | Landlord | Create Stripe Identity session      |
+| GET    | `/kyc/status`              | Landlord | Get KYC verification status         |
+| POST   | `/webhooks/stripe`         | Public   | Stripe webhook (signature-verified) |
+| GET    | `/payouts/summary`         | Landlord | Payout summary (balance + escrow)   |
+| POST   | `/payouts/connect/onboard` | Landlord | Create Stripe Connect account       |
 
 See Swagger UI at `/swagger-ui.html` for the complete API reference.
 

@@ -23,6 +23,7 @@ public class AppProperties {
     private Stripe stripe = new Stripe();
     private Outbox outbox = new Outbox();
     private RateLimit rateLimit = new RateLimit();
+    private Monitoring monitoring = new Monitoring();
 
     @Data
     public static class Jwt {
@@ -110,5 +111,10 @@ public class AppProperties {
         private int maxRetries = 5;
         private long baseBackoffSeconds = 2;
         private String exchangeName = "homeflex.events";
+    }
+
+    @Data
+    public static class Monitoring {
+        private String metricsToken;
     }
 }

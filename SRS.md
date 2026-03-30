@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 2.2
-**Date:** March 29, 2026
+**Version:** 2.3
+**Date:** March 30, 2026
 **Classification:** Confidential
 **Status:** Draft — Aligned with implemented codebase
 
@@ -11,12 +11,13 @@
 
 ## Document Control
 
-| Version | Date       | Author        | Description                                                                                              |
-| ------- | ---------- | ------------- | -------------------------------------------------------------------------------------------------------- |
-| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                             |
-| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                         |
-| 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned                              |
-| 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion |
+| Version | Date       | Author        | Description                                                                                                                     |
+| ------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                                                    |
+| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                                                |
+| 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned                                                     |
+| 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion                        |
+| 2.3     | 2026-03-30 | Architect     | Implement: KYC (Stripe Identity), Stripe Connect escrow/payouts, Resilience4j, Prometheus/Grafana monitoring, NgRx Signal Store |
 
 ---
 
@@ -86,6 +87,19 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 CSRF protection (CookieCsrfTokenRepository + SpaCsrfTokenRequestHandler for Angular 21)
 - 🟢 Vehicle rentals vertical (full CRUD, image uploads, soft-delete, condition reports, availability/double-booking prevention)
 
+### Implemented since v2.2
+
+- 🟢 KYC verification via Stripe Identity (KycVerification entity, webhook-driven status updates, landlord publishing guard)
+- 🟢 Stripe Connect with Destination Charges and Escrow (Express accounts, separate charges and transfers, 15% platform commission, hourly escrow release via EscrowService)
+- 🟢 Payout management (GET /api/v1/payouts/summary, POST /api/v1/payouts/connect/onboard)
+- 🟢 Resilience4j circuit breakers on EmailService and FirebaseNotificationGateway (trip after 5 consecutive failures)
+- 🟢 Resilience4j retry with exponential backoff on Stripe API calls (3 attempts, 500ms base)
+- 🟢 Prometheus metrics export (Micrometer registry, /actuator/prometheus secured by bearer token + ROLE_MONITORING)
+- 🟢 Grafana monitoring dashboard (JVM heap, GC, threads, HikariCP, HTTP request rate/latency, booking/payment counters)
+- 🟢 Custom Micrometer metrics (homeflex.bookings.created, homeflex.bookings.payments with outcome tag)
+- 🟢 NgRx Signal Store for frontend state management (PropertyStore with withEntities + rxMethod, AuthStore)
+- 🟢 Angular @for/@if control flow migration (zone-less rendering, no *ngFor/*ngIf)
+
 ### Partially Implemented (v2.2)
 
 - 🟡 AWS S3 storage (StorageService exists with dev fallback, not fully wired in production)
@@ -93,16 +107,13 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 
 ### Planned (not yet built)
 
-- 🔴 KYC verification for owners
 - 🔴 SMS notifications (Twilio)
 - 🔴 Document management (leases, insurance)
 - 🔴 Maintenance request system
 - 🔴 Multi-region deployment
 - 🔴 Arabic and Spanish i18n
 - 🔴 Apple / Facebook social login
-- 🔴 Centralized state management (NgRx Signal Store)
-- 🔴 Circuit breakers (Resilience4j)
-- 🔴 Prometheus / Grafana / ELK monitoring stack
+- 🔴 ELK logging stack (Elasticsearch + Logstash + Kibana)
 - 🔴 AI-powered price recommendations (v3.0)
 - 🔴 Blockchain-based lease contracts (v3.0)
 - 🔴 Insurance marketplace integration (v3.0)
@@ -112,15 +123,15 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 
 This SRS is based on explicit product and architecture decisions. The "Status" column indicates what is implemented.
 
-| Decision Area      | Approved Direction                        | Rationale                         | Status                                |
-| ------------------ | ----------------------------------------- | --------------------------------- | ------------------------------------- |
-| Product scope      | Real estate rental marketplace            | Focus on core vertical first      | 🟢 Implemented                        |
-| Payments           | Stripe integration                        | Native marketplace support        | 🟢 Implemented (PaymentService)       |
-| Deployment model   | Docker Compose (local/single-server)      | Simplicity for current scale      | 🟢 Implemented                        |
-| Cloud provider     | AWS (planned)                             | Best fit for managed services     | 🔴 Planned — currently Docker Compose |
-| Trust & safety     | Admin moderation                          | Fraud reduction via manual review | 🟢 Implemented                        |
-| KYC verification   | Mandatory owner/landlord KYC              | Fraud reduction and compliance    | 🔴 Planned                            |
-| Platform verticals | Real estate (full) + vehicles (full CRUD) | Complete vehicle feature set      | 🟢 Both verticals implemented         |
+| Decision Area      | Approved Direction                        | Rationale                         | Status                                          |
+| ------------------ | ----------------------------------------- | --------------------------------- | ----------------------------------------------- |
+| Product scope      | Real estate rental marketplace            | Focus on core vertical first      | 🟢 Implemented                                  |
+| Payments           | Stripe Connect (escrow + destination)     | Native marketplace support        | 🟢 Implemented (PaymentService + EscrowService) |
+| Deployment model   | Docker Compose (local/single-server)      | Simplicity for current scale      | 🟢 Implemented                                  |
+| Cloud provider     | AWS (planned)                             | Best fit for managed services     | 🔴 Planned — currently Docker Compose           |
+| Trust & safety     | Admin moderation                          | Fraud reduction via manual review | 🟢 Implemented                                  |
+| KYC verification   | Mandatory owner/landlord KYC              | Fraud reduction and compliance    | 🟢 Implemented (Stripe Identity)                |
+| Platform verticals | Real estate (full) + vehicles (full CRUD) | Complete vehicle feature set      | 🟢 Both verticals implemented                   |
 
 ## 1.4 Definitions & Acronyms
 
@@ -131,7 +142,7 @@ This SRS is based on explicit product and architecture decisions. The "Status" c
 | **Admin**    | Platform administrator who moderates content and manages users (role: `ADMIN`) |
 | **Property** | A real estate asset posted for rent by a landlord                              |
 | **Booking**  | A reservation of a property by a tenant                                        |
-| **KYC**      | Know Your Customer — identity verification process (planned)                   |
+| **KYC**      | Know Your Customer — identity verification via Stripe Identity (implemented)   |
 | **STOMP**    | Simple Text Oriented Messaging Protocol — used for WebSocket chat              |
 | **SLA**      | Service Level Agreement                                                        |
 | **CDN**      | Content Delivery Network                                                       |

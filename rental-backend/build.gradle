@@ -51,6 +51,13 @@ dependencies {
     // Stripe payments (FR-400)
     implementation 'com.stripe:stripe-java:28.3.0'
 
+    // Prometheus metrics export
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Resilience4j (circuit breaker, retry — programmatic API, no AOP annotations)
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

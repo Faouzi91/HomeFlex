@@ -1,14 +1,10 @@
 package com.homeflex.core.service;
 
-//import com.google.firebase.messaging.*;
-import com.google.firebase.messaging.BatchResponse;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.MulticastMessage;
-import com.google.firebase.messaging.SendResponse;
+import com.homeflex.core.infrastructure.notification.FirebaseNotificationGateway;
 import com.homeflex.core.mapper.NotificationMapper;
 import com.homeflex.core.dto.response.NotificationDto;
-import com.homeflex.core.domain.repository.NotificationRepository;
 import com.homeflex.core.domain.repository.FcmTokenRepository;
+import com.homeflex.core.domain.repository.NotificationRepository;
 import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.exception.UnauthorizedException;
@@ -20,6 +16,7 @@ import com.homeflex.core.domain.enums.NotificationType;
 import com.homeflex.core.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +35,7 @@ public class NotificationService {
     private final FcmTokenRepository fcmTokenRepository;
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
+    private final @Lazy FirebaseNotificationGateway firebaseNotificationGateway;
 
     public void sendNewMessageNotification(UUID recipientId, User sender, Property property) {
         String title = "New Message";
@@ -103,38 +101,7 @@ public class NotificationService {
     }
 
     private void sendPushNotification(UUID userId, String title, String body) {
-        List<FcmToken> tokens = fcmTokenRepository.findByUserId(userId);
-
-        if (tokens.isEmpty()) {
-            return;
-        }
-
-        MulticastMessage message = MulticastMessage.builder()
-                .setNotification(com.google.firebase.messaging.Notification.builder()
-                        .setTitle(title)
-                        .setBody(body)
-                        .build())
-                .addAllTokens(tokens.stream()
-                        .map(FcmToken::getToken)
-                        .collect(Collectors.toList()))
-                .build();
-
-        try {
-            BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
-            log.info("{} messages sent successfully", response.getSuccessCount());
-
-            // Remove invalid tokens
-            if (response.getFailureCount() > 0) {
-                List<SendResponse> responses = response.getResponses();
-                for (int i = 0; i < responses.size(); i++) {
-                    if (!responses.get(i).isSuccessful()) {
-                        fcmTokenRepository.deleteByToken(tokens.get(i).getToken());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error sending push notification: {}", e.getMessage());
-        }
+        firebaseNotificationGateway.sendPush(userId, title, body);
     }
 
 

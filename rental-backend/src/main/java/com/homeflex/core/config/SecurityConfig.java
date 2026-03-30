@@ -1,6 +1,7 @@
 package com.homeflex.core.config;
 
 import com.homeflex.core.security.JwtAuthenticationFilter;
+import com.homeflex.core.security.MetricsTokenFilter;
 import com.homeflex.core.security.RateLimitFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -47,6 +48,7 @@ import java.util.function.Supplier;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final MetricsTokenFilter metricsTokenFilter;
     private final RateLimitFilter rateLimitFilter;
     private final UserRepository userRepository;
     private final AppProperties appProperties;
@@ -85,7 +87,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/webhooks/**").permitAll()
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/prometheus").hasAnyRole("ADMIN", "MONITORING")
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/stats").permitAll()
 
@@ -117,9 +121,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/kyc/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/kyc/**").authenticated()
 
-                        // Payment endpoints
+                        // Payment & payout endpoints
                         .requestMatchers("/api/v1/payments/refund").hasRole("ADMIN")
                         .requestMatchers("/api/v1/payments/**").authenticated()
+                        .requestMatchers("/api/v1/payouts/**").hasAnyRole("LANDLORD", "ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews/property/**").permitAll()
 
@@ -136,6 +141,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(metricsTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class)
                 .addFilterAfter(new CsrfCookieFilter(), RateLimitFilter.class);
