@@ -1,0 +1,205 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="toolbar-custom">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Vehicles for Rent</h1>
+          <p class="text-gray-600 mt-1 text-sm">{{ totalElements }} vehicles found</p>
+        </div>
+        <button class="btn-primary btn-sm" (click)="toggleFilters()">
+          <ion-icon name="options-outline"></ion-icon>
+          <span>Filters</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div
+          class="chip"
+          [class.active]="filters.transmission === 'AUTOMATIC'"
+          (click)="filters.transmission = 'AUTOMATIC'; applyFilters()"
+        >
+          Automatic
+        </div>
+        <div
+          class="chip"
+          [class.active]="filters.transmission === 'MANUAL'"
+          (click)="filters.transmission = 'MANUAL'; applyFilters()"
+        >
+          Manual
+        </div>
+        <div
+          class="chip"
+          [class.active]="filters.fuelType === 'ELECTRIC'"
+          (click)="filters.fuelType = 'ELECTRIC'; applyFilters()"
+        >
+          Electric
+        </div>
+        <div
+          *ngIf="
+            filters.brand ||
+            filters.city ||
+            filters.transmission ||
+            filters.fuelType ||
+            filters.minPrice ||
+            filters.maxPrice
+          "
+          class="chip chip-clear"
+          (click)="clearFilters()"
+        >
+          <ion-icon name="close-circle"></ion-icon>
+          Clear All
+        </div>
+      </div>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="vehicle-list-content">
+  <div class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Loading skeleton -->
+    <div
+      *ngIf="loading && vehicles.length === 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+    >
+      <div *ngFor="let i of [1, 2, 3, 4]" class="loading-skeleton">
+        <ion-skeleton-text
+          animated
+          style="height: 16rem; border-radius: 0.75rem"
+        ></ion-skeleton-text>
+      </div>
+    </div>
+
+    <!-- Vehicle grid -->
+    <div
+      *ngIf="!loading || vehicles.length > 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+    >
+      <app-vehicle-card
+        *ngFor="let vehicle of vehicles; trackBy: trackById"
+        [vehicle]="vehicle"
+        (cardClick)="navigateToDetail(vehicle)"
+      >
+      </app-vehicle-card>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!loading && vehicles.length === 0" class="empty-state">
+      <div class="empty-icon-wrapper">
+        <ion-icon name="car-outline"></ion-icon>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">No vehicles found</h3>
+      <p class="text-gray-600 mb-6 text-center max-w-md">
+        Try adjusting your filters to find available vehicles.
+      </p>
+      <button class="btn-primary" style="max-width: 200px" (click)="clearFilters()">
+        Clear Filters
+      </button>
+    </div>
+
+    <!-- Infinite scroll -->
+    <ion-infinite-scroll (ionInfinite)="loadMore($event)" threshold="100px" [disabled]="!hasMore">
+      <ion-infinite-scroll-content loadingSpinner="bubbles" loadingText="Loading more vehicles...">
+      </ion-infinite-scroll-content>
+    </ion-infinite-scroll>
+  </div>
+</ion-content>
+
+<!-- Filters sidebar backdrop -->
+<div *ngIf="showFilters" class="filters-backdrop" (click)="toggleFilters()"></div>
+
+<!-- Filters sidebar -->
+<div *ngIf="showFilters" class="filters-sidebar">
+  <div class="filters-header">
+    <h2 class="text-xl font-bold text-gray-900">Filters</h2>
+    <button class="icon-btn" (click)="toggleFilters()">
+      <ion-icon name="close-outline"></ion-icon>
+    </button>
+  </div>
+
+  <div class="filters-content">
+    <div class="space-y-6">
+      <div class="form-group">
+        <label class="form-label">City</label>
+        <div class="input-wrapper">
+          <ion-icon name="location-outline" class="input-icon"></ion-icon>
+          <input
+            type="text"
+            [(ngModel)]="filters.city"
+            placeholder="e.g. Douala"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Brand</label>
+        <div class="input-wrapper">
+          <ion-icon name="car-outline" class="input-icon"></ion-icon>
+          <input
+            type="text"
+            [(ngModel)]="filters.brand"
+            placeholder="e.g. Toyota"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Transmission</label>
+        <div class="input-wrapper">
+          <ion-icon name="cog-outline" class="input-icon"></ion-icon>
+          <ion-select
+            [(ngModel)]="filters.transmission"
+            interface="popover"
+            class="form-select-custom"
+          >
+            <ion-select-option [value]="undefined">All</ion-select-option>
+            <ion-select-option *ngFor="let t of transmissionOptions" [value]="t">
+              {{ t }}
+            </ion-select-option>
+          </ion-select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Fuel Type</label>
+        <div class="input-wrapper">
+          <ion-icon name="flash-outline" class="input-icon"></ion-icon>
+          <ion-select [(ngModel)]="filters.fuelType" interface="popover" class="form-select-custom">
+            <ion-select-option [value]="undefined">All</ion-select-option>
+            <ion-select-option *ngFor="let f of fuelTypeOptions" [value]="f">
+              {{ f }}
+            </ion-select-option>
+          </ion-select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Daily Price Range</label>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="input-wrapper">
+            <input
+              type="number"
+              [(ngModel)]="filters.minPrice"
+              placeholder="Min"
+              class="form-input"
+            />
+          </div>
+          <div class="input-wrapper">
+            <input
+              type="number"
+              [(ngModel)]="filters.maxPrice"
+              placeholder="Max"
+              class="form-input"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters-footer">
+    <button class="btn-primary" (click)="applyFilters()">Apply Filters</button>
+    <button class="btn-google mt-3" (click)="clearFilters()">Clear All</button>
+  </div>
+</div>

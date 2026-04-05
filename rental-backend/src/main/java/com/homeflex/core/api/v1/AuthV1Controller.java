@@ -76,6 +76,12 @@ public class AuthV1Controller {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/verify")
+    public ResponseEntity<ApiValueResponse<String>> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok(new ApiValueResponse<>("Email verified successfully"));
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiValueResponse<String>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {

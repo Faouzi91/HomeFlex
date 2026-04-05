@@ -1,11 +1,11 @@
 // ====================================
 // core/services/user.service.ts
 // ====================================
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
-import { environment } from "../../../environments/environment";
-import { User } from "src/app/models/user.model";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from 'src/app/environments/environment';
+import { User } from 'src/app/models/user.model';
 
 export interface ChangePasswordRequest {
   currentPassword: string;
@@ -23,7 +23,7 @@ export interface UserUpdateRequest {
 }
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class UserService {
   private apiUrl = `${environment.apiUrl}/users`;
@@ -40,7 +40,7 @@ export class UserService {
 
   uploadAvatar(file: File): Observable<User> {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
     return this.http.post<User>(`${this.apiUrl}/me/avatar`, formData);
   }
 

@@ -118,6 +118,14 @@ public class VehicleAvailabilityService {
                 vehicleId, BLOCKING_STATUSES);
     }
 
+    /**
+     * Returns all bookings for a given tenant, ordered by creation date (newest first).
+     */
+    @Transactional(readOnly = true)
+    public List<VehicleBooking> getTenantBookings(UUID tenantId) {
+        return bookingRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
+    }
+
     private void validateDates(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null) {
             throw new DomainException("Start date and end date are required");

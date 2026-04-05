@@ -12,11 +12,12 @@ import { pipe, switchMap, tap, debounceTime, distinctUntilChanged, EMPTY } from 
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Property, PropertySearchParams } from '../../models/property.model';
 import { ApiPageResponse } from '../../types/api.types';
-import { environment } from '../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 
 export type PropertyEntityId = { id: string };
 
 export interface PropertyFilters {
+  q?: string;
   city?: string;
   propertyType?: string;
   listingType?: string;
@@ -64,6 +65,7 @@ export const PropertyStore = signalStore(
     hasActiveFilters: computed(() => {
       const f = store.filters();
       return !!(
+        f.q ||
         f.city ||
         f.propertyType ||
         f.listingType ||
@@ -85,6 +87,7 @@ export const PropertyStore = signalStore(
         .set('sortDirection', filters.sortDirection);
 
       const optionalKeys: (keyof PropertyFilters)[] = [
+        'q',
         'city',
         'propertyType',
         'listingType',

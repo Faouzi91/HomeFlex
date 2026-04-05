@@ -1,4 +1,5 @@
 import { Component, inject, signal, effect, ViewChild, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonInfiniteScroll, IonicModule } from '@ionic/angular';
 import { TranslateModule } from '@ngx-translate/core';
@@ -10,7 +11,7 @@ import { ListingType, PropertyType } from 'src/app/models/property.model';
 @Component({
   selector: 'app-property-list',
   standalone: true,
-  imports: [IonicModule, PropertyCardComponent, TranslateModule, FormsModule],
+  imports: [IonicModule, CommonModule, PropertyCardComponent, TranslateModule, FormsModule],
   templateUrl: './property-list.component.html',
   styleUrls: ['./property-list.component.scss'],
 })
@@ -48,6 +49,9 @@ export class PropertyListComponent implements OnInit {
     sortDirection: 'desc',
   };
 
+  /** Bound to the search bar input. */
+  searchQuery = '';
+
   constructor() {
     // Sync infinite scroll disabled state with store
     effect(() => {
@@ -61,6 +65,7 @@ export class PropertyListComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
       const filters: PropertyFilters = {
+        q: params['q'] || undefined,
         sortBy: params['sortBy'] || 'createdAt',
         sortDirection: params['sortDirection'] || 'desc',
         city: params['city'] || undefined,
@@ -73,8 +78,14 @@ export class PropertyListComponent implements OnInit {
       };
 
       this.filterDraft = { ...filters };
+      this.searchQuery = filters.q || '';
       this.store.load(filters);
     });
+  }
+
+  onSearch(): void {
+    this.filterDraft.q = this.searchQuery.trim() || undefined;
+    this.applyFilters();
   }
 
   loadMore(): void {
@@ -96,6 +107,7 @@ export class PropertyListComponent implements OnInit {
 
   clearFilters(): void {
     this.store.clearFilters();
+    this.searchQuery = '';
     this.filterDraft = { sortBy: 'createdAt', sortDirection: 'desc' };
     this.updateQueryParams(this.filterDraft);
   }

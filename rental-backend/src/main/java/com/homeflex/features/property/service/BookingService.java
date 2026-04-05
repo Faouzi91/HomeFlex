@@ -125,16 +125,10 @@ public class BookingService {
             String description = "HomeFlex booking: " + property.getTitle();
             PaymentIntent pi = paymentService.createBookingPaymentIntent(
                     totalPrice, property.getCurrency(), description, transferGroup);
-            if (pi != null) {
-                booking.setStripePaymentIntentId(pi.getId());
-                booking = bookingRepository.save(booking);
-                paymentsSucceededCounter.increment();
-                log.info("PaymentIntent created for booking {}: piId={}", booking.getId(), pi.getId());
-            } else {
-                paymentsFailedCounter.increment();
-                log.warn("PaymentIntent creation failed for booking {}; booking saved without payment",
-                        booking.getId());
-            }
+            booking.setStripePaymentIntentId(pi.getId());
+            booking = bookingRepository.save(booking);
+            paymentsSucceededCounter.increment();
+            log.info("PaymentIntent created for booking {}: piId={}", booking.getId(), pi.getId());
         }
 
         // Notify landlord
@@ -210,6 +204,12 @@ public class BookingService {
             throw new UnauthorizedException("Not authorized to approve this booking");
         }
 
+        // Confirm the PaymentIntent to charge the tenant
+        if (booking.getStripePaymentIntentId() != null) {
+            paymentService.confirmPaymentIntent(booking.getStripePaymentIntentId());
+            log.info("Payment confirmed for booking {}: piId={}", bookingId, booking.getStripePaymentIntentId());
+        }
+
         booking.setStatus(BookingStatus.APPROVED);
         booking.setLandlordResponse(response);
         booking.setRespondedAt(LocalDateTime.now());
@@ -234,6 +234,12 @@ public class BookingService {
             throw new UnauthorizedException("Not authorized to reject this booking");
         }
 
+        // Cancel the PaymentIntent to release the hold
+        if (booking.getStripePaymentIntentId() != null) {
+            paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+            log.info("Payment cancelled for rejected booking {}", bookingId);
+        }
+
         booking.setStatus(BookingStatus.REJECTED);
         booking.setLandlordResponse(reason);
         booking.setRespondedAt(LocalDateTime.now());
@@ -249,6 +255,35 @@ public class BookingService {
         return bookingMapper.toDto(booking);
     }
 
+    /**
+     * Called by the Stripe webhook when a PaymentIntent succeeds.
+     * Sets paymentConfirmedAt on the matching booking.
+     */
+    public void handlePaymentSucceeded(String paymentIntentId) {
+        bookingRepository.findByStripePaymentIntentId(paymentIntentId)
+                .ifPresent(booking -> {
+                    if (booking.getStatus() == BookingStatus.PENDING ||
+                        booking.getStatus() == BookingStatus.APPROVED) {
+                        booking.setPaymentConfirmedAt(LocalDateTime.now());
+                        bookingRepository.save(booking);
+                        log.info("Booking {} payment confirmed via webhook", booking.getId());
+                    }
+                });
+    }
+
+    /**
+     * Called by the Stripe webhook when a PaymentIntent fails.
+     * Cancels the matching booking.
+     */
+    public void handlePaymentFailed(String paymentIntentId) {
+        bookingRepository.findByStripePaymentIntentId(paymentIntentId)
+                .ifPresent(booking -> {
+                    booking.setStatus(BookingStatus.CANCELLED);
+                    bookingRepository.save(booking);
+                    log.warn("Booking {} cancelled due to payment failure", booking.getId());
+                });
+    }
+
     public BookingDto cancelBooking(UUID bookingId, UUID tenantId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
@@ -256,6 +291,12 @@ public class BookingService {
         // Verify tenant owns the booking
         if (!booking.getTenant().getId().equals(tenantId)) {
             throw new UnauthorizedException("Not authorized to cancel this booking");
+        }
+
+        // Cancel the PaymentIntent if it exists
+        if (booking.getStripePaymentIntentId() != null) {
+            paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+            log.info("Payment cancelled for cancelled booking {}", bookingId);
         }
 
         booking.setStatus(BookingStatus.CANCELLED);

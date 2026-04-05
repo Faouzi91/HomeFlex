@@ -1,38 +1,34 @@
-// ====================================
-// core/interceptors/auth.interceptor.ts
-// ====================================
 import {
   HttpInterceptorFn,
   HttpRequest,
   HttpHandlerFn,
   HttpErrorResponse,
-} from "@angular/common/http";
-import { inject } from "@angular/core";
-import { Observable, throwError } from "rxjs";
-import { catchError, switchMap } from "rxjs/operators";
-import { AuthService } from "../services/auth/auth.service";
+} from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Observable, throwError } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+import { AuthService } from '../services/auth/auth.service';
+import { environment } from 'src/app/environments/environment';
 
 let isRefreshing = false;
-let refreshTokenSubject: string | null = null;
 
+/**
+ * Attaches `withCredentials: true` to every API request so the browser
+ * sends the httpOnly auth cookies automatically. On a 401, attempts
+ * a single token refresh before logging the user out.
+ */
 export const authInterceptor: HttpInterceptorFn = (
   request: HttpRequest<any>,
   next: HttpHandlerFn
 ): Observable<any> => {
-  const authService = inject(AuthService);
-  const token = authService.getToken();
-
-  if (token) {
-    request = request.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  // Only attach credentials to our own API
+  if (request.url.startsWith(environment.apiUrl)) {
+    request = request.clone({ withCredentials: true });
   }
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !request.url.includes("auth/refresh")) {
+      if (error.status === 401 && !request.url.includes('auth/refresh')) {
         return handle401Error(request, next);
       }
       return throwError(() => error);
@@ -40,15 +36,11 @@ export const authInterceptor: HttpInterceptorFn = (
   );
 };
 
-function handle401Error(
-  request: HttpRequest<any>,
-  next: HttpHandlerFn
-): Observable<any> {
+function handle401Error(request: HttpRequest<any>, next: HttpHandlerFn): Observable<any> {
   const authService = inject(AuthService);
 
   if (!isRefreshing) {
     isRefreshing = true;
-    refreshTokenSubject = null;
 
     return authService.refreshToken().pipe(
       catchError((err) => {
@@ -56,20 +48,13 @@ function handle401Error(
         authService.logout();
         return throwError(() => err);
       }),
-      switchMap((response: any) => {
+      switchMap(() => {
         isRefreshing = false;
-        refreshTokenSubject = response.token;
-        return next(
-          request.clone({
-            setHeaders: {
-              Authorization: `Bearer ${response.token}`,
-            },
-          })
-        );
+        // Retry the original request — cookies are updated by the refresh response
+        return next(request.clone({ withCredentials: true }));
       })
     );
   } else {
-    // Wait for token refresh to complete
-    return throwError(() => new Error("Token refresh in progress"));
+    return throwError(() => new Error('Token refresh in progress'));
   }
 }

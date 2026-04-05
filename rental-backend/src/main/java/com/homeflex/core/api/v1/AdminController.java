@@ -66,7 +66,12 @@ public class AdminController {
     }
 
     @PatchMapping("/reports/{id}/resolve")
-    public ResponseEntity<ReportDto> resolveReport(@PathVariable UUID id) {
-        return ResponseEntity.ok(adminService.resolveReport(id));
+    public ResponseEntity<ReportDto> resolveReport(
+            @PathVariable UUID id,
+            @RequestBody(required = false) RejectReasonRequest request,
+            org.springframework.security.core.Authentication authentication) {
+        UUID adminId = UUID.fromString(authentication.getName());
+        String notes = request != null ? request.reason() : null;
+        return ResponseEntity.ok(adminService.resolveReport(id, adminId, notes));
     }
 }

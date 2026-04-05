@@ -29,6 +29,23 @@
         </div>
       </div>
 
+      <!-- Search bar (Elasticsearch full-text) -->
+      <div class="search-bar mb-3">
+        <div class="search-input-wrapper">
+          <ion-icon name="search-outline" class="search-icon"></ion-icon>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            [placeholder]="'property.search' | translate"
+            class="search-input"
+          />
+          <button *ngIf="searchQuery" class="search-clear" (click)="searchQuery = ''; onSearch()">
+            <ion-icon name="close-circle"></ion-icon>
+          </button>
+        </div>
+      </div>
+
       <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
         @for (bedOption of bedroomOptions; track bedOption.value) {
           <div

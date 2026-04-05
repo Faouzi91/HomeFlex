@@ -1,399 +1,448 @@
 {
-    "app": {
-        "name": "HomeFlex",
-        "welcome": "Welcome",
-        "slogan": "Find Your Perfect Home"
+  "app": {
+    "name": "HomeFlex",
+    "welcome": "Welcome",
+    "slogan": "Find Your Perfect Home"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Sign Up",
+    "registerWelcome": "Create Account",
+    "registerSubtitle": "Join thousands finding their dream homes",
+    "loginWelcome": "Welcome Back!",
+    "loginSubtitle": "Sign in to continue your property search journey",
+    "logout": "Logout",
+    "email": "Email Address",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phoneNumber": "Phone Number",
+    "confirmPassword": "Confirm Password",
+    "rememberMe": "Remember me",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "signInWithGoogle": "Sign in with Google",
+    "continueWith": "Or continue with",
+    "role": "I am a",
+    "passwordPlaceholder": "Create strong password",
+    "confirmPasswordPlaceholder": "Re-enter password",
+    "passwordRules": "Use 8+ characters with mix of letters, numbers & symbols",
+    "passwordStrength": {
+      "weak": "Weak password",
+      "medium": "Medium password",
+      "strong": "Strong password"
     },
-    "auth": {
-        "login": "Sign In",
-        "register": "Sign Up",
-        "registerWelcome": "Create Account",
-        "registerSubtitle": "Join thousands finding their dream homes",
-        "loginWelcome": "Welcome Back!",
-        "loginSubtitle": "Sign in to continue your property search journey",
-        "logout": "Logout",
-        "email": "Email Address",
-        "password": "Password",
-        "firstName": "First Name",
-        "lastName": "Last Name",
-        "phoneNumber": "Phone Number",
-        "confirmPassword": "Confirm Password",
-        "rememberMe": "Remember me",
-        "noAccount": "Don't have an account?",
-        "haveAccount": "Already have an account?",
-        "signInWithGoogle": "Sign in with Google",
-        "continueWith": "Or continue with",
-        "role": "I am a",
-        "passwordPlaceholder": "Create strong password",
-        "confirmPasswordPlaceholder": "Re-enter password",
-        "passwordRules": "Use 8+ characters with mix of letters, numbers & symbols",
-        "passwordStrength": {
-            "weak": "Weak password",
-            "medium": "Medium password",
-            "strong": "Strong password"
-        },
-        "roleTenant": "Tenant",
-        "roleLandlord": "Landlord",
-        "roleTenantDesc": "Looking for property",
-        "roleLandlordDesc": "Listing property",
-        "termsAgree": "By creating an account, you agree to our",
-        "termsOfService": "Terms of Service",
-        "and": "and",
-        "privacyPolicy": "Privacy Policy",
-        "createAccountBtn": "Create Account",
-        "forgotPassword": "Forgot password",
-        "forgotTitle": "Reset your password",
-        "forgotSubtitle": "Enter your email and we'll send a password reset link.",
-        "sendResetLink": "Send reset link",
-        "resetPassword": "Reset password",
-        "resetTitle": "Create a new password",
-        "resetSubtitle": "Enter a new password for your account.",
-        "newPassword": "New password",
-        "resetPasswordBtn": "Reset password",
-        "resetEmailSent": "Reset email sent. Check your inbox.",
-        "resetEmailFailed": "Failed to send reset email.",
-        "resetSuccess": "Password updated. You can now login.",
-        "resetFailed": "Failed to reset password.",
-        "resetNoToken": "Invalid or missing reset token.",
-        "loggingIn": "Signing you in...",
-        "loginSuccess": "Logged in successfully!",
-        "creatingAccount": "Creating your account...",
-        "registrationSuccess": "Account created successfully!",
-        "sendingResetLink": "Sending reset link...",
-        "resettingPassword": "Updating your password...",
-        "features": {
-            "smartSearch": "Smart Search",
-            "smartSearchDesc": "Find properties that match your exact preferences",
-            "instantMessaging": "Instant Messaging",
-            "instantMessagingDesc": "Connect directly with property owners",
-            "verifiedListings": "Verified Listings",
-            "verifiedListingsDesc": "All properties are verified for your safety"
-        }
-    },
-    "profile": {
-        "title": "Profile",
-        "editProfile": "Edit Profile",
-        "changePassword": "Change Password",
-        "changeAvatar": "Take Photo",
-        "uploadAvatar": "Upload Photo",
-        "registered": "Registered",
-        "actions": "Actions",
-        "deleteAccount": "Delete Account",
-        "accountDetails": "Account Details",
-        "manageInfo": "Manage your personal information",
-        "language": "Language",
-        "saveChanges": "Save Changes",
-        "security": "Security",
-        "passwordSubtitle": "Update your password to keep your account secure",
-        "currentPassword": "Current Password",
-        "updatePassword": "Update Password",
-        "saved": "Profile updated successfully",
-        "saveFailed": "Failed to update profile",
-        "avatarUpdated": "Avatar updated successfully",
-        "avatarError": "Failed to update avatar",
-        "passwordUpdated": "Password updated successfully",
-        "passwordFailed": "Failed to update password",
-        "deleteConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
-        "deleteContactAdmin": "Please contact support to delete your account"
-    },
-    "errors": {
-        "requiredFirstName": "First name is required",
-        "minName": "Required (min 2 chars)",
-        "requiredLastName": "Last name is required",
-        "minLastName": "Required (min 2 chars)",
-        "requiredEmail": "Email is required",
-        "invalidEmail": "Invalid email format",
-        "validEmailRequired": "Valid email required",
-        "invalidPhone": "Invalid phone number",
-        "requiredPassword": "Password is required",
-        "minPassword": "Password must be at least 6 characters",
-        "weakPassword": "Password does not meet security requirements",
-        "confirmPasswordRequired": "Please confirm your password",
-        "passwordMismatch": "Passwords don't match",
-        "passwordsMatch": "Passwords match",
-        "roleRequired": "Role selection is required",
-        "loginFailed": "Login failed. Please check your credentials.",
-        "registrationFailed": "Registration failed. Please try again.",
-        "passwordRequired": "Password is required",
-        "minFirstName": "Required (min 2 chars)",
-        "passwordMinLength": "Password must be at least {{min}} characters",
-        "fileTooLarge": "File size must be less than 5MB",
-        "invalidFileType": "Please select a valid image file",
-        "loadUserFailed": "Failed to load user information",
-        "default": "An unexpected error occurred. Please try again."
-    },
-    "header": {
-        "buy": "Buy",
-        "rent": "Rent",
-        "sell": "Sell",
-        "agents": "Agents",
-        "contact": "Contact"
-    },
-    "landing": {
-        "hero": {
-            "title": "Find Your Perfect Home in Cameroon",
-            "subtitle": "Discover thousands of verified properties for rent and sale across major cities",
-            "searchPlaceholder": "Enter city (e.g., Douala, Yaoundé)",
-            "searchBtn": "Search"
-        },
-        "quickFilters": {
-            "bedrooms": "1-2 Bedrooms",
-            "price": "Under 200K XAF",
-            "nearMe": "Near Me"
-        },
-        "stats": {
-            "properties": "Properties Listed",
-            "users": "Active Users",
-            "cities": "Cities Covered",
-            "transactions": "Successful Deals"
-        },
-        "featured": {
-            "title": "Featured Properties",
-            "subtitle": "Handpicked properties for you",
-            "viewAll": "View All"
-        },
-        "features": {
-            "title": "Why Choose Us",
-            "subtitle": "Everything you need to find your dream home",
-            "smartSearch": {
-                "title": "Smart Search",
-                "description": "Find your perfect property with advanced filters and AI-powered recommendations"
-            },
-            "verified": {
-                "title": "Verified Listings",
-                "description": "All properties are verified by our team for authenticity and quality"
-            },
-            "instantChat": {
-                "title": "Instant Chat",
-                "description": "Connect with landlords instantly through our real-time messaging system"
-            },
-            "favorites": {
-                "title": "Save Favorites",
-                "description": "Create collections of your favorite properties and get instant alerts"
-            }
-        },
-        "cta": {
-            "title": "Ready to Find Your Home?",
-            "subtitle": "Join thousands of satisfied users who found their perfect property",
-            "getStarted": "Get Started Free",
-            "browseProperties": "Browse Properties"
-        },
-        "footer": {
-            "terms": "Terms",
-            "privacy": "Privacy",
-            "help": "Help"
-        }
-    },
-    "property": {
-        "title": "Properties",
-        "propertiesFor": "Properties for",
-        "propertiesFound": "properties found",
-        "forRent": "For Rent",
-        "forSale": "For Sale",
-        "perMonth": "/month",
-        "search": "Search Properties",
-        "addNew": "Add Property",
-        "details": "Property Details",
-        "price": "Price",
-        "bedrooms": "Bedrooms",
-        "beds": "Beds",
-        "bathrooms": "Bathrooms",
-        "baths": "Baths",
-        "area": "Area",
-        "sqm": "m²",
-        "location": "Location",
-        "amenities": "Amenities",
-        "description": "Description",
-        "contactLandlord": "Contact Landlord",
-        "requestViewing": "Request Viewing",
-        "addToFavorites": "Add to Favorites",
-        "removeFromFavorites": "Remove from Favorites",
-        "views": "Views",
-        "images": "Images",
-        "messageOwner": "Message Owner",
-        "bookViewing": "Book Viewing",
-        "reportListing": "Report Listing",
-        "reportReasonPrompt": "Please provide a reason for reporting this listing:",
-        "reportDescriptionPrompt": "Optionally add more details (description):",
-        "reportReasonRequired": "Reason is required to file a report.",
-        "reportSuccess": "Report submitted. Thank you for your feedback.",
-        "reportError": "Failed to submit report. Please try again later.",
-        "moreDetails": "More Details",
-        "noAmenities": "No amenities listed",
-        "reviews": "Reviews",
-        "averageRating": "average rating",
-        "addReview": "Add Review",
-        "noReviewsYet": "No reviews yet",
-        "contactOwner": "Contact Owner",
-        "posted": "Posted",
-        "features": "Features",
-        "similar": "Similar Properties",
-        "noSimilar": "No similar properties",
-        "selectDate": "Select Date & Time",
-        "message": "Message (optional)",
-        "bookingSuccess": "Booking request sent successfully",
-        "bookingError": "Failed to send booking request",
-        "type": {
-            "APARTMENT": "Apartment",
-            "HOUSE": "House",
-            "STUDIO": "Studio",
-            "VILLA": "Villa",
-            "ROOM": "Room",
-            "OFFICE": "Office",
-            "LAND": "Land"
-        },
-        "noResults": {
-            "title": "No properties found",
-            "subtitle": "Try adjusting your filters",
-            "clearBtn": "Clear Filters"
-        }
-    },
-    "filters": {
-        "filters": "Filters",
-        "propertyType": "Property Type",
-        "allTypes": "All Types",
-        "priceRange": "Price Range",
-        "priceRangeXAF": "Price Range (XAF)",
-        "minPrice": "Min",
-        "maxPrice": "Max",
-        "city": "City",
-        "cityOrArea": "City or area",
-        "location": "Location",
-        "bedrooms": "Bedrooms",
-        "any": "Any",
-        "apply": "Apply Filters",
-        "clear": "Clear",
-        "clearAll": "Clear All",
-        "quickFilters": {
-            "studioBeds": "Studio",
-            "onePlusBeds": "1+",
-            "twoPlusBeds": "2+",
-            "threePlusBeds": "3+",
-            "fourPlusBeds": "4+",
-            "under100k": "Under 100K",
-            "100to200k": "100K - 200K",
-            "200to500k": "200K - 500K",
-            "over500k": "500K+"
-        }
-    },
-    "common": {
-        "save": "Save",
-        "cancel": "Cancel",
-        "delete": "Delete",
-        "edit": "Edit",
-        "submit": "Submit",
-        "loading": "Loading...",
-        "loadingMore": "Loading more...",
-        "error": "Error",
-        "success": "Success",
-        "viewToggle": "Toggle View",
-        "close": "Close"
-    },
-    "admin": {
-        "dashboard": {
-            "title": "Admin Dashboard",
-            "welcome": "Welcome to Admin Panel",
-            "subtitle": "Manage your platform from here"
-        },
-        "stats": {
-            "totalProperties": "Total Properties",
-            "totalUsers": "Total Users",
-            "totalBookings": "Total Bookings",
-            "pendingApprovals": "Pending Approvals"
-        },
-        "management": {
-            "title": "Management",
-            "pendingProperties": {
-                "title": "Pending Properties",
-                "subtitle": "Review and approve listings"
-            },
-            "userManagement": {
-                "title": "User Management",
-                "subtitle": "Manage user accounts and access"
-            },
-            "reports": {
-                "title": "Reports & Issues",
-                "subtitle": "Handle user reports and complaints"
-            },
-            "analytics": {
-                "title": "Analytics",
-                "subtitle": "View platform statistics and insights"
-            }
-        },
-        "quickActions": {
-            "title": "Quick Actions",
-            "approveProperties": "Approve Properties",
-            "manageUsers": "Manage Users",
-            "viewReports": "View Reports"
-        },
-        "properties": {
-            "title": "Pending Approvals",
-            "noPending": {
-                "title": "All caught up!",
-                "subtitle": "No properties pending review at the moment"
-            },
-            "owner": "Owner",
-            "approve": "Approve",
-            "reject": "Reject",
-            "viewDetails": "View Details",
-            "approveConfirm": {
-                "title": "Approve Property",
-                "message": "Are you sure you want to approve '{{title}}'? This will make it visible to all users."
-            },
-            "rejectConfirm": {
-                "title": "Reject Property",
-                "message": "Please provide a reason for rejection. This will be sent to the property owner."
-            },
-            "rejectReason": "Reason for rejection",
-            "defaultRejectReason": "Does not meet platform guidelines",
-            "approveSuccess": "Property approved successfully",
-            "approveError": "Failed to approve property",
-            "rejectSuccess": "Property rejected",
-            "rejectError": "Failed to reject property"
-        },
-        "users": {
-            "title": "User Management",
-            "searchPlaceholder": "Search users by name or email",
-            "joined": "Joined",
-            "role": {
-                "ADMIN": "Admin",
-                "LANDLORD": "Landlord",
-                "TENANT": "Tenant"
-            },
-            "status": {
-                "active": "Active",
-                "suspended": "Suspended"
-            },
-            "suspend": "Suspend",
-            "activate": "Activate",
-            "suspendConfirm": {
-                "title": "Suspend User",
-                "message": "Are you sure you want to suspend {{name}}? They will not be able to access the platform."
-            },
-            "activateConfirm": {
-                "title": "Activate User",
-                "message": "Are you sure you want to activate {{name}}? They will regain full access to the platform."
-            },
-            "suspendSuccess": "User suspended successfully",
-            "suspendError": "Failed to suspend user",
-            "activateSuccess": "User activated successfully",
-            "activateError": "Failed to activate user",
-            "noUsers": {
-                "title": "No Users Found",
-                "subtitle": "There are no users matching your criteria"
-            }
-        },
-        "reports": {
-            "title": "Reports & Issues",
-            "reported": "Reported",
-            "resolve": "Resolve",
-            "viewDetails": "View Details",
-            "resolveSuccess": "Report resolved successfully",
-            "resolveError": "Failed to resolve report",
-            "noReports": {
-                "title": "No Reports",
-                "subtitle": "All reports have been handled"
-            }
-        }
+    "roleTenant": "Tenant",
+    "roleLandlord": "Landlord",
+    "roleTenantDesc": "Looking for property",
+    "roleLandlordDesc": "Listing property",
+    "termsAgree": "By creating an account, you agree to our",
+    "termsOfService": "Terms of Service",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "createAccountBtn": "Create Account",
+    "forgotPassword": "Forgot password",
+    "forgotTitle": "Reset your password",
+    "forgotSubtitle": "Enter your email and we'll send a password reset link.",
+    "sendResetLink": "Send reset link",
+    "resetPassword": "Reset password",
+    "resetTitle": "Create a new password",
+    "resetSubtitle": "Enter a new password for your account.",
+    "newPassword": "New password",
+    "resetPasswordBtn": "Reset password",
+    "resetEmailSent": "Reset email sent. Check your inbox.",
+    "resetEmailFailed": "Failed to send reset email.",
+    "resetSuccess": "Password updated. You can now login.",
+    "resetFailed": "Failed to reset password.",
+    "resetNoToken": "Invalid or missing reset token.",
+    "loggingIn": "Signing you in...",
+    "loginSuccess": "Logged in successfully!",
+    "creatingAccount": "Creating your account...",
+    "registrationSuccess": "Account created successfully!",
+    "sendingResetLink": "Sending reset link...",
+    "resettingPassword": "Updating your password...",
+    "features": {
+      "smartSearch": "Smart Search",
+      "smartSearchDesc": "Find properties that match your exact preferences",
+      "instantMessaging": "Instant Messaging",
+      "instantMessagingDesc": "Connect directly with property owners",
+      "verifiedListings": "Verified Listings",
+      "verifiedListingsDesc": "All properties are verified for your safety"
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "changePassword": "Change Password",
+    "changeAvatar": "Take Photo",
+    "uploadAvatar": "Upload Photo",
+    "registered": "Registered",
+    "actions": "Actions",
+    "deleteAccount": "Delete Account",
+    "accountDetails": "Account Details",
+    "manageInfo": "Manage your personal information",
+    "language": "Language",
+    "saveChanges": "Save Changes",
+    "security": "Security",
+    "passwordSubtitle": "Update your password to keep your account secure",
+    "currentPassword": "Current Password",
+    "updatePassword": "Update Password",
+    "saved": "Profile updated successfully",
+    "saveFailed": "Failed to update profile",
+    "avatarUpdated": "Avatar updated successfully",
+    "avatarError": "Failed to update avatar",
+    "passwordUpdated": "Password updated successfully",
+    "passwordFailed": "Failed to update password",
+    "deleteConfirm": "Are you sure you want to delete your account? This action cannot be undone.",
+    "deleteContactAdmin": "Please contact support to delete your account"
+  },
+  "errors": {
+    "requiredFirstName": "First name is required",
+    "minName": "Required (min 2 chars)",
+    "requiredLastName": "Last name is required",
+    "minLastName": "Required (min 2 chars)",
+    "requiredEmail": "Email is required",
+    "invalidEmail": "Invalid email format",
+    "validEmailRequired": "Valid email required",
+    "invalidPhone": "Invalid phone number",
+    "requiredPassword": "Password is required",
+    "minPassword": "Password must be at least 6 characters",
+    "weakPassword": "Password does not meet security requirements",
+    "confirmPasswordRequired": "Please confirm your password",
+    "passwordMismatch": "Passwords don't match",
+    "passwordsMatch": "Passwords match",
+    "roleRequired": "Role selection is required",
+    "loginFailed": "Login failed. Please check your credentials.",
+    "registrationFailed": "Registration failed. Please try again.",
+    "passwordRequired": "Password is required",
+    "minFirstName": "Required (min 2 chars)",
+    "passwordMinLength": "Password must be at least {{min}} characters",
+    "fileTooLarge": "File size must be less than 5MB",
+    "invalidFileType": "Please select a valid image file",
+    "loadUserFailed": "Failed to load user information",
+    "default": "An unexpected error occurred. Please try again."
+  },
+  "header": {
+    "buy": "Buy",
+    "rent": "Rent",
+    "sell": "Sell",
+    "agents": "Agents",
+    "contact": "Contact"
+  },
+  "landing": {
+    "hero": {
+      "title": "Find Your Perfect Home in Cameroon",
+      "subtitle": "Discover thousands of verified properties for rent and sale across major cities",
+      "searchPlaceholder": "Enter city (e.g., Douala, Yaoundé)",
+      "searchBtn": "Search"
+    },
+    "quickFilters": {
+      "bedrooms": "1-2 Bedrooms",
+      "price": "Under 200K XAF",
+      "nearMe": "Near Me"
+    },
+    "stats": {
+      "properties": "Properties Listed",
+      "users": "Active Users",
+      "cities": "Cities Covered",
+      "transactions": "Successful Deals"
+    },
+    "featured": {
+      "title": "Featured Properties",
+      "subtitle": "Handpicked properties for you",
+      "viewAll": "View All"
+    },
+    "features": {
+      "title": "Why Choose Us",
+      "subtitle": "Everything you need to find your dream home",
+      "smartSearch": {
+        "title": "Smart Search",
+        "description": "Find your perfect property with advanced filters and AI-powered recommendations"
+      },
+      "verified": {
+        "title": "Verified Listings",
+        "description": "All properties are verified by our team for authenticity and quality"
+      },
+      "instantChat": {
+        "title": "Instant Chat",
+        "description": "Connect with landlords instantly through our real-time messaging system"
+      },
+      "favorites": {
+        "title": "Save Favorites",
+        "description": "Create collections of your favorite properties and get instant alerts"
+      }
+    },
+    "cta": {
+      "title": "Ready to Find Your Home?",
+      "subtitle": "Join thousands of satisfied users who found their perfect property",
+      "getStarted": "Get Started Free",
+      "browseProperties": "Browse Properties"
+    },
+    "footer": {
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "help": "Help"
+    }
+  },
+  "property": {
+    "title": "Properties",
+    "propertiesFor": "Properties for",
+    "propertiesFound": "properties found",
+    "forRent": "For Rent",
+    "forSale": "For Sale",
+    "perMonth": "/month",
+    "search": "Search Properties",
+    "addNew": "Add Property",
+    "details": "Property Details",
+    "price": "Price",
+    "bedrooms": "Bedrooms",
+    "beds": "Beds",
+    "bathrooms": "Bathrooms",
+    "baths": "Baths",
+    "area": "Area",
+    "sqm": "m²",
+    "location": "Location",
+    "amenities": "Amenities",
+    "description": "Description",
+    "contactLandlord": "Contact Landlord",
+    "requestViewing": "Request Viewing",
+    "addToFavorites": "Add to Favorites",
+    "removeFromFavorites": "Remove from Favorites",
+    "views": "Views",
+    "images": "Images",
+    "messageOwner": "Message Owner",
+    "bookViewing": "Book Viewing",
+    "reportListing": "Report Listing",
+    "reportReasonPrompt": "Please provide a reason for reporting this listing:",
+    "reportDescriptionPrompt": "Optionally add more details (description):",
+    "reportReasonRequired": "Reason is required to file a report.",
+    "reportSuccess": "Report submitted. Thank you for your feedback.",
+    "reportError": "Failed to submit report. Please try again later.",
+    "moreDetails": "More Details",
+    "noAmenities": "No amenities listed",
+    "reviews": "Reviews",
+    "averageRating": "average rating",
+    "addReview": "Add Review",
+    "noReviewsYet": "No reviews yet",
+    "contactOwner": "Contact Owner",
+    "posted": "Posted",
+    "features": "Features",
+    "similar": "Similar Properties",
+    "noSimilar": "No similar properties",
+    "selectDate": "Select Date & Time",
+    "message": "Message (optional)",
+    "bookingSuccess": "Booking request sent successfully",
+    "bookingError": "Failed to send booking request",
+    "type": {
+      "APARTMENT": "Apartment",
+      "HOUSE": "House",
+      "STUDIO": "Studio",
+      "VILLA": "Villa",
+      "ROOM": "Room",
+      "OFFICE": "Office",
+      "LAND": "Land"
+    },
+    "noResults": {
+      "title": "No properties found",
+      "subtitle": "Try adjusting your filters",
+      "clearBtn": "Clear Filters"
+    }
+  },
+  "filters": {
+    "filters": "Filters",
+    "propertyType": "Property Type",
+    "allTypes": "All Types",
+    "priceRange": "Price Range",
+    "priceRangeXAF": "Price Range (XAF)",
+    "minPrice": "Min",
+    "maxPrice": "Max",
+    "city": "City",
+    "cityOrArea": "City or area",
+    "location": "Location",
+    "bedrooms": "Bedrooms",
+    "any": "Any",
+    "apply": "Apply Filters",
+    "clear": "Clear",
+    "clearAll": "Clear All",
+    "quickFilters": {
+      "studioBeds": "Studio",
+      "onePlusBeds": "1+",
+      "twoPlusBeds": "2+",
+      "threePlusBeds": "3+",
+      "fourPlusBeds": "4+",
+      "under100k": "Under 100K",
+      "100to200k": "100K - 200K",
+      "200to500k": "200K - 500K",
+      "over500k": "500K+"
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "loadingMore": "Loading more...",
+    "error": "Error",
+    "success": "Success",
+    "viewToggle": "Toggle View",
+    "close": "Close"
+  },
+  "vehicle": {
+    "title": "Vehicles",
+    "vehiclesFound": "vehicles found",
+    "search": "Search Vehicles",
+    "filters": "Filters",
+    "brand": "Brand",
+    "model": "Model",
+    "transmission": "Transmission",
+    "fuelType": "Fuel Type",
+    "city": "City",
+    "priceRange": "Price Range (XAF)",
+    "minPrice": "Min Price",
+    "maxPrice": "Max Price",
+    "perDay": "/ day",
+    "seats": "Seats",
+    "mileage": "Mileage",
+    "description": "Description",
+    "pickupLocation": "Pickup Location",
+    "backToVehicles": "Back to vehicles",
+    "bookThisVehicle": "Book this vehicle",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "messageOptional": "Message (optional)",
+    "checkAvailability": "Check Availability",
+    "confirmBooking": "Confirm Booking",
+    "available": "Available for selected dates",
+    "unavailable": "Not available for selected dates",
+    "bookingSuccess": "Booking request sent successfully!",
+    "bookingFailed": "Failed to create booking.",
+    "notFound": "Vehicle not found.",
+    "loginRequired": "Please log in to book a vehicle.",
+    "clearFilters": "Clear Filters",
+    "applyFilters": "Apply Filters",
+    "noResults": {
+      "title": "No vehicles found",
+      "subtitle": "Try adjusting your search or filters",
+      "clearBtn": "Clear Filters"
+    },
+    "transmissionOptions": {
+      "AUTOMATIC": "Automatic",
+      "MANUAL": "Manual"
+    },
+    "fuelOptions": {
+      "PETROL": "Petrol",
+      "DIESEL": "Diesel",
+      "ELECTRIC": "Electric",
+      "HYBRID": "Hybrid"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "welcome": "Welcome to Admin Panel",
+      "subtitle": "Manage your platform from here"
+    },
+    "stats": {
+      "totalProperties": "Total Properties",
+      "totalUsers": "Total Users",
+      "totalBookings": "Total Bookings",
+      "pendingApprovals": "Pending Approvals"
+    },
+    "management": {
+      "title": "Management",
+      "pendingProperties": {
+        "title": "Pending Properties",
+        "subtitle": "Review and approve listings"
+      },
+      "userManagement": {
+        "title": "User Management",
+        "subtitle": "Manage user accounts and access"
+      },
+      "reports": {
+        "title": "Reports & Issues",
+        "subtitle": "Handle user reports and complaints"
+      },
+      "analytics": {
+        "title": "Analytics",
+        "subtitle": "View platform statistics and insights"
+      }
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "approveProperties": "Approve Properties",
+      "manageUsers": "Manage Users",
+      "viewReports": "View Reports"
+    },
+    "properties": {
+      "title": "Pending Approvals",
+      "noPending": {
+        "title": "All caught up!",
+        "subtitle": "No properties pending review at the moment"
+      },
+      "owner": "Owner",
+      "approve": "Approve",
+      "reject": "Reject",
+      "viewDetails": "View Details",
+      "approveConfirm": {
+        "title": "Approve Property",
+        "message": "Are you sure you want to approve '{{title}}'? This will make it visible to all users."
+      },
+      "rejectConfirm": {
+        "title": "Reject Property",
+        "message": "Please provide a reason for rejection. This will be sent to the property owner."
+      },
+      "rejectReason": "Reason for rejection",
+      "defaultRejectReason": "Does not meet platform guidelines",
+      "approveSuccess": "Property approved successfully",
+      "approveError": "Failed to approve property",
+      "rejectSuccess": "Property rejected",
+      "rejectError": "Failed to reject property"
+    },
+    "users": {
+      "title": "User Management",
+      "searchPlaceholder": "Search users by name or email",
+      "joined": "Joined",
+      "role": {
+        "ADMIN": "Admin",
+        "LANDLORD": "Landlord",
+        "TENANT": "Tenant"
+      },
+      "status": {
+        "active": "Active",
+        "suspended": "Suspended"
+      },
+      "suspend": "Suspend",
+      "activate": "Activate",
+      "suspendConfirm": {
+        "title": "Suspend User",
+        "message": "Are you sure you want to suspend {{name}}? They will not be able to access the platform."
+      },
+      "activateConfirm": {
+        "title": "Activate User",
+        "message": "Are you sure you want to activate {{name}}? They will regain full access to the platform."
+      },
+      "suspendSuccess": "User suspended successfully",
+      "suspendError": "Failed to suspend user",
+      "activateSuccess": "User activated successfully",
+      "activateError": "Failed to activate user",
+      "noUsers": {
+        "title": "No Users Found",
+        "subtitle": "There are no users matching your criteria"
+      }
+    },
+    "reports": {
+      "title": "Reports & Issues",
+      "reported": "Reported",
+      "resolve": "Resolve",
+      "viewDetails": "View Details",
+      "resolveSuccess": "Report resolved successfully",
+      "resolveError": "Failed to resolve report",
+      "noReports": {
+        "title": "No Reports",
+        "subtitle": "All reports have been handled"
+      }
+    }
+  }
 }

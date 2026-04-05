@@ -2,14 +2,19 @@ package com.homeflex.features.vehicle.api.v1;
 
 import com.homeflex.core.dto.common.ApiListResponse;
 import com.homeflex.core.dto.common.ApiPageResponse;
+import com.homeflex.features.vehicle.domain.entity.VehicleBooking;
 import com.homeflex.features.vehicle.domain.enums.FuelType;
 import com.homeflex.features.vehicle.domain.enums.Transmission;
 import com.homeflex.features.vehicle.domain.enums.VehicleStatus;
+import com.homeflex.features.vehicle.dto.request.VehicleBookingCreateRequest;
 import com.homeflex.features.vehicle.dto.request.VehicleCreateRequest;
 import com.homeflex.features.vehicle.dto.request.VehicleUpdateRequest;
 import com.homeflex.features.vehicle.dto.response.ConditionReportResponse;
+import com.homeflex.features.vehicle.dto.response.VehicleBookingResponse;
 import com.homeflex.features.vehicle.dto.response.VehicleResponse;
 import com.homeflex.features.vehicle.dto.response.VehicleSearchParams;
+import com.homeflex.features.vehicle.mapper.VehicleMapper;
+import com.homeflex.features.vehicle.service.VehicleAvailabilityService;
 import com.homeflex.features.vehicle.service.VehicleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +39,8 @@ import java.util.UUID;
 public class VehicleV1Controller {
 
     private final VehicleService vehicleService;
+    private final VehicleAvailabilityService vehicleAvailabilityService;
+    private final VehicleMapper vehicleMapper;
 
     // ── Public search & detail ──────────────────────────────────────────
 
@@ -133,5 +141,46 @@ public class VehicleV1Controller {
             @PathVariable UUID id) {
         return ResponseEntity.ok(
                 new ApiListResponse<>(vehicleService.getConditionReports(id)));
+    }
+
+    // ── Vehicle Bookings ────────────────────────────────────────────────
+
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<Boolean> checkAvailability(
+            @PathVariable UUID id,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+        return ResponseEntity.ok(vehicleAvailabilityService.isAvailable(id, startDate, endDate));
+    }
+
+    @GetMapping("/{id}/bookings")
+    public ResponseEntity<ApiListResponse<VehicleBookingResponse>> getActiveBookings(
+            @PathVariable UUID id) {
+        List<VehicleBooking> bookings = vehicleAvailabilityService.getActiveBookings(id);
+        return ResponseEntity.ok(
+                new ApiListResponse<>(vehicleMapper.toBookingResponseList(bookings)));
+    }
+
+    @PostMapping("/{id}/bookings")
+    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
+    public ResponseEntity<VehicleBookingResponse> createBooking(
+            @PathVariable UUID id,
+            @Valid @RequestBody VehicleBookingCreateRequest request,
+            Authentication authentication) {
+        UUID tenantId = UUID.fromString(authentication.getName());
+        VehicleBooking booking = vehicleAvailabilityService.reserve(
+                id, tenantId, request.startDate(), request.endDate(), request.message());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(vehicleMapper.toBookingResponse(booking));
+    }
+
+    @GetMapping("/my-bookings")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiListResponse<VehicleBookingResponse>> getMyBookings(
+            Authentication authentication) {
+        UUID tenantId = UUID.fromString(authentication.getName());
+        List<VehicleBooking> bookings = vehicleAvailabilityService.getTenantBookings(tenantId);
+        return ResponseEntity.ok(
+                new ApiListResponse<>(vehicleMapper.toBookingResponseList(bookings)));
     }
 }

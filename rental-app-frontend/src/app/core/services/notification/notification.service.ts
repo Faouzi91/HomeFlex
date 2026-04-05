@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 import { ApiListResponse } from 'src/app/types/api.types';
 
 export interface Notification {

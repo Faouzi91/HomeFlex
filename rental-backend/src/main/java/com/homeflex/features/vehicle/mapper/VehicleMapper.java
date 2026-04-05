@@ -2,9 +2,11 @@ package com.homeflex.features.vehicle.mapper;
 
 import com.homeflex.features.vehicle.domain.entity.ConditionReport;
 import com.homeflex.features.vehicle.domain.entity.Vehicle;
+import com.homeflex.features.vehicle.domain.entity.VehicleBooking;
 import com.homeflex.features.vehicle.domain.entity.VehicleImage;
 import com.homeflex.features.vehicle.dto.request.VehicleCreateRequest;
 import com.homeflex.features.vehicle.dto.response.ConditionReportResponse;
+import com.homeflex.features.vehicle.dto.response.VehicleBookingResponse;
 import com.homeflex.features.vehicle.dto.response.VehicleImageDto;
 import com.homeflex.features.vehicle.dto.response.VehicleResponse;
 import org.mapstruct.Mapper;
@@ -27,6 +29,14 @@ public interface VehicleMapper {
     VehicleImageDto toImageDto(VehicleImage image);
 
     ConditionReportResponse toConditionReportResponse(ConditionReport report);
+
+    VehicleBookingResponse toBookingResponse(VehicleBooking booking);
+
+    default List<VehicleBookingResponse> toBookingResponseList(List<VehicleBooking> bookings) {
+        return bookings == null ? List.of() : bookings.stream()
+                .map(this::toBookingResponse)
+                .toList();
+    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "ownerId", ignore = true)

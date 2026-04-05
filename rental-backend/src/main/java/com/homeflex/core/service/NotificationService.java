@@ -16,7 +16,6 @@ import com.homeflex.core.domain.enums.NotificationType;
 import com.homeflex.core.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +34,7 @@ public class NotificationService {
     private final FcmTokenRepository fcmTokenRepository;
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
-    private final @Lazy FirebaseNotificationGateway firebaseNotificationGateway;
+    private final FirebaseNotificationGateway firebaseNotificationGateway;
 
     public void sendNewMessageNotification(UUID recipientId, User sender, Property property) {
         String title = "New Message";
@@ -175,6 +174,17 @@ public class NotificationService {
                 NotificationType.SYSTEM, "PROPERTY", property.getId());
 
         sendPushNotification(landlord.getId(), title, message);
+    }
+
+    public void sendReportResolvedNotification(User reporter, Property property, String notes) {
+        String title = "Report Reviewed";
+        String message = "Your report on '" + property.getTitle() + "' has been reviewed."
+                + (notes != null ? " Resolution: " + notes : "");
+
+        createNotification(reporter.getId(), title, message,
+                NotificationType.SYSTEM, "PROPERTY", property.getId());
+
+        sendPushNotification(reporter.getId(), title, message);
     }
 
     public void sendPropertyRejectedNotification(User landlord, Property property, String reason) {

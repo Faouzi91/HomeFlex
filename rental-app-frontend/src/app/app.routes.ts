@@ -19,6 +19,10 @@ export const APP_ROUTES: Routes = [
       import('./features/properties/properties.routes').then((m) => m.PROPERTY_ROUTES),
   },
   {
+    path: 'vehicles',
+    loadChildren: () => import('./features/vehicles/vehicles.routes').then((m) => m.VEHICLE_ROUTES),
+  },
+  {
     path: 'bookings',
     loadChildren: () => import('./features/bookings/bookings.module').then((m) => m.BookingsModule),
     canActivate: [AuthGuard, PublicAccessGuard],

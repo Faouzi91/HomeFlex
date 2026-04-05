@@ -71,6 +71,9 @@ public class Booking {
     @Column(name = "stripe_payment_intent_id")
     private String stripePaymentIntentId;
 
+    @Column(name = "payment_confirmed_at")
+    private LocalDateTime paymentConfirmedAt;
+
     @Column(name = "escrow_released_at")
     private LocalDateTime escrowReleasedAt;
 

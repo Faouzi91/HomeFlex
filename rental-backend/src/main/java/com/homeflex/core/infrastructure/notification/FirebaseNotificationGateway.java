@@ -1,14 +1,12 @@
 package com.homeflex.core.infrastructure.notification;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.SendResponse;
 import com.homeflex.core.domain.entity.FcmToken;
 import com.homeflex.core.domain.repository.FcmTokenRepository;
-import com.homeflex.core.service.NotificationService;
-import com.homeflex.features.property.domain.entity.Property;
-import com.homeflex.core.domain.entity.User;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,37 +19,22 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FirebaseNotificationGateway implements NotificationGateway {
+public class FirebaseNotificationGateway {
 
-    private final NotificationService notificationService;
     private final FcmTokenRepository fcmTokenRepository;
     private final CircuitBreaker firebaseCircuitBreaker;
-
-    @Override
-    public void sendNewMessage(UUID recipientId, User sender, Property property) {
-        notificationService.sendNewMessageNotification(recipientId, sender, property);
-    }
-
-    @Override
-    public void sendBookingRequest(UUID landlordId, User tenant, Property property) {
-        notificationService.sendBookingRequestNotification(landlordId, tenant, property);
-    }
-
-    @Override
-    public void sendBookingResponse(UUID tenantId, Property property, boolean approved) {
-        notificationService.sendBookingResponseNotification(tenantId, property, approved);
-    }
-
-    @Override
-    public void notifyAdminsNewProperty(Property property) {
-        notificationService.notifyAdminsNewProperty(property);
-    }
 
     /**
      * Sends a push notification via Firebase Cloud Messaging, protected by a circuit breaker.
      * Falls back to logging on failure so that the caller's transaction is not affected.
      */
     public void sendPush(UUID userId, String title, String body) {
+        // Gracefully skip if Firebase is not initialized (e.g. no credentials configured)
+        if (FirebaseApp.getApps().isEmpty()) {
+            log.debug("Firebase not initialized — skipping push notification (userId={}, title={})", userId, title);
+            return;
+        }
+
         List<FcmToken> tokens = fcmTokenRepository.findByUserId(userId);
         if (tokens.isEmpty()) {
             return;

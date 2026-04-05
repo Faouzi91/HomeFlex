@@ -9,13 +9,17 @@ import com.homeflex.core.dto.response.AuthTokens;
 import com.homeflex.core.dto.request.LoginRequest;
 import com.homeflex.core.dto.request.RegisterRequest;
 import com.homeflex.core.domain.repository.UserRepository;
+import com.homeflex.core.domain.repository.EmailVerificationTokenRepository;
+import com.homeflex.core.domain.repository.PasswordResetTokenRepository;
 import com.homeflex.core.domain.repository.RefreshTokenRepository;
 import com.homeflex.core.domain.repository.OAuthProviderRepository;
 import com.homeflex.core.security.JwtTokenProvider;
 import com.homeflex.core.exception.ConflictException;
 import com.homeflex.core.exception.DomainException;
 import com.homeflex.core.exception.ResourceNotFoundException;
+import com.homeflex.core.domain.entity.EmailVerificationToken;
 import com.homeflex.core.domain.entity.OAuthProvider;
+import com.homeflex.core.domain.entity.PasswordResetToken;
 import com.homeflex.core.domain.entity.RefreshToken;
 import com.homeflex.core.domain.entity.User;
 import com.homeflex.core.domain.enums.UserRole;
@@ -40,6 +44,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final OAuthProviderRepository oAuthProviderRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -184,14 +190,42 @@ public class AuthService {
         refreshTokenRepository.deleteByUserId(userId);
     }
 
+    public void verifyEmail(String token) {
+        EmailVerificationToken verificationToken = emailVerificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new DomainException("Invalid verification token"));
+
+        if (verificationToken.isExpired()) {
+            throw new DomainException("Verification token has expired");
+        }
+        if (verificationToken.isVerified()) {
+            throw new DomainException("Email has already been verified");
+        }
+
+        User user = verificationToken.getUser();
+        user.setIsVerified(true);
+        userRepository.save(user);
+
+        verificationToken.setVerifiedAt(LocalDateTime.now());
+        emailVerificationTokenRepository.save(verificationToken);
+
+        log.info("Email verified for user {}", user.getId());
+    }
+
     public void sendPasswordResetEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        String resetToken = UUID.randomUUID().toString();
+        // Invalidate any existing reset tokens for this user
+        passwordResetTokenRepository.deleteByUserId(user.getId());
+
+        PasswordResetToken resetToken = new PasswordResetToken();
+        resetToken.setUser(user);
+        resetToken.setToken(UUID.randomUUID().toString());
+        resetToken.setExpiresAt(LocalDateTime.now().plusHours(1));
+        passwordResetTokenRepository.save(resetToken);
 
         try {
-            emailService.sendPasswordResetEmail(user, resetToken);
+            emailService.sendPasswordResetEmail(user, resetToken.getToken());
         } catch (Exception e) {
             log.error("Failed to send password reset email: {}", e.getMessage());
             throw new DomainException("Failed to send password reset email");
@@ -199,7 +233,27 @@ public class AuthService {
     }
 
     public void resetPassword(String token, String newPassword) {
-        throw new DomainException("Password reset not yet implemented");
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new DomainException("Invalid password reset token"));
+
+        if (resetToken.isExpired()) {
+            throw new DomainException("Password reset token has expired");
+        }
+        if (resetToken.isUsed()) {
+            throw new DomainException("Password reset token has already been used");
+        }
+
+        User user = resetToken.getUser();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        resetToken.setUsedAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(resetToken);
+
+        // Invalidate all refresh tokens so existing sessions are logged out
+        refreshTokenRepository.deleteByUserId(user.getId());
+
+        log.info("Password reset completed for user {}", user.getId());
     }
 
     private String createRefreshToken(User user) {

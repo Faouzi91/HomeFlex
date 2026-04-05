@@ -24,6 +24,10 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             "ORDER BY b.createdAt DESC")
     List<Booking> findByLandlordId(@Param("landlordId") UUID landlordId);
 
+    Optional<Booking> findByStripePaymentIntentId(String stripePaymentIntentId);
+
+    boolean existsByPropertyIdAndTenantIdAndStatusIn(UUID propertyId, UUID tenantId, List<BookingStatus> statuses);
+
     List<Booking> findByStatus(BookingStatus status);
 
     // Analytics methods

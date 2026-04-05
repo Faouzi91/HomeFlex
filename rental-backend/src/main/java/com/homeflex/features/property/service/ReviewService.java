@@ -3,14 +3,17 @@ package com.homeflex.features.property.service;
 import com.homeflex.features.property.mapper.ReviewMapper;
 import com.homeflex.features.property.dto.response.ReviewDto;
 import com.homeflex.features.property.dto.request.ReviewCreateRequest;
+import com.homeflex.features.property.domain.repository.BookingRepository;
 import com.homeflex.features.property.domain.repository.ReviewRepository;
 import com.homeflex.features.property.domain.repository.PropertyRepository;
 import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.core.exception.ConflictException;
+import com.homeflex.core.exception.DomainException;
 import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.exception.UnauthorizedException;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.entity.Review;
+import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.core.domain.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,8 +28,12 @@ import java.util.stream.Collectors;
 @Transactional
 public class ReviewService {
 
+    private static final List<BookingStatus> REVIEW_ELIGIBLE_STATUSES =
+            List.of(BookingStatus.APPROVED, BookingStatus.COMPLETED);
+
     private final ReviewRepository reviewRepository;
     private final PropertyRepository propertyRepository;
+    private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
 
@@ -34,6 +41,13 @@ public class ReviewService {
         // Check if user already reviewed this property
         if (reviewRepository.findByPropertyIdAndReviewerId(request.propertyId(), reviewerId).isPresent()) {
             throw new ConflictException("You have already reviewed this property");
+        }
+
+        // Verify the reviewer had an approved or completed booking for this property
+        boolean hadBooking = bookingRepository.existsByPropertyIdAndTenantIdAndStatusIn(
+                request.propertyId(), reviewerId, REVIEW_ELIGIBLE_STATUSES);
+        if (!hadBooking) {
+            throw new DomainException("You can only review properties where you had a booking");
         }
 
         Property property = propertyRepository.findById(request.propertyId())

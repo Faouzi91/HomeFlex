@@ -2,6 +2,7 @@ package com.homeflex.core.api.v1;
 
 import com.homeflex.core.config.AppProperties;
 import com.homeflex.core.service.KycService;
+import com.homeflex.features.property.service.BookingService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Account;
 import com.stripe.model.Event;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -23,12 +25,10 @@ public class StripeWebhookController {
 
     private final KycService kycService;
     private final AppProperties appProperties;
+    private final BookingService bookingService;
 
-    /**
-     * Handles Stripe webhook events.
-     * The endpoint is CSRF-exempt and publicly accessible (signature-verified instead).
-     */
     @PostMapping("/stripe")
+    @Transactional
     public ResponseEntity<String> handleWebhook(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String sigHeader) {
@@ -48,6 +48,9 @@ public class StripeWebhookController {
                 VerificationSession session = deserialize(event, VerificationSession.class);
                 if (session != null) {
                     kycService.handleVerified(session.getId());
+                } else {
+                    log.error("Failed to deserialize VerificationSession for event {}", event.getId());
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Deserialization failed");
                 }
             }
             case "identity.verification_session.requires_input" -> {
@@ -57,6 +60,9 @@ public class StripeWebhookController {
                             ? session.getLastError().getCode()
                             : "unknown";
                     kycService.handleRejected(session.getId(), reason);
+                } else {
+                    log.error("Failed to deserialize VerificationSession for event {}", event.getId());
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Deserialization failed");
                 }
             }
 
@@ -64,15 +70,19 @@ public class StripeWebhookController {
             case "payment_intent.succeeded" -> {
                 PaymentIntent pi = deserialize(event, PaymentIntent.class);
                 if (pi != null) {
-                    log.info("Payment succeeded: piId={}, amount={}, transferGroup={}",
-                            pi.getId(), pi.getAmount(), pi.getTransferGroup());
+                    handlePaymentSucceeded(pi);
+                } else {
+                    log.error("Failed to deserialize PaymentIntent for event {}", event.getId());
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Deserialization failed");
                 }
             }
             case "payment_intent.payment_failed" -> {
                 PaymentIntent pi = deserialize(event, PaymentIntent.class);
                 if (pi != null) {
-                    log.warn("Payment failed: piId={}, transferGroup={}",
-                            pi.getId(), pi.getTransferGroup());
+                    handlePaymentFailed(pi);
+                } else {
+                    log.error("Failed to deserialize PaymentIntent for event {}", event.getId());
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Deserialization failed");
                 }
             }
 
@@ -89,6 +99,17 @@ public class StripeWebhookController {
         }
 
         return ResponseEntity.ok("OK");
+    }
+
+    private void handlePaymentSucceeded(PaymentIntent pi) {
+        log.info("Payment succeeded: piId={}, amount={}, transferGroup={}",
+                pi.getId(), pi.getAmount(), pi.getTransferGroup());
+        bookingService.handlePaymentSucceeded(pi.getId());
+    }
+
+    private void handlePaymentFailed(PaymentIntent pi) {
+        log.warn("Payment failed: piId={}, transferGroup={}", pi.getId(), pi.getTransferGroup());
+        bookingService.handlePaymentFailed(pi.getId());
     }
 
     @SuppressWarnings("unchecked")

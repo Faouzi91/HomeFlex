@@ -1,0 +1,45 @@
+<ion-content class="auth-page" [scrollY]="true">
+  <div class="auth-container-simple">
+    <!-- Mobile Logo -->
+    <div class="mobile-logo">
+      <div class="mobile-logo-icon">
+        <ion-icon name="home"></ion-icon>
+      </div>
+      <h1 class="mobile-logo-text">{{ 'app.name' | translate }}</h1>
+    </div>
+
+    <!-- Result Card -->
+    <div class="form-card-simple">
+      <!-- Loading State -->
+      <div *ngIf="status === 'loading'" class="verify-status">
+        <ion-spinner name="crescent" class="verify-spinner"></ion-spinner>
+        <h2 class="form-title">Verifying your email...</h2>
+        <p class="form-subtitle">Please wait while we confirm your email address.</p>
+      </div>
+
+      <!-- Success State -->
+      <div *ngIf="status === 'success'" class="verify-status">
+        <div class="status-icon success">
+          <ion-icon name="checkmark-circle"></ion-icon>
+        </div>
+        <h2 class="form-title">Email Verified!</h2>
+        <p class="form-subtitle">{{ message }}</p>
+        <button class="btn-primary" (click)="goToLogin()">
+          <span>Go to Login</span>
+        </button>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="status === 'error'" class="verify-status">
+        <div class="status-icon error">
+          <ion-icon name="close-circle"></ion-icon>
+        </div>
+        <h2 class="form-title">Verification Failed</h2>
+        <p class="form-subtitle">{{ message }}</p>
+        <button class="btn-primary" (click)="goToLogin()">
+          <span>Go to Login</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</ion-content>

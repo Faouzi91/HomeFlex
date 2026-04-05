@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 import { ApiListResponse } from 'src/app/types/api.types';
 import { WebSocketService } from '../websocket/websocket.service';
 

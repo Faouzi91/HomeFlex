@@ -1,17 +1,16 @@
 // ====================================
 // capacitor.config.ts
 // ====================================
-import { CapacitorConfig } from "@capacitor/cli";
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: "com.realestate.rental",
-  appName: "Real Estate Rental",
-  webDir: "dist/rental-app-frontend/browser",
-  bundledWebRuntime: false,
+  appId: 'com.realestate.rental',
+  appName: 'Real Estate Rental',
+  webDir: 'dist/rental-app-frontend',
   server: {
-    androidScheme: "https",
-    iosScheme: "https",
-    hostname: "app.realestate.com",
+    androidScheme: 'https',
+    iosScheme: 'https',
+    hostname: 'app.realestate.com',
     // For development only - remove in production
     // url: 'http://192.168.1.100:4200',
     // cleartext: true
@@ -20,36 +19,36 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
-      backgroundColor: "#4F46E5",
-      androidSplashResourceName: "splash",
-      androidScaleType: "CENTER_CROP",
+      backgroundColor: '#4F46E5',
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
       showSpinner: false,
-      androidSpinnerStyle: "large",
-      iosSpinnerStyle: "small",
-      spinnerColor: "#FFFFFF",
+      androidSpinnerStyle: 'large',
+      iosSpinnerStyle: 'small',
+      spinnerColor: '#FFFFFF',
       splashFullScreen: true,
       splashImmersive: true,
     },
     PushNotifications: {
-      presentationOptions: ["badge", "sound", "alert"],
+      presentationOptions: ['badge', 'sound', 'alert'],
     },
     Camera: {
-      permissions: ["camera", "photos"],
+      permissions: ['camera', 'photos'],
     },
     Geolocation: {
-      permissions: ["location"],
+      permissions: ['location'],
     },
   },
   android: {
     buildOptions: {
-      keystorePath: "path/to/keystore.jks",
-      keystorePassword: "",
-      keystoreAlias: "",
-      keystoreAliasPassword: "",
+      keystorePath: 'path/to/keystore.jks',
+      keystorePassword: '',
+      keystoreAlias: '',
+      keystoreAliasPassword: '',
     },
   },
   ios: {
-    contentInset: "automatic",
+    contentInset: 'automatic',
     scrollEnabled: true,
   },
 };

@@ -179,13 +179,21 @@ public class AdminService {
                 .map(reportMapper::toDto);
     }
 
-    public ReportDto resolveReport(UUID reportId) {
+    public ReportDto resolveReport(UUID reportId, UUID adminId, String notes) {
         ReportedListing report = reportedListingRepository.findById(reportId)
                 .orElseThrow(() -> new ResourceNotFoundException("Report not found"));
 
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+
         report.setStatus("RESOLVED");
+        report.setResolvedBy(admin);
+        report.setResolutionNotes(notes);
         report.setResolvedAt(LocalDateTime.now());
         report = reportedListingRepository.save(report);
+
+        // Notify the reporter that their report was reviewed
+        notificationService.sendReportResolvedNotification(report.getReporter(), report.getProperty(), notes);
 
         return reportMapper.toDto(report);
     }

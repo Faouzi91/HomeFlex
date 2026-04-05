@@ -105,6 +105,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/*/view").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*/availability").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*/bookings").permitAll()
 
                         // Vehicle owner endpoints
                         .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/my-vehicles")

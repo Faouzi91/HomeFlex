@@ -2,9 +2,9 @@
 // models/user.model.ts
 // ====================================
 export enum UserRole {
-  TENANT = "TENANT",
-  LANDLORD = "LANDLORD",
-  ADMIN = "ADMIN",
+  TENANT = 'TENANT',
+  LANDLORD = 'LANDLORD',
+  ADMIN = 'ADMIN',
 }
 
 export interface User {
@@ -38,8 +38,10 @@ export interface RegisterRequest {
   phoneNumber?: string;
 }
 
+/**
+ * Matches backend AuthResponse record: only contains user data.
+ * Tokens are delivered via httpOnly cookies — never exposed to JS.
+ */
 export interface AuthResponse {
-  token: string;
-  refreshToken: string;
   user: User;
 }

@@ -39,6 +39,9 @@ public class ReportedListing {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "resolution_notes", columnDefinition = "TEXT")
+    private String resolutionNotes;
+
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 

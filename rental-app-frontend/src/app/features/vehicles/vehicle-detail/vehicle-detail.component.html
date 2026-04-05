@@ -1,0 +1,164 @@
+<ion-content class="vehicle-detail-content">
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+  </div>
+
+  <div *ngIf="vehicle && !loading" class="max-w-5xl mx-auto px-4 py-6">
+    <!-- Back button -->
+    <button class="back-btn" (click)="goBack()">
+      <ion-icon name="arrow-back"></ion-icon>
+      <span>Back to vehicles</span>
+    </button>
+
+    <!-- Image gallery -->
+    <div class="image-gallery">
+      <img
+        [src]="getCurrentImage()"
+        [alt]="vehicle.brand + ' ' + vehicle.model"
+        class="main-image"
+      />
+      <button *ngIf="currentImageIndex > 0" class="gallery-nav prev" (click)="prevImage()">
+        <ion-icon name="chevron-back"></ion-icon>
+      </button>
+      <button
+        *ngIf="vehicle.images && currentImageIndex < vehicle.images.length - 1"
+        class="gallery-nav next"
+        (click)="nextImage()"
+      >
+        <ion-icon name="chevron-forward"></ion-icon>
+      </button>
+      <div *ngIf="vehicle.images && vehicle.images.length > 1" class="image-counter">
+        {{ currentImageIndex + 1 }} / {{ vehicle.images.length }}
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Main info -->
+      <div class="detail-main">
+        <h1 class="vehicle-title">{{ vehicle.brand }} {{ vehicle.model }}</h1>
+        <p class="vehicle-subtitle">
+          {{ vehicle.year }} &middot; {{ vehicle.color }} &middot; {{ vehicle.pickupCity }}
+        </p>
+
+        <div class="specs-grid">
+          <div class="spec-item">
+            <ion-icon name="cog-outline"></ion-icon>
+            <span class="spec-label">Transmission</span>
+            <span class="spec-value">{{ vehicle.transmission }}</span>
+          </div>
+          <div class="spec-item">
+            <ion-icon name="flash-outline"></ion-icon>
+            <span class="spec-label">Fuel Type</span>
+            <span class="spec-value">{{ vehicle.fuelType }}</span>
+          </div>
+          <div class="spec-item">
+            <ion-icon name="speedometer-outline"></ion-icon>
+            <span class="spec-label">Mileage</span>
+            <span class="spec-value">{{ vehicle.mileage | number }} km</span>
+          </div>
+          <div class="spec-item">
+            <ion-icon name="people-outline"></ion-icon>
+            <span class="spec-label">Seats</span>
+            <span class="spec-value">{{ vehicle.seats }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="vehicle.description" class="description-section">
+          <h2 class="section-title">Description</h2>
+          <p class="description-text">{{ vehicle.description }}</p>
+        </div>
+
+        <div class="info-section">
+          <h2 class="section-title">Pickup Location</h2>
+          <p class="info-text">
+            <ion-icon name="location-outline"></ion-icon>
+            {{ vehicle.pickupAddress }}, {{ vehicle.pickupCity }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Booking sidebar -->
+      <div class="detail-sidebar">
+        <div class="price-card">
+          <div class="price-main">
+            <span class="price-amount">{{
+              formatPrice(vehicle.dailyPrice, vehicle.currency)
+            }}</span>
+            <span class="price-period">/ day</span>
+          </div>
+
+          <button *ngIf="!showBookingForm" class="btn-primary" (click)="openBookingForm()">
+            Book this vehicle
+          </button>
+
+          <!-- Booking form -->
+          <div *ngIf="showBookingForm" class="booking-form">
+            <div class="form-group">
+              <label class="form-label">Start Date</label>
+              <input
+                type="date"
+                [(ngModel)]="bookingStartDate"
+                class="form-input"
+                [min]="todayDate"
+                (change)="isAvailable = null"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">End Date</label>
+              <input
+                type="date"
+                [(ngModel)]="bookingEndDate"
+                class="form-input"
+                [min]="bookingStartDate || todayDate"
+                (change)="isAvailable = null"
+              />
+            </div>
+            <div *ngIf="dateError" class="availability-badge unavailable">
+              <ion-icon name="alert-circle"></ion-icon>
+              {{ dateError }}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Message (optional)</label>
+              <textarea
+                [(ngModel)]="bookingMessage"
+                class="form-input form-textarea"
+                placeholder="Any special requests..."
+                rows="3"
+              ></textarea>
+            </div>
+
+            <button
+              class="btn-outline"
+              (click)="checkAvailability()"
+              [disabled]="!datesValid || checkingAvailability"
+            >
+              <ion-spinner *ngIf="checkingAvailability" name="crescent"></ion-spinner>
+              <span *ngIf="!checkingAvailability">Check Availability</span>
+            </button>
+
+            <div *ngIf="isAvailable === true" class="availability-badge available">
+              <ion-icon name="checkmark-circle"></ion-icon>
+              Available for selected dates
+            </div>
+            <div *ngIf="isAvailable === false" class="availability-badge unavailable">
+              <ion-icon name="close-circle"></ion-icon>
+              Not available for selected dates
+            </div>
+
+            <button
+              class="btn-primary"
+              (click)="submitBooking()"
+              [disabled]="!datesValid || submittingBooking || isAvailable !== true"
+            >
+              <ion-spinner *ngIf="submittingBooking" name="crescent"></ion-spinner>
+              <span *ngIf="!submittingBooking">Confirm Booking</span>
+            </button>
+
+            <button class="btn-text" (click)="showBookingForm = false">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

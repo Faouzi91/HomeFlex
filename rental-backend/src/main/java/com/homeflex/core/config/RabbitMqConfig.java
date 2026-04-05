@@ -1,6 +1,9 @@
 package com.homeflex.core.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -29,6 +32,44 @@ public class RabbitMqConfig {
     TopicExchange outboxExchange() {
         return new TopicExchange(appProperties.getOutbox().getExchangeName(), true, false);
     }
+
+    // ── Booking event queue ───────────────────────────��──────────────────
+
+    @Bean
+    Queue bookingEventsQueue() {
+        return new Queue("homeflex.booking.events", true);
+    }
+
+    @Bean
+    Binding bookingEventsBinding(Queue bookingEventsQueue, TopicExchange outboxExchange) {
+        return BindingBuilder.bind(bookingEventsQueue).to(outboxExchange).with("Booking.#");
+    }
+
+    // ── Property event queue ─────────────────────────────────────────────
+
+    @Bean
+    Queue propertyEventsQueue() {
+        return new Queue("homeflex.property.events", true);
+    }
+
+    @Bean
+    Binding propertyEventsBinding(Queue propertyEventsQueue, TopicExchange outboxExchange) {
+        return BindingBuilder.bind(propertyEventsQueue).to(outboxExchange).with("Property.#");
+    }
+
+    // ── Notification event queue ─────────────────────────────────────────
+
+    @Bean
+    Queue notificationEventsQueue() {
+        return new Queue("homeflex.notification.events", true);
+    }
+
+    @Bean
+    Binding notificationEventsBinding(Queue notificationEventsQueue, TopicExchange outboxExchange) {
+        return BindingBuilder.bind(notificationEventsQueue).to(outboxExchange).with("*.#");
+    }
+
+    // ── Serialization ────────────────────────────────────────────────────
 
     @Bean
     @SuppressWarnings("removal")

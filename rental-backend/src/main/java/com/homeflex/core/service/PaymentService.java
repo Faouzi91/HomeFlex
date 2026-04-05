@@ -144,7 +144,7 @@ public class PaymentService {
             }).get();
         } catch (Exception e) {
             log.error("Failed to create booking PaymentIntent after retries: {}", description, e);
-            return null;
+            throw new DomainException("Payment processing failed. Please try again later.");
         }
     }
 
@@ -184,7 +184,59 @@ public class PaymentService {
             }).get();
         } catch (Exception e) {
             log.error("Failed to release escrow after retries for transferGroup={}", transferGroup, e);
-            return null;
+            throw new DomainException("Failed to release escrow payment. Please try again later.");
+        }
+    }
+
+    // ── Payment Confirmation ───────────────────────────────────────────
+
+    /**
+     * Confirms (captures) a PaymentIntent that was previously created.
+     * Called when a landlord approves a booking, triggering the actual charge.
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID stored on the booking
+     * @return The confirmed PaymentIntent
+     */
+    public PaymentIntent confirmPaymentIntent(String paymentIntentId) {
+        try {
+            return Retry.decorateSupplier(stripeRetry, () -> {
+                try {
+                    PaymentIntent pi = PaymentIntent.retrieve(paymentIntentId);
+                    if ("requires_confirmation".equals(pi.getStatus())) {
+                        return pi.confirm();
+                    }
+                    return pi;
+                } catch (StripeException e) {
+                    throw new RuntimeException(e);
+                }
+            }).get();
+        } catch (Exception e) {
+            log.error("Failed to confirm PaymentIntent {}", paymentIntentId, e);
+            throw new DomainException("Failed to confirm payment. Please try again later.");
+        }
+    }
+
+    /**
+     * Cancels a PaymentIntent (e.g. when a booking is rejected or cancelled).
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID stored on the booking
+     */
+    public void cancelPaymentIntent(String paymentIntentId) {
+        try {
+            Retry.decorateRunnable(stripeRetry, () -> {
+                try {
+                    PaymentIntent pi = PaymentIntent.retrieve(paymentIntentId);
+                    if (!"canceled".equals(pi.getStatus())) {
+                        pi.cancel();
+                    }
+                } catch (StripeException e) {
+                    throw new RuntimeException(e);
+                }
+            }).run();
+            log.info("PaymentIntent cancelled: {}", paymentIntentId);
+        } catch (Exception e) {
+            log.error("Failed to cancel PaymentIntent {}", paymentIntentId, e);
+            throw new DomainException("Failed to cancel payment. Please try again later.");
         }
     }
 
@@ -212,7 +264,7 @@ public class PaymentService {
             }).get();
         } catch (Exception e) {
             log.error("Failed to retrieve balance after retries for account {}", stripeAccountId, e);
-            return null;
+            throw new DomainException("Failed to retrieve account balance. Please try again later.");
         }
     }
 

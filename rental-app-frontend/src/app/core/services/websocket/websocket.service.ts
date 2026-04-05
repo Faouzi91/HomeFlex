@@ -1,13 +1,16 @@
-// ====================================
-// websocket.service.ts
-// ====================================
 import { Injectable } from '@angular/core';
 import { Client } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 import { Subject, Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { AuthService } from '../auth/auth.service';
+import { environment } from 'src/app/environments/environment';
 
+/**
+ * WebSocket service using SockJS + STOMP.
+ *
+ * Authentication is handled via the httpOnly session cookie — SockJS uses
+ * an HTTP-based transport (XHR/iframe) which includes cookies automatically.
+ * No Bearer token header is needed.
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -16,20 +19,13 @@ export class WebSocketService {
   private connectionStatus = new Subject<boolean>();
   public connectionStatus$ = this.connectionStatus.asObservable();
 
-  constructor(private authService: AuthService) {}
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
 
   connect(): void {
-    const token = this.authService.getToken();
-    if (!token) {
-      console.error('No auth token available');
-      return;
-    }
-
     this.stompClient = new Client({
+      // SockJS transport automatically includes cookies (withCredentials)
       webSocketFactory: () => new SockJS(environment.wsUrl),
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
       debug: (str) => {
         if (environment.production) return;
         console.log('STOMP Debug:', str);
@@ -40,12 +36,11 @@ export class WebSocketService {
     });
 
     this.stompClient.onConnect = () => {
-      console.log('WebSocket connected');
+      this.reconnectAttempts = 0;
       this.connectionStatus.next(true);
     };
 
     this.stompClient.onDisconnect = () => {
-      console.log('WebSocket disconnected');
       this.connectionStatus.next(false);
     };
 
@@ -54,11 +49,22 @@ export class WebSocketService {
       this.connectionStatus.next(false);
     };
 
+    this.stompClient.onWebSocketClose = () => {
+      this.reconnectAttempts++;
+      this.connectionStatus.next(false);
+
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.warn('WebSocket: max reconnect attempts reached, stopping auto-reconnect');
+        this.stompClient?.deactivate();
+      }
+    };
+
     this.stompClient.activate();
   }
 
   disconnect(): void {
     if (this.stompClient) {
+      this.reconnectAttempts = this.maxReconnectAttempts; // prevent auto-reconnect
       this.stompClient.deactivate();
       this.connectionStatus.next(false);
     }
@@ -66,7 +72,7 @@ export class WebSocketService {
 
   subscribe(destination: string): Observable<any> {
     return new Observable((observer) => {
-      if (!this.stompClient) {
+      if (!this.stompClient || !this.stompClient.connected) {
         observer.error('WebSocket not connected');
         return;
       }
@@ -75,7 +81,6 @@ export class WebSocketService {
         try {
           observer.next(JSON.parse(message.body));
         } catch {
-          // Guard against non-JSON payloads coming from proxies or text frames.
           observer.next(message.body);
         }
       });

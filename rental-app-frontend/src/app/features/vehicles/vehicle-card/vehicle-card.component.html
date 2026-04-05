@@ -1,0 +1,31 @@
+<div class="vehicle-card" (click)="onCardClick()">
+  <div class="card-image">
+    <img [src]="getPrimaryImage()" [alt]="vehicle.brand + ' ' + vehicle.model" loading="lazy" />
+    <div class="card-badge">{{ vehicle.transmission }}</div>
+  </div>
+  <div class="card-content">
+    <h3 class="card-title">{{ vehicle.brand }} {{ vehicle.model }} ({{ vehicle.year }})</h3>
+    <div class="card-details">
+      <span class="detail-item">
+        <ion-icon name="location-outline"></ion-icon>
+        {{ vehicle.pickupCity }}
+      </span>
+      <span class="detail-item">
+        <ion-icon name="speedometer-outline"></ion-icon>
+        {{ vehicle.mileage | number }} km
+      </span>
+      <span class="detail-item">
+        <ion-icon name="people-outline"></ion-icon>
+        {{ vehicle.seats }} seats
+      </span>
+      <span class="detail-item">
+        <ion-icon name="flash-outline"></ion-icon>
+        {{ vehicle.fuelType }}
+      </span>
+    </div>
+    <div class="card-footer">
+      <span class="card-price">{{ formatPrice(vehicle.dailyPrice, vehicle.currency) }}</span>
+      <span class="price-period">/ day</span>
+    </div>
+  </div>
+</div>
