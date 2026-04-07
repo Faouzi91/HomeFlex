@@ -27,7 +27,7 @@ class _PropertyFormScreenState extends ConsumerState<PropertyFormScreen> {
   final _areaController = TextEditingController();
   String _propertyType = 'APARTMENT';
   String _listingType = 'RENT';
-  List<XFile> _selectedImages = [];
+  final List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
 
   bool get _isEditing => widget.propertyId != null;
@@ -99,7 +99,7 @@ class _PropertyFormScreenState extends ConsumerState<PropertyFormScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _propertyType,
+                      initialValue: _propertyType,
                       decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
                       items: const [
                         DropdownMenuItem(value: 'APARTMENT', child: Text('Apartment')),
@@ -114,7 +114,7 @@ class _PropertyFormScreenState extends ConsumerState<PropertyFormScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _listingType,
+                      initialValue: _listingType,
                       decoration: const InputDecoration(labelText: 'Listing', border: OutlineInputBorder()),
                       items: const [
                         DropdownMenuItem(value: 'RENT', child: Text('Rent')),
@@ -207,7 +207,7 @@ class _PropertyFormScreenState extends ConsumerState<PropertyFormScreen> {
                             borderRadius: BorderRadius.circular(8),
                             child: Image.asset(_selectedImages[index].path,
                                 width: 80, height: 80, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                                errorBuilder: (_, _, _) => Container(
                                     width: 80, height: 80, color: Colors.grey[300],
                                     child: const Icon(Icons.image))),
                           ),

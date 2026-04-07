@@ -27,7 +27,7 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
   final _addressController = TextEditingController();
   String _transmission = 'AUTOMATIC';
   String _fuelType = 'PETROL';
-  List<XFile> _selectedImages = [];
+  final List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
 
   bool get _isEditing => widget.vehicleId != null;
@@ -132,7 +132,7 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _transmission,
+                      initialValue: _transmission,
                       decoration: const InputDecoration(labelText: 'Transmission', border: OutlineInputBorder()),
                       items: const [
                         DropdownMenuItem(value: 'AUTOMATIC', child: Text('Automatic')),
@@ -144,7 +144,7 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _fuelType,
+                      initialValue: _fuelType,
                       decoration: const InputDecoration(labelText: 'Fuel Type', border: OutlineInputBorder()),
                       items: const [
                         DropdownMenuItem(value: 'PETROL', child: Text('Petrol')),

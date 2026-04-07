@@ -8,7 +8,8 @@
       "Bash(powershell.exe:*)",
       "Bash(dart analyze:*)",
       "Bash(dart run:*)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(git add:*)"
     ]
   }
 }

@@ -38,7 +38,7 @@ class _CreateBookingScreenState extends ConsumerState<CreateBookingScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _bookingType,
+                initialValue: _bookingType,
                 decoration: const InputDecoration(
                   labelText: 'Booking Type',
                   border: OutlineInputBorder(),

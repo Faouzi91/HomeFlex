@@ -2,6 +2,37 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-07 (Round 6 — Flutter Migration)
+
+### Added — Flutter Mobile App (`rental-app-flutter`)
+
+- **Full backend feature parity** — A new Flutter app replaces the Angular frontend
+  and covers every backend endpoint: properties, vehicles, bookings, chat (STOMP
+  WebSocket), reviews, favorites, notifications, KYC, vehicle condition reports,
+  and the admin panel.
+- **Auth** — Email/password login & register, forgot/reset password, email
+  verification (deep-link), Google OAuth (`google_sign_in`), session restore via
+  cookie auth. Web build uses `withCredentials: true` (browser-managed cookies);
+  native builds use `PersistCookieJar` via `path_provider`.
+- **State & routing** — Riverpod 3.x (`Notifier`/`NotifierProvider`), GoRouter 17
+  with `StatefulShellRoute.indexedStack` (5 bottom-nav tabs), Freezed 3.x DTOs.
+- **UX polish** — Material 3 light/dark theme with system toggle, shimmer
+  loading skeletons, error retry widget, full-screen tap-to-zoom image gallery,
+  pull-to-refresh on all lists, infinite-scroll pagination on properties &
+  vehicles, advanced search filters (price range slider, min bedrooms/bathrooms),
+  language preference toggle (EN/FR) persisted via `PUT /users/me`.
+- **Real-time chat** — STOMP WebSocket subscriber with HTTP fallback and
+  automatic message de-duplication.
+- **KYC flow** — Stripe Identity session start + status polling for landlords.
+- **Vehicle condition reports** — Multi-photo upload, mileage & fuel-level
+  capture, history view (landlord/admin only).
+
+### Removed
+
+- **Angular frontend (`rental-app-frontend`) deleted** — All web-frontend
+  responsibilities now belong to the Flutter app (which targets web, Android,
+  iOS, Windows, macOS, and Linux from a single codebase).
+
 ## [Unreleased] — 2026-04-05 (Round 5)
 
 ### Fixes — Architecture Violation (Backend)

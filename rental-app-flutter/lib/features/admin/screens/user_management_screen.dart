@@ -18,7 +18,7 @@ class UserManagementScreen extends ConsumerWidget {
           }
           return ListView.separated(
             itemCount: users.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final user = users[index];
               return ListTile(

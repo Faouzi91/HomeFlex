@@ -76,7 +76,7 @@ class PropertyNotifier {
   Future<void> reportProperty(String id, {required String reason, String? description}) async {
     await _apiClient.dio.post('/properties/$id/report', data: {
       'reason': reason,
-      if (description != null) 'description': description,
+      'description': ?description,
     });
   }
 }

@@ -163,7 +163,7 @@ class _StatusChip extends StatelessWidget {
     final color = isPending ? Colors.orange : Colors.green;
     return Chip(
       label: Text(status, style: TextStyle(color: color, fontSize: 12)),
-      backgroundColor: color.withOpacity(0.1),
+      backgroundColor: color.withValues(alpha: 0.1),
       side: BorderSide.none,
       padding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,

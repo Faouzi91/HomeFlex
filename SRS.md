@@ -460,7 +460,34 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ## 3.2 Frontend Stack
 
-### 3.2.1 Framework: Angular 21
+> **🔄 Migration Notice (2026-04-07)** — The frontend has been migrated from
+> **Angular 21 + Ionic + Capacitor** to **Flutter**. The Angular project
+> (`rental-app-frontend`) has been deleted and replaced by `rental-app-flutter`,
+> which targets web, Android, iOS, Windows, macOS, and Linux from a single
+> Dart codebase.
+>
+> **Why the switch:**
+>
+> - **One codebase, six platforms** — Flutter compiles natively to mobile,
+>   desktop, and web. Capacitor only wrapped the Angular web app in a WebView,
+>   delivering inferior native performance and limited access to platform APIs.
+> - **Consistent UI** — Flutter renders its own widgets via Skia/Impeller, so
+>   pixel-identical screens across all platforms (no browser quirks).
+> - **Smaller surface area** — Replaces Angular + RxJS + NgRx Signal Store +
+>   Ionic + Tailwind + Capacitor with Flutter + Riverpod + Material 3.
+> - **Type safety end-to-end** — Dart's sound null safety + Freezed immutable
+>   models give the same compile-time guarantees we wanted from TypeScript.
+>
+> **Current Flutter stack** — Flutter 3.8+, Dart 3.8+, Riverpod 3.x
+> (`Notifier`/`NotifierProvider`), GoRouter 17 (`StatefulShellRoute`),
+> Freezed 3.x + json_serializable, Dio 5 + dio_cookie_manager, Material 3
+> theming with light/dark, `stomp_dart_client` for real-time chat,
+> `cached_network_image`, `shimmer`, `image_picker`, `google_sign_in`.
+>
+> The Angular-specific subsections below (3.2.1 – 3.2.x) are retained for
+> historical context only and no longer reflect the implementation.
+
+### 3.2.1 Framework: Angular 21 _(historical — superseded by Flutter)_
 
 **Choice:** Angular 21 (current active release, LTS planned)
 

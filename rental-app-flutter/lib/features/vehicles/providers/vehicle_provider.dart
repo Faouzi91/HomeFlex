@@ -97,7 +97,7 @@ class VehicleNotifier {
       'vehicleId': vehicleId,
       'startDate': startDate,
       'endDate': endDate,
-      if (message != null) 'message': message,
+      'message': ?message,
     });
     return VehicleBookingResponse.fromJson(response.data);
   }

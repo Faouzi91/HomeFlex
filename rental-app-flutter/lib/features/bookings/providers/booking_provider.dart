@@ -38,10 +38,10 @@ class BookingNotifier {
     final response = await _apiClient.dio.post('/bookings', data: {
       'propertyId': propertyId,
       'bookingType': bookingType,
-      if (startDate != null) 'startDate': startDate,
-      if (endDate != null) 'endDate': endDate,
-      if (message != null) 'message': message,
-      if (numberOfOccupants != null) 'numberOfOccupants': numberOfOccupants,
+      'startDate': ?startDate,
+      'endDate': ?endDate,
+      'message': ?message,
+      'numberOfOccupants': ?numberOfOccupants,
     });
     return BookingDto.fromJson(response.data);
   }

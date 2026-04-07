@@ -584,7 +584,7 @@ class _SimilarPropertiesSection extends ConsumerWidget {
             );
           },
           loading: () => const SizedBox(height: 180, child: Center(child: CircularProgressIndicator())),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
         ),
       ],
     );

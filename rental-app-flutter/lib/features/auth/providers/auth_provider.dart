@@ -132,8 +132,8 @@ class AuthNotifier extends Notifier<AuthState> {
       final response = await _apiClient.dio.put('/users/me', data: {
         'firstName': firstName,
         'lastName': lastName,
-        if (phoneNumber != null) 'phoneNumber': phoneNumber,
-        if (languagePreference != null) 'languagePreference': languagePreference,
+        'phoneNumber': ?phoneNumber,
+        'languagePreference': ?languagePreference,
       });
       final user = UserDto.fromJson(response.data);
       state = state.copyWith(user: user, isLoading: false);

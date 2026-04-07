@@ -51,7 +51,7 @@ class ShimmerGrid extends StatelessWidget {
         mainAxisSpacing: 10,
       ),
       itemCount: itemCount,
-      itemBuilder: (_, __) => const ShimmerCard(),
+      itemBuilder: (_, _) => const ShimmerCard(),
     );
   }
 }

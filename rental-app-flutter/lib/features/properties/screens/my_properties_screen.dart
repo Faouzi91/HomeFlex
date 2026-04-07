@@ -143,7 +143,7 @@ class _MyPropertyCard extends ConsumerWidget {
     }
     return Chip(
       label: Text(status, style: TextStyle(color: color, fontSize: 11)),
-      backgroundColor: color.withOpacity(0.1),
+      backgroundColor: color.withValues(alpha: 0.1),
       side: BorderSide.none,
       padding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,

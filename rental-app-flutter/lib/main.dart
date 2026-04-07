@@ -254,8 +254,6 @@ class AuthWrapper extends ConsumerStatefulWidget {
 }
 
 class _AuthWrapperState extends ConsumerState<AuthWrapper> {
-  bool _initialized = false;
-
   @override
   void initState() {
     super.initState();
@@ -265,7 +263,6 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper> {
   Future<void> _restoreSession() async {
     await ref.read(authProvider.notifier).fetchCurrentUser();
     if (mounted) {
-      setState(() => _initialized = true);
       final user = ref.read(authProvider).user;
       if (user != null) {
         context.go('/properties');
