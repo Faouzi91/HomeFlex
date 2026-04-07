@@ -61,6 +61,7 @@
     "registrationSuccess": "Compte créé avec succès !",
     "sendingResetLink": "Envoi du lien...",
     "resettingPassword": "Mise à jour du mot de passe...",
+    "unauthorized": "Accès Refusé",
     "features": {
       "smartSearch": "Recherche Intelligente",
       "smartSearchDesc": "Trouvez des propriétés qui correspondent à vos préférences exactes",
@@ -239,8 +240,28 @@
       "VILLA": "Villa",
       "ROOM": "Chambre",
       "OFFICE": "Bureau",
-      "LAND": "Terrain"
+      "LAND": "Terrain",
+      "rent": "À Louer",
+      "sale": "À Vendre",
+      "short_term": "Court Terme"
     },
+    "myListings": "Mes Annonces",
+    "totalProperties": "Total Propriétés",
+    "active": "Actives",
+    "favorites": "Favoris",
+    "noListings": "Aucune annonce",
+    "startByAdding": "Commencez par ajouter votre première propriété",
+    "landlordOnlyPage": "Cette page est réservée aux propriétaires",
+    "deleteConfirm": {
+      "title": "Supprimer la Propriété",
+      "message": "Êtes-vous sûr de vouloir supprimer cette propriété ? Cette action est irréversible."
+    },
+    "deleteSuccess": "Propriété supprimée avec succès",
+    "deleteError": "Échec de la suppression de la propriété",
+    "checkIn": "Arrivée",
+    "checkOut": "Départ",
+    "total": "Total",
+    "guests": "Voyageurs",
     "noResults": {
       "title": "Aucune propriété trouvée",
       "subtitle": "Essayez d'ajuster vos filtres",
@@ -286,7 +307,10 @@
     "error": "Erreur",
     "success": "Succès",
     "viewToggle": "Changer de Vue",
-    "close": "Fermer"
+    "close": "Fermer",
+    "all": "Tout",
+    "add": "Ajouter",
+    "goBack": "Retour"
   },
   "vehicle": {
     "title": "Véhicules",
@@ -336,6 +360,31 @@
       "ELECTRIC": "Électrique",
       "HYBRID": "Hybride"
     }
+  },
+  "booking": {
+    "title": "Mes Réservations",
+    "noBookingsTitle": "Aucune réservation",
+    "noBookingsSubtitle": "Vos demandes de réservation apparaîtront ici",
+    "unknownProperty": "Propriété inconnue",
+    "locationUnavailable": "Localisation indisponible",
+    "totalPrice": "Prix Total",
+    "viewDetails": "Voir les Détails",
+    "acceptRequest": "Accepter",
+    "rejectRequest": "Rejeter",
+    "cancelRequest": "Annuler la Réservation",
+    "cancelBooking": "Annuler la Réservation",
+    "backToBookings": "Retour aux Réservations",
+    "tripDetails": "Détails du Séjour",
+    "nights": "nuits",
+    "messageToHost": "Message à l'hôte",
+    "noMessage": "Aucun message fourni",
+    "statusLabel": "Statut de la Réservation",
+    "hostResponse": "Réponse de l'hôte",
+    "priceBreakdown": "Détail du Prix",
+    "rate": "Tarif",
+    "perStay": "/ séjour",
+    "serviceFee": "Frais de Service",
+    "taxes": "Taxes"
   },
   "admin": {
     "dashboard": {

@@ -5,9 +5,9 @@ import { Property, ListingType } from 'src/app/models/property.model';
 import { IonicModule } from '@ionic/angular';
 import { PropertyCardComponent } from '../properties/property-card/property-card.component';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { FooterComponent } from 'src/app/shared/components/footer/footer.component';
 
 @Component({
   selector: 'app-landing',
@@ -16,10 +16,9 @@ import { SharedModule } from 'src/app/shared/shared.module';
     IonicModule,
     PropertyCardComponent,
     CommonModule,
-    ReactiveFormsModule,
     FormsModule,
     TranslateModule,
-    SharedModule,
+    FooterComponent,
   ],
   templateUrl: './landing.component.html',
   styleUrl: './landing.component.scss',
@@ -28,20 +27,8 @@ export class LandingComponent implements OnInit {
   featuredProperties: Property[] = [];
   isLoading = true;
   searchCity = '';
-  selectedType: ListingType = ListingType.RENT;
-  searchType: 'buy' | 'rent' = 'rent';
 
-  stats: {
-    properties?: number;
-    users?: number;
-    cities?: number;
-    transactions?: number;
-  } = {
-    properties: 0,
-    users: 0,
-    cities: 0,
-    transactions: 0,
-  };
+  stats = { properties: 0, users: 0, cities: 0, transactions: 0 };
 
   constructor(
     private router: Router,
@@ -54,71 +41,40 @@ export class LandingComponent implements OnInit {
   }
 
   loadFeaturedProperties(): void {
-    this.isLoading = true; // Start loading
-    this.propertyService.getFeaturedProperties().subscribe({
-      next: (properties) => {
-        this.featuredProperties = properties;
-        this.isLoading = false; // Stop loading
+    this.isLoading = true;
+    this.propertyService.getFeaturedProperties(8).subscribe({
+      next: (props) => {
+        this.featuredProperties = props;
+        this.isLoading = false;
       },
-      error: (err) => {
-        console.error('Error fetching featured properties:', err);
-        this.isLoading = false; // Stop loading even on error
+      error: () => {
+        this.isLoading = false;
       },
     });
-  }
-
-  // Add logic for the chips
-  applyQuickFilter(type: string) {
-    const queryParams: any = {};
-    if (type === 'bedrooms') queryParams.bedrooms = 2; // Example default
-    if (type === 'price') queryParams.sort = 'price_asc';
-    // Navigate to search page with these params
-    this.router.navigate(['/properties'], { queryParams });
   }
 
   loadStats(): void {
     this.propertyService.getStats().subscribe({
-      next: (res) => (this.stats = res),
-      error: (err) => console.error('Error fetching stats', err),
+      next: (s) => (this.stats = s),
+      error: () => {},
     });
   }
 
   onSearch(): void {
-    const queryParams: any = {};
-    if (this.searchCity) queryParams.city = this.searchCity;
-
-    this.propertyService.searchProperties(queryParams).subscribe({
-      next: (res) => (this.featuredProperties = res.data),
-      error: (err) => console.error('Search error', err),
-    });
-  }
-
-  setSearchType(type: 'buy' | 'rent'): void {
-    this.searchType = type;
-    // Optional: You can pass this type to your search parameters later
-  }
-
-  setListingType(type: ListingType): void {
-    this.selectedType = type;
+    const q: any = {};
+    if (this.searchCity.trim()) q.city = this.searchCity.trim();
+    this.router.navigate(['/properties'], { queryParams: q });
   }
 
   navigate(path: string): void {
-    this.router.navigate([path]);
+    this.router.navigateByUrl(path);
   }
 
   navigateToProperties(): void {
     this.router.navigate(['/properties']);
   }
 
-  navigateToPropertyDetail(propertyId: string): void {
-    this.router.navigate(['/properties', propertyId]);
-  }
-
-  formatPrice(price: number, currency: string): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'XAF',
-      minimumFractionDigits: 0,
-    }).format(price);
+  navigateToPropertyDetail(id: string): void {
+    this.router.navigate(['/properties', id]);
   }
 }

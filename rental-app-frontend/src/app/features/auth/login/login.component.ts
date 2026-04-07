@@ -1,31 +1,26 @@
-import { Component, OnInit } from "@angular/core";
-import {
-  FormGroup,
-  FormBuilder,
-  Validators,
-  ReactiveFormsModule,
-} from "@angular/forms";
-import { Router } from "@angular/router";
-import { TranslateModule, TranslateService } from "@ngx-translate/core";
-import { CapacitorService } from "src/app/core/services/capacitor/capacitor.service";
-import { IonicModule } from "@ionic/angular";
-import { AuthService } from "src/app/core/services/auth/auth.service";
-import { LoadingService } from "src/app/core/services/loading/loading.service";
-import { ToastService } from "src/app/core/services/toast/toast.service";
-import { LoginRequest, UserRole } from "src/app/models/user.model"; // 👈 Import UserRole
-import { CommonModule } from "@angular/common";
+import { Component, OnInit } from '@angular/core';
+import { FormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { CapacitorService } from 'src/app/core/services/capacitor/capacitor.service';
+import { IonicModule } from '@ionic/angular';
+import { AuthService } from 'src/app/core/services/auth/auth.service';
+import { LoadingService } from 'src/app/core/services/loading/loading.service';
+import { ToastService } from 'src/app/core/services/toast/toast.service';
+import { LoginRequest, UserRole } from 'src/app/models/user.model'; // 👈 Import UserRole
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: "app-login",
+  selector: 'app-login',
   standalone: true,
   imports: [IonicModule, ReactiveFormsModule, TranslateModule, CommonModule],
-  templateUrl: "./login.component.html",
-  styleUrl: "./login.component.scss",
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   loading = false;
-  error = "";
+  error = '';
 
   constructor(
     private fb: FormBuilder,
@@ -37,8 +32,8 @@ export class LoginComponent implements OnInit {
     private toast: ToastService
   ) {
     this.loginForm = this.fb.group({
-      email: ["", [Validators.required, Validators.email]],
-      password: ["", [Validators.required, Validators.minLength(6)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
 
@@ -56,11 +51,9 @@ export class LoginComponent implements OnInit {
     }
 
     this.loading = true;
-    this.error = "";
+    this.error = '';
 
-    await this.loadingService.show(
-      this.translate.instant("auth.loggingIn") || "Signing in..."
-    );
+    await this.loadingService.show(this.translate.instant('auth.loggingIn') || 'Signing in...');
 
     const payload: LoginRequest = this.loginForm.value;
 
@@ -71,7 +64,7 @@ export class LoginComponent implements OnInit {
         this.loading = false;
 
         await this.toast.success(
-          this.translate.instant("auth.loginSuccess") || "Login successful!"
+          this.translate.instant('auth.loginSuccess') || 'Login successful!'
         );
 
         // Determine redirect path based on role
@@ -79,9 +72,9 @@ export class LoginComponent implements OnInit {
 
         setTimeout(() => {
           if (user && user.role === UserRole.ADMIN) {
-            this.router.navigate(["/admin"]);
+            this.router.navigate(['/admin']);
           } else {
-            this.router.navigate(["/"]);
+            this.router.navigate(['/properties']);
           }
         }, 500);
       },
@@ -91,8 +84,8 @@ export class LoginComponent implements OnInit {
 
         const message =
           err?.error?.message ||
-          this.translate.instant("errors.loginFailed") ||
-          "Login failed. Please check your credentials.";
+          this.translate.instant('errors.loginFailed') ||
+          'Login failed. Please check your credentials.';
 
         this.error = message;
         await this.toast.error(message);
@@ -104,9 +97,9 @@ export class LoginComponent implements OnInit {
   private redirectBasedOnRole(): void {
     const user = this.authService.getCurrentUser();
     if (user && user.role === UserRole.ADMIN) {
-      this.router.navigate(["/admin"]);
+      this.router.navigate(['/admin']);
     } else {
-      this.router.navigate(["/properties"]);
+      this.router.navigate(['/properties']);
     }
   }
 
@@ -115,19 +108,19 @@ export class LoginComponent implements OnInit {
       this.loading = true;
       // ... existing google logic
     } catch (error) {
-      console.error("Google login error:", error);
-      this.error = "Google login failed";
+      console.error('Google login error:', error);
+      this.error = 'Google login failed';
     } finally {
       this.loading = false;
     }
   }
 
   goToRegister(): void {
-    this.router.navigate(["/auth/register"]);
+    this.router.navigate(['/auth/register']);
   }
 
   goToForgotPassword(): void {
-    this.router.navigate(["/auth/forgot-password"]);
+    this.router.navigate(['/auth/forgot-password']);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {

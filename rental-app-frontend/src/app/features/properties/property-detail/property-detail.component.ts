@@ -1,34 +1,24 @@
-import {
-  Component,
-  CUSTOM_ELEMENTS_SCHEMA,
-  OnDestroy,
-  OnInit,
-} from "@angular/core";
-import { ActivatedRoute, Router } from "@angular/router";
-import { PropertyService } from "src/app/core/services/property/property.service";
-import { Property } from "src/app/models/property.model";
-import { FavoriteService } from "src/app/core/services/favorite/favorite.service";
-import { BookingService } from "src/app/core/services/booking/booking.service";
-import { ChatService } from "src/app/core/services/chat/chat.service";
-import { AuthService } from "src/app/core/services/auth/auth.service";
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from "@angular/forms";
-import { Subscription } from "rxjs";
-import { TranslateModule, TranslateService } from "@ngx-translate/core";
-import { ReviewService } from "src/app/core/services/review/review.service";
-import { IonicModule, IonicSlides } from "@ionic/angular";
-import { PropertyCardComponent } from "../property-card/property-card.component";
-import { CommonModule } from "@angular/common";
+import { Component, CUSTOM_ELEMENTS_SCHEMA, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { PropertyService } from 'src/app/core/services/property/property.service';
+import { Property } from 'src/app/models/property.model';
+import { FavoriteService } from 'src/app/core/services/favorite/favorite.service';
+import { BookingService } from 'src/app/core/services/booking/booking.service';
+import { ChatService } from 'src/app/core/services/chat/chat.service';
+import { AuthService } from 'src/app/core/services/auth/auth.service';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ReviewService } from 'src/app/core/services/review/review.service';
+import { IonicModule } from '@ionic/angular';
+import { PropertyCardComponent } from '../property-card/property-card.component';
+import { CommonModule } from '@angular/common';
 // import { SwiperModule } from "swiper/angular";
 
 @Component({
-  selector: "app-property-detail",
-  templateUrl: "./property-detail.component.html",
-  styleUrls: ["./property-detail.component.scss"],
+  selector: 'app-property-detail',
+  templateUrl: './property-detail.component.html',
+  styleUrls: ['./property-detail.component.scss'],
   standalone: true,
   imports: [
     IonicModule,
@@ -47,18 +37,12 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   reviews: any[] = [];
   averageRating: number = 0;
   similarProperties: Property[] = [];
+  activeSlide = 0;
   isFavorite = false;
   bookingModalOpen = false;
   bookingForm: FormGroup;
   bookingLoading = false;
   canMessage = false;
-
-  slideOpts = {
-    initialSlide: 0,
-    speed: 400,
-    slidesPerView: 1,
-    spaceBetween: 0,
-  };
 
   private subs: Subscription[] = [];
 
@@ -76,22 +60,22 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   ) {
     this.bookingForm = this.fb.group({
       requestedDate: [null, Validators.required],
-      message: ["", Validators.maxLength(500)],
-      bookingType: ["VIEWING"],
+      message: ['', Validators.maxLength(500)],
+      bookingType: ['VIEWING'],
     });
   }
 
   ngOnInit(): void {
     this.subs.push(
       this.route.paramMap.subscribe((params) => {
-        const id = params.get("id");
+        const id = params.get('id');
         if (id) {
           this.id = id;
           this.loadProperty(id);
           this.loadSimilar(id);
           this.loadReviews(id);
         } else {
-          this.router.navigate(["/properties"]);
+          this.router.navigate(['/properties']);
         }
       })
     );
@@ -116,7 +100,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
         } catch {}
       },
       error: (err) => {
-        console.error("Error loading property", err);
+        console.error('Error loading property', err);
       },
     });
   }
@@ -127,7 +111,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
         this.reviews = r;
       },
       error: (err) => {
-        console.error("Error loading reviews", err);
+        console.error('Error loading reviews', err);
       },
     });
 
@@ -143,7 +127,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
         this.similarProperties = res;
       },
       error: (err) => {
-        console.error("Error loading similar properties", err);
+        console.error('Error loading similar properties', err);
       },
     });
   }
@@ -157,7 +141,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
   toggleFavorite(): void {
     if (!this.authService.isAuthenticated()) {
-      this.router.navigate(["/auth/login"]);
+      this.router.navigate(['/auth/login']);
       return;
     }
     if (!this.property) return;
@@ -177,7 +161,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
   openBooking(): void {
     if (!this.authService.isAuthenticated()) {
-      this.router.navigate(["/auth/login"]);
+      this.router.navigate(['/auth/login']);
       return;
     }
     this.bookingModalOpen = true;
@@ -199,24 +183,24 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
         this.bookingLoading = false;
         this.bookingModalOpen = false;
         // show a simple toast via native service or navigate
-        alert(this.translate.instant("property.bookingSuccess"));
+        alert(this.translate.instant('property.bookingSuccess'));
       },
       error: (err) => {
         this.bookingLoading = false;
-        console.error("Booking error", err);
-        alert(this.translate.instant("property.bookingError"));
+        console.error('Booking error', err);
+        alert(this.translate.instant('property.bookingError'));
       },
     });
   }
 
   openAddReview(): void {
     // For now navigate to /properties/:id/review or open a modal - simple alert placeholder
-    this.router.navigate(["/properties", this.id, "add-review"]);
+    this.router.navigate(['/properties', this.id, 'add-review']);
   }
 
   startChat(): void {
     if (!this.authService.isAuthenticated() || !this.property) {
-      this.router.navigate(["/auth/login"]);
+      this.router.navigate(['/auth/login']);
       return;
     }
     // create or get chat room with landlord
@@ -229,66 +213,66 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
     };
     this.chatService.createOrGetChatRoom(request).subscribe({
       next: (room) => {
-        this.router.navigate(["/chat", room.id]);
+        this.router.navigate(['/chat', room.id]);
       },
       error: (err) => {
-        console.error("Chat error", err);
+        console.error('Chat error', err);
       },
     });
   }
 
   reportListing(): void {
     if (!this.authService.isAuthenticated() || !this.property) {
-      this.router.navigate(["/auth/login"]);
+      this.router.navigate(['/auth/login']);
       return;
     }
 
-    const reason = prompt(this.translate.instant("property.reportReasonPrompt"));
+    const reason = prompt(this.translate.instant('property.reportReasonPrompt'));
     if (!reason || reason.trim().length === 0) {
-      alert(this.translate.instant("property.reportReasonRequired"));
+      alert(this.translate.instant('property.reportReasonRequired'));
       return;
     }
 
-    const description = prompt(this.translate.instant("property.reportDescriptionPrompt"));
+    const description = prompt(this.translate.instant('property.reportDescriptionPrompt'));
 
     this.propertyService
       .reportProperty(this.property.id, { reason: reason.trim(), description })
       .subscribe({
         next: () => {
-          alert(this.translate.instant("property.reportSuccess"));
+          alert(this.translate.instant('property.reportSuccess'));
         },
         error: (err) => {
-          console.error("Report error", err);
-          alert(this.translate.instant("property.reportError"));
+          console.error('Report error', err);
+          alert(this.translate.instant('property.reportError'));
         },
       });
   }
 
   navigateToProperty(id: string): void {
-    this.router.navigate(["/properties", id]);
+    this.router.navigate(['/properties', id]);
     // scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   goBack(): void {
-    this.router.navigate(["/properties"]);
+    this.router.navigate(['/properties']);
   }
 
   scrollToSection(id: string): void {
     const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth' " as any });
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   }
 
   formatPrice(price?: number, currency?: string): string {
-    if (!price) return "";
+    if (!price) return '';
     try {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: currency || "XAF",
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency || 'XAF',
         minimumFractionDigits: 0,
       }).format(price);
     } catch {
-      return `${price} ${currency || ""}`;
+      return `${price} ${currency || ''}`;
     }
   }
 }

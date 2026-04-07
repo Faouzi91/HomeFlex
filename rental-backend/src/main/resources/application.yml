@@ -115,14 +115,14 @@ app:
 
   # JWT Configuration (SRS FR-101: 15-min access, 7-day refresh)
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:your_super_secret_jwt_key_min_32_characters_long_for_security}
     expiration: 900000 # 15 minutes in milliseconds
     refresh-expiration: 604800000 # 7 days in milliseconds
     cookie:
       access-token-name: ACCESS_TOKEN
       refresh-token-name: REFRESH_TOKEN
       secure: ${JWT_COOKIE_SECURE:false}
-      same-site: Strict
+      same-site: Lax
       max-age-seconds: 604800 # 7 days (refresh token)
 
   # Stripe Payment Configuration (FR-400)
@@ -187,6 +187,7 @@ app:
     allowed-headers:
       - Content-Type
       - Accept
+      - Authorization
       - X-Requested-With
       - X-XSRF-TOKEN
     exposed-headers: []

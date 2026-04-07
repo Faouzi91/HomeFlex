@@ -1,178 +1,180 @@
-<ion-header class="app-header">
-    <ion-toolbar class="app-toolbar">
-        <div class="header-container">
+<header class="header" [class.header-scrolled]="scrolled">
+  <div class="header-inner">
+    <!-- Logo -->
+    <a class="logo" (click)="navigate(isUserAdmin ? '/admin' : '/')">
+      <span class="logo-mark">H</span>
+      <span class="logo-text">HomeFlex</span>
+    </a>
 
-            <!-- Left: Logo -->
-            <div class="header-left">
-                <div class="logo" (click)="navigate(isUserAdmin ? '/admin' : '/')">
-                    <span class="logo-text">{{ 'app.name' | translate }}</span>
-                </div>
+    <!-- Desktop Nav -->
+    <nav class="nav-desktop" *ngIf="!isUserAdmin">
+      <a class="nav-link" [class.active]="isRoute('/properties')" (click)="navigate('/properties')">
+        {{ 'header.buy' | translate }}
+      </a>
+      <a
+        class="nav-link"
+        [class.active]="isRoute('/properties?type=rent')"
+        (click)="navigate('/properties?type=rent')"
+      >
+        {{ 'header.rent' | translate }}
+      </a>
+      <a class="nav-link" (click)="navigate('/vehicles')">
+        {{ 'header.vehicles' | translate }}
+      </a>
+    </nav>
 
-                <!-- Desktop Nav -->
-                <nav class="desktop-nav" *ngIf="!isUserAdmin">
-                    <button class="nav-btn" (click)="navigate('/properties?type=buy')">
-                        <span>{{ 'header.buy' | translate }}</span>
-                        <div class="nav-underline"></div>
-                    </button>
-                    <button class="nav-btn" (click)="navigate('/properties?type=rent')">
-                        <span>{{ 'header.rent' | translate }}</span>
-                        <div class="nav-underline"></div>
-                    </button>
-                    <button class="nav-btn" (click)="navigate('/properties?type=sell')">
-                        <span>{{ 'header.sell' | translate }}</span>
-                        <div class="nav-underline"></div>
-                    </button>
-                    <button class="nav-btn" (click)="navigate('/agents')">
-                        <span>{{ 'header.agents' | translate }}</span>
-                        <div class="nav-underline"></div>
-                    </button>
-                    <button class="nav-btn" (click)="navigate('/contact')">
-                        <span>{{ 'header.contact' | translate }}</span>
-                        <div class="nav-underline"></div>
-                    </button>
-                </nav>
-            </div>
+    <!-- Spacer -->
+    <div class="flex-1"></div>
 
-            <!-- Right: Actions -->
-            <div class="header-right">
+    <!-- Right actions -->
+    <div class="header-actions">
+      <!-- Language -->
+      <select [(ngModel)]="selectedLang" (change)="changeLanguage($event)" class="lang-select">
+        <option value="en">EN</option>
+        <option value="fr">FR</option>
+      </select>
 
-                <!-- Language Selector -->
-                <select [(ngModel)]="selectedLang" (change)="changeLanguage($event)" class="lang-select">
-                    <option value="en">EN</option>
-                    <option value="fr">FR</option>
-                </select>
-
-                <!-- Not Logged In -->
-                <ng-container *ngIf="!user">
-                    <button class="btn-text" (click)="navigate('/auth/login')">
-                        {{ 'auth.login' | translate }}
-                    </button>
-                    <button class="btn-signup" (click)="navigate('/auth/register')">
-                        {{ 'auth.register' | translate }}
-                    </button>
-                </ng-container>
-
-                <!-- Logged In -->
-                <ng-container *ngIf="user && !isUserAdmin">
-                    <button class="icon-btn" (click)="navigate('/favorites')">
-                        <ion-icon name="heart-outline"></ion-icon>
-                    </button>
-
-                    <!-- User Menu -->
-                    <div class="user-menu">
-                        <button class="user-avatar" (click)="toggleUserMenu()">
-                            <img *ngIf="user?.avatarUrl; else initials" [src]="user.avatarUrl" class="avatar-image"
-                                alt="User avatar" />
-                            <ng-template #initials>
-                                <span class="avatar-initials">{{ getUserInitials() }}</span>
-                            </ng-template>
-                        </button>
-                    </div>
-                </ng-container>
-
-                <!-- Mobile Menu Toggle -->
-                <button class="mobile-menu-btn" *ngIf="isMobile"
-                    (click)="$event.stopPropagation(); toggleMobileMenu($event)">
-                    <ion-icon name="menu-outline"></ion-icon>
-                </button>
-
-            </div>
-
-        </div>
-    </ion-toolbar>
-</ion-header>
-
-
-<!-- Mobile Menu -->
-<nav class="mobile-nav" *ngIf="mobileMenuOpen && !isAdminRoute" (click)="$event.stopPropagation()">
-    <button class="nav-btn" (click)="navigate('/properties?type=buy')">
-        <span>{{ 'header.buy' | translate }}</span>
-    </button>
-    <button class="nav-btn" (click)="navigate('/properties?type=rent')">
-        <span>{{ 'header.rent' | translate }}</span>
-    </button>
-    <button class="nav-btn" (click)="navigate('/properties?type=sell')">
-        <span>{{ 'header.sell' | translate }}</span>
-    </button>
-    <button class="nav-btn" (click)="navigate('/agents')">
-        <span>{{ 'header.agents' | translate }}</span>
-    </button>
-    <button class="nav-btn" (click)="navigate('/contact')">
-        <span>{{ 'header.contact' | translate }}</span>
-    </button>
-
-    <!-- Auth Buttons -->
-    <ng-container *ngIf="!user">
-        <button class="btn-text" (click)="navigate('/auth/login')">
-            {{ 'auth.login' | translate }}
+      <!-- Guest -->
+      <ng-container *ngIf="!user">
+        <button class="btn-login" (click)="navigate('/auth/login')">
+          {{ 'auth.login' | translate }}
         </button>
         <button class="btn-signup" (click)="navigate('/auth/register')">
-            {{ 'auth.register' | translate }}
+          {{ 'auth.register' | translate }}
         </button>
-    </ng-container>
-</nav>
+      </ng-container>
 
-
-
-<!-- ADMIN MOBILE MENU -->
-<nav class="mobile-nav" *ngIf="mobileMenuOpen && isAdminRoute" (click)="$event.stopPropagation()">
-    <button class="nav-btn" (click)="navigate('/admin')">
-        Dashboard
-    </button>
-
-    <button class="nav-btn" (click)="navigate('/admin/properties')">
-        Properties
-    </button>
-
-    <button class="nav-btn" (click)="navigate('/admin/users')">
-        Users
-    </button>
-
-    <button class="nav-btn" (click)="navigate('/admin/settings')">
-        Settings
-    </button>
-
-    <button class="nav-btn dropdown-item-danger" (click)="logout()">
-        Logout
-    </button>
-</nav>
-
-
-
-<!-- Dropdown Menu OUTSIDE header (Portal Pattern) -->
-<div class="dropdown-portal" *ngIf="user && userMenuOpen" (click)="closeUserMenu()">
-    <div class="user-dropdown" (click)="$event.stopPropagation()" [style.top.px]="dropdownTop"
-        [style.right.px]="dropdownRight">
-        <div class="dropdown-header">
-            <div class="dropdown-avatar">
-                <img *ngIf="user?.avatarUrl; else dropdownInitials" [src]="user.avatarUrl" class="dropdown-avatar-image"
-                    alt="User avatar" />
-                <ng-template #dropdownInitials>
-                    <span class="dropdown-avatar-initials">{{ getUserInitials() }}</span>
-                </ng-template>
-            </div>
-            <div class="dropdown-user-info">
-                <div class="user-name">{{ user.firstName }} {{ user.lastName }}</div>
-                <div class="user-email">{{ user.email }}</div>
-            </div>
-        </div>
-        <div class="dropdown-divider"></div>
-        <button class="dropdown-item" (click)="navigate('/profile')">
-            <ion-icon name="person-outline"></ion-icon>
-            <span>Profile</span>
+      <!-- Authenticated -->
+      <ng-container *ngIf="user">
+        <button class="btn-icon-header" *ngIf="!isUserAdmin" (click)="navigate('/favorites')">
+          <ion-icon name="heart-outline"></ion-icon>
         </button>
-        <button class="dropdown-item" (click)="navigate('/bookings')">
-            <ion-icon name="calendar-outline"></ion-icon>
-            <span>Bookings</span>
+        <button class="btn-icon-header" *ngIf="!isUserAdmin" (click)="navigate('/chat')">
+          <ion-icon name="chatbubble-outline"></ion-icon>
         </button>
-        <button class="dropdown-item" (click)="navigate('/properties/add')" *ngIf="user.role === 'LANDLORD'">
-            <ion-icon name="add-circle-outline"></ion-icon>
-            <span>Add Property</span>
+
+        <!-- Avatar -->
+        <button class="avatar-btn" (click)="toggleUserMenu($event)">
+          <img
+            *ngIf="user?.avatarUrl; else initials"
+            [src]="user.avatarUrl"
+            class="avatar-img"
+            alt=""
+          />
+          <ng-template #initials>
+            <span class="avatar-initials">{{ getUserInitials() }}</span>
+          </ng-template>
+          <ion-icon name="chevron-down-outline" class="avatar-chevron"></ion-icon>
         </button>
-        <div class="dropdown-divider"></div>
-        <button class="dropdown-item dropdown-item-danger" (click)="logout()">
-            <ion-icon name="log-out-outline"></ion-icon>
-            <span>{{ 'auth.logout' | translate }}</span>
-        </button>
+      </ng-container>
+
+      <!-- Mobile toggle -->
+      <button class="mobile-toggle" (click)="toggleMobileMenu($event)">
+        <ion-icon [name]="mobileMenuOpen ? 'close-outline' : 'menu-outline'"></ion-icon>
+      </button>
     </div>
+  </div>
+</header>
+
+<!-- User Dropdown -->
+<div class="dropdown-backdrop" *ngIf="userMenuOpen" (click)="closeUserMenu()">
+  <div
+    class="dropdown"
+    (click)="$event.stopPropagation()"
+    [style.top.px]="dropdownTop"
+    [style.right.px]="dropdownRight"
+  >
+    <div class="dropdown-user">
+      <div class="dropdown-avatar">
+        <span>{{ getUserInitials() }}</span>
+      </div>
+      <div>
+        <div class="dropdown-name">{{ user?.firstName }} {{ user?.lastName }}</div>
+        <div class="dropdown-email">{{ user?.email }}</div>
+      </div>
+    </div>
+    <div class="dropdown-sep"></div>
+
+    <button class="dropdown-item" (click)="navigate('/profile')">
+      <ion-icon name="person-outline"></ion-icon>
+      {{ 'profile.title' | translate }}
+    </button>
+    <button class="dropdown-item" (click)="navigate('/bookings')">
+      <ion-icon name="calendar-outline"></ion-icon>
+      {{ 'booking.title' | translate }}
+    </button>
+    <button
+      class="dropdown-item"
+      *ngIf="user?.role === 'LANDLORD'"
+      (click)="navigate('/properties/my-properties')"
+    >
+      <ion-icon name="home-outline"></ion-icon>
+      {{ 'property.myListings' | translate }}
+    </button>
+    <button
+      class="dropdown-item"
+      *ngIf="user?.role === 'LANDLORD'"
+      (click)="navigate('/properties/add')"
+    >
+      <ion-icon name="add-circle-outline"></ion-icon>
+      {{ 'property.addNew' | translate }}
+    </button>
+    <button class="dropdown-item" *ngIf="isUserAdmin" (click)="navigate('/admin')">
+      <ion-icon name="settings-outline"></ion-icon>
+      Admin Dashboard
+    </button>
+
+    <div class="dropdown-sep"></div>
+    <button class="dropdown-item dropdown-item-danger" (click)="logout()">
+      <ion-icon name="log-out-outline"></ion-icon>
+      {{ 'auth.logout' | translate }}
+    </button>
+  </div>
+</div>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" *ngIf="mobileMenuOpen" (click)="$event.stopPropagation()">
+  <nav class="mobile-nav-links">
+    <ng-container *ngIf="!isAdminRoute">
+      <a (click)="navigate('/properties')">{{ 'header.buy' | translate }}</a>
+      <a (click)="navigate('/properties?type=rent')">{{ 'header.rent' | translate }}</a>
+      <a (click)="navigate('/vehicles')">{{ 'header.vehicles' | translate }}</a>
+    </ng-container>
+    <ng-container *ngIf="isAdminRoute">
+      <a (click)="navigate('/admin')">Dashboard</a>
+      <a (click)="navigate('/admin/properties')">Properties</a>
+      <a (click)="navigate('/admin/users')">Users</a>
+      <a (click)="navigate('/admin/reports')">Reports</a>
+    </ng-container>
+  </nav>
+
+  <div class="mobile-menu-sep"></div>
+
+  <ng-container *ngIf="!user">
+    <button class="btn-primary btn-full" (click)="navigate('/auth/login')">
+      {{ 'auth.login' | translate }}
+    </button>
+    <button
+      class="btn-outline btn-full"
+      style="margin-top: 0.5rem"
+      (click)="navigate('/auth/register')"
+    >
+      {{ 'auth.register' | translate }}
+    </button>
+  </ng-container>
+
+  <ng-container *ngIf="user">
+    <a class="mobile-user-link" (click)="navigate('/profile')">
+      <ion-icon name="person-outline"></ion-icon> {{ 'profile.title' | translate }}
+    </a>
+    <a class="mobile-user-link" (click)="navigate('/bookings')">
+      <ion-icon name="calendar-outline"></ion-icon> {{ 'booking.title' | translate }}
+    </a>
+    <a class="mobile-user-link" (click)="navigate('/favorites')">
+      <ion-icon name="heart-outline"></ion-icon> Favorites
+    </a>
+    <a class="mobile-user-link danger" (click)="logout()">
+      <ion-icon name="log-out-outline"></ion-icon> {{ 'auth.logout' | translate }}
+    </a>
+  </ng-container>
 </div>

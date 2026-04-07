@@ -1,511 +1,366 @@
 .auth-page {
-    --background: #f9fafb;
-}
-
-// Remove ion-content padding, handle it in container
-ion-content.auth-page {
-    --padding-top: 0;
-    --padding-bottom: 0;
-    --padding-start: 0;
-    --padding-end: 0;
+  --background: var(--hf-gray-50);
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
 }
 
 .auth-container {
-    min-height: 100vh; // Full viewport height
-    display: flex;
-    // padding-top: 4rem; // Account for fixed header
-
-    @media (max-width: 1023px) {
-        flex-direction: column;
-        min-height: calc(100vh - 4rem); // On mobile, adjust for header
-    }
-}
-
-// Left Side - Branding
-.auth-branding {
-    display: none;
-    width: 50%;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #4338ca 100%);
-    padding: 3rem;
+  min-height: 100%;
+  display: flex;
+  @media (max-width: 1023px) {
     flex-direction: column;
-    justify-content: space-between;
-    overflow-y: auto;
-
-    @media (min-width: 1024px) {
-        display: flex;
-    }
-
-    @media (min-width: 1024px) and (max-height: 800px) {
-        padding: 2rem;
-    }
+  }
 }
 
-.branding-content {
-    flex-shrink: 0;
+// ── Branding panel ───────────────────────────────────────────────
+.auth-branding {
+  display: none;
+  width: 50%;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  padding: 3rem;
+  flex-direction: column;
+  justify-content: space-between;
+  @media (min-width: 1024px) {
+    display: flex;
+  }
 }
 
 .brand-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: white;
-    margin-bottom: 2rem;
-
-    ion-icon {
-        font-size: 2.5rem;
-    }
-
-    @media (max-height: 800px) {
-        margin-bottom: 1rem;
-    }
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #fff;
+  margin-bottom: 2rem;
+  ion-icon {
+    font-size: 2rem;
+  }
 }
 
 .branding-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: white;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-
-    @media (max-height: 800px) {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-    }
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
 }
 
 .branding-subtitle {
-    font-size: 1.25rem;
-    color: #bfdbfe;
-
-    @media (max-height: 800px) {
-        font-size: 1rem;
-    }
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .feature-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    flex-shrink: 0;
-
-    @media (max-height: 800px) {
-        gap: 1rem;
-    }
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .feature-item {
-    display: flex;
-    gap: 1rem;
+  display: flex;
+  gap: 0.875rem;
 }
 
 .feature-icon {
-    width: 3rem;
-    height: 3rem;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-
-    ion-icon {
-        font-size: 1.5rem;
-        color: white;
-    }
-
-    @media (max-height: 800px) {
-        width: 2.5rem;
-        height: 2.5rem;
-
-        ion-icon {
-            font-size: 1.25rem;
-        }
-    }
+  width: 2.75rem;
+  height: 2.75rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  ion-icon {
+    font-size: 1.25rem;
+    color: #fff;
+  }
 }
 
 .feature-title {
-    font-weight: 600;
-    color: white;
-    margin-bottom: 0.25rem;
-
-    @media (max-height: 800px) {
-        font-size: 0.875rem;
-    }
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.9375rem;
+  margin-bottom: 0.125rem;
 }
-
 .feature-desc {
-    font-size: 0.875rem;
-    color: #bfdbfe;
-
-    @media (max-height: 800px) {
-        font-size: 0.75rem;
-    }
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-// Right Side - Form
+// ── Form panel ───────────────────────────────────────────────────
 .auth-form-container {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-    overflow-y: auto;
-
-    @media (min-width: 1024px) {
-        width: 50%;
-        max-height: calc(100vh - 4rem); // Only on desktop
-    }
-
-    @media (max-width: 1023px) {
-        padding: 1.5rem 1rem;
-    }
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  @media (min-width: 1024px) {
+    width: 50%;
+  }
 }
 
 .auth-form-wrapper {
-    width: 100%;
-    max-width: 28rem;
+  width: 100%;
+  max-width: 26rem;
 }
 
-// Mobile Logo
 .mobile-logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 2rem;
-
-    @media (min-width: 1024px) {
-        display: none;
-    }
-
-    @media (max-width: 1023px) {
-        margin-bottom: 1.5rem;
-    }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  @media (min-width: 1024px) {
+    display: none;
+  }
 }
 
 .mobile-logo-icon {
-    width: 4rem;
-    height: 4rem;
-    background: #2563eb;
-    border-radius: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1rem;
-
-    ion-icon {
-        font-size: 2rem;
-        color: white;
-    }
-
-    @media (max-width: 1023px) {
-        width: 3.5rem;
-        height: 3.5rem;
-        margin-bottom: 0.75rem;
-
-        ion-icon {
-            font-size: 1.75rem;
-        }
-    }
+  width: 3.5rem;
+  height: 3.5rem;
+  background: var(--hf-blue-600);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  ion-icon {
+    font-size: 1.75rem;
+    color: #fff;
+  }
 }
 
 .mobile-logo-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #111827;
-
-    @media (max-width: 1023px) {
-        font-size: 1.25rem;
-    }
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--hf-gray-900);
 }
 
-// Form Card
+// ── Form card ────────────────────────────────────────────────────
 .form-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-
-    @media (max-width: 1023px) {
-        padding: 1.5rem;
-    }
+  background: #fff;
+  border-radius: var(--hf-radius);
+  box-shadow: var(--hf-shadow-lg);
+  padding: 2rem;
+  @media (max-width: 640px) {
+    padding: 1.5rem;
+    box-shadow: var(--hf-shadow);
+  }
 }
 
 .form-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 0.5rem;
-
-    @media (max-width: 1023px) {
-        font-size: 1.25rem;
-    }
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--hf-gray-900);
+  margin-bottom: 0.25rem;
 }
-
 .form-subtitle {
-    color: #6b7280;
-    margin-bottom: 1.5rem;
-    font-size: 0.875rem;
-
-    @media (max-width: 1023px) {
-        margin-bottom: 1rem;
-    }
+  color: var(--hf-gray-500);
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
 }
 
-// Form Elements
 .auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-
-    @media (max-width: 1023px) {
-        gap: 0.875rem;
-    }
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
 }
-
 .form-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #374151;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hf-gray-700);
 }
 
 .form-label-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .forgot-link {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #2563eb;
-    cursor: pointer;
-    text-decoration: none;
-
-    &:hover {
-        color: #1d4ed8;
-    }
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hf-blue-600);
+  cursor: pointer;
+  &:hover {
+    color: var(--hf-blue-700);
+  }
 }
 
 .input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-icon {
-    position: absolute;
-    left: 1rem;
-    font-size: 1.25rem;
-    color: #9ca3af;
-    pointer-events: none;
+  position: absolute;
+  left: 0.875rem;
+  font-size: 1.125rem;
+  color: var(--hf-gray-400);
+  pointer-events: none;
 }
 
 .form-input {
-    width: 100%;
-    height: 3rem;
-    padding: 0 1rem 0 3rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    color: #111827;
-    background: white;
-    transition: border-color 0.2s;
-
-    &:focus {
-        outline: none;
-        border-color: #3b82f6;
-    }
-
-    &::placeholder {
-        color: #9ca3af;
-    }
-
-    @media (max-width: 1023px) {
-        height: 2.75rem;
-        font-size: 0.9375rem;
-    }
+  width: 100%;
+  height: 2.75rem;
+  padding: 0 0.875rem 0 2.75rem;
+  border: 1.5px solid var(--hf-gray-200);
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--hf-gray-900);
+  background: #fff;
+  transition: all 0.15s;
+  &:focus {
+    outline: none;
+    border-color: var(--hf-blue-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+  }
+  &::placeholder {
+    color: var(--hf-gray-400);
+  }
 }
 
 .form-error {
-    font-size: 0.875rem;
-    color: #dc2626;
+  font-size: 0.8125rem;
+  color: #dc2626;
 }
 
-// Remember Me
 .remember-me {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  input {
     width: 1rem;
     height: 1rem;
-    border: 2px solid #d1d5db;
-    border-radius: 0.25rem;
+    accent-color: var(--hf-blue-600);
     cursor: pointer;
-
-    &:checked {
-        background: #2563eb;
-        border-color: #2563eb;
-    }
+  }
+  label {
+    font-size: 0.8125rem;
+    color: var(--hf-gray-600);
+    cursor: pointer;
+  }
 }
 
-.checkbox-label {
-    font-size: 0.875rem;
-    color: #374151;
-    cursor: pointer;
-}
-
-// Alerts
 .alert {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
-    border-radius: 0.5rem;
-
-    ion-icon {
-        font-size: 1.25rem;
-        flex-shrink: 0;
-    }
-
-    span {
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  ion-icon {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+  }
+  span {
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
 }
 
 .alert-error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #991b1b;
-
-    ion-icon {
-        color: #dc2626;
-    }
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  ion-icon {
+    color: #dc2626;
+  }
 }
 
-// Buttons
 .btn-primary {
-    width: 100%;
-    height: 3rem;
-    background: #3b82f6;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-
-    &:hover:not(:disabled) {
-        background: #2563eb;
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    ion-spinner {
-        --color: white;
-    }
-
-    @media (max-width: 1023px) {
-        height: 2.75rem;
-    }
+  width: 100%;
+  height: 2.75rem;
+  background: var(--hf-blue-600);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  &:hover:not(:disabled) {
+    background: var(--hf-blue-700);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  ion-spinner {
+    --color: #fff;
+  }
 }
 
 .btn-google {
-    width: 100%;
-    height: 3rem;
-    background: white;
-    color: #374151;
-    font-weight: 600;
-    font-size: 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-
-    &:hover {
-        background: #f9fafb;
-        border-color: #d1d5db;
-    }
-
-    ion-icon {
-        font-size: 1.25rem;
-    }
-
-    @media (max-width: 1023px) {
-        height: 2.75rem;
-    }
+  width: 100%;
+  height: 2.75rem;
+  background: #fff;
+  color: var(--hf-gray-700);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  border: 1.5px solid var(--hf-gray-200);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  &:hover {
+    background: var(--hf-gray-50);
+    border-color: var(--hf-gray-300);
+  }
+  ion-icon {
+    font-size: 1.125rem;
+  }
 }
 
-// Divider
 .divider {
+  position: relative;
+  text-align: center;
+  margin: 1.25rem 0;
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--hf-gray-200);
+  }
+  span {
     position: relative;
-    text-align: center;
-    margin: 1.5rem 0;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: #e5e7eb;
-    }
-
-    span {
-        position: relative;
-        background: white;
-        padding: 0 1rem;
-        font-size: 0.875rem;
-        color: #6b7280;
-    }
-
-    @media (max-width: 1023px) {
-        margin: 1rem 0;
-    }
+    background: #fff;
+    padding: 0 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--hf-gray-400);
+  }
 }
 
-// Footer Link
 .footer-link {
-    text-align: center;
-    font-size: 0.875rem;
-    color: #6b7280;
-    margin-top: 1.5rem;
-
-    @media (max-width: 1023px) {
-        margin-top: 1rem;
-    }
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--hf-gray-500);
+  margin-top: 1.25rem;
 }
 
 .link {
-    font-weight: 600;
-    color: #2563eb;
-    cursor: pointer;
-    text-decoration: none;
-    margin-left: 0.25rem;
-
-    &:hover {
-        color: #1d4ed8;
-    }
+  font-weight: 600;
+  color: var(--hf-blue-600);
+  cursor: pointer;
+  margin-left: 0.25rem;
+  &:hover {
+    color: var(--hf-blue-700);
+  }
 }

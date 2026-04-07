@@ -1,204 +1,160 @@
 <ion-content class="landing-page">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content page-container-wide">
+      <div class="hero-text">
+        <h1>{{ 'landing.hero.title' | translate }}</h1>
+        <p class="hero-sub">{{ 'landing.hero.subtitle' | translate }}</p>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-overlay"></div>
-
-        <div class="hero-content">
-            <div class="hero-text">
-
-                <h1 class="hero-title">
-                    {{ 'landing.hero.title' | translate }}
-                </h1>
-
-                <p class="hero-subtitle">
-                    {{ 'landing.hero.subtitle' | translate }}
-                </p>
-
-                <div class="search-container">
-
-                    <div class="search-box">
-                        <div class="search-inner">
-                            <div class="search-input-wrapper">
-                                <input type="text" [(ngModel)]="searchCity"
-                                    [placeholder]="'landing.hero.searchPlaceholder' | translate" class="search-input" />
-                            </div>
-                            <button (click)="onSearch()" class="btn-search">
-                                <ion-icon name="search"></ion-icon>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Filters -->
-                <div class="quick-filters">
-                    <button class="filter-chip">
-                        <ion-icon name="bed-outline"></ion-icon>
-                        <span>{{ 'landing.quickFilters.bedrooms' | translate }}</span>
-                    </button>
-                    <button class="filter-chip">
-                        <ion-icon name="cash-outline"></ion-icon>
-                        <span>{{ 'landing.quickFilters.price' | translate }}</span>
-                    </button>
-                    <button class="filter-chip">
-                        <ion-icon name="location-outline"></ion-icon>
-                        <span>{{ 'landing.quickFilters.nearMe' | translate }}</span>
-                    </button>
-                </div>
-
-            </div>
+        <div class="hero-search">
+          <div class="hero-search-inner">
+            <ion-icon name="search-outline" class="search-ico"></ion-icon>
+            <input
+              type="text"
+              [(ngModel)]="searchCity"
+              [placeholder]="'landing.hero.searchPlaceholder' | translate"
+              (keyup.enter)="onSearch()"
+            />
+            <button class="search-btn" (click)="onSearch()">
+              {{ 'landing.hero.searchBtn' | translate }}
+            </button>
+          </div>
         </div>
-    </section>
 
-    <!-- Stats Section -->
-    <section class="stats-section">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value">{{stats.properties}}</div>
-                    <div class="stat-label">{{ 'landing.stats.properties' | translate }}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{stats.users}}</div>
-                    <div class="stat-label">{{ 'landing.stats.users' | translate }}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{stats.cities}}</div>
-                    <div class="stat-label">{{ 'landing.stats.cities' | translate }}</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">{{stats.transactions}}</div>
-                    <div class="stat-label">{{ 'landing.stats.transactions' | translate }}</div>
-                </div>
-            </div>
+        <div class="hero-chips">
+          <button class="hero-chip" (click)="navigate('/properties?listingType=RENT')">
+            <ion-icon name="home-outline"></ion-icon> {{ 'landing.quickFilters.rent' | translate }}
+          </button>
+          <button class="hero-chip" (click)="navigate('/properties?listingType=SALE')">
+            <ion-icon name="cash-outline"></ion-icon> {{ 'landing.quickFilters.buy' | translate }}
+          </button>
+          <button class="hero-chip" (click)="navigate('/vehicles')">
+            <ion-icon name="car-outline"></ion-icon>
+            {{ 'landing.quickFilters.vehicles' | translate }}
+          </button>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <!-- Featured Properties -->
-    <section class="featured-section">
-        <div class="container">
-
-            <div class="section-header">
-                <div>
-                    <h2 class="section-title">{{ 'landing.featured.title' | translate }}</h2>
-                    <p class="section-subtitle">{{ 'landing.featured.subtitle' | translate }}</p>
-                </div>
-                <button class="btn-text-link" (click)="navigateToProperties()">
-                    <span>{{ 'landing.featured.viewAll' | translate }}</span>
-                    <ion-icon name="arrow-forward"></ion-icon>
-                </button>
-            </div>
-
-            <div class="properties-grid">
-
-                <ng-container *ngIf="isLoading">
-                    <div class="property-card-skeleton" *ngFor="let i of [1,2,3,4]">
-                        <ion-skeleton-text animated
-                            style="width: 100%; height: 200px; border-radius: 1rem;"></ion-skeleton-text>
-                        <div style="padding: 1rem;">
-                            <ion-skeleton-text animated
-                                style="width: 60%; height: 20px; margin-bottom: 10px;"></ion-skeleton-text>
-                            <ion-skeleton-text animated style="width: 40%; height: 15px;"></ion-skeleton-text>
-                        </div>
-                    </div>
-                </ng-container>
-
-                <ng-container *ngIf="!isLoading">
-                    <app-property-card *ngFor="let property of featuredProperties" [property]="property"
-                        (cardClick)="navigateToPropertyDetail($event.id)">
-                    </app-property-card>
-                </ng-container>
-
-            </div>
-
-            <div *ngIf="!isLoading && featuredProperties.length === 0" class="empty-state">
-                <ion-icon name="home-outline"></ion-icon>
-                <p>{{ 'landing.featured.noProperties' | translate }}</p>
-            </div>
-
-            <div class="quick-filters">
-                <button class="filter-chip" (click)="applyQuickFilter('bedrooms')">
-                    <ion-icon name="bed-outline"></ion-icon>
-                    <span>{{ 'landing.quickFilters.bedrooms' | translate }}</span>
-                </button>
-            </div>
-
+  <!-- Stats -->
+  <section class="stats">
+    <div class="page-container-wide">
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-num">{{ stats.properties || 0 }}</div>
+          <div class="stat-label">{{ 'landing.stats.properties' | translate }}</div>
         </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features-section">
-        <div class="container">
-
-            <div class="section-header-center">
-                <h2 class="section-title">{{ 'landing.features.title' | translate }}</h2>
-                <p class="section-subtitle">{{ 'landing.features.subtitle' | translate }}</p>
-            </div>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <ion-icon name="search"></ion-icon>
-                    </div>
-                    <h3 class="feature-title">
-                        {{ 'landing.features.smartSearch.title' | translate }}
-                    </h3>
-                    <p class="feature-description">{{ 'landing.features.smartSearch.description' | translate }}</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <ion-icon name="shield-checkmark"></ion-icon>
-                    </div>
-                    <h3 class="feature-title">
-                        {{ 'landing.features.verified.title' | translate }}
-                    </h3>
-                    <p class="feature-description">{{ 'landing.features.verified.description' | translate }}</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <ion-icon name="chatbubbles"></ion-icon>
-                    </div>
-                    <h3 class="feature-title">
-                        {{ 'landing.features.instantChat.title' | translate }}
-                    </h3>
-                    <p class="feature-description">{{ 'landing.features.instantChat.description' | translate }}</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <ion-icon name="heart"></ion-icon>
-                    </div>
-                    <h3 class="feature-title">
-                        {{ 'landing.features.favorites.title' | translate }}
-                    </h3>
-                    <p class="feature-description">{{ 'landing.features.favorites.description' | translate }}</p>
-                </div>
-            </div>
-
+        <div class="stat">
+          <div class="stat-num">{{ stats.users || 0 }}</div>
+          <div class="stat-label">{{ 'landing.stats.users' | translate }}</div>
         </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="container-narrow">
-            <h2 class="cta-title">
-                {{ 'landing.cta.title' | translate }}
-            </h2>
-            <p class="cta-subtitle">
-                {{ 'landing.cta.subtitle' | translate }}
-            </p>
-            <div class="cta-buttons">
-                <button class="btn-cta-primary" (click)="navigate('/auth/register')">
-                    {{ 'landing.cta.getStarted' | translate }}
-                </button>
-                <button class="btn-cta-outline" (click)="navigate('/properties')">
-                    {{ 'landing.cta.browseProperties' | translate }}
-                </button>
-            </div>
+        <div class="stat">
+          <div class="stat-num">{{ stats.cities || 0 }}</div>
+          <div class="stat-label">{{ 'landing.stats.cities' | translate }}</div>
         </div>
-    </section>
+        <div class="stat">
+          <div class="stat-num">{{ stats.transactions || 0 }}</div>
+          <div class="stat-label">{{ 'landing.stats.transactions' | translate }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <app-footer></app-footer>
+  <!-- Featured Properties -->
+  <section class="featured">
+    <div class="page-container-wide">
+      <div class="section-top">
+        <div>
+          <h2 class="section-title">{{ 'landing.featured.title' | translate }}</h2>
+          <p class="section-sub">{{ 'landing.featured.subtitle' | translate }}</p>
+        </div>
+        <button class="btn-outline btn-sm" (click)="navigateToProperties()">
+          {{ 'landing.featured.viewAll' | translate }}
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </div>
+
+      <!-- Loading skeletons -->
+      <div class="prop-grid" *ngIf="isLoading">
+        <div *ngFor="let i of [1, 2, 3, 4]" class="card" style="overflow: hidden">
+          <div class="skeleton-pulse" style="height: 200px"></div>
+          <div style="padding: 1rem">
+            <div
+              class="skeleton-pulse"
+              style="height: 16px; width: 70%; margin-bottom: 0.5rem"
+            ></div>
+            <div class="skeleton-pulse" style="height: 14px; width: 40%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Properties -->
+      <div class="prop-grid" *ngIf="!isLoading && featuredProperties.length > 0">
+        <app-property-card
+          *ngFor="let p of featuredProperties"
+          [property]="p"
+          (cardClick)="navigateToPropertyDetail($event.id)"
+        ></app-property-card>
+      </div>
+
+      <div *ngIf="!isLoading && featuredProperties.length === 0" class="empty-state">
+        <ion-icon name="home-outline"></ion-icon>
+        <h3>{{ 'landing.featured.noProperties' | translate }}</h3>
+        <p>{{ 'landing.featured.noPropertiesDesc' | translate }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="why-us">
+    <div class="page-container-wide">
+      <div class="section-center">
+        <h2 class="section-title">{{ 'landing.features.title' | translate }}</h2>
+        <p class="section-sub">{{ 'landing.features.subtitle' | translate }}</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon"><ion-icon name="search-outline"></ion-icon></div>
+          <h3>{{ 'landing.features.smartSearch.title' | translate }}</h3>
+          <p>{{ 'landing.features.smartSearch.description' | translate }}</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><ion-icon name="shield-checkmark-outline"></ion-icon></div>
+          <h3>{{ 'landing.features.verified.title' | translate }}</h3>
+          <p>{{ 'landing.features.verified.description' | translate }}</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><ion-icon name="chatbubbles-outline"></ion-icon></div>
+          <h3>{{ 'landing.features.instantChat.title' | translate }}</h3>
+          <p>{{ 'landing.features.instantChat.description' | translate }}</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon"><ion-icon name="heart-outline"></ion-icon></div>
+          <h3>{{ 'landing.features.favorites.title' | translate }}</h3>
+          <p>{{ 'landing.features.favorites.description' | translate }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="page-container" style="text-align: center">
+      <h2>{{ 'landing.cta.title' | translate }}</h2>
+      <p>{{ 'landing.cta.subtitle' | translate }}</p>
+      <div class="cta-btns">
+        <button class="cta-btn-white" (click)="navigate('/auth/register')">
+          {{ 'landing.cta.getStarted' | translate }}
+        </button>
+        <button class="cta-btn-outline" (click)="navigate('/properties')">
+          {{ 'landing.cta.browseProperties' | translate }}
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <app-footer></app-footer>
 </ion-content>

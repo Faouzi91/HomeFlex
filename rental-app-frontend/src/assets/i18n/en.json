@@ -61,6 +61,7 @@
     "registrationSuccess": "Account created successfully!",
     "sendingResetLink": "Sending reset link...",
     "resettingPassword": "Updating your password...",
+    "unauthorized": "Access Denied",
     "features": {
       "smartSearch": "Smart Search",
       "smartSearchDesc": "Find properties that match your exact preferences",
@@ -240,8 +241,28 @@
       "VILLA": "Villa",
       "ROOM": "Room",
       "OFFICE": "Office",
-      "LAND": "Land"
+      "LAND": "Land",
+      "rent": "For Rent",
+      "sale": "For Sale",
+      "short_term": "Short Term"
     },
+    "myListings": "My Listings",
+    "totalProperties": "Total Properties",
+    "active": "Active",
+    "favorites": "Favorites",
+    "noListings": "No listings yet",
+    "startByAdding": "Start by adding your first property",
+    "landlordOnlyPage": "This page is only available to landlords",
+    "deleteConfirm": {
+      "title": "Delete Property",
+      "message": "Are you sure you want to delete this property? This action cannot be undone."
+    },
+    "deleteSuccess": "Property deleted successfully",
+    "deleteError": "Failed to delete property",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "total": "Total",
+    "guests": "Guests",
     "noResults": {
       "title": "No properties found",
       "subtitle": "Try adjusting your filters",
@@ -287,7 +308,10 @@
     "error": "Error",
     "success": "Success",
     "viewToggle": "Toggle View",
-    "close": "Close"
+    "close": "Close",
+    "all": "All",
+    "add": "Add",
+    "goBack": "Go Back"
   },
   "vehicle": {
     "title": "Vehicles",
@@ -337,6 +361,31 @@
       "ELECTRIC": "Electric",
       "HYBRID": "Hybrid"
     }
+  },
+  "booking": {
+    "title": "My Bookings",
+    "noBookingsTitle": "No bookings yet",
+    "noBookingsSubtitle": "Your booking requests will appear here",
+    "unknownProperty": "Unknown Property",
+    "locationUnavailable": "Location unavailable",
+    "totalPrice": "Total Price",
+    "viewDetails": "View Details",
+    "acceptRequest": "Accept",
+    "rejectRequest": "Reject",
+    "cancelRequest": "Cancel Booking",
+    "cancelBooking": "Cancel Booking",
+    "backToBookings": "Back to Bookings",
+    "tripDetails": "Trip Details",
+    "nights": "nights",
+    "messageToHost": "Message to Host",
+    "noMessage": "No message provided",
+    "statusLabel": "Booking Status",
+    "hostResponse": "Host Response",
+    "priceBreakdown": "Price Breakdown",
+    "rate": "Rate",
+    "perStay": "/ stay",
+    "serviceFee": "Service Fee",
+    "taxes": "Taxes"
   },
   "admin": {
     "dashboard": {

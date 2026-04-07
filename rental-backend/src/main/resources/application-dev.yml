@@ -82,14 +82,14 @@ app:
 
   # JWT Configuration
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:your_super_secret_jwt_key_min_32_characters_long_for_security}
     expiration: 86400000 # 24 hours in milliseconds
     refresh-expiration: 604800000 # 7 days in milliseconds
     cookie:
       access-token-name: ACCESS_TOKEN
       refresh-token-name: REFRESH_TOKEN
       secure: false
-      same-site: Strict
+      same-site: Lax
       max-age-seconds: 604800
 
   # AWS S3 Configuration
@@ -126,6 +126,7 @@ app:
     allowed-headers:
       - Content-Type
       - Accept
+      - Authorization
       - X-Requested-With
       - X-XSRF-TOKEN
     exposed-headers: []

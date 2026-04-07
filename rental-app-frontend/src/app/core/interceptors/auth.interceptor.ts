@@ -28,7 +28,10 @@ export const authInterceptor: HttpInterceptorFn = (
 
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !request.url.includes('auth/refresh')) {
+      // Only attempt token refresh for non-auth endpoints.
+      // Auth endpoints (login, register, refresh, etc.) should propagate
+      // errors directly so the calling component can handle them.
+      if (error.status === 401 && !request.url.includes('/auth/')) {
         return handle401Error(request, next);
       }
       return throwError(() => error);

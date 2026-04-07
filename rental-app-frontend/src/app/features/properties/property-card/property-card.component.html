@@ -1,86 +1,69 @@
-<div class="property-card group cursor-pointer" (click)="onCardClick($event)">
+<div class="prop-card" (click)="onCardClick($event)">
+  <!-- Image -->
+  <div class="prop-img-wrap">
+    <img [src]="getPrimaryImage()" [alt]="property.title" loading="lazy" />
 
-    <!-- Image Container -->
-    <div class="relative overflow-hidden rounded-xl aspect-[4/3] bg-gray-200">
-        <img [src]="getPrimaryImage()" [alt]="property.title"
-            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+    <!-- Badges -->
+    <span
+      class="listing-badge"
+      [class.badge-rent]="property.listingType === 'RENT'"
+      [class.badge-sale]="property.listingType === 'SALE'"
+    >
+      {{
+        (property.listingType === 'RENT'
+          ? 'property.forRent'
+          : property.listingType === 'SHORT_TERM'
+            ? 'property.shortTerm'
+            : 'property.forSale'
+        ) | translate
+      }}
+    </span>
 
-        <!-- Overlay Gradient -->
-        <div
-            class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-        </div>
+    <!-- Favorite -->
+    <button
+      *ngIf="showFavoriteButton"
+      class="fav-btn"
+      (click)="toggleFavorite($event)"
+      [class.fav-active]="isFavorite"
+    >
+      <ion-icon [name]="isFavorite ? 'heart' : 'heart-outline'"></ion-icon>
+    </button>
 
-        <!-- Favorite Button -->
-        <button *ngIf="showFavoriteButton" (click)="toggleFavorite($event)"
-            class="absolute top-3 right-3 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10">
-            <ion-icon [name]="isFavorite ? 'heart' : 'heart-outline'" [class.text-red-500]="isFavorite" class="text-xl">
-            </ion-icon>
-        </button>
+    <!-- Photo count -->
+    <span class="photo-count" *ngIf="property.images?.length">
+      <ion-icon name="camera-outline"></ion-icon> {{ property.images.length }}
+    </span>
+  </div>
 
-        <!-- Listing Type Badge -->
-        <div class="absolute top-3 left-3 px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-lg">
-            {{ (property.listingType === 'RENT' ? 'property.forRent' : 'property.forSale') | translate }}
-        </div>
-
-        <!-- Image Count -->
-        <div
-            class="absolute bottom-3 right-3 px-2 py-1 bg-black/70 text-white text-xs font-semibold rounded flex items-center gap-1">
-            <ion-icon name="images-outline" class="text-sm"></ion-icon>
-            {{ property.images?.length || 0 }}
-        </div>
+  <!-- Body -->
+  <div class="prop-body">
+    <div class="prop-price">
+      {{ formatPrice(property.price, property.currency) }}
+      <span *ngIf="property.listingType === 'RENT'" class="prop-period"
+        >/{{ 'property.month' | translate }}</span
+      >
     </div>
 
-    <!-- Content -->
-    <div class="p-4">
+    <h3 class="prop-title">{{ property.title }}</h3>
 
-        <!-- Price -->
-        <div class="mb-2">
-            <div class="text-2xl font-bold text-gray-900">
-                {{ formatPrice(property.price, property.currency) }}
-                <span *ngIf="property.listingType === 'RENT'" class="text-base text-gray-600 font-normal">
-                    {{ 'property.perMonth' | translate }}
-                </span>
-            </div>
-        </div>
-
-        <!-- Title -->
-        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
-            {{ property.title }}
-        </h3>
-
-        <!-- Location -->
-        <div class="flex items-start gap-1 text-sm text-gray-600 mb-3">
-            <ion-icon name="location" class="text-base flex-shrink-0 mt-0.5"></ion-icon>
-            <span class="line-clamp-1">{{ property.address }}, {{ property.city }}</span>
-        </div>
-
-        <!-- Property Details -->
-        <div class="flex items-center gap-4 text-sm text-gray-700 pb-3 border-b border-gray-200">
-            <div *ngIf="property.bedrooms" class="flex items-center gap-1">
-                <ion-icon name="bed-outline" class="text-lg"></ion-icon>
-                <span class="font-medium">{{ property.bedrooms }}</span>
-            </div>
-            <div *ngIf="property.bathrooms" class="flex items-center gap-1">
-                <ion-icon name="water-outline" class="text-lg"></ion-icon>
-                <span class="font-medium">{{ property.bathrooms }}</span>
-            </div>
-            <div *ngIf="property.areaSqm" class="flex items-center gap-1">
-                <ion-icon name="expand-outline" class="text-lg"></ion-icon>
-                <span class="font-medium">{{ property.areaSqm }} {{ 'property.sqm' | translate }}</span>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="flex items-center justify-between mt-3">
-            <div class="text-xs text-gray-500">
-                {{ 'property.type.' + property.propertyType | translate }}
-            </div>
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-                <ion-icon name="eye-outline"></ion-icon>
-                {{ property.viewCount || 0 }}
-            </div>
-        </div>
-
+    <div class="prop-loc">
+      <ion-icon name="location-outline"></ion-icon>
+      <span
+        >{{ property.city
+        }}<ng-container *ngIf="property.address">, {{ property.address }}</ng-container></span
+      >
     </div>
 
+    <div class="prop-meta">
+      <span *ngIf="property.bedrooms != null"
+        ><ion-icon name="bed-outline"></ion-icon> {{ property.bedrooms }}</span
+      >
+      <span *ngIf="property.bathrooms != null"
+        ><ion-icon name="water-outline"></ion-icon> {{ property.bathrooms }}</span
+      >
+      <span *ngIf="property.areaSqm"
+        ><ion-icon name="resize-outline"></ion-icon> {{ property.areaSqm }} m²</span
+      >
+    </div>
+  </div>
 </div>

@@ -72,14 +72,8 @@ public class RabbitMqConfig {
     // ── Serialization ────────────────────────────────────────────────────
 
     @Bean
-    @SuppressWarnings("removal")
-    MessageConverter jacksonMessageConverter() {
-        // Jackson2JsonMessageConverter works with com.fasterxml.jackson (current project dependency).
-        // JacksonJsonMessageConverter requires tools.jackson (Spring Boot 4's repackaged namespace).
-        // Using the fasterxml variant until the project migrates to tools.jackson.
-        var mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-        return new org.springframework.amqp.support.converter.Jackson2JsonMessageConverter(mapper);
+    MessageConverter jacksonMessageConverter(com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+        return new org.springframework.amqp.support.converter.Jackson2JsonMessageConverter(objectMapper);
     }
 
     @Bean
