@@ -48,6 +48,7 @@ class BookingServiceTest {
     @Mock private NotificationService notificationService;
     @Mock private PaymentService paymentService;
     @Mock private BookingMapper bookingMapper;
+    @Mock private PropertyAvailabilityService propertyAvailabilityService;
 
     private BookingService bookingService;
 
@@ -61,7 +62,8 @@ class BookingServiceTest {
     void setUp() {
         bookingService = new BookingService(
                 bookingRepository, propertyRepository, userRepository,
-                notificationService, paymentService, bookingMapper, new SimpleMeterRegistry()
+                notificationService, paymentService, bookingMapper,
+                propertyAvailabilityService, new SimpleMeterRegistry()
         );
 
         landlord = new User();
