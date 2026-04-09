@@ -100,6 +100,10 @@ jobs:
           done
 
       # Run tests explicitly
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+        working-directory: rental-backend
+
       - name: Run Backend Tests
         run: ./gradlew test --no-daemon
         working-directory: rental-backend
