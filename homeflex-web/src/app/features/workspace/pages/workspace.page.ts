@@ -55,6 +55,7 @@ export class WorkspacePageComponent {
   protected readonly favorites = signal<Property[]>([]);
   protected readonly propertyBookings = signal<Booking[]>([]);
   protected readonly vehicleBookings = signal<VehicleBooking[]>([]);
+  protected readonly myLeases = signal<any[]>([]);
   protected readonly notifications = signal<NotificationItem[]>([]);
   protected readonly chatRooms = signal<ChatRoom[]>([]);
   protected readonly messages = signal<Message[]>([]);
@@ -207,12 +208,14 @@ export class WorkspacePageComponent {
       reports: this.session.isAdmin()
         ? this.api.getReports()
         : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
+      myLeases: this.api.getMyLeases(),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
         this.favorites.set(response.favorites.data);
         this.propertyBookings.set(response.propertyBookings.data);
         this.vehicleBookings.set(response.vehicleBookings.data);
+        this.myLeases.set(response.myLeases.data);
         this.notifications.set(response.notifications.data);
         this.chatRooms.set(response.chatRooms.data);
         this.myProperties.set(response.myProperties.data);
@@ -340,6 +343,32 @@ export class WorkspacePageComponent {
       });
   }
 
+  protected generateLease(bookingId: string): void {
+    this.api
+      .generateLease(bookingId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.hostMessage.set('Lease generated successfully.');
+        this.loadLeases();
+      });
+  }
+
+  protected signLease(leaseId: string): void {
+    this.api
+      .signLease(leaseId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loadLeases();
+      });
+  }
+
+  protected loadLeases(): void {
+    this.api
+      .getMyLeases()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => this.myLeases.set(response.data));
+  }
+
   protected saveProfile(): void {
     const value = this.profileForm.getRawValue();
     this.session
@@ -367,29 +396,6 @@ export class WorkspacePageComponent {
       .subscribe((message) => {
         this.passwordMessage.set(message);
         this.passwordForm.reset();
-      });
-  }
-
-  protected createProperty(): void {
-    if (this.propertyForm.invalid) {
-      return;
-    }
-
-    this.api
-      .createProperty(this.propertyForm.getRawValue())
-      .pipe(
-        switchMap(() => this.api.getMyProperties()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((response) => {
-        this.myProperties.set(response.data);
-        this.hostMessage.set('Property created successfully.');
-        this.propertyForm.patchValue({
-          title: '',
-          description: '',
-          address: '',
-          city: '',
-        });
       });
   }
 

@@ -1,6 +1,7 @@
 package com.homeflex.core.service;
 
 import com.homeflex.core.infrastructure.notification.FirebaseNotificationGateway;
+import com.homeflex.core.infrastructure.notification.TwilioSmsGateway;
 import com.homeflex.core.mapper.NotificationMapper;
 import com.homeflex.core.dto.response.NotificationDto;
 import com.homeflex.core.domain.repository.FcmTokenRepository;
@@ -35,6 +36,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
     private final FirebaseNotificationGateway firebaseNotificationGateway;
+    private final TwilioSmsGateway twilioSmsGateway;
 
     public void sendNewMessageNotification(UUID recipientId, User sender, Property property) {
         String title = "New Message";
@@ -54,6 +56,8 @@ public class NotificationService {
                 NotificationType.BOOKING_REQUEST, "PROPERTY", property.getId());
 
         sendPushNotification(landlordId, title, message);
+        sendSmsNotification(landlordId, "HomeFlex: New booking request from " +
+                tenant.getFirstName() + " for " + property.getTitle(), false);
     }
 
     public void sendBookingResponseNotification(UUID tenantId, Property property,
@@ -66,6 +70,8 @@ public class NotificationService {
                 NotificationType.BOOKING_RESPONSE, "PROPERTY", property.getId());
 
         sendPushNotification(tenantId, title, message);
+        sendSmsNotification(tenantId, "HomeFlex: Your booking for " +
+                property.getTitle() + (approved ? " was APPROVED." : " was DECLINED."), true);
     }
 
     public void notifyAdminsNewProperty(Property property) {
@@ -103,6 +109,17 @@ public class NotificationService {
         firebaseNotificationGateway.sendPush(userId, title, body);
     }
 
+    private void sendSmsNotification(UUID userId, String body, boolean preferWhatsApp) {
+        userRepository.findById(userId).ifPresent(user -> {
+            if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
+                if (preferWhatsApp) {
+                    twilioSmsGateway.sendWhatsApp(user.getPhoneNumber(), body);
+                } else {
+                    twilioSmsGateway.sendSms(user.getPhoneNumber(), body);
+                }
+            }
+        });
+    }
 
     public void registerFCMToken(UUID userId, String token, String deviceType) {
         User user = userRepository.findById(userId)

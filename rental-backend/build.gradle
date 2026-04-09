@@ -51,6 +51,9 @@ dependencies {
     // Stripe payments (FR-400)
     implementation 'com.stripe:stripe-java:28.3.0'
 
+    // Twilio for SMS/WhatsApp (SRS-3.4.2)
+    implementation 'com.twilio.sdk:twilio:10.6.3'
+
     // Prometheus metrics export
     implementation 'io.micrometer:micrometer-registry-prometheus'
 

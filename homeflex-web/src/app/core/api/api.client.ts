@@ -331,6 +331,30 @@ export class ApiClient {
     });
   }
 
+  // --- Lease Management ---
+
+  getMyLeases(): Observable<ApiListResponse<any>> {
+    return this.http.get<ApiListResponse<any>>(`${this.baseUrl}/leases/my`);
+  }
+
+  getLeaseByBooking(bookingId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/leases/booking/${bookingId}`);
+  }
+
+  generateLease(bookingId: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/leases/booking/${bookingId}/generate`, {});
+  }
+
+  signLease(leaseId: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/leases/${leaseId}/sign`, {});
+  }
+
+  uploadLeaseTemplate(propertyId: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(`${this.baseUrl}/leases/property/${propertyId}/template`, formData);
+  }
+
   createVehicle(payload: Record<string, unknown>): Observable<Vehicle> {
     return this.http.post<Vehicle>(`${this.baseUrl}/vehicles`, payload);
   }

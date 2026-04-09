@@ -21,6 +21,7 @@ public class AppProperties {
     private Firebase firebase = new Firebase();
     private Google google = new Google();
     private Stripe stripe = new Stripe();
+    private TwilioProperties twilio = new TwilioProperties();
     private Outbox outbox = new Outbox();
     private RateLimit rateLimit = new RateLimit();
     private Monitoring monitoring = new Monitoring();
@@ -94,6 +95,15 @@ public class AppProperties {
         private String webhookSecret;
         private double platformCommission;
         private String currency;
+    }
+
+    @Data
+    public static class TwilioProperties {
+        private String accountSid;
+        private String authToken;
+        private String fromNumber;
+        private String fromWhatsApp;
+        private boolean enabled;
     }
 
     @Data

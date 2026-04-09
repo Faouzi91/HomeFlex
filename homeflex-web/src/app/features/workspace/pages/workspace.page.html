@@ -280,35 +280,54 @@
                   </div>
                 </div>
 
-                <!-- Vehicle Bookings -->
+                <!-- Leases & Contracts -->
                 <div class="space-y-6">
                   <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <div class="h-2 w-2 rounded-full bg-sky-500"></div>
-                    Vehicle Rentals
+                    <div class="h-2 w-2 rounded-full bg-slate-900"></div>
+                    Digital Leases
                   </h2>
                   <div class="space-y-4">
-                    @for (booking of vehicleBookings(); track booking.id) {
-                      <div class="p-5 rounded-xl border border-slate-200 bg-white">
+                    @for (lease of myLeases(); track lease.id) {
+                      <div class="p-5 rounded-xl border border-slate-200 bg-white group">
                         <div class="flex justify-between items-start mb-3">
-                          <h4 class="font-bold text-slate-900 text-sm">
-                            Reservation #{{ booking.id.toString().slice(-6) }}
-                          </h4>
+                          <h4 class="font-bold text-slate-900 text-sm">Lease agreement</h4>
                           <span
-                            class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-600"
+                            class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                            [class.bg-emerald-50]="lease.status === 'SIGNED'"
+                            [class.text-emerald-700]="lease.status === 'SIGNED'"
+                            [class.bg-slate-50]="lease.status !== 'SIGNED'"
+                            [class.text-slate-600]="lease.status !== 'SIGNED'"
                           >
-                            {{ booking.status }}
+                            {{ lease.status }}
                           </span>
                         </div>
-                        <p class="text-xs font-bold text-slate-500 mb-2">
-                          {{ date(booking.startDate) }} &rarr; {{ date(booking.endDate) }}
-                        </p>
-                        <p class="text-sm font-extrabold text-brand-600 text-right">
-                          {{ price(booking.totalPrice, booking.currency) }}
-                        </p>
+                        <div class="flex items-center justify-between">
+                          <p class="text-[10px] font-bold text-slate-400 uppercase">
+                            {{ date(lease.createdAt) }}
+                          </p>
+                          <div class="flex gap-3">
+                            <a
+                              [href]="lease.leaseUrl"
+                              target="_blank"
+                              class="text-xs font-bold text-brand-600 hover:underline uppercase tracking-wider"
+                              >View PDF</a
+                            >
+                            @if (
+                              lease.status === 'PENDING' && lease.tenantId === session.user()?.id
+                            ) {
+                              <button
+                                (click)="signLease(lease.id)"
+                                class="text-xs font-bold text-emerald-600 hover:underline uppercase tracking-wider"
+                              >
+                                Sign Now
+                              </button>
+                            }
+                          </div>
+                        </div>
                       </div>
                     } @empty {
                       <p class="text-sm text-slate-400 font-medium italic">
-                        No vehicle bookings found.
+                        No digital leases yet.
                       </p>
                     }
                   </div>
@@ -822,18 +841,27 @@
                               </p>
                             </div>
                             <div class="flex gap-2">
-                              <button
-                                (click)="approveHostBooking(booking.id)"
-                                class="px-4 py-2 rounded-md bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-colors"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                (click)="rejectHostBooking(booking.id)"
-                                class="px-4 py-2 rounded-md bg-white border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-50 transition-colors"
-                              >
-                                Reject
-                              </button>
+                              @if (booking.status === 'APPROVED') {
+                                <button
+                                  (click)="generateLease(booking.id)"
+                                  class="px-4 py-2 rounded-md bg-brand-500 text-white text-xs font-bold hover:bg-brand-600 transition-colors"
+                                >
+                                  Generate Lease
+                                </button>
+                              } @else {
+                                <button
+                                  (click)="approveHostBooking(booking.id)"
+                                  class="px-4 py-2 rounded-md bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  (click)="rejectHostBooking(booking.id)"
+                                  class="px-4 py-2 rounded-md bg-white border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-50 transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              }
                             </div>
                           </div>
                         }
