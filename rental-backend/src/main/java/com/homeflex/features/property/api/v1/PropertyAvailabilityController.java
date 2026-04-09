@@ -21,7 +21,7 @@ import java.util.UUID;
 public class PropertyAvailabilityController {
 
     private final PropertyAvailabilityService availabilityService;
-    private final com.homeflex.core.domain.repository.UserRepository userRepository;
+    private final com.homeflex.core.service.UserService userService;
 
     /// Public — anyone browsing the listing should see which dates are taken.
     /// Returns one row per unavailable date in the range.
@@ -40,8 +40,7 @@ public class PropertyAvailabilityController {
             @PathVariable UUID propertyId,
             @RequestBody @NotNull RangeRequest body,
             @AuthenticationPrincipal UserDetails principal) {
-        var landlordId = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow().getId();
+        var landlordId = userService.getUserByEmail(principal.getUsername()).getId();
         availabilityService.blockRange(propertyId, landlordId, body.start(), body.end());
         return ResponseEntity.noContent().build();
     }
@@ -52,8 +51,7 @@ public class PropertyAvailabilityController {
             @PathVariable UUID propertyId,
             @RequestBody @NotNull RangeRequest body,
             @AuthenticationPrincipal UserDetails principal) {
-        var landlordId = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow().getId();
+        var landlordId = userService.getUserByEmail(principal.getUsername()).getId();
         availabilityService.unblockRange(propertyId, landlordId, body.start(), body.end());
         return ResponseEntity.noContent().build();
     }

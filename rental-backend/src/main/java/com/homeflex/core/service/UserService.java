@@ -101,4 +101,9 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+    }
+
 }
