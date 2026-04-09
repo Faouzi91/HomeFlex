@@ -1,7 +1,6 @@
 package com.homeflex.features.property.api.v1;
 
 import com.homeflex.core.domain.entity.User;
-import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.features.property.domain.entity.PropertyLease;
 import com.homeflex.features.property.service.LeaseService;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +20,11 @@ import java.util.UUID;
 public class LeaseController {
 
     private final LeaseService leaseService;
-    private final UserRepository userRepository;
+    private final com.homeflex.core.service.UserService userService;
 
     @GetMapping("/my")
     public ResponseEntity<List<LeaseDto>> getMyLeases(@AuthenticationPrincipal UserDetails principal) {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = userService.getUserByEmail(principal.getUsername());
         var leases = leaseService.getMyLeases(user.getId());
         return ResponseEntity.ok(leases.stream().map(LeaseDto::from).toList());
     }
@@ -47,7 +46,7 @@ public class LeaseController {
     public ResponseEntity<LeaseDto> signLease(
             @PathVariable UUID leaseId,
             @AuthenticationPrincipal UserDetails principal) {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = userService.getUserByEmail(principal.getUsername());
         var lease = leaseService.signLease(leaseId, user.getId());
         return ResponseEntity.ok(LeaseDto.from(lease));
     }
@@ -58,7 +57,7 @@ public class LeaseController {
             @PathVariable UUID propertyId,
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UserDetails principal) {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = userService.getUserByEmail(principal.getUsername());
         var lease = leaseService.uploadLeaseTemplate(propertyId, file, user.getId());
         return ResponseEntity.ok(LeaseDto.from(lease));
     }
