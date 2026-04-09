@@ -63,15 +63,24 @@ export class WorkspacePageComponent {
   protected readonly analytics = signal<Analytics | null>(null);
   protected readonly pendingProperties = signal<Property[]>([]);
   protected readonly reports = signal<ReportItem[]>([]);
+  protected readonly kycStatus = signal<any>(null);
+  protected readonly payoutSummary = signal<any>(null);
+  protected readonly selectedHostPropertyAvailability = signal<any[]>([]);
   protected readonly selectedRoomId = signal('');
   protected readonly selectedHostPropertyId = signal('');
   protected readonly profileMessage = signal('');
   protected readonly passwordMessage = signal('');
   protected readonly hostMessage = signal('');
+  protected readonly propertyImages = signal<File[]>([]);
 
   protected readonly unreadNotifications = computed(
     () => this.notifications().filter((item) => !item.isRead).length,
   );
+
+  protected readonly rangeForm = this.fb.group({
+    start: ['', Validators.required],
+    end: ['', Validators.required],
+  });
 
   protected readonly profileForm = this.fb.group({
     firstName: [''],
@@ -210,6 +219,124 @@ export class WorkspacePageComponent {
         this.analytics.set(response.analytics);
         this.pendingProperties.set(response.pendingProperties.data);
         this.reports.set(response.reports.data);
+      });
+
+    if (this.session.isLandlord() || this.session.isAdmin()) {
+      this.loadKycStatus();
+      this.loadPayoutSummary();
+    }
+  }
+
+  protected loadKycStatus(): void {
+    this.api
+      .getKycStatus()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => this.kycStatus.set(response.data));
+  }
+
+  protected startKyc(): void {
+    this.api
+      .createKycSession()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        // In a real app, we would use the Stripe SDK to mount the session.
+        // For this demo, we'll just log it and show a message.
+        console.info('Stripe KYC session created:', response.sessionId);
+        this.hostMessage.set(
+          'Verification session started. In production, this would open Stripe Identity.',
+        );
+      });
+  }
+
+  protected loadPayoutSummary(): void {
+    this.api
+      .getPayoutSummary()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => this.payoutSummary.set(response));
+  }
+
+  protected onboardConnect(): void {
+    this.api
+      .onboardConnectAccount()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        if (response.url) {
+          window.location.href = response.url;
+        }
+      });
+  }
+
+  protected onFileSelected(event: any): void {
+    const files = event.target.files;
+    if (files) {
+      this.propertyImages.set(Array.from(files));
+    }
+  }
+
+  protected createProperty(): void {
+    if (this.propertyForm.invalid) {
+      return;
+    }
+
+    this.api
+      .createProperty(this.propertyForm.getRawValue())
+      .pipe(
+        switchMap((prop) => {
+          if (this.propertyImages().length > 0) {
+            return this.api.uploadPropertyImages(prop.id, this.propertyImages());
+          }
+          return of(null);
+        }),
+        switchMap(() => this.api.getMyProperties()),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((response) => {
+        this.myProperties.set(response.data);
+        this.hostMessage.set('Property created successfully with images.');
+        this.propertyForm.patchValue({
+          title: '',
+          description: '',
+          address: '',
+          city: '',
+        });
+        this.propertyImages.set([]);
+      });
+  }
+
+  protected loadAvailability(propertyId: string): void {
+    this.selectedHostPropertyId.set(propertyId);
+    const start = new Date().toISOString().split('T')[0];
+    const end = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    this.api
+      .getPropertyAvailability(propertyId, start, end)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        this.selectedHostPropertyAvailability.set(response.data);
+      });
+  }
+
+  protected blockRange(): void {
+    if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
+    const { start, end } = this.rangeForm.getRawValue();
+    this.api
+      .blockPropertyRange(this.selectedHostPropertyId(), start!, end!)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loadAvailability(this.selectedHostPropertyId());
+        this.hostMessage.set('Dates blocked successfully.');
+      });
+  }
+
+  protected unblockRange(): void {
+    if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
+    const { start, end } = this.rangeForm.getRawValue();
+    this.api
+      .unblockPropertyRange(this.selectedHostPropertyId(), start!, end!)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loadAvailability(this.selectedHostPropertyId());
+        this.hostMessage.set('Dates unblocked successfully.');
       });
   }
 

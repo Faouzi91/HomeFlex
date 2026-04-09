@@ -635,30 +635,92 @@
               <div class="grid gap-10 lg:grid-cols-[1fr_400px]">
                 <!-- Managed Portfolio -->
                 <div class="space-y-10">
+                  <!-- Identity & Payouts -->
+                  <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="p-6 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200">
+                      <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold">Identity (KYC)</h3>
+                        <span
+                          class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white/80"
+                        >
+                          {{ kycStatus()?.status ?? 'NOT_STARTED' }}
+                        </span>
+                      </div>
+                      <p class="text-slate-400 text-xs mb-6 leading-relaxed">
+                        Verify your identity to unlock publishing privileges and increase trust with
+                        tenants.
+                      </p>
+                      @if (kycStatus()?.status !== 'VERIFIED') {
+                        <button
+                          (click)="startKyc()"
+                          class="w-full rounded-md bg-white py-2 text-xs font-bold text-slate-900 hover:bg-slate-50 transition-colors"
+                        >
+                          {{ kycStatus()?.status === 'REJECTED' ? 'Try Again' : 'Verify Identity' }}
+                        </button>
+                      }
+                    </div>
+
+                    <div class="p-6 rounded-2xl bg-brand-600 text-white shadow-xl shadow-brand-100">
+                      <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold">Payments</h3>
+                        <span
+                          class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest bg-white/10 text-white/80"
+                        >
+                          Stripe Connect
+                        </span>
+                      </div>
+                      <div class="mb-6">
+                        <p class="text-3xl font-extrabold text-white">
+                          {{ price(payoutSummary()?.availableBalance ?? 0, 'XAF') }}
+                        </p>
+                        <p class="text-brand-100 text-xs font-bold uppercase tracking-wider">
+                          Available for payout
+                        </p>
+                      </div>
+                      <button
+                        (click)="onboardConnect()"
+                        class="w-full rounded-md bg-white py-2 text-xs font-bold text-brand-600 hover:bg-brand-50 transition-colors"
+                      >
+                        {{ payoutSummary() ? 'View Dashboard' : 'Setup Payouts' }}
+                      </button>
+                    </div>
+                  </div>
+
                   <div class="space-y-6">
                     <h2 class="text-2xl font-bold text-slate-900">Your Active Listings</h2>
                     <div class="grid gap-4 sm:grid-cols-2">
                       @for (property of myProperties(); track property.id) {
-                        <button
-                          type="button"
-                          (click)="loadHostBookings(property.id)"
-                          class="text-left p-6 rounded-xl border border-slate-200 bg-white hover:border-brand-500 transition-all group"
+                        <div
+                          class="p-6 rounded-xl border border-slate-200 bg-white hover:border-brand-500 transition-all group flex flex-col justify-between"
                         >
-                          <h4
-                            class="font-bold text-slate-900 group-hover:text-brand-600 transition-colors"
-                          >
-                            {{ property.title }}
-                          </h4>
-                          <div class="mt-2 flex items-center justify-between">
-                            <span
-                              class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-                              >{{ property.city }}</span
+                          <div>
+                            <h4
+                              class="font-bold text-slate-900 group-hover:text-brand-600 transition-colors"
                             >
+                              {{ property.title }}
+                            </h4>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                              {{ property.city }}
+                            </p>
+                          </div>
+                          <div class="mt-4 flex items-center justify-between">
+                            <button
+                              (click)="loadHostBookings(property.id)"
+                              class="text-[10px] font-bold text-brand-600 uppercase tracking-widest hover:underline"
+                            >
+                              Bookings
+                            </button>
+                            <button
+                              (click)="loadAvailability(property.id)"
+                              class="text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:underline"
+                            >
+                              Calendar
+                            </button>
                             <span class="text-sm font-extrabold text-slate-900">{{
                               price(property.price, property.currency)
                             }}</span>
                           </div>
-                        </button>
+                        </div>
                       } @empty {
                         <p
                           class="col-span-full py-10 text-center border-2 border-dashed border-slate-100 rounded-xl text-slate-400 font-bold italic"
@@ -669,9 +731,82 @@
                     </div>
                   </div>
 
+                  @if (selectedHostPropertyId() && selectedHostPropertyAvailability().length) {
+                    <div class="space-y-6 pt-10 border-t border-slate-100">
+                      <h2 class="text-2xl font-bold text-slate-900">Calendar & Availability</h2>
+                      <div class="flex gap-4 mb-4">
+                        <form
+                          [formGroup]="rangeForm"
+                          class="flex-grow flex gap-4 items-end bg-slate-50 p-6 rounded-xl border border-slate-100"
+                        >
+                          <div class="flex-grow space-y-1">
+                            <label
+                              class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                              >Start Date</label
+                            >
+                            <input
+                              type="date"
+                              formControlName="start"
+                              class="w-full rounded border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+                            />
+                          </div>
+                          <div class="flex-grow space-y-1">
+                            <label
+                              class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                              >End Date</label
+                            >
+                            <input
+                              type="date"
+                              formControlName="end"
+                              class="w-full rounded border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand-500"
+                            />
+                          </div>
+                          <div class="flex gap-2">
+                            <button
+                              (click)="blockRange()"
+                              type="button"
+                              class="px-4 py-2 bg-slate-900 text-white rounded text-xs font-bold hover:bg-slate-800 transition-colors"
+                            >
+                              Block
+                            </button>
+                            <button
+                              (click)="unblockRange()"
+                              type="button"
+                              class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded text-xs font-bold hover:bg-slate-50 transition-colors"
+                            >
+                              Unblock
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                      <div class="grid grid-cols-7 gap-2">
+                        @for (day of selectedHostPropertyAvailability(); track day.date) {
+                          <div
+                            class="p-2 rounded border text-center space-y-1"
+                            [class.bg-rose-50]="day.status !== 'AVAILABLE'"
+                            [class.border-rose-100]="day.status !== 'AVAILABLE'"
+                            [class.bg-white]="day.status === 'AVAILABLE'"
+                            [class.border-slate-100]="day.status === 'AVAILABLE'"
+                          >
+                            <p class="text-[10px] font-bold text-slate-400">
+                              {{ day.date.split('-')[2] }}
+                            </p>
+                            <p
+                              class="text-[8px] font-extrabold uppercase tracking-tighter"
+                              [class.text-rose-600]="day.status !== 'AVAILABLE'"
+                              [class.text-slate-300]="day.status === 'AVAILABLE'"
+                            >
+                              {{ day.status }}
+                            </p>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
                   @if (hostBookings().length) {
                     <div class="space-y-6 pt-10 border-t border-slate-100">
-                      <h2 class="text-2xl font-bold text-slate-900">Pending Approvals</h2>
+                      <h2 class="text-2xl font-bold text-slate-900">Booking Approvals</h2>
                       <div class="space-y-4">
                         @for (booking of hostBookings(); track booking.id) {
                           <div
@@ -682,6 +817,9 @@
                                 {{ booking.tenant.firstName }} {{ booking.tenant.lastName }}
                               </p>
                               <p class="text-sm text-slate-500">{{ booking.message }}</p>
+                              <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                                {{ date(booking.startDate) }} &rarr; {{ date(booking.endDate) }}
+                              </p>
                             </div>
                             <div class="flex gap-2">
                               <button
@@ -762,6 +900,18 @@
                           placeholder="Area sqm"
                           formControlName="areaSqm"
                           class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        />
+                      </div>
+                      <div class="space-y-1">
+                        <label
+                          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                          >Property Images</label
+                        >
+                        <input
+                          type="file"
+                          multiple
+                          (change)="onFileSelected($event)"
+                          class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
                         />
                       </div>
                       <button

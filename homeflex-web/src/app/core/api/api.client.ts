@@ -263,6 +263,74 @@ export class ApiClient {
     return this.http.post<Property>(`${this.baseUrl}/properties/json`, payload);
   }
 
+  uploadPropertyImages(id: string, files: File[]): Observable<void> {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('images', file));
+    return this.http.post<void>(`${this.baseUrl}/properties/${id}/images`, formData);
+  }
+
+  // --- KYC Verification ---
+
+  getKycStatus(): Observable<
+    ApiValueResponse<{
+      status: string;
+      rejectionReason?: string;
+      verifiedAt?: string;
+      submittedAt?: string;
+    }>
+  > {
+    return this.http.get<ApiValueResponse<any>>(`${this.baseUrl}/kyc/status`);
+  }
+
+  createKycSession(): Observable<{ sessionId: string; clientSecret: string }> {
+    return this.http.post<any>(`${this.baseUrl}/kyc/session`, {});
+  }
+
+  // --- Stripe Connect & Payouts ---
+
+  getPayoutSummary(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/payouts/summary`);
+  }
+
+  onboardConnectAccount(): Observable<{ url: string }> {
+    return this.http.post<any>(`${this.baseUrl}/payouts/connect/onboard`, {});
+  }
+
+  // --- Property Availability ---
+
+  getPropertyAvailability(
+    propertyId: string,
+    start: string,
+    end: string,
+  ): Observable<
+    ApiListResponse<{
+      date: string;
+      status: string;
+      bookingId?: string;
+    }>
+  > {
+    return this.http.get<ApiListResponse<any>>(
+      `${this.baseUrl}/properties/${propertyId}/availability`,
+      {
+        params: this.buildParams({ start, end }),
+      },
+    );
+  }
+
+  blockPropertyRange(propertyId: string, start: string, end: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/properties/${propertyId}/availability/block`, {
+      start,
+      end,
+    });
+  }
+
+  unblockPropertyRange(propertyId: string, start: string, end: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/properties/${propertyId}/availability/unblock`, {
+      start,
+      end,
+    });
+  }
+
   createVehicle(payload: Record<string, unknown>): Observable<Vehicle> {
     return this.http.post<Vehicle>(`${this.baseUrl}/vehicles`, payload);
   }
