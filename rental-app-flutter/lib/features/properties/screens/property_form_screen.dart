@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 import '../providers/property_provider.dart';
 import 'dart:convert';
 
@@ -277,7 +278,7 @@ class _PropertyFormScreenState extends ConsumerState<PropertyFormScreen> {
       final formData = FormData.fromMap({
         'property': MultipartFile.fromString(
           jsonEncode(propertyData),
-          contentType: DioMediaType.parse('application/json'),
+          contentType: MediaType.parse('application/json'),
         ),
         if (_selectedImages.isNotEmpty)
           'images': await Future.wait(

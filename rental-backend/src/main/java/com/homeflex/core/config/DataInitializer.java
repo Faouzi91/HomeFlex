@@ -41,7 +41,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private void createDefaultAdmin() {
         if (userRepository.existsByEmail(adminEmail)) {
-            log.info("✅ Admin user already exists: {}", adminEmail);
+            log.info(" Admin user already exists: {}", adminEmail);
             return;
         }
 
@@ -59,17 +59,17 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(admin);
 
             log.info("═══════════════════════════════════════════════════════");
-            log.info("✅ DEFAULT ADMIN USER CREATED SUCCESSFULLY!");
+            log.info(" DEFAULT ADMIN USER CREATED SUCCESSFULLY!");
             log.info("═══════════════════════════════════════════════════════");
-            log.info("📧 Email: {}", adminEmail);
-            log.info("🔑 Password: {}", adminPassword);
-            log.info("👤 Role: ADMIN");
+            log.info(" Email: {}", adminEmail);
+            log.info(" Password: {}", adminPassword);
+            log.info(" Role: ADMIN");
             log.info("═══════════════════════════════════════════════════════");
-            log.info("⚠️  IMPORTANT: Change this password in production!");
+            log.info(" IMPORTANT: Change this password in production!");
             log.info("═══════════════════════════════════════════════════════");
 
         } catch (Exception e) {
-            log.error("❌ Failed to create default admin user: {}", e.getMessage());
+            log.error(" Failed to create default admin user: {}", e.getMessage());
         }
     }
 
@@ -89,9 +89,9 @@ public class DataInitializer implements CommandLineRunner {
                 landlord.setLanguagePreference("en");
 
                 userRepository.save(landlord);
-                log.info("✅ Test Landlord created: landlord@test.com / Landlord@123");
+                log.info(" Test Landlord created: landlord@test.com / Landlord@123");
             } catch (Exception e) {
-                log.warn("⚠️  Could not create test landlord: {}", e.getMessage());
+                log.warn(" Could not create test landlord: {}", e.getMessage());
             }
         }
 
@@ -110,9 +110,9 @@ public class DataInitializer implements CommandLineRunner {
                 tenant.setLanguagePreference("en");
 
                 userRepository.save(tenant);
-                log.info("✅ Test Tenant created: tenant@test.com / Tenant@123");
+                log.info(" Test Tenant created: tenant@test.com / Tenant@123");
             } catch (Exception e) {
-                log.warn("⚠️  Could not create test tenant: {}", e.getMessage());
+                log.warn(" Could not create test tenant: {}", e.getMessage());
             }
         }
     }

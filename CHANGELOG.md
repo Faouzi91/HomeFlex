@@ -2,6 +2,42 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-09 (Round 7 — Property Availability & Web Frontend)
+
+### Added — Property Availability System (Backend)
+
+- **Sparse availability model** — New `property_availability` table (V11) stores
+  only BLOCKED or BOOKED dates. Un-listed dates are available by default.
+- **Concurrency control** — Database-level `UNIQUE(property_id, date)`
+  constraint guarantees no double-booking, even across parallel requests.
+- **`PropertyAvailabilityService`** — Methods for `isAvailable`, `blockRange`,
+  `unblockRange`, `reserveForBooking`, and `releaseForBooking`.
+- **`PropertyAvailabilityController`** — New endpoints for getting availability
+  ranges and host-controlled blocking.
+
+### Added — Stripe Webhook Idempotency (Backend)
+
+- **Processed event tracking** — New `processed_stripe_events` table (V10) to
+  record event IDs from Stripe.
+- **`ProcessedStripeEventRepository`** — Ensures each webhook payload is
+  handled exactly once by checking before processing.
+
+### Added — Web Frontend (`homeflex-web`)
+
+- **Angular 21 + Tailwind 4** — Re-introduced the Angular frontend as a new
+  project in the root directory.
+- **Project Renaming** — Renamed all references from `rental-app-frontend` to
+  `homeflex-web` in root documentation and `docker-compose.yml`.
+
+### Changed — Flutter App (`rental-app-flutter`)
+
+- **UI Updates** — Various improvements to login/register screens, property and
+  vehicle grids, detail views, and user profiles.
+- **Provider Updates** — Logic enhancements in `PropertyProvider`,
+  `VehicleProvider`, and core API services.
+
+---
+
 ## [Unreleased] — 2026-04-07 (Round 6 — Flutter Migration)
 
 ### Added — Flutter Mobile App (`rental-app-flutter`)

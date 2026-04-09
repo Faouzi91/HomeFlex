@@ -106,7 +106,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/*/view").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*/availability").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*/bookings").permitAll()
+                        // Vehicle bookings list contains PII — owner or admin only.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*/bookings")
+                                .hasAnyRole("LANDLORD", "ADMIN")
 
                         // Vehicle owner endpoints
                         .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/my-vehicles")

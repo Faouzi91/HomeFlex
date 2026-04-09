@@ -1,0 +1,231 @@
+@if (vehicle(); as vehicle) {
+  <div class="bg-white min-h-screen pb-20">
+    <!-- Image Gallery -->
+    <section class="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="aspect-[16/10] overflow-hidden rounded-xl border border-slate-100 shadow-sm">
+          <img
+            [src]="coverImage()"
+            [alt]="vehicle.brand + ' ' + vehicle.model"
+            class="h-full w-full object-cover"
+          />
+        </div>
+        <div class="hidden md:grid grid-cols-2 gap-4">
+          @for (image of vehicle.images.slice(0, 4); track image.id) {
+            <div
+              class="aspect-[16/10] overflow-hidden rounded-xl border border-slate-100 shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              <img
+                [src]="image.imageUrl"
+                [alt]="vehicle.brand + ' ' + vehicle.model"
+                class="h-full w-full object-cover"
+              />
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Split -->
+    <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div class="grid gap-12 lg:grid-cols-[1fr_400px]">
+        <!-- Left Column: Details -->
+        <div class="space-y-10">
+          <!-- Header Info -->
+          <div class="border-b border-slate-100 pb-8">
+            <div class="flex items-center gap-2 mb-4">
+              <span
+                class="inline-flex items-center rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-600 uppercase tracking-wider"
+              >
+                {{ vehicle.status }}
+              </span>
+              <span class="text-slate-300">•</span>
+              <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">{{
+                vehicle.transmission
+              }}</span>
+              <span class="text-slate-300">•</span>
+              <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">{{
+                vehicle.fuelType
+              }}</span>
+            </div>
+
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
+              {{ vehicle.year }} {{ vehicle.brand }} {{ vehicle.model }}
+            </h1>
+            <p class="text-lg font-medium text-slate-500 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-5 h-5 text-slate-400"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                />
+              </svg>
+              Pickup from {{ vehicle.pickupAddress }}, {{ vehicle.pickupCity }}
+            </p>
+
+            <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div class="text-center sm:text-left">
+                <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.seats ?? 0 }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Seats</p>
+              </div>
+              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
+                <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.mileage ?? 0 }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Kilometers</p>
+              </div>
+              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
+                <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.year }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Model Year</p>
+              </div>
+              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
+                <p class="text-2xl font-extrabold text-brand-600">{{ price() }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Per Day</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-slate-900">Vehicle description</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">{{ vehicle.description }}</p>
+          </div>
+
+          <!-- Specifications -->
+          <div class="space-y-6 pt-10 border-t border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-900">Specifications</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+              <div class="space-y-1">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Transmission
+                </p>
+                <p class="text-sm font-bold text-slate-700">{{ vehicle.transmission }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Fuel Type</p>
+                <p class="text-sm font-bold text-slate-700">{{ vehicle.fuelType }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Color</p>
+                <p class="text-sm font-bold text-slate-700">{{ vehicle.color || 'Premium' }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  License Plate
+                </p>
+                <p class="text-sm font-bold text-slate-700">
+                  {{ vehicle.licensePlate || 'Available on request' }}
+                </p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered</p>
+                <p class="text-sm font-bold text-slate-700">{{ vehicle.year }}</p>
+              </div>
+              <div class="space-y-1">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Last Updated
+                </p>
+                <p class="text-sm font-bold text-slate-700">{{ date(vehicle.updatedAt) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Booking Sidebar -->
+        <aside class="space-y-6">
+          <div
+            class="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-zillow space-y-6"
+          >
+            <div class="flex items-baseline justify-between border-b border-slate-50 pb-4">
+              <span class="text-2xl font-extrabold text-slate-900">{{ price() }}</span>
+              <span class="text-sm font-bold text-slate-400">/ day</span>
+            </div>
+
+            @if (availabilityMessage()) {
+              <div
+                class="rounded-lg p-4 text-sm font-bold border"
+                [class.bg-emerald-50]="availability() === true"
+                [class.text-emerald-700]="availability() === true"
+                [class.border-emerald-100]="availability() === true"
+                [class.bg-rose-50]="availability() === false"
+                [class.text-rose-700]="availability() === false"
+                [class.border-rose-100]="availability() === false"
+              >
+                {{ availabilityMessage() }}
+              </div>
+            }
+
+            <form class="space-y-4" [formGroup]="bookingForm" (ngSubmit)="reserveVehicle()">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                    >Pick up</label
+                  >
+                  <input
+                    type="date"
+                    formControlName="startDate"
+                    class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                    >Drop off</label
+                  >
+                  <input
+                    type="date"
+                    formControlName="endDate"
+                    class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                  >Inquiry details</label
+                >
+                <textarea
+                  rows="3"
+                  formControlName="message"
+                  placeholder="Pickup details, delivery request..."
+                  class="w-full rounded-md border border-slate-200 p-3 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                ></textarea>
+              </div>
+
+              <div class="grid gap-3">
+                <button
+                  class="w-full rounded-md border border-brand-500 py-3 text-sm font-bold text-brand-600 hover:bg-brand-50 transition-colors"
+                  type="button"
+                  (click)="checkAvailability()"
+                >
+                  Check availability
+                </button>
+                <button
+                  class="w-full rounded-md bg-brand-500 py-4 text-base font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors"
+                  type="submit"
+                >
+                  Reserve this vehicle
+                </button>
+              </div>
+            </form>
+
+            <p class="text-xs text-center text-slate-400 font-medium">
+              Daily rate includes basic insurance and taxes.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+}

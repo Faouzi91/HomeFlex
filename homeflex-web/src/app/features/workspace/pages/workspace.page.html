@@ -1,0 +1,930 @@
+@if (!session.isAuthenticated()) {
+  <div class="min-h-[80vh] flex flex-col items-center justify-center p-4">
+    <div
+      class="max-w-md w-full text-center space-y-6 bg-white p-10 rounded-2xl border border-slate-200 shadow-zillow"
+    >
+      <div class="flex justify-center">
+        <div
+          class="h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-400"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-8 h-8"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+            />
+          </svg>
+        </div>
+      </div>
+      <h1 class="text-2xl font-extrabold text-slate-900">Workspace locked</h1>
+      <p class="text-slate-500">
+        Sign in to manage your bookings, profile, hosting tools, and messages in one unified
+        operations panel.
+      </p>
+      <div class="flex flex-col gap-3 pt-4">
+        <a
+          class="w-full rounded-md bg-brand-500 py-3 text-sm font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors"
+          routerLink="/login"
+          >Sign in</a
+        >
+        <a
+          class="w-full rounded-md border border-slate-300 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+          routerLink="/register"
+          >Create account</a
+        >
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="bg-white min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div class="grid gap-10 lg:grid-cols-[280px_1fr]">
+        <!-- Sidebar Navigation -->
+        <aside class="space-y-8">
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+            <div
+              class="h-12 w-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-extrabold text-lg"
+            >
+              {{ userInitials() }}
+            </div>
+            <div class="truncate">
+              <p class="font-bold text-slate-900 truncate">{{ session.displayName() }}</p>
+              <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                {{ session.role() }}
+              </p>
+            </div>
+          </div>
+
+          <nav class="space-y-1">
+            @for (tab of tabs(); track tab.id) {
+              <button
+                type="button"
+                (click)="activeTab.set(tab.id)"
+                class="w-full flex flex-col items-start px-4 py-3 rounded-lg text-sm transition-colors group"
+                [class.bg-brand-50]="activeTab() === tab.id"
+                [class.text-brand-700]="activeTab() === tab.id"
+                [class.text-slate-600]="activeTab() !== tab.id"
+                [class.hover:bg-slate-50]="activeTab() !== tab.id"
+              >
+                <span class="font-bold">{{ tab.label }}</span>
+                <span
+                  class="text-[10px] uppercase tracking-wider font-bold opacity-60 group-hover:opacity-100"
+                  >{{ tab.description }}</span
+                >
+              </button>
+            }
+          </nav>
+
+          <button
+            type="button"
+            (click)="logout()"
+            class="w-full mt-10 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-rose-100 text-rose-600 text-sm font-bold hover:bg-rose-50 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+              />
+            </svg>
+            Log out
+          </button>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="min-w-0">
+          @if (activeTab() === 'overview') {
+            <div class="space-y-10">
+              <header class="border-b border-slate-100 pb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Workspace Overview</h1>
+                <p class="text-slate-500">
+                  Welcome back. Here's what's happening with your account today.
+                </p>
+              </header>
+
+              <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                  class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Favorites
+                  </p>
+                  <p class="text-3xl font-extrabold text-slate-900">{{ favorites().length }}</p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Properties
+                  </p>
+                  <p class="text-3xl font-extrabold text-slate-900">
+                    {{ propertyBookings().length }}
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Vehicles
+                  </p>
+                  <p class="text-3xl font-extrabold text-slate-900">
+                    {{ vehicleBookings().length }}
+                  </p>
+                </div>
+                <div
+                  class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    Unread
+                  </p>
+                  <p class="text-3xl font-extrabold text-brand-600">{{ unreadNotifications() }}</p>
+                </div>
+              </div>
+
+              <div class="grid gap-8 lg:grid-cols-2">
+                <div class="p-8 rounded-2xl bg-brand-600 text-white shadow-xl shadow-brand-100">
+                  <h3 class="text-xl font-bold mb-4">Manage your bookings</h3>
+                  <p class="text-brand-100 text-sm mb-6 leading-relaxed">
+                    Review your pending requests, active rentals, and historical data across
+                    properties and vehicles.
+                  </p>
+                  <button
+                    class="rounded-md bg-white px-6 py-2 text-sm font-bold text-brand-600 hover:bg-brand-50"
+                    (click)="activeTab.set('bookings')"
+                  >
+                    Go to Bookings
+                  </button>
+                </div>
+                <div class="p-8 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-200">
+                  <h3 class="text-xl font-bold mb-4">Messages & Support</h3>
+                  <p class="text-slate-400 text-sm mb-6 leading-relaxed">
+                    Chat with hosts directly about your inquiries or reach out to our support team
+                    for assistance.
+                  </p>
+                  <button
+                    class="rounded-md bg-white px-6 py-2 text-sm font-bold text-slate-900 hover:bg-slate-50"
+                    (click)="activeTab.set('messages')"
+                  >
+                    Open Inbox
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'favorites') {
+            <div class="space-y-8">
+              <header class="border-b border-slate-100 pb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Your Shortlist</h1>
+                <p class="text-slate-500">
+                  All the properties you've saved for future consideration.
+                </p>
+              </header>
+
+              <div class="grid gap-4">
+                @for (property of favorites(); track property.id) {
+                  <div
+                    class="flex items-center justify-between p-6 rounded-xl border border-slate-200 bg-white hover:border-brand-300 transition-colors group"
+                  >
+                    <div>
+                      <h3
+                        class="font-bold text-slate-900 group-hover:text-brand-600 transition-colors"
+                      >
+                        {{ property.title }}
+                      </h3>
+                      <p class="text-sm text-slate-500 font-medium">
+                        {{ property.city }}, {{ property.country }}
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-bold text-slate-900 text-lg">
+                        {{ price(property.price, property.currency) }}
+                      </p>
+                      <a
+                        [routerLink]="['/properties', property.id]"
+                        class="text-xs font-bold text-brand-600 hover:underline uppercase tracking-wider"
+                        >View Listing</a
+                      >
+                    </div>
+                  </div>
+                } @empty {
+                  <div
+                    class="py-20 text-center border-2 border-dashed border-slate-100 rounded-2xl"
+                  >
+                    <p class="text-lg font-bold text-slate-400">Your shortlist is empty.</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'bookings') {
+            <div class="space-y-12">
+              <header class="border-b border-slate-100 pb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Booking History</h1>
+                <p class="text-slate-500">
+                  Track and manage all your rental transactions and inquiries.
+                </p>
+              </header>
+
+              <div class="grid gap-10 lg:grid-cols-2">
+                <!-- Property Bookings -->
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <div class="h-2 w-2 rounded-full bg-brand-500"></div>
+                    Property Rentals
+                  </h2>
+                  <div class="space-y-4">
+                    @for (booking of propertyBookings(); track booking.id) {
+                      <div class="p-5 rounded-xl border border-slate-200 bg-white">
+                        <div class="flex justify-between items-start mb-3">
+                          <h4 class="font-bold text-slate-900 text-sm">
+                            {{ booking.property.title }}
+                          </h4>
+                          <span
+                            class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                            [class.bg-emerald-50]="booking.status === 'APPROVED'"
+                            [class.text-emerald-700]="booking.status === 'APPROVED'"
+                            [class.bg-amber-50]="booking.status === 'PENDING'"
+                            [class.text-amber-700]="booking.status === 'PENDING'"
+                          >
+                            {{ booking.status }}
+                          </span>
+                        </div>
+                        <div
+                          class="flex items-center justify-between text-xs font-bold text-slate-400"
+                        >
+                          <span>{{ booking.bookingType }}</span>
+                          <span>{{ date(booking.createdAt) }}</span>
+                        </div>
+                      </div>
+                    } @empty {
+                      <p class="text-sm text-slate-400 font-medium italic">
+                        No property bookings found.
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Vehicle Bookings -->
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <div class="h-2 w-2 rounded-full bg-sky-500"></div>
+                    Vehicle Rentals
+                  </h2>
+                  <div class="space-y-4">
+                    @for (booking of vehicleBookings(); track booking.id) {
+                      <div class="p-5 rounded-xl border border-slate-200 bg-white">
+                        <div class="flex justify-between items-start mb-3">
+                          <h4 class="font-bold text-slate-900 text-sm">
+                            Reservation #{{ booking.id.toString().slice(-6) }}
+                          </h4>
+                          <span
+                            class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-600"
+                          >
+                            {{ booking.status }}
+                          </span>
+                        </div>
+                        <p class="text-xs font-bold text-slate-500 mb-2">
+                          {{ date(booking.startDate) }} &rarr; {{ date(booking.endDate) }}
+                        </p>
+                        <p class="text-sm font-extrabold text-brand-600 text-right">
+                          {{ price(booking.totalPrice, booking.currency) }}
+                        </p>
+                      </div>
+                    } @empty {
+                      <p class="text-sm text-slate-400 font-medium italic">
+                        No vehicle bookings found.
+                      </p>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'messages') {
+            <div
+              class="h-[700px] grid lg:grid-cols-[320px_1fr] border border-slate-200 rounded-2xl overflow-hidden shadow-sm"
+            >
+              <!-- Chat List -->
+              <aside class="border-r border-slate-200 flex flex-col bg-slate-50/50">
+                <div class="p-6 border-b border-slate-200 bg-white">
+                  <h2 class="text-lg font-bold text-slate-900">Conversations</h2>
+                </div>
+                <div class="flex-grow overflow-y-auto">
+                  @for (room of chatRooms(); track room.id) {
+                    <button
+                      type="button"
+                      (click)="openRoom(room.id)"
+                      class="w-full text-left p-6 border-b border-slate-100 transition-colors"
+                      [class.bg-white]="selectedRoomId() === room.id"
+                      [class.hover:bg-slate-50]="selectedRoomId() !== room.id"
+                    >
+                      <h4 class="font-bold text-slate-900 text-sm truncate mb-1">
+                        {{ room.propertyTitle }}
+                      </h4>
+                      <div class="flex items-center justify-between">
+                        <p class="text-xs font-bold text-brand-600">
+                          {{ room.unreadCount ?? 0 }} unread
+                        </p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">
+                          {{ room.lastMessageAt ? dateTime(room.lastMessageAt) : 'New' }}
+                        </p>
+                      </div>
+                    </button>
+                  } @empty {
+                    <p class="p-6 text-sm text-slate-400 italic text-center">No messages yet.</p>
+                  }
+                </div>
+              </aside>
+
+              <!-- Active Chat -->
+              <main class="flex flex-col bg-white">
+                @if (selectedRoomId()) {
+                  <header class="p-6 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-900">{{ selectedRoomTitle() }}</h3>
+                  </header>
+                  <div class="flex-grow overflow-y-auto p-6 space-y-6">
+                    @for (message of messages(); track message.id) {
+                      <div
+                        class="flex gap-4"
+                        [class.flex-row-reverse]="message.senderName === session.displayName()"
+                      >
+                        <div
+                          class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600 shrink-0"
+                        >
+                          {{ message.senderName.slice(0, 1) }}
+                        </div>
+                        <div
+                          class="max-w-[80%] space-y-1"
+                          [class.text-right]="message.senderName === session.displayName()"
+                        >
+                          <p class="text-xs font-bold text-slate-400">{{ message.senderName }}</p>
+                          <div
+                            class="p-4 rounded-2xl text-sm leading-relaxed"
+                            [class.bg-brand-500]="message.senderName === session.displayName()"
+                            [class.text-white]="message.senderName === session.displayName()"
+                            [class.bg-slate-100]="message.senderName !== session.displayName()"
+                            [class.text-slate-800]="message.senderName !== session.displayName()"
+                          >
+                            {{ message.messageText }}
+                          </div>
+                          <p class="text-[10px] font-bold text-slate-300 uppercase">
+                            {{ dateTime(message.createdAt) }}
+                          </p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  <form
+                    class="p-6 border-t border-slate-100"
+                    [formGroup]="messageForm"
+                    (ngSubmit)="sendMessage()"
+                  >
+                    <div class="flex gap-4">
+                      <input
+                        type="text"
+                        formControlName="message"
+                        placeholder="Type your message..."
+                        class="flex-grow rounded-lg border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                      />
+                      <button
+                        class="rounded-lg bg-brand-500 px-6 py-3 text-sm font-bold text-white hover:bg-brand-600 transition-colors"
+                        type="submit"
+                      >
+                        Send
+                      </button>
+                    </div>
+                  </form>
+                } @else {
+                  <div
+                    class="flex-grow flex flex-col items-center justify-center p-10 text-center space-y-4"
+                  >
+                    <div
+                      class="h-16 w-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="w-8 h-8"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="font-bold text-slate-900">Your Inbox</h3>
+                      <p class="text-sm text-slate-500 max-w-xs mx-auto">
+                        Select a conversation from the list to view your messages and updates.
+                      </p>
+                    </div>
+                  </div>
+                }
+              </main>
+            </div>
+          }
+
+          @if (activeTab() === 'notifications') {
+            <div class="space-y-8">
+              <header class="border-b border-slate-100 pb-8 flex items-end justify-between">
+                <div>
+                  <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Notifications</h1>
+                  <p class="text-slate-500">
+                    Stay updated on your booking status and account activity.
+                  </p>
+                </div>
+                <button
+                  class="text-sm font-bold text-brand-600 hover:underline"
+                  type="button"
+                  (click)="markAllNotificationsRead()"
+                >
+                  Mark all as read
+                </button>
+              </header>
+
+              <div class="space-y-4">
+                @for (item of notifications(); track item.id) {
+                  <div
+                    class="flex items-start justify-between p-6 rounded-xl border border-slate-200 transition-all"
+                    [class.bg-white]="item.isRead"
+                    [class.bg-brand-50/30]="!item.isRead"
+                    [class.border-brand-100]="!item.isRead"
+                  >
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2">
+                        @if (!item.isRead) {
+                          <div class="h-2 w-2 rounded-full bg-brand-500"></div>
+                        }
+                        <h4 class="font-bold text-slate-900 text-sm">{{ item.title }}</h4>
+                      </div>
+                      <p class="text-sm text-slate-600 leading-relaxed">{{ item.message }}</p>
+                      <p class="text-[10px] font-bold text-slate-400 uppercase">
+                        {{ dateTime(item.createdAt) }}
+                      </p>
+                    </div>
+                    @if (!item.isRead) {
+                      <button
+                        type="button"
+                        (click)="markNotificationRead(item.id)"
+                        class="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors uppercase tracking-wider"
+                      >
+                        Read
+                      </button>
+                    }
+                  </div>
+                } @empty {
+                  <div
+                    class="py-20 text-center border-2 border-dashed border-slate-100 rounded-2xl"
+                  >
+                    <p class="text-lg font-bold text-slate-400">No new notifications.</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'profile') {
+            <div class="space-y-12">
+              <header class="border-b border-slate-100 pb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Account Settings</h1>
+                <p class="text-slate-500">
+                  Manage your personal information and security preferences.
+                </p>
+              </header>
+
+              <div class="grid gap-10 lg:grid-cols-2">
+                <!-- Profile Form -->
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900">Personal Information</h2>
+                  @if (profileMessage()) {
+                    <div
+                      class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100"
+                    >
+                      {{ profileMessage() }}
+                    </div>
+                  }
+                  <form class="space-y-4" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                          >First Name</label
+                        >
+                        <input
+                          type="text"
+                          formControlName="firstName"
+                          class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                        />
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                          >Last Name</label
+                        >
+                        <input
+                          type="text"
+                          formControlName="lastName"
+                          class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                        >Phone Number</label
+                      >
+                      <input
+                        type="tel"
+                        formControlName="phoneNumber"
+                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                      />
+                    </div>
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                        >Preferred Language</label
+                      >
+                      <select
+                        formControlName="languagePreference"
+                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 bg-white outline-none focus:border-brand-500"
+                      >
+                        <option value="en">English (US)</option>
+                        <option value="fr">Français (FR)</option>
+                      </select>
+                    </div>
+                    <button
+                      class="inline-flex items-center justify-center rounded-md bg-brand-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors"
+                      type="submit"
+                    >
+                      Save Changes
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Security Form -->
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900">Security</h2>
+                  @if (passwordMessage()) {
+                    <div
+                      class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100"
+                    >
+                      {{ passwordMessage() }}
+                    </div>
+                  }
+                  <form class="space-y-4" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                        >Current Password</label
+                      >
+                      <input
+                        type="password"
+                        formControlName="currentPassword"
+                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                        >New Password</label
+                      >
+                      <input
+                        type="password"
+                        formControlName="newPassword"
+                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
+                        placeholder="Min. 8 characters"
+                      />
+                    </div>
+                    <button
+                      class="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-8 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                      type="submit"
+                    >
+                      Update Password
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'hosting' && (session.isLandlord() || session.isAdmin())) {
+            <div class="space-y-12">
+              <header class="border-b border-slate-100 pb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Host Dashboard</h1>
+                <p class="text-slate-500">
+                  Manage your listings, approve bookings, and grow your rental business.
+                </p>
+              </header>
+
+              <div class="grid gap-10 lg:grid-cols-[1fr_400px]">
+                <!-- Managed Portfolio -->
+                <div class="space-y-10">
+                  <div class="space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Your Active Listings</h2>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      @for (property of myProperties(); track property.id) {
+                        <button
+                          type="button"
+                          (click)="loadHostBookings(property.id)"
+                          class="text-left p-6 rounded-xl border border-slate-200 bg-white hover:border-brand-500 transition-all group"
+                        >
+                          <h4
+                            class="font-bold text-slate-900 group-hover:text-brand-600 transition-colors"
+                          >
+                            {{ property.title }}
+                          </h4>
+                          <div class="mt-2 flex items-center justify-between">
+                            <span
+                              class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                              >{{ property.city }}</span
+                            >
+                            <span class="text-sm font-extrabold text-slate-900">{{
+                              price(property.price, property.currency)
+                            }}</span>
+                          </div>
+                        </button>
+                      } @empty {
+                        <p
+                          class="col-span-full py-10 text-center border-2 border-dashed border-slate-100 rounded-xl text-slate-400 font-bold italic"
+                        >
+                          No listings yet.
+                        </p>
+                      }
+                    </div>
+                  </div>
+
+                  @if (hostBookings().length) {
+                    <div class="space-y-6 pt-10 border-t border-slate-100">
+                      <h2 class="text-2xl font-bold text-slate-900">Pending Approvals</h2>
+                      <div class="space-y-4">
+                        @for (booking of hostBookings(); track booking.id) {
+                          <div
+                            class="p-6 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6"
+                          >
+                            <div>
+                              <p class="font-bold text-slate-900">
+                                {{ booking.tenant.firstName }} {{ booking.tenant.lastName }}
+                              </p>
+                              <p class="text-sm text-slate-500">{{ booking.message }}</p>
+                            </div>
+                            <div class="flex gap-2">
+                              <button
+                                (click)="approveHostBooking(booking.id)"
+                                class="px-4 py-2 rounded-md bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-colors"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                (click)="rejectHostBooking(booking.id)"
+                                class="px-4 py-2 rounded-md bg-white border border-rose-200 text-rose-600 text-xs font-bold hover:bg-rose-50 transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Create Listing Sidebar -->
+                <aside class="space-y-8">
+                  <div class="p-8 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-6">
+                    <h3 class="text-xl font-bold text-slate-900">New Property</h3>
+                    @if (hostMessage()) {
+                      <div
+                        class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100"
+                      >
+                        {{ hostMessage() }}
+                      </div>
+                    }
+                    <form
+                      class="space-y-4"
+                      [formGroup]="propertyForm"
+                      (ngSubmit)="createProperty()"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Listing Title"
+                        formControlName="title"
+                        class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                      />
+                      <textarea
+                        rows="3"
+                        placeholder="Description"
+                        formControlName="description"
+                        class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                      ></textarea>
+                      <div class="grid grid-cols-2 gap-4">
+                        <select
+                          formControlName="propertyType"
+                          class="w-full rounded-md border border-slate-200 px-3 py-2 text-xs font-bold bg-slate-50 focus:border-brand-500"
+                        >
+                          <option value="APARTMENT">Apartment</option>
+                          <option value="HOUSE">House</option>
+                          <option value="VILLA">Villa</option>
+                          <option value="STUDIO">Studio</option>
+                        </select>
+                        <select
+                          formControlName="listingType"
+                          class="w-full rounded-md border border-slate-200 px-3 py-2 text-xs font-bold bg-slate-50 focus:border-brand-500"
+                        >
+                          <option value="RENT">Long Term</option>
+                          <option value="SHORT_TERM">Short Stay</option>
+                        </select>
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                        <input
+                          type="number"
+                          placeholder="Price"
+                          formControlName="price"
+                          class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Area sqm"
+                          formControlName="areaSqm"
+                          class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        />
+                      </div>
+                      <button
+                        class="w-full rounded-md bg-brand-500 py-3 text-sm font-bold text-white hover:bg-brand-600 shadow-lg shadow-brand-100 transition-colors"
+                        type="submit"
+                      >
+                        Publish Listing
+                      </button>
+                    </form>
+                  </div>
+
+                  <div class="p-8 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-6">
+                    <h3 class="text-xl font-bold text-slate-900">New Vehicle</h3>
+                    <form class="space-y-4" [formGroup]="vehicleForm" (ngSubmit)="createVehicle()">
+                      <div class="grid grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          placeholder="Brand"
+                          formControlName="brand"
+                          class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Model"
+                          formControlName="model"
+                          class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        />
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                        <input
+                          type="number"
+                          placeholder="Year"
+                          formControlName="year"
+                          class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Daily $"
+                          formControlName="dailyPrice"
+                          class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        />
+                      </div>
+                      <button
+                        class="w-full rounded-md border border-brand-500 py-3 text-sm font-bold text-brand-600 hover:bg-brand-50 transition-colors"
+                        type="submit"
+                      >
+                        Create Vehicle
+                      </button>
+                    </form>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'admin' && session.isAdmin()) {
+            <div class="space-y-12">
+              <header class="border-b border-slate-100 pb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Admin Console</h1>
+                <p class="text-slate-500">Global system oversight and operational reporting.</p>
+              </header>
+
+              @if (analytics(); as analytics) {
+                <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Total Users
+                    </p>
+                    <p class="text-3xl font-extrabold text-slate-900">{{ analytics.totalUsers }}</p>
+                  </div>
+                  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Listings
+                    </p>
+                    <p class="text-3xl font-extrabold text-slate-900">
+                      {{ analytics.totalProperties }}
+                    </p>
+                  </div>
+                  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Pending
+                    </p>
+                    <p class="text-3xl font-extrabold text-brand-600">
+                      {{ analytics.pendingProperties }}
+                    </p>
+                  </div>
+                  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Total Bookings
+                    </p>
+                    <p class="text-3xl font-extrabold text-slate-900">
+                      {{ analytics.totalBookings }}
+                    </p>
+                  </div>
+                </div>
+              }
+
+              <div class="grid gap-10 lg:grid-cols-2">
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900">Approvals Required</h2>
+                  <div class="space-y-4">
+                    @for (property of pendingProperties(); track property.id) {
+                      <div
+                        class="p-6 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-4"
+                      >
+                        <div>
+                          <h4 class="font-bold text-slate-900 text-sm">{{ property.title }}</h4>
+                          <p class="text-xs font-medium text-slate-500">
+                            {{ property.city }} • {{ property.status }}
+                          </p>
+                        </div>
+                        <div class="flex gap-2">
+                          <button
+                            (click)="approvePendingProperty(property.id)"
+                            class="px-3 py-1.5 rounded bg-brand-500 text-white text-[10px] font-bold hover:bg-brand-600 uppercase tracking-wider transition-colors"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            (click)="rejectPendingProperty(property.id)"
+                            class="px-3 py-1.5 rounded bg-white border border-rose-200 text-rose-600 text-[10px] font-bold hover:bg-rose-50 uppercase tracking-wider transition-colors"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    } @empty {
+                      <p class="text-sm text-slate-400 font-medium italic">
+                        No pending properties found.
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900">System Reports</h2>
+                  <div class="space-y-4">
+                    @for (report of reports(); track report.id) {
+                      <div class="p-6 rounded-xl border border-slate-200 bg-slate-50/50">
+                        <div class="flex justify-between items-start mb-2">
+                          <h4 class="font-bold text-slate-900 text-sm">
+                            {{ report.propertyTitle }}
+                          </h4>
+                          <span
+                            class="text-[10px] font-bold text-rose-600 uppercase tracking-wider"
+                            >{{ report.status }}</span
+                          >
+                        </div>
+                        <p class="text-xs text-slate-600 mb-2">{{ report.reason }}</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">
+                          {{ dateTime(report.createdAt) }}
+                        </p>
+                      </div>
+                    } @empty {
+                      <p class="text-sm text-slate-400 font-medium italic">No reports available.</p>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </main>
+      </div>
+    </div>
+  </div>
+}

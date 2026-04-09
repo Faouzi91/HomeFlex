@@ -1,0 +1,54 @@
+<article
+  class="group relative flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition-all hover:shadow-zillow"
+>
+  <!-- Image -->
+  <a class="aspect-[4/3] overflow-hidden bg-slate-100" [routerLink]="href()">
+    <img
+      [src]="image()"
+      [alt]="title()"
+      class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+      loading="lazy"
+    />
+    <div class="absolute right-3 top-3">
+      <span
+        class="inline-flex items-center rounded-md bg-white/90 px-2 py-1 text-xs font-bold text-slate-900 shadow-sm backdrop-blur-sm"
+      >
+        {{ badge() }}
+      </span>
+    </div>
+  </a>
+
+  <!-- Content -->
+  <div class="flex flex-col p-4">
+    <div class="flex items-baseline justify-between mb-1">
+      <p class="text-2xl font-bold text-slate-900">{{ price() }}</p>
+      <span class="text-xs font-bold text-slate-500 uppercase tracking-tight">{{
+        priceSuffix()
+      }}</span>
+    </div>
+
+    <div class="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-700">
+      <span>{{ detail() }}</span>
+      <span class="h-1 w-1 rounded-full bg-slate-300"></span>
+      <span class="truncate">{{ location() }}</span>
+    </div>
+
+    <a
+      class="mb-3 text-sm text-slate-500 line-clamp-1 hover:text-brand-600 transition-colors"
+      [routerLink]="href()"
+    >
+      {{ title() }}
+    </a>
+
+    <!-- Optional Chips/Tags -->
+    <div class="mt-auto flex flex-wrap gap-2 pt-2 border-t border-slate-50">
+      @for (chip of chips(); track chip) {
+        <span
+          class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600"
+        >
+          {{ chip }}
+        </span>
+      }
+    </div>
+  </div>
+</article>

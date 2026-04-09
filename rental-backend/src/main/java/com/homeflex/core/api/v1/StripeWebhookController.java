@@ -1,6 +1,8 @@
 package com.homeflex.core.api.v1;
 
 import com.homeflex.core.config.AppProperties;
+import com.homeflex.core.domain.entity.ProcessedStripeEvent;
+import com.homeflex.core.domain.repository.ProcessedStripeEventRepository;
 import com.homeflex.core.service.KycService;
 import com.homeflex.features.property.service.BookingService;
 import com.stripe.exception.SignatureVerificationException;
@@ -26,6 +28,7 @@ public class StripeWebhookController {
     private final KycService kycService;
     private final AppProperties appProperties;
     private final BookingService bookingService;
+    private final ProcessedStripeEventRepository processedEventRepository;
 
     @PostMapping("/stripe")
     @Transactional
@@ -41,6 +44,17 @@ public class StripeWebhookController {
             log.warn("Stripe webhook signature verification failed", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
         }
+
+        // Idempotency: skip events we have already processed. Stripe retries
+        // until it sees a 2xx, so we still return 200 OK on a duplicate.
+        if (processedEventRepository.existsById(event.getId())) {
+            log.info("Stripe event {} already processed — skipping", event.getId());
+            return ResponseEntity.ok("Already processed");
+        }
+        ProcessedStripeEvent record = new ProcessedStripeEvent();
+        record.setEventId(event.getId());
+        record.setEventType(event.getType());
+        processedEventRepository.save(record);
 
         switch (event.getType()) {
             // ── KYC Identity Verification ──────────────────────────────

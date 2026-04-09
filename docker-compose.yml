@@ -39,7 +39,7 @@ services:
       - rental-network
 
   frontend:
-    build: ./rental-app-frontend
+    build: ./homeflex-web
     container_name: rental-frontend
     ports:
       - '80:80'

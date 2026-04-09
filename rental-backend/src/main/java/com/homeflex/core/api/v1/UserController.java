@@ -9,6 +9,7 @@ import com.homeflex.core.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -65,7 +66,11 @@ public class UserController {
         return ResponseEntity.ok(userService.updateLanguage(userId, request.language()));
     }
 
+    /// Returns the full user record. Contains PII (email, phone, role) so it
+    /// is restricted to administrators. Public profiles for hosts will be
+    /// served by a dedicated endpoint that returns a sanitized DTO.
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }

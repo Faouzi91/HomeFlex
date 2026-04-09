@@ -20,34 +20,49 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+
       redis:
         image: redis:7-alpine
         ports:
           - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+
       rabbitmq:
         image: rabbitmq:3-management-alpine
         ports:
           - 5672:5672
         options: >-
           --health-cmd "rabbitmq-diagnostics -q ping"
-          --health-interval 10s
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     env:
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
+      SPRING_PROFILES_ACTIVE: test
+
+      # DB
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/rental_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+      # Redis
+      SPRING_REDIS_HOST: localhost
+      SPRING_REDIS_PORT: 6379
+
+      # RabbitMQ
+      SPRING_RABBITMQ_HOST: localhost
+      SPRING_RABBITMQ_PORT: 5672
+
+      # Security
       JWT_SECRET: ci-test-secret-key-at-least-32-chars-long
-      SPRING_PROFILES_ACTIVE: dev
 
     steps:
       - uses: actions/checkout@v4
@@ -57,14 +72,46 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: maven
+          cache: gradle
 
-      - name: Build and Test with Maven
-        run: mvn -B verify --no-transfer-progress
+      # Wait for services (CRITICAL)
+      - name: Wait for Postgres
+        run: |
+          for i in {1..20}; do
+            pg_isready -h localhost -p 5432 && break
+            echo "Waiting for Postgres..."
+            sleep 2
+          done
+
+      - name: Wait for Redis
+        run: |
+          for i in {1..20}; do
+            redis-cli -h localhost ping && break
+            echo "Waiting for Redis..."
+            sleep 2
+          done
+
+      - name: Wait for RabbitMQ
+        run: |
+          for i in {1..20}; do
+            nc -z localhost 5672 && break
+            echo "Waiting for RabbitMQ..."
+            sleep 2
+          done
+
+      # Run tests explicitly
+      - name: Run Backend Tests
+        run: ./gradlew test --no-daemon
+        working-directory: rental-backend
+
+      # Optional but cleaner separation
+      - name: Build Backend
+        run: ./gradlew build -x test --no-daemon
         working-directory: rental-backend
 
   frontend-test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -73,20 +120,20 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: rental-app-frontend/package-lock.json
+          cache-dependency-path: homeflex-web/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
-        working-directory: rental-app-frontend
+        working-directory: homeflex-web
 
       - name: Run Lint
         run: npm run lint
-        working-directory: rental-app-frontend
+        working-directory: homeflex-web
 
       - name: Run Tests
         run: npm test -- --watch=false --browsers=ChromeHeadless
-        working-directory: rental-app-frontend
+        working-directory: homeflex-web
 
       - name: Build
         run: npm run build
-        working-directory: rental-app-frontend
+        working-directory: homeflex-web

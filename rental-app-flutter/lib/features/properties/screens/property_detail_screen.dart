@@ -435,11 +435,11 @@ class _ReviewsSectionState extends ConsumerState<_ReviewsSection> {
                       );
                   ref.invalidate(propertyReviewsProvider(widget.propertyId));
                   ref.invalidate(propertyAverageRatingProvider(widget.propertyId));
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(const SnackBar(content: Text('Review submitted!')));
-                  }
+                  if (!ctx.mounted) return;
+                  Navigator.pop(ctx);
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(const SnackBar(content: Text('Review submitted!')));
                 } catch (e) {
                   if (ctx.mounted) {
                     ScaffoldMessenger.of(context)

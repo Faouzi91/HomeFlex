@@ -94,7 +94,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 _tokenController.text.trim(),
                                 _passwordController.text,
                               );
-                          if (mounted && ref.read(authProvider).message != null) {
+                          if (!context.mounted) return;
+                          if (ref.read(authProvider).message != null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Password reset! Please login.')),
                             );

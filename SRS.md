@@ -2069,7 +2069,7 @@ _(Detailed OpenAPI spec to be auto-generated from code via SpringDoc)_
 ## Appendix E: Source of Truth References
 
 - `rental-backend/build.gradle` — Backend runtime/tooling (Gradle + Java 21 + Spring Boot 4)
-- `rental-app-frontend/package.json` — Frontend runtime/tooling (Angular 21 + Ionic 8 + Tailwind 4)
+- `homeflex-web/package.json` — Frontend runtime/tooling (Angular 21 + Ionic 8 + Tailwind 4)
 - `docker-compose.yml` — Service orchestration and infrastructure
 - `CLAUDE.md` — AI assistant context with current package structure
 - `docs/ARCHITECTURE.md` — Architecture diagrams and system documentation

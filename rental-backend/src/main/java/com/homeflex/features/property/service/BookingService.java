@@ -44,6 +44,7 @@ public class BookingService {
     private final NotificationService notificationService;
     private final PaymentService paymentService;
     private final BookingMapper bookingMapper;
+    private final PropertyAvailabilityService availabilityService;
 
     private final Counter bookingsCreatedCounter;
     private final Counter paymentsSucceededCounter;
@@ -55,6 +56,7 @@ public class BookingService {
                           NotificationService notificationService,
                           PaymentService paymentService,
                           BookingMapper bookingMapper,
+                          PropertyAvailabilityService availabilityService,
                           MeterRegistry meterRegistry) {
         this.bookingRepository = bookingRepository;
         this.propertyRepository = propertyRepository;
@@ -62,6 +64,7 @@ public class BookingService {
         this.notificationService = notificationService;
         this.paymentService = paymentService;
         this.bookingMapper = bookingMapper;
+        this.availabilityService = availabilityService;
 
         this.bookingsCreatedCounter = Counter.builder("homeflex.bookings.created")
                 .description("Total bookings created")
@@ -215,6 +218,17 @@ public class BookingService {
         booking.setRespondedAt(LocalDateTime.now());
         booking = bookingRepository.save(booking);
 
+        // Reserve the calendar dates. The unique constraint on
+        // (property_id, date) is what guarantees no double-booking even under
+        // concurrent approvals.
+        if (booking.getStartDate() != null && booking.getEndDate() != null) {
+            availabilityService.reserveForBooking(
+                    booking.getProperty().getId(),
+                    booking.getId(),
+                    booking.getStartDate(),
+                    booking.getEndDate());
+        }
+
         // Notify tenant
         notificationService.sendBookingResponseNotification(
                 booking.getTenant().getId(),
@@ -280,6 +294,7 @@ public class BookingService {
                 .ifPresent(booking -> {
                     booking.setStatus(BookingStatus.CANCELLED);
                     bookingRepository.save(booking);
+                    availabilityService.releaseForBooking(booking.getId());
                     log.warn("Booking {} cancelled due to payment failure", booking.getId());
                 });
     }
@@ -301,6 +316,9 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.CANCELLED);
         booking = bookingRepository.save(booking);
+
+        // Free the dates so they can be booked again.
+        availabilityService.releaseForBooking(booking.getId());
 
         return bookingMapper.toDto(booking);
     }

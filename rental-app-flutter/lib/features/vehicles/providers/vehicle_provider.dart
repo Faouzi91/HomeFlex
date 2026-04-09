@@ -97,7 +97,7 @@ class VehicleNotifier {
       'vehicleId': vehicleId,
       'startDate': startDate,
       'endDate': endDate,
-      'message': ?message,
+      'message': message,
     });
     return VehicleBookingResponse.fromJson(response.data);
   }
@@ -147,7 +147,7 @@ class PaginatedVehicleState {
 class PaginatedVehicleNotifier extends Notifier<PaginatedVehicleState> {
   @override
   PaginatedVehicleState build() {
-    loadFirstPage();
+    Future.microtask(loadFirstPage);
     return const PaginatedVehicleState(isLoading: true);
   }
 

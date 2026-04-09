@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
-class StompService {
-  static final StompService _instance = StompService._internal();
-  factory StompService() => _instance;
+class AppStompService {
+  static final AppStompService _instance = AppStompService._internal();
+  factory AppStompService() => _instance;
   StompClient? _client;
   bool _connected = false;
   final _subscriptions = <String, dynamic>{};
 
-  StompService._internal();
+  AppStompService._internal();
 
   bool get isConnected => _connected;
 

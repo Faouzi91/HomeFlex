@@ -144,7 +144,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 phoneNumber: _phoneController.text.trim(),
                                 role: _selectedRole,
                               );
-                          if (mounted && ref.read(authProvider).user != null) {
+                          if (!context.mounted) return;
+                          if (ref.read(authProvider).user != null) {
                             context.go('/properties');
                           }
                         },

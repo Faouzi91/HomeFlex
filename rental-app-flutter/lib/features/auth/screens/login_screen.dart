@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +17,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  final _googleSignInClient = GoogleSignIn(scopes: ['email', 'profile']);
+  // GoogleSignIn on web requires a configured client_id meta tag in
+  // index.html. Until that is set up, only construct the client on
+  // native platforms — otherwise the constructor throws on app startup.
+  final GoogleSignIn? _googleSignInClient =
+      kIsWeb ? null : GoogleSignIn(scopes: ['email', 'profile']);
 
   @override
   void dispose() {
@@ -26,6 +31,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _googleSignIn() async {
+    if (_googleSignInClient == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google sign-in not configured for web')),
+      );
+      return;
+    }
     try {
       final account = await _googleSignInClient.signIn();
       if (account == null) return; // user cancelled
@@ -113,7 +124,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     _emailController.text.trim(),
                                     _passwordController.text,
                                   );
-                              if (mounted && ref.read(authProvider).user != null) {
+                              if (!context.mounted) return;
+                              if (ref.read(authProvider).user != null) {
                                 context.go('/properties');
                               }
                             },

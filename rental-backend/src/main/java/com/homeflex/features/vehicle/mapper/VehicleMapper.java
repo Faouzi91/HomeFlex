@@ -19,9 +19,9 @@ import java.util.Set;
 @Mapper(componentModel = "spring")
 public interface VehicleMapper {
 
-    @Mapping(target = "transmission", expression = "java(vehicle.getTransmission().name())")
-    @Mapping(target = "fuelType", expression = "java(vehicle.getFuelType().name())")
-    @Mapping(target = "status", expression = "java(vehicle.getStatus().name())")
+    @Mapping(target = "transmission", expression = "java(vehicle.getTransmission() != null ? vehicle.getTransmission().name() : null)")
+    @Mapping(target = "fuelType", expression = "java(vehicle.getFuelType() != null ? vehicle.getFuelType().name() : null)")
+    @Mapping(target = "status", expression = "java(vehicle.getStatus() != null ? vehicle.getStatus().name() : null)")
     @Mapping(target = "images", expression = "java(toImageList(vehicle.getImages()))")
     VehicleResponse toResponse(Vehicle vehicle);
 

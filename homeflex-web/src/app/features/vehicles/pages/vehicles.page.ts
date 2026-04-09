@@ -1,0 +1,52 @@
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ApiClient } from '../../../core/api/api.client';
+import { Vehicle, VehicleSearchParams } from '../../../core/models/api.types';
+import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
+
+@Component({
+  selector: 'app-vehicles-page',
+  imports: [ReactiveFormsModule, ListingCardComponent],
+  templateUrl: './vehicles.page.html',
+  styleUrl: './vehicles.page.scss',
+})
+export class VehiclesPageComponent {
+  private readonly fb = inject(FormBuilder);
+  private readonly api = inject(ApiClient);
+  private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly vehicles = signal<Vehicle[]>([]);
+  protected readonly filters = this.fb.group({
+    brand: [''],
+    model: [''],
+    city: [''],
+    transmission: [''],
+    fuelType: [''],
+    minPrice: [''],
+    maxPrice: [''],
+  });
+
+  constructor() {
+    this.search();
+  }
+
+  protected search(): void {
+    const raw = this.filters.getRawValue();
+    const payload: VehicleSearchParams = {
+      brand: raw.brand || undefined,
+      model: raw.model || undefined,
+      city: raw.city || undefined,
+      transmission: raw.transmission || undefined,
+      fuelType: raw.fuelType || undefined,
+      minPrice: raw.minPrice ? Number(raw.minPrice) : null,
+      maxPrice: raw.maxPrice ? Number(raw.maxPrice) : null,
+      size: 24,
+    };
+
+    this.api
+      .searchVehicles(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => this.vehicles.set(response.data));
+  }
+}

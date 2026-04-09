@@ -3,6 +3,7 @@ package com.homeflex.features.property.api.v1;
 import com.homeflex.features.property.service.PropertySearchService;
 import com.homeflex.features.property.service.PropertyService;
 import com.homeflex.features.property.dto.response.PropertyDto;
+import com.homeflex.features.property.dto.response.PropertySearchParams;
 import com.homeflex.features.property.dto.response.ReportDto;
 import com.homeflex.core.dto.common.ApiListResponse;
 import com.homeflex.core.dto.common.ApiPageResponse;
@@ -44,9 +45,17 @@ public class PropertyV1Controller {
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng,
             Pageable pageable) {
-        return ResponseEntity.ok(propertySearchService.search(
-                q, propertyType, city, minPrice, maxPrice,
-                bedrooms, bathrooms, lat, lng, pageable));
+        
+        PropertySearchParams params = PropertySearchParams.builder()
+                .city(city)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .propertyType(propertyType)
+                .bedrooms(bedrooms)
+                .bathrooms(bathrooms)
+                .build();
+                
+        return ResponseEntity.ok(ApiPageResponse.from(propertyService.searchProperties(params, pageable)));
     }
 
     @GetMapping("/{id}")

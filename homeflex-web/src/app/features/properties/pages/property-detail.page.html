@@ -1,0 +1,336 @@
+@if (property(); as property) {
+  <div class="bg-white min-h-screen pb-20">
+    <!-- Image Gallery -->
+    <section class="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="aspect-[4/3] overflow-hidden rounded-xl border border-slate-100 shadow-sm">
+          <img [src]="coverImage()" [alt]="property.title" class="h-full w-full object-cover" />
+        </div>
+        <div class="hidden md:grid grid-cols-2 gap-4">
+          @for (image of property.images.slice(0, 4); track image.id) {
+            <div
+              class="aspect-[4/3] overflow-hidden rounded-xl border border-slate-100 shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              <img
+                [src]="image.imageUrl"
+                [alt]="property.title"
+                class="h-full w-full object-cover"
+              />
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Split -->
+    <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div class="grid gap-12 lg:grid-cols-[1fr_400px]">
+        <!-- Left Column: Details -->
+        <div class="space-y-10">
+          <!-- Header Info -->
+          <div class="border-b border-slate-100 pb-8">
+            <div class="flex items-center gap-2 mb-4">
+              <span
+                class="inline-flex items-center rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-600 uppercase tracking-wider"
+              >
+                {{ property.listingType }}
+              </span>
+              <span class="text-slate-300">•</span>
+              <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">{{
+                property.propertyType
+              }}</span>
+            </div>
+
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
+              {{ property.title }}
+            </h1>
+            <p class="text-lg font-medium text-slate-500 flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-5 h-5 text-slate-400"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                />
+              </svg>
+              {{ property.address }}, {{ property.city }}
+            </p>
+
+            <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div class="text-center sm:text-left">
+                <p class="text-2xl font-extrabold text-slate-900">{{ property.bedrooms ?? 0 }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Bedrooms</p>
+              </div>
+              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
+                <p class="text-2xl font-extrabold text-slate-900">{{ property.bathrooms ?? 0 }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Bathrooms</p>
+              </div>
+              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
+                <p class="text-2xl font-extrabold text-slate-900">{{ property.areaSqm ?? '--' }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Square Ft</p>
+              </div>
+              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
+                <p class="text-2xl font-extrabold text-brand-600">{{ price() }}</p>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Price/mo</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-slate-900">About this home</h2>
+            <p class="text-lg text-slate-600 leading-relaxed">{{ property.description }}</p>
+          </div>
+
+          <!-- Amenities -->
+          <div class="space-y-6 pt-10 border-t border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-900">Amenities</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              @for (amenity of property.amenities; track amenity.id) {
+                <div
+                  class="flex items-center gap-3 p-3 rounded-lg bg-slate-50 border border-slate-100"
+                >
+                  <div class="h-2 w-2 rounded-full bg-brand-500"></div>
+                  <span class="text-sm font-bold text-slate-700">{{ amenity.name }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Reviews Section -->
+          <div class="space-y-8 pt-10 border-t border-slate-100">
+            <div class="flex items-center justify-between">
+              <h2 class="text-2xl font-bold text-slate-900">Guest Reviews</h2>
+              <div class="flex items-center gap-2">
+                <span class="text-xl font-bold text-slate-900">{{ averageRating() || 'New' }}</span>
+                <div class="flex text-yellow-400">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="w-5 h-5"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            @if (session.isAuthenticated()) {
+              <form
+                class="bg-slate-50 rounded-xl p-6 border border-slate-100 space-y-4"
+                [formGroup]="reviewForm"
+                (ngSubmit)="submitReview()"
+              >
+                <div class="flex items-center gap-4">
+                  <span class="text-sm font-bold text-slate-700">Your Rating:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="5"
+                    formControlName="rating"
+                    class="w-20 rounded-md border border-slate-200 px-3 py-1 text-sm font-bold"
+                  />
+                </div>
+                <textarea
+                  rows="3"
+                  formControlName="comment"
+                  placeholder="Tell us about your experience..."
+                  class="w-full rounded-lg border border-slate-200 p-4 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                ></textarea>
+                <button
+                  class="inline-flex items-center justify-center rounded-md bg-white border border-slate-300 px-6 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                  type="submit"
+                >
+                  Post Review
+                </button>
+              </form>
+            }
+
+            <div class="space-y-6">
+              @for (review of reviews(); track review.id) {
+                <div class="p-6 rounded-xl border border-slate-100 bg-white shadow-sm space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm"
+                      >
+                        {{ reviewerInitials(review) }}
+                      </div>
+                      <div>
+                        <p class="font-bold text-slate-900">{{ review.reviewer.firstName }}</p>
+                        <p class="text-xs text-slate-400">{{ dateTime(review.createdAt) }}</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1 text-yellow-400 font-bold">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        class="w-4 h-4"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      {{ review.rating }}
+                    </div>
+                  </div>
+                  <p class="text-slate-600 leading-relaxed text-sm">{{ review.comment }}</p>
+                </div>
+              } @empty {
+                <p class="text-slate-400 italic text-center py-4">
+                  No reviews yet for this listing.
+                </p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Booking Sidebar -->
+        <aside class="space-y-6">
+          <div
+            class="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-zillow space-y-6"
+          >
+            <div class="flex items-baseline justify-between border-b border-slate-50 pb-4">
+              <span class="text-2xl font-extrabold text-slate-900">{{ price() }}</span>
+              <span class="text-sm font-bold text-slate-400">/ month</span>
+            </div>
+
+            @if (bookingMessage()) {
+              <div
+                class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100"
+              >
+                {{ bookingMessage() }}
+              </div>
+            }
+
+            <form class="space-y-4" [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
+              <div>
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                  >Request Type</label
+                >
+                <select
+                  formControlName="bookingType"
+                  class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                >
+                  <option value="VIEWING">Request Viewing</option>
+                  <option value="RENTAL">Direct Booking</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                  >Preferred Date</label
+                >
+                <input
+                  type="datetime-local"
+                  formControlName="requestedDate"
+                  class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                    >Move In</label
+                  >
+                  <input
+                    type="date"
+                    formControlName="startDate"
+                    class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                    >Move Out</label
+                  >
+                  <input
+                    type="date"
+                    formControlName="endDate"
+                    class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                  />
+                </div>
+              </div>
+
+              <button
+                class="w-full rounded-md bg-brand-500 py-4 text-base font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors"
+                type="submit"
+              >
+                Check Availability
+              </button>
+            </form>
+
+            <div class="pt-6 border-t border-slate-50 flex flex-col gap-3">
+              @if (session.isTenant()) {
+                <button
+                  class="w-full rounded-md border border-brand-500 py-3 text-sm font-bold text-brand-600 hover:bg-brand-50 transition-colors"
+                  type="button"
+                  (click)="startChat()"
+                >
+                  Message the host
+                </button>
+              }
+              <button
+                class="w-full flex items-center justify-center gap-2 py-2 text-sm font-bold text-slate-400 hover:text-brand-600 transition-colors"
+                type="button"
+                (click)="toggleFavorite()"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  [attr.fill]="favorite() ? 'currentColor' : 'none'"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  class="w-5 h-5"
+                  [class.text-rose-500]="favorite()"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+                  />
+                </svg>
+                {{ favorite() ? 'Saved to shortlist' : 'Save this home' }}
+              </button>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Similar Listings -->
+    <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 border-t border-slate-100 mt-10">
+      <div class="flex items-baseline justify-between mb-10">
+        <h2 class="text-3xl font-extrabold text-slate-900">Similar listings</h2>
+        <a class="text-brand-600 font-bold hover:underline" routerLink="/properties"
+          >View all &rarr;</a
+        >
+      </div>
+      <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        @for (item of similar(); track item.id) {
+          <app-listing-card variant="property" [item]="item" />
+        }
+      </div>
+    </section>
+  </div>
+}

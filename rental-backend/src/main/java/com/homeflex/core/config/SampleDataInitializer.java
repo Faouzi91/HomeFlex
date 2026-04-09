@@ -11,6 +11,9 @@ import com.homeflex.features.property.domain.repository.AmenityRepository;
 import com.homeflex.features.property.domain.repository.BookingRepository;
 import com.homeflex.features.property.domain.repository.FavoriteRepository;
 import com.homeflex.features.property.domain.repository.ReviewRepository;
+import com.homeflex.features.vehicle.domain.repository.VehicleRepository;
+import com.homeflex.features.vehicle.domain.repository.VehicleImageRepository;
+import com.homeflex.features.vehicle.domain.repository.VehicleBookingRepository;
 import com.homeflex.core.domain.entity.User;
 import com.homeflex.features.property.domain.entity.Amenity;
 import com.homeflex.features.property.domain.entity.Booking;
@@ -18,12 +21,19 @@ import com.homeflex.features.property.domain.entity.Favorite;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.entity.PropertyImage;
 import com.homeflex.features.property.domain.entity.Review;
+import com.homeflex.features.vehicle.domain.entity.Vehicle;
+import com.homeflex.features.vehicle.domain.entity.VehicleImage;
+import com.homeflex.features.vehicle.domain.entity.VehicleBooking;
 import com.homeflex.features.property.domain.enums.AmenityCategory;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
 import com.homeflex.features.property.domain.enums.ListingType;
 import com.homeflex.features.property.domain.enums.PropertyStatus;
 import com.homeflex.features.property.domain.enums.PropertyType;
+import com.homeflex.features.vehicle.domain.enums.VehicleStatus;
+import com.homeflex.features.vehicle.domain.enums.Transmission;
+import com.homeflex.features.vehicle.domain.enums.FuelType;
+import com.homeflex.features.vehicle.domain.enums.VehicleBookingStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +52,7 @@ import java.util.*;
 @Profile("dev")
 @RequiredArgsConstructor
 @Slf4j
-//@Order(2)
+@Order(2)
 public class SampleDataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -52,6 +62,9 @@ public class SampleDataInitializer implements CommandLineRunner {
     private final BookingRepository bookingRepository;
     private final FavoriteRepository favoriteRepository;
     private final ReviewRepository reviewRepository;
+    private final VehicleRepository vehicleRepository;
+    private final VehicleImageRepository vehicleImageRepository;
+    private final VehicleBookingRepository vehicleBookingRepository;
 
     @Value("${app.data.create-sample-properties:true}")
     private boolean createSampleProperties;
@@ -64,8 +77,8 @@ public class SampleDataInitializer implements CommandLineRunner {
             return;
         }
 
-        if (propertyRepository.count() > 0) {
-            log.info(" Sample properties already exist, skipping...");
+        if (propertyRepository.count() > 0 || vehicleRepository.count() > 0) {
+            log.info(" Sample data already exists, skipping...");
             return;
         }
 
@@ -74,6 +87,7 @@ public class SampleDataInitializer implements CommandLineRunner {
         try {
             createAmenities();
             createSampleProperties();
+            createSampleVehicles();
             createSampleBookings();
             createSampleFavorites();
             createSampleReviews();
@@ -83,12 +97,14 @@ public class SampleDataInitializer implements CommandLineRunner {
             log.info("═══════════════════════════════════════════════════════");
             log.info("Statistics:");
             log.info("   - Properties: {}", propertyRepository.count());
-            log.info("   - Bookings: {}", bookingRepository.count());
-            log.info("   - Favorites: {}", favoriteRepository.count());
-            log.info("   - Reviews: {}", reviewRepository.count());
+            log.info("   - Vehicles:   {}", vehicleRepository.count());
+            log.info("   - Bookings:   {}", bookingRepository.count());
+            log.info("   - Favorites:  {}", favoriteRepository.count());
+            log.info("   - Reviews:    {}", reviewRepository.count());
             log.info("═══════════════════════════════════════════════════════");
         } catch (Exception e) {
             log.error(" Failed to create sample data: {}", e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -252,13 +268,7 @@ public class SampleDataInitializer implements CommandLineRunner {
                 null, 2, new BigDecimal("150"),
                 4, 8,
                 Arrays.asList("https://images.unsplash.com/photo-1497366216548-37526070297c"),
-                Arrays.asList(
-                        amenityRepository.findAll().stream()
-                                .filter(a -> a.getName().contains("WiFi") ||
-                                        a.getName().contains("Parking") ||
-                                        a.getName().contains("Security"))
-                                .toList()
-                ).get(0)
+                getRandomAmenities(allAmenities, 3)
         );
 
         // Property 7: Beachfront Apartment
@@ -334,32 +344,109 @@ public class SampleDataInitializer implements CommandLineRunner {
         property.setStatus(PropertyStatus.APPROVED);
         property.setViewCount(new Random().nextInt(100));
         property.setFavoriteCount(0);
-        property.setCreatedAt(LocalDateTime.now()); // Ensure timestamp is set
+        property.setCreatedAt(LocalDateTime.now());
 
-        // 1. Add Amenities (if any)
         if (amenities != null && !amenities.isEmpty()) {
             property.setAmenities(new HashSet<>(amenities));
         }
 
-        // 2. Add Images (Link both sides of the relationship)
-        // We do NOT save the property yet. We build the full object first.
         if (imageUrls != null) {
             for (int i = 0; i < imageUrls.size(); i++) {
                 PropertyImage image = new PropertyImage();
                 image.setImageUrl(imageUrls.get(i));
                 image.setDisplayOrder(i);
                 image.setIsPrimary(i == 0);
-
-                // CRITICAL: Link the relationship on BOTH sides
-                image.setProperty(property); // Child knows Parent
-                property.getImages().add(image); // Parent knows Child
+                image.setProperty(property);
+                property.getImages().add(image);
             }
         }
 
-        // 3. Save ONLY the property
-        // Because Property.java has 'cascade = CascadeType.ALL' on images,
-        // this will automatically save all the images too.
         propertyRepository.save(property);
+    }
+
+    private void createSampleVehicles() {
+        log.info("  → Creating sample vehicles...");
+
+        User landlord = userRepository.findByEmail("landlord@test.com")
+                .orElseThrow(() -> new RuntimeException("Landlord not found"));
+
+        // Vehicle 1: BMW X5
+        createVehicle(
+                landlord,
+                "BMW", "X5", 2023,
+                "Luxury SUV perfect for business trips or family travel. Excellent performance and comfort.",
+                Transmission.AUTO, FuelType.GASOLINE,
+                new BigDecimal("75000"), "XAF",
+                "Akwa, Douala", "Douala",
+                5, 25000, "Black", "LT-123-AB",
+                Arrays.asList("https://images.unsplash.com/photo-1555215695-3004980ad54e")
+        );
+
+        // Vehicle 2: Toyota Hilux
+        createVehicle(
+                landlord,
+                "Toyota", "Hilux", 2022,
+                "Robust 4x4 pickup truck. Ideal for rough terrain and long distance travel across the country.",
+                Transmission.MANUAL, FuelType.DIESEL,
+                new BigDecimal("60000"), "XAF",
+                "Bastos, Yaoundé", "Yaoundé",
+                5, 45000, "White", "CE-456-XY",
+                Arrays.asList("https://images.unsplash.com/photo-1583121274602-3e2820c69888")
+        );
+
+        // Vehicle 3: Tesla Model 3
+        createVehicle(
+                landlord,
+                "Tesla", "Model 3", 2024,
+                "Modern electric sedan. High tech, sustainable and very comfortable for city driving.",
+                Transmission.AUTO, FuelType.ELECTRIC,
+                new BigDecimal("90000"), "XAF",
+                "Bonapriso, Douala", "Douala",
+                5, 5000, "Blue", "LT-789-EL",
+                Arrays.asList("https://images.unsplash.com/photo-1560958089-b8a1929cea89")
+        );
+
+        log.info("  ✓ Created {} vehicles", vehicleRepository.count());
+    }
+
+    private void createVehicle(User owner, String brand, String model, int year,
+                               String description, Transmission transmission, FuelType fuel,
+                               BigDecimal price, String currency, String address, String city,
+                               int seats, int mileage, String color, String plate,
+                               List<String> imageUrls) {
+
+        Vehicle vehicle = new Vehicle();
+        vehicle.setOwnerId(owner.getId());
+        vehicle.setBrand(brand);
+        vehicle.setModel(model);
+        vehicle.setYear(year);
+        vehicle.setDescription(description);
+        vehicle.setTransmission(transmission);
+        vehicle.setFuelType(fuel);
+        vehicle.setDailyPrice(price);
+        vehicle.setCurrency(currency);
+        vehicle.setPickupAddress(address);
+        vehicle.setPickupCity(city);
+        vehicle.setSeats(seats);
+        vehicle.setMileage(mileage);
+        vehicle.setColor(color);
+        vehicle.setLicensePlate(plate);
+        vehicle.setStatus(VehicleStatus.AVAILABLE);
+        vehicle.setCreatedAt(LocalDateTime.now());
+        vehicle.setUpdatedAt(LocalDateTime.now());
+
+        if (imageUrls != null) {
+            for (int i = 0; i < imageUrls.size(); i++) {
+                VehicleImage image = new VehicleImage();
+                image.setImageUrl(imageUrls.get(i));
+                image.setDisplayOrder(i);
+                image.setPrimary(i == 0);
+                image.setVehicle(vehicle);
+                vehicle.getImages().add(image);
+            }
+        }
+
+        vehicleRepository.save(vehicle);
     }
 
     private List<Amenity> getRandomAmenities(List<Amenity> allAmenities, int count) {
@@ -375,12 +462,11 @@ public class SampleDataInitializer implements CommandLineRunner {
         if (tenant == null) return;
 
         List<Property> properties = propertyRepository.findAll();
-        if (properties.isEmpty()) return;
+        List<Vehicle> vehicles = vehicleRepository.findAll();
 
-        // Create 3-5 sample bookings
+        // Property bookings
         for (int i = 0; i < Math.min(5, properties.size()); i++) {
             Property property = properties.get(i);
-
             Booking booking = new Booking();
             booking.setProperty(property);
             booking.setTenant(tenant);
@@ -390,24 +476,26 @@ public class SampleDataInitializer implements CommandLineRunner {
             booking.setEndDate(LocalDate.now().plusDays(i + 37));
             booking.setMessage("I'm interested in this property. Can we schedule a viewing?");
             booking.setNumberOfOccupants(2);
-
-            // Mix statuses
-            if (i % 3 == 0) {
-                booking.setStatus(BookingStatus.APPROVED);
-                booking.setLandlordResponse("Booking approved! Looking forward to meeting you.");
-                booking.setRespondedAt(LocalDateTime.now().minusHours(2));
-            } else if (i % 3 == 1) {
-                booking.setStatus(BookingStatus.PENDING);
-            } else {
-                booking.setStatus(BookingStatus.REJECTED);
-                booking.setLandlordResponse("Sorry, the property is no longer available.");
-                booking.setRespondedAt(LocalDateTime.now().minusHours(5));
-            }
-
+            booking.setStatus(i % 3 == 0 ? BookingStatus.APPROVED : (i % 3 == 1 ? BookingStatus.PENDING : BookingStatus.REJECTED));
             bookingRepository.save(booking);
         }
 
-        log.info("  ✓ Created {} bookings", bookingRepository.count());
+        // Vehicle bookings
+        for (int i = 0; i < Math.min(3, vehicles.size()); i++) {
+            Vehicle vehicle = vehicles.get(i);
+            VehicleBooking booking = new VehicleBooking();
+            booking.setVehicleId(vehicle.getId());
+            booking.setTenantId(tenant.getId());
+            booking.setStartDate(LocalDate.now().plusDays(i + 2));
+            booking.setEndDate(LocalDate.now().plusDays(i + 5));
+            booking.setTotalPrice(vehicle.getDailyPrice().multiply(new BigDecimal("3")));
+            booking.setCurrency(vehicle.getCurrency());
+            booking.setStatus(i % 2 == 0 ? VehicleBookingStatus.CONFIRMED : VehicleBookingStatus.PENDING);
+            booking.setCreatedAt(LocalDateTime.now());
+            vehicleBookingRepository.save(booking);
+        }
+
+        log.info("  ✓ Created sample bookings");
     }
 
     private void createSampleFavorites() {
@@ -417,22 +505,15 @@ public class SampleDataInitializer implements CommandLineRunner {
         if (tenant == null) return;
 
         List<Property> properties = propertyRepository.findAll();
-        if (properties.isEmpty()) return;
-
-        // Add first 3 properties to favorites
         for (int i = 0; i < Math.min(3, properties.size()); i++) {
             Favorite favorite = new Favorite();
             favorite.setUser(tenant);
             favorite.setProperty(properties.get(i));
             favoriteRepository.save(favorite);
-
-            // Update favorite count on property
-            Property property = properties.get(i);
-            property.setFavoriteCount(property.getFavoriteCount() + 1);
-            propertyRepository.save(property);
+            Property p = properties.get(i);
+            p.setFavoriteCount(p.getFavoriteCount() + 1);
+            propertyRepository.save(p);
         }
-
-        log.info("  ✓ Created {} favorites", favoriteRepository.count());
     }
 
     private void createSampleReviews() {
@@ -442,26 +523,19 @@ public class SampleDataInitializer implements CommandLineRunner {
         if (tenant == null) return;
 
         List<Property> properties = propertyRepository.findAll();
-        if (properties.isEmpty()) return;
-
         String[] comments = {
-                "Amazing property! The landlord was very responsive and professional. Highly recommended!",
-                "Great location and the apartment is exactly as described. Very satisfied with my choice.",
-                "Good value for money. The property is clean and well-maintained.",
-                "Perfect for families! Spacious and in a quiet neighborhood.",
-                "Excellent amenities and beautiful views. Would definitely recommend to others."
+                "Amazing property! The landlord was very responsive and professional.",
+                "Great location and the apartment is exactly as described.",
+                "Good value for money. The property is clean and well-maintained."
         };
 
-        // Add reviews to first 3 properties
         for (int i = 0; i < Math.min(3, properties.size()); i++) {
             Review review = new Review();
             review.setProperty(properties.get(i));
             review.setReviewer(tenant);
-            review.setRating(4 + (i % 2)); // 4 or 5 stars
+            review.setRating(4 + (i % 2));
             review.setComment(comments[i % comments.length]);
             reviewRepository.save(review);
         }
-
-        log.info("  ✓ Created {} reviews", reviewRepository.count());
     }
 }

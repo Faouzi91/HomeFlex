@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/vehicle_provider.dart';
+import 'package:homeflex_flutter/features/vehicles/providers/vehicle_provider.dart';
 import '../models/vehicle_response.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 

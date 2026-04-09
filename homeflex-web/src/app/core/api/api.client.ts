@@ -1,0 +1,305 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import {
+  Analytics,
+  ApiListResponse,
+  ApiPageResponse,
+  ApiValueResponse,
+  AuthResponse,
+  Booking,
+  ChatRoom,
+  Message,
+  NotificationItem,
+  Property,
+  PropertySearchParams,
+  ReportItem,
+  Review,
+  User,
+  Vehicle,
+  VehicleBooking,
+  VehicleSearchParams,
+} from '../models/api.types';
+
+@Injectable({ providedIn: 'root' })
+export class ApiClient {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = '/api/v1';
+
+  searchProperties(params: PropertySearchParams): Observable<ApiPageResponse<Property>> {
+    return this.http.get<ApiPageResponse<Property>>(`${this.baseUrl}/properties/search`, {
+      params: this.buildParams(params),
+    });
+  }
+
+  getProperty(id: string): Observable<Property> {
+    return this.http.get<Property>(`${this.baseUrl}/properties/${id}`);
+  }
+
+  trackPropertyView(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/properties/${id}/view`, {});
+  }
+
+  getSimilarProperties(id: string): Observable<ApiListResponse<Property>> {
+    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/properties/${id}/similar`);
+  }
+
+  getFavorites(): Observable<ApiListResponse<Property>> {
+    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/favorites`);
+  }
+
+  isFavorite(propertyId: string): Observable<ApiValueResponse<boolean>> {
+    return this.http.get<ApiValueResponse<boolean>>(
+      `${this.baseUrl}/favorites/check/${propertyId}`,
+    );
+  }
+
+  addFavorite(propertyId: string): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/favorites/${propertyId}`, {});
+  }
+
+  removeFavorite(propertyId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/favorites/${propertyId}`);
+  }
+
+  getReviews(propertyId: string): Observable<ApiListResponse<Review>> {
+    return this.http.get<ApiListResponse<Review>>(`${this.baseUrl}/reviews/property/${propertyId}`);
+  }
+
+  getAverageRating(propertyId: string): Observable<ApiValueResponse<number>> {
+    return this.http.get<ApiValueResponse<number>>(
+      `${this.baseUrl}/reviews/property/${propertyId}/average`,
+    );
+  }
+
+  createReview(payload: {
+    propertyId: string;
+    rating: number;
+    comment: string;
+  }): Observable<Review> {
+    return this.http.post<Review>(`${this.baseUrl}/reviews`, payload);
+  }
+
+  reportProperty(payload: {
+    propertyId: string;
+    reason: string;
+    description: string;
+  }): Observable<ReportItem> {
+    return this.http.post<ReportItem>(`${this.baseUrl}/properties/${payload.propertyId}/report`, {
+      reason: payload.reason,
+      description: payload.description,
+    });
+  }
+
+  createPropertyBooking(payload: {
+    propertyId: string;
+    bookingType: string;
+    requestedDate?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    message?: string | null;
+    numberOfOccupants?: number | null;
+  }): Observable<Booking> {
+    return this.http.post<Booking>(`${this.baseUrl}/bookings`, payload);
+  }
+
+  getMyPropertyBookings(): Observable<ApiListResponse<Booking>> {
+    return this.http.get<ApiListResponse<Booking>>(`${this.baseUrl}/bookings/my-bookings`);
+  }
+
+  getPropertyBookings(propertyId: string): Observable<ApiListResponse<Booking>> {
+    return this.http.get<ApiListResponse<Booking>>(
+      `${this.baseUrl}/bookings/property/${propertyId}`,
+    );
+  }
+
+  approvePropertyBooking(id: string, message?: string): Observable<Booking> {
+    return this.http.patch<Booking>(
+      `${this.baseUrl}/bookings/${id}/approve`,
+      message ? { message } : {},
+    );
+  }
+
+  rejectPropertyBooking(id: string, message: string): Observable<Booking> {
+    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/reject`, { message });
+  }
+
+  cancelPropertyBooking(id: string): Observable<Booking> {
+    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/cancel`, {});
+  }
+
+  searchVehicles(params: VehicleSearchParams): Observable<ApiPageResponse<Vehicle>> {
+    return this.http.get<ApiPageResponse<Vehicle>>(`${this.baseUrl}/vehicles/search`, {
+      params: this.buildParams(params),
+    });
+  }
+
+  getVehicle(id: string): Observable<Vehicle> {
+    return this.http.get<Vehicle>(`${this.baseUrl}/vehicles/${id}`);
+  }
+
+  trackVehicleView(id: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/vehicles/${id}/view`, {});
+  }
+
+  getVehicleAvailability(id: string, startDate: string, endDate: string): Observable<boolean> {
+    return this.http.get<boolean>(`${this.baseUrl}/vehicles/${id}/availability`, {
+      params: this.buildParams({ startDate, endDate }),
+    });
+  }
+
+  createVehicleBooking(payload: {
+    vehicleId: string;
+    startDate: string;
+    endDate: string;
+    message?: string | null;
+  }): Observable<VehicleBooking> {
+    return this.http.post<VehicleBooking>(
+      `${this.baseUrl}/vehicles/${payload.vehicleId}/bookings`,
+      payload,
+    );
+  }
+
+  getMyVehicleBookings(): Observable<ApiListResponse<VehicleBooking>> {
+    return this.http.get<ApiListResponse<VehicleBooking>>(`${this.baseUrl}/vehicles/my-bookings`);
+  }
+
+  login(payload: { email: string; password: string }): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, payload);
+  }
+
+  register(payload: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string | null;
+    role: string;
+  }): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, payload);
+  }
+
+  forgotPassword(email: string): Observable<ApiValueResponse<string>> {
+    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/auth/forgot-password`, {
+      email,
+    });
+  }
+
+  refresh(): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/refresh`, {});
+  }
+
+  logout(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/auth/logout`, {});
+  }
+
+  getMe(): Observable<User> {
+    return this.http.get<User>(`${this.baseUrl}/users/me`);
+  }
+
+  updateProfile(payload: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string | null;
+    languagePreference?: string;
+  }): Observable<User> {
+    return this.http.put<User>(`${this.baseUrl}/users/me`, payload);
+  }
+
+  changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+  }): Observable<ApiValueResponse<string>> {
+    return this.http.put<ApiValueResponse<string>>(`${this.baseUrl}/users/me/password`, payload);
+  }
+
+  createChatRoom(payload: {
+    propertyId: string;
+    tenantId: string;
+    landlordId: string;
+  }): Observable<ChatRoom> {
+    return this.http.post<ChatRoom>(`${this.baseUrl}/chat/rooms`, payload);
+  }
+
+  getChatRooms(): Observable<ApiListResponse<ChatRoom>> {
+    return this.http.get<ApiListResponse<ChatRoom>>(`${this.baseUrl}/chat/rooms`);
+  }
+
+  getChatMessages(roomId: string): Observable<ApiListResponse<Message>> {
+    return this.http.get<ApiListResponse<Message>>(`${this.baseUrl}/chat/rooms/${roomId}/messages`);
+  }
+
+  sendMessage(roomId: string, message: string): Observable<Message> {
+    return this.http.post<Message>(`${this.baseUrl}/chat/rooms/${roomId}/messages`, { message });
+  }
+
+  getNotifications(unreadOnly = false): Observable<ApiListResponse<NotificationItem>> {
+    return this.http.get<ApiListResponse<NotificationItem>>(`${this.baseUrl}/notifications`, {
+      params: this.buildParams({ unreadOnly }),
+    });
+  }
+
+  markNotificationRead(id: string): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/notifications/${id}/read`, {});
+  }
+
+  markAllNotificationsRead(): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/notifications/read-all`, {});
+  }
+
+  deleteNotification(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/notifications/${id}`);
+  }
+
+  getStats(): Observable<ApiValueResponse<Record<string, number>>> {
+    return this.http.get<ApiValueResponse<Record<string, number>>>(`${this.baseUrl}/stats`);
+  }
+
+  getMyProperties(): Observable<ApiListResponse<Property>> {
+    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/properties/my-properties`);
+  }
+
+  createProperty(payload: Record<string, unknown>): Observable<Property> {
+    return this.http.post<Property>(`${this.baseUrl}/properties/json`, payload);
+  }
+
+  createVehicle(payload: Record<string, unknown>): Observable<Vehicle> {
+    return this.http.post<Vehicle>(`${this.baseUrl}/vehicles`, payload);
+  }
+
+  getAdminAnalytics(): Observable<Analytics> {
+    return this.http.get<Analytics>(`${this.baseUrl}/admin/analytics`);
+  }
+
+  getPendingProperties(page = 0, size = 6): Observable<ApiPageResponse<Property>> {
+    return this.http.get<ApiPageResponse<Property>>(`${this.baseUrl}/admin/properties/pending`, {
+      params: this.buildParams({ page, size }),
+    });
+  }
+
+  approveProperty(id: string): Observable<Property> {
+    return this.http.patch<Property>(`${this.baseUrl}/admin/properties/${id}/approve`, {});
+  }
+
+  rejectProperty(id: string, reason: string): Observable<Property> {
+    return this.http.patch<Property>(`${this.baseUrl}/admin/properties/${id}/reject`, { reason });
+  }
+
+  getReports(page = 0, size = 20): Observable<ApiPageResponse<ReportItem>> {
+    return this.http.get<ApiPageResponse<ReportItem>>(`${this.baseUrl}/admin/reports`, {
+      params: this.buildParams({ page, size }),
+    });
+  }
+
+  private buildParams(values: object): HttpParams {
+    let params = new HttpParams();
+
+    Object.entries(values as Record<string, unknown>).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(key, String(value));
+      }
+    });
+
+    return params;
+  }
+}

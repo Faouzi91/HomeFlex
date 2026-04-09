@@ -1,0 +1,27 @@
+<div class="min-h-screen bg-white flex flex-col relative">
+  <!-- Global Loader -->
+  @if (notificationService.loading()) {
+    <app-loader />
+  }
+
+  <!-- Global Alerts -->
+  <div class="fixed top-20 right-4 z-50 w-full max-w-sm flex flex-col gap-3 pointer-events-none">
+    @for (alert of notificationService.notifications(); track alert.id) {
+      <div class="pointer-events-auto animate-in slide-in-from-right fade-in duration-300">
+        <app-alert
+          [type]="alert.type"
+          [message]="alert.message"
+          (dismiss)="notificationService.dismiss(alert.id)"
+        />
+      </div>
+    }
+  </div>
+
+  <app-header />
+
+  <main class="flex-grow">
+    <router-outlet />
+  </main>
+
+  <app-footer />
+</div>

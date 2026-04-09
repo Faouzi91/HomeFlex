@@ -9,7 +9,24 @@
       "Bash(dart analyze:*)",
       "Bash(dart run:*)",
       "Bash(flutter analyze:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(./gradlew bootRun)",
+      "Bash(flutter run:*)",
+      "Bash(grep -E \"^\\\\s+[a-z-]+:$|image:|ports:\" /c/Users/aboub/Documents/Projects/Personal/HomeFlex/docker-compose.yml)",
+      "Bash(docker compose:*)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist //FI \"PID eq 24408\")",
+      "Bash(curl:*)",
+      "Bash(taskkill //F //IM dart.exe)",
+      "Bash(taskkill //F //IM flutter.exe)",
+      "Bash(grep:*)",
+      "Bash(taskkill //F //PID 24408)",
+      "Bash(taskkill:*)",
+      "Bash(./gradlew bootRun --args='--spring.profiles.active=dev')",
+      "Bash(./gradlew compileJava)"
     ]
   }
 }

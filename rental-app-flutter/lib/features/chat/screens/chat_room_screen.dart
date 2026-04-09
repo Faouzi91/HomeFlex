@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_provider.dart';
 import '../models/message_dto.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../../core/api/stomp_service.dart';
+import 'package:homeflex_flutter/core/api/stomp_service.dart';
 
 class ChatRoomScreen extends ConsumerStatefulWidget {
   final String roomId;
@@ -18,7 +18,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
   final _scrollController = ScrollController();
   List<MessageDto> _messages = [];
   bool _isSending = false;
-  final _stompService = StompService();
+  final _stompService = AppStompService();
 
   @override
   void initState() {

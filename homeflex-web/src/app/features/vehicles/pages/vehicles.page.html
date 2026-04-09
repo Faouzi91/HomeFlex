@@ -1,0 +1,175 @@
+<div class="bg-white min-h-screen">
+  <!-- Header / Stats Section -->
+  <section class="border-b border-slate-100 py-10 bg-slate-50">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div>
+          <span
+            class="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700 mb-4"
+          >
+            Vehicle rental
+          </span>
+          <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Premium fleet</h1>
+          <p class="text-lg text-slate-500 max-w-2xl">
+            Explore a curated selection of vehicles with the same confidence and polish as our
+            housing marketplace.
+          </p>
+        </div>
+        <div class="flex gap-4">
+          <div
+            class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm text-center min-w-[120px]"
+          >
+            <p class="text-2xl font-bold text-slate-900">{{ vehicles().length }}</p>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Vehicles</p>
+          </div>
+          <div
+            class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm text-center min-w-[120px]"
+          >
+            <p class="text-2xl font-bold text-slate-900">Elite</p>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Selection</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content / Search Shell -->
+  <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="grid gap-10 lg:grid-cols-[300px_1fr]">
+      <!-- Filters Sidebar -->
+      <aside class="space-y-8">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-5 h-5 text-brand-600"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 12H13.5"
+              />
+            </svg>
+            Filter Fleet
+          </h2>
+
+          <form class="space-y-6" [formGroup]="filters" (ngSubmit)="search()">
+            <div class="space-y-4">
+              <label class="block">
+                <span class="text-sm font-bold text-slate-700 block mb-1">Brand</span>
+                <input
+                  type="text"
+                  placeholder="e.g. BMW"
+                  formControlName="brand"
+                  class="w-full rounded-md border border-slate-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                />
+              </label>
+
+              <label class="block">
+                <span class="text-sm font-bold text-slate-700 block mb-1">Model</span>
+                <input
+                  type="text"
+                  placeholder="e.g. X5"
+                  formControlName="model"
+                  class="w-full rounded-md border border-slate-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                />
+              </label>
+
+              <label class="block">
+                <span class="text-sm font-bold text-slate-700 block mb-1">Pickup City</span>
+                <input
+                  type="text"
+                  placeholder="Any City"
+                  formControlName="city"
+                  class="w-full rounded-md border border-slate-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                />
+              </label>
+
+              <div class="grid grid-cols-2 gap-3">
+                <label class="block">
+                  <span class="text-sm font-bold text-slate-700 block mb-1">Transmission</span>
+                  <select
+                    formControlName="transmission"
+                    class="w-full rounded-md border border-slate-300 px-2 py-2 text-xs focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                  >
+                    <option value="">Any</option>
+                    <option value="AUTO">Auto</option>
+                    <option value="MANUAL">Manual</option>
+                  </select>
+                </label>
+                <label class="block">
+                  <span class="text-sm font-bold text-slate-700 block mb-1">Fuel</span>
+                  <select
+                    formControlName="fuelType"
+                    class="w-full rounded-md border border-slate-300 px-2 py-2 text-xs focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                  >
+                    <option value="">Any</option>
+                    <option value="GASOLINE">Gas</option>
+                    <option value="DIESEL">Diesel</option>
+                    <option value="ELECTRIC">EV</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <label class="block">
+                  <span class="text-sm font-bold text-slate-700 block mb-1">Min Daily</span>
+                  <input
+                    type="number"
+                    placeholder="$0"
+                    formControlName="minPrice"
+                    class="w-full rounded-md border border-slate-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                  />
+                </label>
+                <label class="block">
+                  <span class="text-sm font-bold text-slate-700 block mb-1">Max Daily</span>
+                  <input
+                    type="number"
+                    placeholder="Any"
+                    formControlName="maxPrice"
+                    class="w-full rounded-md border border-slate-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <button
+              class="w-full rounded-md bg-brand-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-600 shadow-md shadow-brand-100"
+              type="submit"
+            >
+              Search Fleet
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <!-- Results Grid -->
+      <div class="space-y-8">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-6">
+          <h2 class="text-xl font-bold text-slate-900">
+            {{ vehicles().length }} Vehicles available
+          </h2>
+          <div class="flex items-center gap-2 text-sm font-bold text-slate-500">
+            Sort by: <span class="text-brand-600">Featured</span>
+          </div>
+        </div>
+
+        <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          @for (vehicle of vehicles(); track vehicle.id) {
+            <app-listing-card variant="vehicle" [item]="vehicle" />
+          } @empty {
+            <div
+              class="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-xl"
+            >
+              <p class="text-lg font-bold text-slate-400">No vehicles match those filters yet.</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

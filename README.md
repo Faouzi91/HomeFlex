@@ -4,23 +4,23 @@ A full-stack real estate rental platform where tenants can search and book prope
 
 ## Tech Stack
 
-| Layer         | Technology                                       |
-| ------------- | ------------------------------------------------ |
-| Frontend      | Angular 21, Ionic 8, TailwindCSS, TypeScript 5.9 |
-| Backend       | Spring Boot 4, Java 21, Gradle                   |
-| Database      | PostgreSQL 16, Flyway migrations                 |
-| Cache         | Redis 7                                          |
-| Messaging     | RabbitMQ 3                                       |
-| Search        | Elasticsearch 9                                  |
-| Mobile        | Capacitor 8 (Android / iOS)                      |
-| State         | NgRx Signal Store (`@ngrx/signals` 21)           |
-| Auth          | JWT (access + refresh tokens), Google OAuth      |
-| Payments      | Stripe Connect (escrow, destination charges)     |
-| KYC           | Stripe Identity Verification                     |
-| Notifications | Firebase Cloud Messaging                         |
-| Resilience    | Resilience4j (circuit breaker, retry)            |
-| Monitoring    | Micrometer, Prometheus, Grafana                  |
-| CI            | GitHub Actions                                   |
+| Layer         | Technology                                   |
+| ------------- | -------------------------------------------- |
+| Frontend      | Angular 21, TailwindCSS 4, TypeScript 5.9    |
+| Backend       | Spring Boot 4, Java 21, Gradle               |
+| Database      | PostgreSQL 16, Flyway migrations             |
+| Cache         | Redis 7                                      |
+| Messaging     | RabbitMQ 3                                   |
+| Search        | Elasticsearch 9                              |
+| Mobile        | Capacitor 8 (Android / iOS)                  |
+| State         | NgRx Signal Store (`@ngrx/signals` 21)       |
+| Auth          | JWT (access + refresh tokens), Google OAuth  |
+| Payments      | Stripe Connect (escrow, destination charges) |
+| KYC           | Stripe Identity Verification                 |
+| Notifications | Firebase Cloud Messaging                     |
+| Resilience    | Resilience4j (circuit breaker, retry)        |
+| Monitoring    | Micrometer, Prometheus, Grafana              |
+| CI            | GitHub Actions                               |
 
 ## Features
 
@@ -115,12 +115,11 @@ Key environment variables (set in `.env` or export):
 Requires **Node 20+**.
 
 ```bash
-cd rental-app-frontend
+cd homeflex-web
 npm install
 npm start                      # dev server on port 4200
-npm run build:prod             # production build
-npm test                       # unit tests (Karma + Jasmine)
-npm run lint                   # lint
+npm run build                  # production build
+npm test                       # unit tests (Vitest)
 ```
 
 The dev server proxies `/api/*` to `http://localhost:8080` by default. Update `src/app/environments/environment.ts` to change the API URL.
@@ -135,14 +134,14 @@ docker-compose up -d db redis rabbitmq elasticsearch
 
 # run backend and frontend locally
 cd rental-backend && ./gradlew bootRun &
-cd rental-app-frontend && npm start &
+cd homeflex-web && npm start &
 ```
 
 ## Project Structure
 
 ```
 HomeFlex/
-├── rental-app-frontend/          # Angular + Ionic SPA
+├── homeflex-web/                 # Angular 21 SPA
 │   ├── src/app/
 │   │   ├── core/                 # Guards, interceptors, services, state
 │   │   ├── features/             # Lazy-loaded feature modules
@@ -235,7 +234,7 @@ cd rental-backend
 ./gradlew test --tests "com.homeflex.SomeTest"          # single class
 
 # Frontend
-cd rental-app-frontend
+cd homeflex-web
 npm test                                                # all tests
 ng test -- --include='**/some.spec.ts'                  # single file
 ```

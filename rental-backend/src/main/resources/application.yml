@@ -176,6 +176,7 @@ app:
   cors:
     allowed-origins:
       - http://localhost:4200
+      - http://localhost:5000
       - https://yourdomain.com
     allowed-methods:
       - GET

@@ -123,7 +123,7 @@ class PaginatedPropertyState {
 class PaginatedPropertyNotifier extends Notifier<PaginatedPropertyState> {
   @override
   PaginatedPropertyState build() {
-    loadFirstPage();
+    Future.microtask(loadFirstPage);
     return const PaginatedPropertyState(isLoading: true);
   }
 

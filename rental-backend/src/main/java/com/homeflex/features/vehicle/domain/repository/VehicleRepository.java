@@ -6,6 +6,7 @@ import com.homeflex.features.vehicle.domain.enums.Transmission;
 import com.homeflex.features.vehicle.domain.enums.VehicleStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -27,6 +28,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
               AND (:minPrice IS NULL OR v.dailyPrice >= :minPrice)
               AND (:maxPrice IS NULL OR v.dailyPrice <= :maxPrice)
             """)
+    @EntityGraph(attributePaths = {"images"})
     Page<Vehicle> search(
             @Param("brand") String brand,
             @Param("model") String model,

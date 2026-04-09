@@ -117,7 +117,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 lastName: _lastNameController.text.trim(),
                                 phoneNumber: _phoneController.text.trim(),
                               );
-                          if (mounted && ref.read(authProvider).error == null) {
+                          if (!context.mounted) return;
+                          if (ref.read(authProvider).error == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Profile updated')),
                             );

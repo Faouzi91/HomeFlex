@@ -91,7 +91,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                                 _currentController.text,
                                 _newController.text,
                               );
-                          if (mounted && ref.read(authProvider).error == null) {
+                          if (!context.mounted) return;
+                          if (ref.read(authProvider).error == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Password changed')),
                             );
