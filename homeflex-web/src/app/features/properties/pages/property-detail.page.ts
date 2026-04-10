@@ -1,8 +1,10 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import * as L from 'leaflet';
 import { ApiClient } from '../../../core/api/api.client';
 import { Booking, Property, Review } from '../../../core/models/api.types';
 import { SessionStore } from '../../../core/state/session.store';
@@ -27,6 +29,7 @@ export class PropertyDetailPageComponent {
   private readonly api = inject(ApiClient);
   protected readonly session = inject(SessionStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly platformId = inject(PLATFORM_ID);
 
   protected readonly property = signal<Property | null>(null);
   protected readonly reviews = signal<Review[]>([]);
@@ -86,7 +89,43 @@ export class PropertyDetailPageComponent {
           response.similar.data.filter((item) => item.id !== response.property.id).slice(0, 3),
         );
         this.favorite.set(response.favorite.data);
+
+        if (isPlatformBrowser(this.platformId)) {
+          setTimeout(() => this.initMap(), 0);
+        }
       });
+  }
+
+  private initMap(): void {
+    const prop = this.property();
+    if (!prop || !prop.latitude || !prop.longitude) return;
+
+    // Use default marker icons from CDN to avoid build-time asset resolution issues in the demo
+    const iconDefault = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      tooltipAnchor: [16, -28],
+      shadowSize: [41, 41],
+    });
+
+    const map = L.map('map', {
+      center: [prop.latitude, prop.longitude],
+      zoom: 15,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors',
+    }).addTo(map);
+
+    L.marker([prop.latitude, prop.longitude], { icon: iconDefault })
+      .addTo(map)
+      .bindPopup(`<b>${prop.title}</b><br>${prop.address}`)
+      .openPopup();
   }
 
   protected coverImage(): string {
