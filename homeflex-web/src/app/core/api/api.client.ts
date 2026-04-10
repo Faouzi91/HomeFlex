@@ -282,7 +282,11 @@ export class ApiClient {
     return this.http.get<ApiValueResponse<any>>(`${this.baseUrl}/kyc/status`);
   }
 
-  createKycSession(): Observable<{ sessionId: string; clientSecret: string }> {
+  createKycSession(): Observable<{
+    sessionId: string;
+    clientSecret: string;
+    publishableKey: string;
+  }> {
     return this.http.post<any>(`${this.baseUrl}/kyc/session`, {});
   }
 

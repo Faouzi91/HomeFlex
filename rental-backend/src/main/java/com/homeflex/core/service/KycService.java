@@ -68,7 +68,7 @@ public class KycService {
 
             log.info("KYC session created: sessionId={}, userId={}", session.getId(), userId);
 
-            return new KycSessionResponse(session.getId(), session.getClientSecret());
+            return new KycSessionResponse(session.getId(), session.getClientSecret(), appProperties.getStripe().getPublishableKey());
         } catch (StripeException e) {
             log.error("Failed to create Stripe Identity session for user {}", userId, e);
             throw new DomainException("Unable to start identity verification. Please try again later.");

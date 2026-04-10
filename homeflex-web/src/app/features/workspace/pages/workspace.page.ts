@@ -1,8 +1,9 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin, of, switchMap } from 'rxjs';
+import { forkJoin, of, switchMap, from } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { loadStripe } from '@stripe/stripe-js';
 import { ApiClient } from '../../../core/api/api.client';
 import {
   Analytics,
@@ -241,13 +242,22 @@ export class WorkspacePageComponent {
     this.api
       .createKycSession()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        // In a real app, we would use the Stripe SDK to mount the session.
-        // For this demo, we'll just log it and show a message.
-        console.info('Stripe KYC session created:', response.sessionId);
-        this.hostMessage.set(
-          'Verification session started. In production, this would open Stripe Identity.',
-        );
+      .subscribe(async (response) => {
+        this.hostMessage.set('Redirecting to Stripe Identity for verification...');
+        const stripe = await loadStripe(response.publishableKey);
+        if (stripe) {
+          const { error } = await stripe.verifyIdentity(response.clientSecret);
+          if (error) {
+            this.hostMessage.set(`Verification failed: ${error.message}`);
+          } else {
+            this.hostMessage.set(
+              'Identity verification submitted successfully. Waiting for results...',
+            );
+            this.loadKycStatus();
+          }
+        } else {
+          this.hostMessage.set('Failed to initialize Stripe.');
+        }
       });
   }
 
