@@ -96,6 +96,40 @@ public class StorageService {
         }
     }
 
+    public String uploadFile(byte[] data, String fileName, String contentType, String folder) {
+        String fullPath = folder + "/" + UUID.randomUUID() + "-" + sanitizeFilename(fileName);
+
+        if (s3Client == null) {
+            log.debug("S3 not configured. Would upload: {}", fullPath);
+            return "https://placeholder.local/" + fullPath;
+        }
+
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fullPath)
+                    .contentType(contentType)
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(data));
+
+            String url;
+            if (endpoint != null && !endpoint.isEmpty()) {
+                url = endpoint + "/" + bucketName + "/" + fullPath;
+            } else {
+                url = String.format("https://%s.s3.%s.amazonaws.com/%s",
+                        bucketName, region, fullPath);
+            }
+
+            log.debug("File uploaded to S3: {}", url);
+            return url;
+
+        } catch (Exception e) {
+            log.error("Failed to upload byte array to S3: {}", fullPath, e);
+            throw new DomainException("File upload failed. Please try again.");
+        }
+    }
+
     private String sanitizeFilename(String filename) {
         if (filename == null) return "file";
         return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
