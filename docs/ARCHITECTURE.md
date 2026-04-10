@@ -252,7 +252,8 @@ Browser                 Nginx              WebSocketConfig          ChatService 
 |  ChatService, NotificationService, AdminService, PaymentService,    |
 |  EmailService, FavoriteService, ReviewService, UserService,         |
 |  StorageService, EventOutboxService, OutboxRelayService,            |
-|  VehicleService, VehicleAvailabilityService                         |
+|  VehicleService, VehicleAvailabilityService, LeaseService,          |
+|  PropertyAvailabilityService, StripeEventService                    |
 +----------+----------+----------+----------+-------------------------+
            |          |          |          |
            v          v          v          v
@@ -463,6 +464,20 @@ Backend                         AWS S3
 
 - SDK: `software.amazon.awssdk:s3:2.42.18`
 - Dev fallback: returns placeholder URLs when not configured
+
+### Twilio (SMS & WhatsApp)
+
+```
+Backend                         Twilio API
+  |                                |
+  |-- sendSms / sendWhatsApp() --->|
+  |   to, body, from_number        |
+  |<-- message_sid ----------------|
+```
+
+- SDK: `com.twilio.sdk:twilio:10.6.3`
+- Config: `app.twilio.enabled=true`
+- Used for: booking alerts and identity verification OTPs (planned)
 
 ### Gmail SMTP (Email)
 

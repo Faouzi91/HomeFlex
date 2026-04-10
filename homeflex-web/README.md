@@ -1,59 +1,33 @@
-# HomeflexWeb
+# HomeFlex Web Dashboard
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.6.
+Modern web frontend for the HomeFlex rental marketplace, built with **Angular 21** and **Tailwind CSS 4**.
 
-## Development server
+## Key Features
 
-To start a local development server, run:
+- **Unified Workspace**: Single dashboard for both tenants (bookings, favorites, chat) and landlords (listings, approvals, availability).
+- **Property Availability**: Interactive calendar for landlords to manage blocked dates and view reservations.
+- **Digital Leases**: End-to-end lease lifecycle management—generation for landlords and electronic signing for tenants.
+- **Stripe Integration**: Payout summaries, Connect account onboarding, and secure payment flows.
+- **Identity (KYC)**: Landlord identity verification status tracking via Stripe Identity.
+- **Real-time Communication**: WebSocket-based chat with typing indicators and notification alerts.
 
-```bash
-ng serve
-```
+## Tech Stack
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+- **Framework**: Angular 21 (Zone-less rendering)
+- **Styling**: Tailwind CSS 4 + PostCSS
+- **State Management**: NgRx Signal Store (`@ngrx/signals`)
+- **API Client**: Reactive `HttpClient` with cookie-based JWT interceptors
+- **Icons & UI**: Heroicons + Lucide (integrated as SVG)
 
-## Code scaffolding
+## Development
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+Requires Node.js 20+.
 
 ```bash
-ng build
+npm install
+npm start                      # Dev server on port 4200
+npm run build                  # Production build
+npm test                       # Unit tests (Vitest)
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+The application uses an Nginx-ready Docker configuration for production deployment.

@@ -18,10 +18,22 @@
 | 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned                                                     |
 | 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion                        |
 | 2.3     | 2026-03-30 | Architect     | Implement: KYC (Stripe Identity), Stripe Connect escrow/payouts, Resilience4j, Prometheus/Grafana monitoring, NgRx Signal Store |
+| 2.4     | 2026-04-09 | Architect     | Implement: Property Availability (V11), Digital Leases (V12), Twilio SMS/WhatsApp, Stripe Webhook Idempotency (V10), Angular 21 |
 
 ---
 
 ## Table of Contents
+
+...
+
+### Implemented since v2.3 (Round 7)
+
+- 🟢 **Property Availability System** — Sparse date model (`property_availability` table) for blocking/booking dates with database-level concurrency control.
+- 🟢 **Digital Lease Management** — `PropertyLease` entity and service for generating, signing, and managing rental contracts via PDF URLs.
+- 🟢 **SMS & WhatsApp Alerts** — `TwilioSmsGateway` integration for real-time booking lifecycle notifications.
+- 🟢 **Stripe Webhook Idempotency** — `processed_stripe_events` tracking to ensure exactly-once processing of payment events.
+- 🟢 **Modern Web Dashboard** — Re-introduced and updated `homeflex-web` using Angular 21, Tailwind CSS 4, and NgRx Signal Store.
+- 🟢 **Responsive Workspace** — Unified host/tenant operations panel with KYC status, payout summaries, and availability calendars.
 
 1. [Introduction](#1-introduction)
 2. [System Overview & Vision](#2-system-overview--vision)
