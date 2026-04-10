@@ -2083,15 +2083,19 @@ _End of Document — v2.1 (2026-03-29)_
 1. Core platform: auth, properties, bookings, chat, reviews, admin, notifications
 2. Docker Compose deployment (6 services)
 3. GitHub Actions CI pipeline
-4. Stripe payment integration
+4. Stripe payment integration (including idempotency)
 5. Firebase push notifications
 6. Google OAuth
+7. Property Availability model and calendar UI
+8. Digital Lease management (generation and signing)
+9. SMS/WhatsApp notifications via Twilio
+10. Modern Angular 21 web frontend (`homeflex-web`)
 
-**Next Steps:**
+**Next Steps (Gaps):**
 
-1. Harden security (httpOnly tokens, strict CORS, secrets management)
-2. Wire Redis caching and rate limiting
-3. Implement RabbitMQ event consumers for outbox events
-4. Integrate Elasticsearch for advanced property search
-5. Set up observability (Prometheus + Grafana)
-6. Plan AWS infrastructure (ECS Fargate, RDS, managed services)
+1. **KYC:** Transition from simulated trigger to live Stripe Identity redirect.
+2. **Document Automation:** Integrate a PDF library (iText) for true lease/receipt generation.
+3. **Map View:** Add an interactive map search to the Angular web frontend.
+4. **Resiliency:** Wire Redis rate limiting and RabbitMQ outbox consumers (partially implemented).
+5. **Observability:** Finalize Prometheus/Grafana dashboard configurations.
+6. **Production:** AWS cloud deployment (Fargate, RDS, CloudFront).

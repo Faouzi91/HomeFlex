@@ -36,6 +36,22 @@ All notable changes to the HomeFlex project will be documented in this file.
 - **Provider Updates** — Logic enhancements in `PropertyProvider`,
   `VehicleProvider`, and core API services.
 
+### Added — Digital Lease System (Backend & Web)
+
+- **`PropertyLease` entity** — New tracking for rental contracts, signatures, and document URLs (V12).
+- **`LeaseService` & `LeaseController`** — Logic for generating, signing, and retrieving leases.
+- **Web UI** — Integrated lease signing for tenants and generation for landlords in the Workspace.
+
+### Added — SMS & WhatsApp Notifications (Backend)
+
+- **Twilio Integration** — New `TwilioSmsGateway` for automated alerts.
+- **Booking Alerts** — Real-time SMS/WhatsApp notifications for new booking requests and status updates.
+
+### Changed — Documentation & Roadmap
+
+- **SRS Update** — Aligned functional requirements with Round 7 progress and identified remaining gaps.
+- **README Update** — Refreshed feature list and API overview.
+
 ---
 
 ## [Unreleased] — 2026-04-07 (Round 6 — Flutter Migration)
