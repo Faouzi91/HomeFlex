@@ -36,7 +36,7 @@
             routerLinkActive="nav-link--active text-brand-600 after:absolute after:bottom-[-1px] after:left-0 after:h-[2px] after:w-full after:bg-brand-500"
             [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
           >
-            {{ item.label }}
+            {{ 'NAV.' + item.label.toUpperCase() | translate }}
           </a>
         }
       </nav>
@@ -44,6 +44,21 @@
 
     <!-- Right side: Actions -->
     <div class="flex items-center gap-4">
+      <!-- Language Switcher -->
+      <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-md border border-slate-100 mr-2">
+        @for (lang of languages; track lang.code) {
+          <button
+            (click)="switchLanguage(lang.code)"
+            class="flex items-center justify-center w-8 h-8 rounded hover:bg-white hover:shadow-sm transition-all"
+            [class.bg-white]="currentLang() === lang.code"
+            [class.shadow-sm]="currentLang() === lang.code"
+            [title]="lang.label"
+          >
+            <span class="text-lg">{{ lang.flag }}</span>
+          </button>
+        }
+      </div>
+
       <div class="hidden items-center gap-4 lg:flex">
         @if (session.isAuthenticated()) {
           <a
@@ -53,14 +68,16 @@
             {{ greeting() }}
           </a>
         } @else {
-          <a class="text-sm font-semibold text-slate-700 hover:text-brand-600" routerLink="/login"
-            >Sign in</a
+          <a
+            class="text-sm font-semibold text-slate-700 hover:text-brand-600"
+            routerLink="/login"
+            >{{ 'NAV.LOGIN' | translate }}</a
           >
           <a
             class="inline-flex items-center rounded-md border border-brand-500 bg-white px-5 py-2 text-sm font-bold text-brand-500 transition hover:bg-brand-50"
             routerLink="/register"
           >
-            Get started
+            {{ 'NAV.REGISTER' | translate }}
           </a>
         }
       </div>

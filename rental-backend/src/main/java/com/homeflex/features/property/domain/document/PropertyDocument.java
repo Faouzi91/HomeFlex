@@ -63,6 +63,9 @@ public class PropertyDocument {
     @Field(type = FieldType.Double)
     private Double areaSqm;
 
+    @Field(type = FieldType.Keyword)
+    private java.util.List<String> amenityIds;
+
     @GeoPointField
     private GeoPoint location;
 

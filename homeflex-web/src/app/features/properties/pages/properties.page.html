@@ -10,10 +10,10 @@
             Property discovery
           </span>
           <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
-            Real estate for rent
+            {{ 'PROPERTIES.TITLE' | translate }}
           </h1>
           <p class="text-lg text-slate-500 max-w-2xl">
-            Browse premium homes and apartments with clear pricing and high-quality details.
+            {{ 'PROPERTIES.SUBTITLE' | translate }}
           </p>
         </div>
         <div class="flex gap-4">
@@ -21,7 +21,9 @@
             class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm text-center min-w-[120px]"
           >
             <p class="text-2xl font-bold text-slate-900">{{ properties().length }}</p>
-            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Properties</p>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              {{ 'NAV.PROPERTIES' | translate }}
+            </p>
           </div>
           <div
             class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm text-center min-w-[120px]"
@@ -61,7 +63,9 @@
           <form class="space-y-6" [formGroup]="filters" (ngSubmit)="search()">
             <div class="space-y-4">
               <label class="block">
-                <span class="text-sm font-bold text-slate-700 block mb-1">Search</span>
+                <span class="text-sm font-bold text-slate-700 block mb-1">{{
+                  'PROPERTIES.SEARCH' | translate
+                }}</span>
                 <input
                   type="text"
                   placeholder="Neighborhood or title"
@@ -71,7 +75,9 @@
               </label>
 
               <label class="block">
-                <span class="text-sm font-bold text-slate-700 block mb-1">City</span>
+                <span class="text-sm font-bold text-slate-700 block mb-1">{{
+                  'PROPERTIES.CITY' | translate
+                }}</span>
                 <input
                   type="text"
                   placeholder="Any City"
@@ -81,7 +87,9 @@
               </label>
 
               <label class="block">
-                <span class="text-sm font-bold text-slate-700 block mb-1">Property type</span>
+                <span class="text-sm font-bold text-slate-700 block mb-1">{{
+                  'PROPERTIES.TYPE' | translate
+                }}</span>
                 <select
                   formControlName="propertyType"
                   class="w-full rounded-md border border-slate-300 px-4 py-2 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
@@ -98,7 +106,9 @@
 
               <div class="grid grid-cols-2 gap-3">
                 <label class="block">
-                  <span class="text-sm font-bold text-slate-700 block mb-1">Min Price</span>
+                  <span class="text-sm font-bold text-slate-700 block mb-1">{{
+                    'PROPERTIES.MIN_PRICE' | translate
+                  }}</span>
                   <input
                     type="number"
                     placeholder="$0"
@@ -107,7 +117,9 @@
                   />
                 </label>
                 <label class="block">
-                  <span class="text-sm font-bold text-slate-700 block mb-1">Max Price</span>
+                  <span class="text-sm font-bold text-slate-700 block mb-1">{{
+                    'PROPERTIES.MAX_PRICE' | translate
+                  }}</span>
                   <input
                     type="number"
                     placeholder="Any"
@@ -119,7 +131,9 @@
 
               <div class="grid grid-cols-2 gap-3">
                 <label class="block">
-                  <span class="text-sm font-bold text-slate-700 block mb-1">Beds</span>
+                  <span class="text-sm font-bold text-slate-700 block mb-1">{{
+                    'PROPERTIES.BEDS' | translate
+                  }}</span>
                   <input
                     type="number"
                     placeholder="Any"
@@ -128,7 +142,9 @@
                   />
                 </label>
                 <label class="block">
-                  <span class="text-sm font-bold text-slate-700 block mb-1">Baths</span>
+                  <span class="text-sm font-bold text-slate-700 block mb-1">{{
+                    'PROPERTIES.BATHS' | translate
+                  }}</span>
                   <input
                     type="number"
                     placeholder="Any"
@@ -143,34 +159,68 @@
               class="w-full rounded-md bg-brand-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-600 shadow-md shadow-brand-100"
               type="submit"
             >
-              Apply Filters
+              {{ 'PROPERTIES.APPLY' | translate }}
             </button>
           </form>
         </div>
       </aside>
 
-      <!-- Results Grid -->
+      <!-- Results Grid / Map -->
       <div class="space-y-8">
         <div class="flex items-center justify-between border-b border-slate-100 pb-6">
-          <h2 class="text-xl font-bold text-slate-900">
-            {{ properties().length }} Properties found
-          </h2>
+          <div class="flex items-center gap-6">
+            <h2 class="text-xl font-bold text-slate-900">
+              {{ 'PROPERTIES.FOUND' | translate: { count: properties().length } }}
+            </h2>
+            <div class="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+              <button
+                (click)="viewMode.set('grid')"
+                class="px-4 py-1.5 rounded-md text-xs font-bold transition-all"
+                [class]="
+                  viewMode() === 'grid'
+                    ? 'bg-white text-brand-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                "
+              >
+                Grid
+              </button>
+              <button
+                (click)="viewMode.set('map')"
+                class="px-4 py-1.5 rounded-md text-xs font-bold transition-all"
+                [class]="
+                  viewMode() === 'map'
+                    ? 'bg-white text-brand-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                "
+              >
+                Map
+              </button>
+            </div>
+          </div>
           <div class="flex items-center gap-2 text-sm font-bold text-slate-500">
             Sort by: <span class="text-brand-600">Newest First</span>
           </div>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          @for (property of properties(); track property.id) {
-            <app-listing-card variant="property" [item]="property" />
-          } @empty {
-            <div
-              class="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-xl"
-            >
-              <p class="text-lg font-bold text-slate-400">No properties match those filters yet.</p>
-            </div>
-          }
-        </div>
+        @if (viewMode() === 'grid') {
+          <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            @for (property of properties(); track property.id) {
+              <app-listing-card variant="property" [item]="property" />
+            } @empty {
+              <div
+                class="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-xl"
+              >
+                <p class="text-lg font-bold text-slate-400">
+                  {{ 'PROPERTIES.NO_RESULTS' | translate }}
+                </p>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="h-[600px] w-full">
+            <app-map [properties]="properties()" (propertySelected)="onPropertySelected($event)" />
+          </div>
+        }
       </div>
     </div>
   </section>

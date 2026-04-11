@@ -37,7 +37,11 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Landlord KYC** via Stripe Identity verification
 - **Admin dashboard** with property moderation and operational analytics
 - **Prometheus + Grafana monitoring** with custom business metrics
-- **Modern Web Dashboard** — Angular 21 + Tailwind 4 operational panel
+- **Modern Web Dashboard** — Angular 21 + Tailwind 4 operational panel with **Map Search**
+- **Global Reach** — Full i18n support (English, French, Spanish, Arabic) with **RTL support**
+- **Enterprise Observability** — Centralized **ELK Stack** (Elasticsearch, Logstash, Kibana) + Prometheus/Grafana
+- **Innovative Tech** — **Blockchain-backed lease contracts** and **AI-driven pricing recommendations**
+- **B2B Foundation** — Multi-tenant **Agency white-labeling** architecture
 
 ## Quick Start (Docker)
 
@@ -239,6 +243,18 @@ ng test -- --include='**/some.spec.ts'                  # single file
 ```
 
 The backend includes **ArchUnit** tests that enforce architectural rules (e.g., controllers must not directly access repositories).
+
+## Remaining Gaps (Planned Features)
+
+The following features remain to be implemented according to the SRS (Software Requirements Specification):
+
+- **Security Hardening:** Migrate to httpOnly cookies and implement CSRF protection.
+- **Insurance Marketplace (v3.0):** Built-in coverage options for landlords and tenants.
+- **Multi-region Deployment:** Expanding beyond the single-region AWS setup to high-availability multi-region.
+- **Advanced Search:** Deeper integration of amenities and filters into Elasticsearch queries.
+- **Automated Finance:** Automated financial receipts and invoice generation.
+- **Production Infrastructure:** AWS Fargate, RDS, and CloudFront production deployment.
+- **Dispute Resolution:** Backend entities and UI for handling tenant-landlord disputes.
 
 ## License
 

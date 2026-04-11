@@ -60,6 +60,13 @@ public class User {
     @Column(name = "language_preference", length = 5)
     private String languagePreference = "en";
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agency_id")
+    private Agency agency;
+
+    @Column(name = "agency_role", length = 20)
+    private String agencyRole;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

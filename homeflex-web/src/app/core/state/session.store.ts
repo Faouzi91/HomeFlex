@@ -77,6 +77,25 @@ export class SessionStore {
     );
   }
 
+  socialLogin(provider: string, token: string): Observable<void> {
+    this.pending.set(true);
+    this.notifications.setLoading(true);
+    this.error.set(null);
+
+    return this.api.socialLogin(provider, token).pipe(
+      tap((response) => {
+        this.user.set(response.user);
+        this.notifications.success('Social login successful!');
+      }),
+      map(() => void 0),
+      catchError((error) => this.handleError(error)),
+      finalize(() => {
+        this.pending.set(false);
+        this.notifications.setLoading(false);
+      }),
+    );
+  }
+
   register(payload: {
     email: string;
     password: string;

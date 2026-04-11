@@ -89,6 +89,9 @@ export interface PropertySearchParams {
   propertyType?: string;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  amenityIds?: string[];
+  lat?: number | null;
+  lng?: number | null;
   page?: number;
   size?: number;
 }
@@ -151,6 +154,8 @@ export interface Booking {
   totalPrice: number | null;
   platformFee: number | null;
   stripePaymentIntentId: string | null;
+  paymentConfirmedAt: string | null;
+  escrowReleasedAt: string | null;
   landlordResponse: string | null;
   respondedAt: string | null;
   createdAt: string;
@@ -245,4 +250,130 @@ export interface ReportItem {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: User | null;
+}
+
+export type MaintenanceCategory = 'PLUMBING' | 'ELECTRICAL' | 'APPLIANCE' | 'STRUCTURAL' | 'OTHER';
+export type MaintenancePriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type MaintenanceStatus = 'REPORTED' | 'IN_PROGRESS' | 'RESOLVED' | 'CANCELLED';
+
+export interface MaintenanceRequest {
+  id: string;
+  propertyId: string;
+  propertyTitle: string;
+  tenantId: string;
+  tenantName: string;
+  title: string;
+  description: string;
+  category: MaintenanceCategory;
+  priority: MaintenancePriority;
+  status: MaintenanceStatus;
+  resolutionNotes: string | null;
+  resolvedAt: string | null;
+  imageUrls: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MaintenanceRequestCreateRequest {
+  propertyId: string;
+  title: string;
+  description: string;
+  category: MaintenanceCategory;
+  priority: MaintenancePriority;
+}
+
+export interface MaintenanceStatusUpdateRequest {
+  status: MaintenanceStatus;
+  resolutionNotes?: string;
+}
+
+export interface InsurancePlan {
+  id: string;
+  providerName: string;
+  name: string;
+  type: 'TENANT' | 'LANDLORD' | 'VEHICLE';
+  description: string;
+  coverageDetails: string;
+  dailyPremium: number;
+  maxCoverageAmount: number;
+}
+
+export interface InsurancePolicy {
+  id: string;
+  plan: InsurancePlan;
+  user: User;
+  booking?: Booking;
+  policyNumber: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  totalPremium: number;
+  certificateUrl: string;
+  createdAt: string;
+}
+
+export interface Agency {
+  id: string;
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  isVerified: boolean;
+  customDomain?: string;
+  themePrimaryColor: string;
+  createdAt: string;
+}
+
+export interface PropertyLease {
+  id: string;
+  bookingId: string;
+  tenantId: string;
+  landlordId: string;
+  content: string;
+  status: 'PENDING' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
+  signedAt?: string;
+  blockchainTxHash?: string;
+  onChainStatus: 'NOT_MINTED' | 'PENDING' | 'SUCCESS' | 'FAILED';
+  contractAddress?: string;
+  tokenId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Receipt {
+  id: string;
+  bookingId?: string;
+  userId: string;
+  receiptNumber: string;
+  amount: number;
+  currency: string;
+  status: string;
+  receiptUrl?: string;
+  issuedAt: string;
+  createdAt: string;
+}
+
+export interface Dispute {
+  id: string;
+  bookingId: string;
+  initiatorId: string;
+  reason: string;
+  description?: string;
+  status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'CLOSED';
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  resolvedById?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PricingRecommendation {
+  propertyId: string;
+  currentPrice: number;
+  recommendedPrice: number;
+  confidenceLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  reasoning: string;
 }

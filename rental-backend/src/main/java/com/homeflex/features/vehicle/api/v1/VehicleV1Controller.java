@@ -183,4 +183,13 @@ public class VehicleV1Controller {
         return ResponseEntity.ok(
                 new ApiListResponse<>(vehicleMapper.toBookingResponseList(bookings)));
     }
+
+    @GetMapping("/my-vehicles")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<ApiPageResponse<VehicleResponse>> getMyVehicles(
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable,
+            Authentication authentication) {
+        UUID ownerId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(ApiPageResponse.from(vehicleService.getByOwnerId(ownerId, pageable)));
+    }
 }

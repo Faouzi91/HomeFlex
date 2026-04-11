@@ -60,12 +60,13 @@ public class PropertySearchService {
                                                Double maxPrice,
                                                Integer bedrooms,
                                                Integer bathrooms,
+                                               List<String> amenityIds,
                                                Double lat,
                                                Double lng,
                                                Pageable pageable) {
 
         NativeQuery query = buildQuery(q, propertyType, city, minPrice, maxPrice,
-                bedrooms, bathrooms, lat, lng, pageable);
+                bedrooms, bathrooms, amenityIds, lat, lng, pageable);
 
         SearchHits<PropertyDocument> hits =
                 elasticsearchOperations.search(query, PropertyDocument.class);
@@ -105,13 +106,14 @@ public class PropertySearchService {
     private NativeQuery buildQuery(String q, String propertyType, String city,
                                    Double minPrice, Double maxPrice,
                                    Integer bedrooms, Integer bathrooms,
+                                   List<String> amenityIds,
                                    Double lat, Double lng,
                                    Pageable pageable) {
 
         var builder = NativeQuery.builder()
                 .withQuery(qb -> qb.bool(bool -> {
                     buildBool(bool, q, propertyType, city, minPrice, maxPrice,
-                            bedrooms, bathrooms);
+                            bedrooms, bathrooms, amenityIds);
                     return bool;
                 }));
 
@@ -129,7 +131,8 @@ public class PropertySearchService {
     private void buildBool(BoolQuery.Builder bool, String q,
                            String propertyType, String city,
                            Double minPrice, Double maxPrice,
-                           Integer bedrooms, Integer bathrooms) {
+                           Integer bedrooms, Integer bathrooms,
+                           List<String> amenityIds) {
 
         // Hard filters — only approved + available
         bool.filter(f -> f.term(t -> t.field("status").value("APPROVED")));
@@ -180,6 +183,13 @@ public class PropertySearchService {
             bool.filter(f -> f.range(r -> r
                     .number(n -> n.field("bathrooms").gte(bathrooms.doubleValue()))
             ));
+        }
+
+        // Amenities filter (must have all selected amenities)
+        if (amenityIds != null && !amenityIds.isEmpty()) {
+            for (String amenityId : amenityIds) {
+                bool.filter(f -> f.term(t -> t.field("amenityIds").value(amenityId)));
+            }
         }
     }
 

@@ -97,6 +97,10 @@ public class Property {
     @Column(name = "total_floors")
     private Integer totalFloors;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agency_id")
+    private com.homeflex.core.domain.entity.Agency agency;
+
     // Availability
     @Column(name = "is_available")
     private Boolean isAvailable = true;

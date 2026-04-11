@@ -16,6 +16,8 @@ abstract class UserDto with _$UserDto {
     required bool isActive,
     required bool isVerified,
     String? languagePreference,
+    String? agencyId,
+    String? agencyRole,
     required String createdAt,
   }) = _UserDto;
 

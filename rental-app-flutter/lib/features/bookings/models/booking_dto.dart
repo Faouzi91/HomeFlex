@@ -21,6 +21,8 @@ abstract class BookingDto with _$BookingDto {
     double? totalPrice,
     double? platformFee,
     String? stripePaymentIntentId,
+    String? paymentConfirmedAt,
+    String? escrowReleasedAt,
     String? landlordResponse,
     String? respondedAt,
     required String createdAt,

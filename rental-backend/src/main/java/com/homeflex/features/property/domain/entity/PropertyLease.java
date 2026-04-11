@@ -43,6 +43,18 @@ public class PropertyLease {
     @Column(name = "signed_at")
     private LocalDateTime signedAt;
 
+    @Column(name = "blockchain_tx_hash")
+    private String blockchainTxHash;
+
+    @Column(name = "on_chain_status")
+    private String onChainStatus = "NOT_MINTED";
+
+    @Column(name = "contract_address")
+    private String contractAddress;
+
+    @Column(name = "token_id")
+    private String tokenId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

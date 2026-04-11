@@ -33,11 +33,24 @@ public class RabbitMqConfig {
         return new TopicExchange(appProperties.getOutbox().getExchangeName(), true, false);
     }
 
-    // ── Booking event queue ───────────────────────────��──────────────────
+    @Bean
+    TopicExchange deadLetterExchange() {
+        return new TopicExchange("homeflex.dead-letter.exchange", true, false);
+    }
+
+    // ── Booking event queue ─────────────────────────────────────────────
 
     @Bean
     Queue bookingEventsQueue() {
-        return new Queue("homeflex.booking.events", true);
+        return org.springframework.amqp.core.QueueBuilder.durable("homeflex.booking.events")
+                .withArgument("x-dead-letter-exchange", "homeflex.dead-letter.exchange")
+                .withArgument("x-dead-letter-routing-key", "dead-letter.booking")
+                .build();
+    }
+
+    @Bean
+    Queue bookingEventsDlq() {
+        return new Queue("homeflex.booking.events.dlq", true);
     }
 
     @Bean
@@ -45,11 +58,24 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(bookingEventsQueue).to(outboxExchange).with("Booking.#");
     }
 
+    @Bean
+    Binding bookingEventsDlqBinding(Queue bookingEventsDlq, TopicExchange deadLetterExchange) {
+        return BindingBuilder.bind(bookingEventsDlq).to(deadLetterExchange).with("dead-letter.booking");
+    }
+
     // ── Property event queue ─────────────────────────────────────────────
 
     @Bean
     Queue propertyEventsQueue() {
-        return new Queue("homeflex.property.events", true);
+        return org.springframework.amqp.core.QueueBuilder.durable("homeflex.property.events")
+                .withArgument("x-dead-letter-exchange", "homeflex.dead-letter.exchange")
+                .withArgument("x-dead-letter-routing-key", "dead-letter.property")
+                .build();
+    }
+
+    @Bean
+    Queue propertyEventsDlq() {
+        return new Queue("homeflex.property.events.dlq", true);
     }
 
     @Bean
@@ -57,16 +83,34 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(propertyEventsQueue).to(outboxExchange).with("Property.#");
     }
 
+    @Bean
+    Binding propertyEventsDlqBinding(Queue propertyEventsDlq, TopicExchange deadLetterExchange) {
+        return BindingBuilder.bind(propertyEventsDlq).to(deadLetterExchange).with("dead-letter.property");
+    }
+
     // ── Notification event queue ─────────────────────────────────────────
 
     @Bean
     Queue notificationEventsQueue() {
-        return new Queue("homeflex.notification.events", true);
+        return org.springframework.amqp.core.QueueBuilder.durable("homeflex.notification.events")
+                .withArgument("x-dead-letter-exchange", "homeflex.dead-letter.exchange")
+                .withArgument("x-dead-letter-routing-key", "dead-letter.notification")
+                .build();
+    }
+
+    @Bean
+    Queue notificationEventsDlq() {
+        return new Queue("homeflex.notification.events.dlq", true);
     }
 
     @Bean
     Binding notificationEventsBinding(Queue notificationEventsQueue, TopicExchange outboxExchange) {
         return BindingBuilder.bind(notificationEventsQueue).to(outboxExchange).with("*.#");
+    }
+
+    @Bean
+    Binding notificationEventsDlqBinding(Queue notificationEventsDlq, TopicExchange deadLetterExchange) {
+        return BindingBuilder.bind(notificationEventsDlq).to(deadLetterExchange).with("dead-letter.notification");
     }
 
     // ── Serialization ────────────────────────────────────────────────────

@@ -1,0 +1,24 @@
+{
+  "NAV": {
+    "HOME": "Home",
+    "PROPERTIES": "Properties",
+    "VEHICLES": "Vehicles",
+    "LOGIN": "Login",
+    "REGISTER": "Register",
+    "WORKSPACE": "Workspace"
+  },
+  "PROPERTIES": {
+    "TITLE": "Real estate for rent",
+    "SUBTITLE": "Browse premium homes and apartments with clear pricing and high-quality details.",
+    "SEARCH": "Search",
+    "CITY": "City",
+    "TYPE": "Property type",
+    "MIN_PRICE": "Min Price",
+    "MAX_PRICE": "Max Price",
+    "BEDS": "Beds",
+    "BATHS": "Baths",
+    "APPLY": "Apply Filters",
+    "FOUND": "{{count}} Properties found",
+    "NO_RESULTS": "No properties match those filters yet."
+  }
+}

@@ -65,6 +65,12 @@ public class VehicleService {
         return vehicleMapper.toResponse(vehicle);
     }
 
+    @Transactional(readOnly = true)
+    public Page<VehicleResponse> getByOwnerId(UUID ownerId, Pageable pageable) {
+        return vehicleRepository.findByOwnerId(ownerId, pageable)
+                .map(vehicleMapper::toResponse);
+    }
+
     // ── Create ──────────────────────────────────────────────────────────
 
     @Transactional

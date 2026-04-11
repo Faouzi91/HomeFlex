@@ -125,6 +125,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/kyc/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/kyc/**").authenticated()
 
+                        // Insurance endpoints
+                        .requestMatchers("/api/v1/insurance/**").authenticated()
+
+                        // Dispute endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/v1/disputes").authenticated()
+                        .requestMatchers("/api/v1/disputes/**").hasRole("ADMIN")
+
                         // Payment & payout endpoints
                         .requestMatchers("/api/v1/payments/refund").hasRole("ADMIN")
                         .requestMatchers("/api/v1/payments/**").authenticated()

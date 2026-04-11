@@ -42,20 +42,14 @@ public class PropertyV1Controller {
             @RequestParam(required = false) String propertyType,
             @RequestParam(required = false) Integer bedrooms,
             @RequestParam(required = false) Integer bathrooms,
+            @RequestParam(required = false) List<String> amenityIds,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lng,
             Pageable pageable) {
         
-        PropertySearchParams params = PropertySearchParams.builder()
-                .city(city)
-                .minPrice(minPrice)
-                .maxPrice(maxPrice)
-                .propertyType(propertyType)
-                .bedrooms(bedrooms)
-                .bathrooms(bathrooms)
-                .build();
-                
-        return ResponseEntity.ok(ApiPageResponse.from(propertyService.searchProperties(params, pageable)));
+        return ResponseEntity.ok(propertySearchService.search(
+                q, propertyType, city, minPrice, maxPrice, bedrooms, bathrooms, amenityIds, lat, lng, pageable
+        ));
     }
 
     @GetMapping("/{id}")

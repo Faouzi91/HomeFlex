@@ -29,6 +29,7 @@ abstract class PropertyDto with _$PropertyDto {
     double? areaSqm,
     int? floorNumber,
     int? totalFloors,
+    String? agencyId,
     required bool isAvailable,
     String? availableFrom,
     required String status,

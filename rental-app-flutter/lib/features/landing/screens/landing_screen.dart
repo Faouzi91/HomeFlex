@@ -284,7 +284,7 @@ class _SearchBarState extends State<_SearchBar> {
         border: Border.all(color: cs.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -435,12 +435,12 @@ class _HeroVisual extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [cs.primary, cs.primary.withOpacity(0.7)],
+                  colors: [cs.primary, cs.primary.withValues(alpha: 0.7)],
                 ),
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: cs.primary.withOpacity(0.25),
+                    color: cs.primary.withValues(alpha: 0.25),
                     blurRadius: 60,
                     offset: const Offset(0, 24),
                   ),
@@ -452,7 +452,7 @@ class _HeroVisual extends StatelessWidget {
                     right: -40,
                     bottom: -40,
                     child: Icon(Icons.home_work,
-                        size: 320, color: Colors.white.withOpacity(0.12)),
+                        size: 320, color: Colors.white.withValues(alpha: 0.12)),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(32),
@@ -464,7 +464,7 @@ class _HeroVisual extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: const Row(
@@ -495,7 +495,7 @@ class _HeroVisual extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text('Paris, France',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.85),
+                                  color: Colors.white.withValues(alpha: 0.85),
                                   fontSize: 15,
                                 )),
                             const SizedBox(height: 16),
@@ -509,7 +509,7 @@ class _HeroVisual extends StatelessWidget {
                                     )),
                                 Text(' /night',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.85),
+                                      color: Colors.white.withValues(alpha: 0.85),
                                       fontSize: 14,
                                     )),
                               ],
@@ -564,7 +564,7 @@ class _FloatingPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -803,7 +803,7 @@ class _Stat extends StatelessWidget {
         const SizedBox(height: 8),
         Text(label,
             style: TextStyle(
-              color: cs.onInverseSurface.withOpacity(0.7),
+              color: cs.onInverseSurface.withValues(alpha: 0.7),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             )),
@@ -826,7 +826,7 @@ class _CtaBanner extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [cs.secondary, cs.secondary.withOpacity(0.75)],
+          colors: [cs.secondary, cs.secondary.withValues(alpha: 0.75)],
         ),
         borderRadius: BorderRadius.circular(32),
       ),
@@ -852,7 +852,7 @@ class _CtaBanner extends StatelessWidget {
                 Text(
                   'Join thousands of hosts already earning extra income with HomeFlex.',
                   style: TextStyle(
-                    color: cs.onSecondary.withOpacity(0.9),
+                    color: cs.onSecondary.withValues(alpha: 0.9),
                     fontSize: 16,
                   ),
                 ),

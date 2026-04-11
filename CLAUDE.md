@@ -36,6 +36,11 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 - `properties` / `vehicles`: Rental assets.
 - `bookings`: Central reservation engine.
 - `property_availability`: Sparse date model for asset availability.
-- `property_leases`: Digital contract tracking.
+- `property_leases`: Digital contract tracking with blockchain TX hashes.
+- `agencies`: Multi-tenant agency white-labeling.
+- `maintenance_requests`: Tenant issue tracking.
+- `insurance_policies`: Tenant/Landlord protection plans.
+- `receipts`: Automated PDF financial records.
+- `disputes`: Conflict resolution tracking.
 - `outbox_events`: Queue for reliable event delivery.
 - `processed_stripe_events`: Idempotency log for Stripe webhooks.

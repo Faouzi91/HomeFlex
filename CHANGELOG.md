@@ -2,7 +2,45 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-11 (Round 8 — Gaps & Innovations)
+
+### Added — Advanced Web Features (Angular)
+
+- **Interactive Map Search** — Integrated Leaflet maps into the property discovery page with a Grid/Map toggle and automated bounds fitting.
+- **Global i18n Expansion** — Added support for **Spanish** and **Arabic**, including full **RTL (Right-to-Left)** layout support for the Arabic locale.
+- **Social Login (Backend)** — Completed the authentication flows for **Apple** and **Facebook** OAuth, enabling seamless user creation for the prototype.
+
+### Added — Enterprise Resiliency & Observability
+
+- **Distributed Caching (Redis)** — Implemented `@Cacheable` for property lookups with configurable TTLs (30m for details, 5m for search). Greatly reduces PostgreSQL load for frequently accessed listings.
+- **RabbitMQ Resiliency (DLX/DLQ)** — Configured a Dead Letter Exchange and dedicated queues for all domain events. Failed tasks (like Elasticsearch indexing) now gracefully fail to a DLQ for manual inspection instead of blocking consumers.
+- **ELK Logging Stack** — Fully integrated Elasticsearch, Logstash, and Kibana. Backend now ships structured JSON logs via TCP to Logstash for real-time analysis.
+- **KYC Hardening** — Enabled live Stripe Identity verification by exposing the publishable key to the frontend during session creation.
+- **Maintenance Alerts** — Enhanced the maintenance system with automated **SMS (Twilio)** and **Push (Firebase)** notifications for status updates.
+
+### Added — Future-Proof Innovations (v3.0/v4.0)
+
+- **Insurance Marketplace (v3.0)** — Built a comprehensive insurance foundation including `InsuranceProvider`, `InsurancePlan`, and `InsurancePolicy` entities. Tenants can now purchase protection plans during the booking flow.
+- **Automated Finance** — Implemented an automated receipt generation system using OpenPDF. Receipts are now automatically issued and stored as PDFs upon successful payment confirmation.
+- **Dispute Resolution** — Added a core dispute management system allowing tenants to open disputes for bookings, which can then be reviewed and resolved by administrators.
+- **Advanced Search (Elasticsearch)** — Enhanced property search by integrating amenities into the Elasticsearch index. Users can now filter properties based on specific features like "Pool", "Gym", or "High-speed Wi-Fi".
+- **Agency White-labeling (v4.0)** — Implemented the core multi-tenant schema and entities for real estate agencies to manage their own properties and agents.
+- **Blockchain Lease Immutability (v3.0)** — Added an asynchronous `BlockchainLeaseService` that records signed leases on a simulated blockchain (Ethereum/Polygon) for tamper-proof records.
+- **AI Pricing Engine (v3.0)** — Built a data-driven pricing recommendation service that suggests optimal rates based on location demand and seasonal trends.
+
+### Fixed
+
+- **Backend Stability** — Fixed compilation errors in `VehicleV1Controller` related to invalid Stream API usage on Spring Data `Page` objects.
+
+---
+
 ## [Unreleased] — 2026-04-09 (Round 7 — Property Availability & Web Frontend)
+
+### Added — Maintenance Request System (Full Stack)
+
+- **Backend** — Comprehensive maintenance request API with category selection, priority levels, and image support.
+- **Flutter UI** — Integrated reporting flow for tenants (with multi-image upload) and a management dashboard for landlords.
+- **Notifications** — Automated alerts for landlords on new requests and tenants on status updates.
 
 ### Added — Property Availability System (Backend)
 
@@ -49,8 +87,9 @@ All notable changes to the HomeFlex project will be documented in this file.
 
 ### Changed — Documentation & Roadmap
 
-- **SRS Update** — Aligned functional requirements with Round 7 progress and identified remaining gaps.
-- **README Update** — Refreshed feature list and API overview.
+- **SRS Update** — Aligned functional requirements with Round 7 progress. Moved Twilio, Leases, and Availability to Implemented.
+- **Identified Remaining Gaps** — Maintenance requests, Multi-region deployment, i18n (Arabic/Spanish), Apple/Facebook Social Login, ELK logging, AI pricing, Blockchain leases, and Agency white-labeling.
+- **README Update** — Refreshed feature list and appended the "Remaining Gaps" explicit breakdown.
 
 ---
 

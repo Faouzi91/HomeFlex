@@ -1,22 +1,27 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
 import { ApiClient } from '../../../core/api/api.client';
 import { Property, PropertySearchParams } from '../../../core/models/api.types';
 import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
+import { MapComponent } from '../../../shared/ui/map/map.component';
 
 @Component({
   selector: 'app-properties-page',
-  imports: [ReactiveFormsModule, ListingCardComponent],
+  imports: [ReactiveFormsModule, ListingCardComponent, MapComponent, TranslateModule],
   templateUrl: './properties.page.html',
   styleUrl: './properties.page.scss',
 })
 export class PropertiesPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiClient);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly properties = signal<Property[]>([]);
+  protected readonly viewMode = signal<'grid' | 'map'>('grid');
   protected readonly filters = this.fb.group({
     q: [''],
     city: [''],
@@ -48,5 +53,9 @@ export class PropertiesPageComponent {
       .searchProperties(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => this.properties.set(response.data));
+  }
+
+  protected onPropertySelected(property: Property): void {
+    this.router.navigate(['/properties', property.id]);
   }
 }

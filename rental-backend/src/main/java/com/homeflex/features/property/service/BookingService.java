@@ -45,6 +45,7 @@ public class BookingService {
     private final PaymentService paymentService;
     private final BookingMapper bookingMapper;
     private final PropertyAvailabilityService availabilityService;
+    private final com.homeflex.features.finance.service.FinanceService financeService;
 
     private final Counter bookingsCreatedCounter;
     private final Counter paymentsSucceededCounter;
@@ -57,6 +58,7 @@ public class BookingService {
                           PaymentService paymentService,
                           BookingMapper bookingMapper,
                           PropertyAvailabilityService availabilityService,
+                          com.homeflex.features.finance.service.FinanceService financeService,
                           MeterRegistry meterRegistry) {
         this.bookingRepository = bookingRepository;
         this.propertyRepository = propertyRepository;
@@ -65,6 +67,7 @@ public class BookingService {
         this.paymentService = paymentService;
         this.bookingMapper = bookingMapper;
         this.availabilityService = availabilityService;
+        this.financeService = financeService;
 
         this.bookingsCreatedCounter = Counter.builder("homeflex.bookings.created")
                 .description("Total bookings created")
@@ -281,6 +284,13 @@ public class BookingService {
                         booking.setPaymentConfirmedAt(LocalDateTime.now());
                         bookingRepository.save(booking);
                         log.info("Booking {} payment confirmed via webhook", booking.getId());
+                        
+                        // Generate automated receipt
+                        try {
+                            financeService.generateReceipt(booking);
+                        } catch (Exception e) {
+                            log.error("Failed to generate receipt for booking {}: {}", booking.getId(), e.getMessage());
+                        }
                     }
                 });
     }

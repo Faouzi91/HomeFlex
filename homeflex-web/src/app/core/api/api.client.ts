@@ -9,10 +9,19 @@ import {
   AuthResponse,
   Booking,
   ChatRoom,
+  Dispute,
+  InsurancePlan,
+  InsurancePolicy,
+  MaintenanceRequest,
+  MaintenanceRequestCreateRequest,
+  MaintenanceStatus,
+  MaintenanceStatusUpdateRequest,
   Message,
   NotificationItem,
+  PricingRecommendation,
   Property,
   PropertySearchParams,
+  Receipt,
   ReportItem,
   Review,
   User,
@@ -25,6 +34,37 @@ import {
 export class ApiClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/v1';
+
+  createMaintenanceRequest(
+    payload: MaintenanceRequestCreateRequest,
+  ): Observable<MaintenanceRequest> {
+    return this.http.post<MaintenanceRequest>(`${this.baseUrl}/maintenance`, payload);
+  }
+
+  uploadMaintenanceImages(id: string, files: File[]): Observable<void> {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+    return this.http.post<void>(`${this.baseUrl}/maintenance/${id}/images`, formData);
+  }
+
+  updateMaintenanceStatus(
+    id: string,
+    payload: MaintenanceStatusUpdateRequest,
+  ): Observable<MaintenanceRequest> {
+    return this.http.patch<MaintenanceRequest>(`${this.baseUrl}/maintenance/${id}/status`, payload);
+  }
+
+  getMyMaintenanceRequests(): Observable<MaintenanceRequest[]> {
+    return this.http.get<MaintenanceRequest[]>(`${this.baseUrl}/maintenance/my`);
+  }
+
+  getLandlordMaintenanceRequests(): Observable<MaintenanceRequest[]> {
+    return this.http.get<MaintenanceRequest[]>(`${this.baseUrl}/maintenance/landlord`);
+  }
+
+  getMaintenanceRequest(id: string): Observable<MaintenanceRequest> {
+    return this.http.get<MaintenanceRequest>(`${this.baseUrl}/maintenance/${id}`);
+  }
 
   searchProperties(params: PropertySearchParams): Observable<ApiPageResponse<Property>> {
     return this.http.get<ApiPageResponse<Property>>(`${this.baseUrl}/properties/search`, {
@@ -166,6 +206,10 @@ export class ApiClient {
 
   login(payload: { email: string; password: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, payload);
+  }
+
+  socialLogin(provider: string, token: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/${provider}`, { token });
   }
 
   register(payload: {
@@ -361,6 +405,76 @@ export class ApiClient {
 
   createVehicle(payload: Record<string, unknown>): Observable<Vehicle> {
     return this.http.post<Vehicle>(`${this.baseUrl}/vehicles`, payload);
+  }
+
+  updateVehicle(id: string, payload: Record<string, unknown>): Observable<Vehicle> {
+    return this.http.put<Vehicle>(`${this.baseUrl}/vehicles/${id}`, payload);
+  }
+
+  deleteVehicle(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/vehicles/${id}`);
+  }
+
+  getMyVehicles(): Observable<ApiPageResponse<Vehicle>> {
+    return this.http.get<ApiPageResponse<Vehicle>>(`${this.baseUrl}/vehicles/my-vehicles`);
+  }
+
+  uploadVehicleImages(id: string, files: File[]): Observable<void> {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('images', file));
+    return this.http.post<void>(`${this.baseUrl}/vehicles/${id}/images`, formData);
+  }
+
+  // --- Insurance Marketplace ---
+
+  getInsurancePlans(
+    type: 'TENANT' | 'LANDLORD' | 'VEHICLE' = 'TENANT',
+  ): Observable<InsurancePlan[]> {
+    return this.http.get<InsurancePlan[]>(`${this.baseUrl}/insurance/plans`, {
+      params: this.buildParams({ type }),
+    });
+  }
+
+  purchaseInsurancePolicy(planId: string, bookingId: string): Observable<InsurancePolicy> {
+    return this.http.post<InsurancePolicy>(`${this.baseUrl}/insurance/purchase`, null, {
+      params: this.buildParams({ planId, bookingId }),
+    });
+  }
+
+  // --- Finance & Receipts ---
+
+  getMyReceipts(): Observable<Receipt[]> {
+    return this.http.get<Receipt[]>(`${this.baseUrl}/finance/receipts`);
+  }
+
+  // --- Disputes ---
+
+  openDispute(bookingId: string, reason: string, description: string): Observable<Dispute> {
+    return this.http.post<Dispute>(`${this.baseUrl}/disputes`, null, {
+      params: this.buildParams({ bookingId, reason, description }),
+    });
+  }
+
+  getAllDisputes(): Observable<Dispute[]> {
+    return this.http.get<Dispute[]>(`${this.baseUrl}/disputes`);
+  }
+
+  resolveDispute(id: string, resolutionNotes: string): Observable<Dispute> {
+    return this.http.patch<Dispute>(`${this.baseUrl}/disputes/${id}/resolve`, null, {
+      params: this.buildParams({ resolutionNotes }),
+    });
+  }
+
+  // --- AI Pricing ---
+
+  getPricingRecommendation(propertyId: string): Observable<PricingRecommendation> {
+    return this.http.get<PricingRecommendation>(
+      `${this.baseUrl}/properties/${propertyId}/pricing/recommendation`,
+    );
+  }
+
+  getVehicleConditionReports(id: string): Observable<ApiListResponse<any>> {
+    return this.http.get<ApiListResponse<any>>(`${this.baseUrl}/vehicles/${id}/condition`);
   }
 
   getAdminAnalytics(): Observable<Analytics> {

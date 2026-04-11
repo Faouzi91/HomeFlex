@@ -94,6 +94,21 @@ class BookingDetailScreen extends ConsumerWidget {
                       child: const Text('Cancel Booking'),
                     ),
                   ),
+                if ((booking.status.toUpperCase() == 'APPROVED' ||
+                        booking.status.toUpperCase() == 'COMPLETED') &&
+                    isTenant)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => context.push(
+                            '/properties/${booking.property?.id}/maintenance/create'),
+                        icon: const Icon(Icons.report_problem),
+                        label: const Text('Report Maintenance Issue'),
+                      ),
+                    ),
+                  ),
                 if (isPending && isLandlord) ...[
                   Row(
                     children: [

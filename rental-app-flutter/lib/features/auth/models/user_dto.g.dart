@@ -17,6 +17,8 @@ _UserDto _$UserDtoFromJson(Map<String, dynamic> json) => _UserDto(
   isActive: json['isActive'] as bool,
   isVerified: json['isVerified'] as bool,
   languagePreference: json['languagePreference'] as String?,
+  agencyId: json['agencyId'] as String?,
+  agencyRole: json['agencyRole'] as String?,
   createdAt: json['createdAt'] as String,
 );
 
@@ -31,5 +33,7 @@ Map<String, dynamic> _$UserDtoToJson(_UserDto instance) => <String, dynamic>{
   'isActive': instance.isActive,
   'isVerified': instance.isVerified,
   'languagePreference': instance.languagePreference,
+  'agencyId': instance.agencyId,
+  'agencyRole': instance.agencyRole,
   'createdAt': instance.createdAt,
 };

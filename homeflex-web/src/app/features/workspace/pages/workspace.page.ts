@@ -9,10 +9,14 @@ import {
   Analytics,
   Booking,
   ChatRoom,
+  MaintenanceRequest,
+  MaintenanceStatus,
   Message,
   NotificationItem,
   Property,
   ReportItem,
+  User,
+  Vehicle,
   VehicleBooking,
 } from '../../../core/models/api.types';
 import {
@@ -30,6 +34,7 @@ type WorkspaceTab =
   | 'messages'
   | 'notifications'
   | 'profile'
+  | 'maintenance'
   | 'hosting'
   | 'admin';
 type WorkspaceTabItem = {
@@ -57,10 +62,13 @@ export class WorkspacePageComponent {
   protected readonly propertyBookings = signal<Booking[]>([]);
   protected readonly vehicleBookings = signal<VehicleBooking[]>([]);
   protected readonly myLeases = signal<any[]>([]);
+  protected readonly myMaintenanceRequests = signal<MaintenanceRequest[]>([]);
+  protected readonly landlordMaintenanceRequests = signal<MaintenanceRequest[]>([]);
   protected readonly notifications = signal<NotificationItem[]>([]);
   protected readonly chatRooms = signal<ChatRoom[]>([]);
   protected readonly messages = signal<Message[]>([]);
   protected readonly myProperties = signal<Property[]>([]);
+  protected readonly myVehicles = signal<Vehicle[]>([]);
   protected readonly hostBookings = signal<Booking[]>([]);
   protected readonly analytics = signal<Analytics | null>(null);
   protected readonly pendingProperties = signal<Property[]>([]);
@@ -68,12 +76,17 @@ export class WorkspacePageComponent {
   protected readonly kycStatus = signal<any>(null);
   protected readonly payoutSummary = signal<any>(null);
   protected readonly selectedHostPropertyAvailability = signal<any[]>([]);
+  protected readonly selectedHostVehicleConditionReports = signal<any[]>([]);
   protected readonly selectedRoomId = signal('');
   protected readonly selectedHostPropertyId = signal('');
+  protected readonly selectedHostVehicleId = signal('');
+  protected readonly selectedMaintenanceRequestId = signal('');
+  protected readonly maintenanceDetail = signal<MaintenanceRequest | null>(null);
   protected readonly profileMessage = signal('');
   protected readonly passwordMessage = signal('');
   protected readonly hostMessage = signal('');
   protected readonly propertyImages = signal<File[]>([]);
+  protected readonly vehicleImages = signal<File[]>([]);
 
   protected readonly unreadNotifications = computed(
     () => this.notifications().filter((item) => !item.isRead).length,
@@ -113,6 +126,21 @@ export class WorkspacePageComponent {
     availableFrom: [''],
     amenityIds: [[] as string[]],
   });
+
+  protected readonly maintenanceForm = this.fb.group({
+    propertyId: ['', Validators.required],
+    title: ['', Validators.required],
+    description: ['', Validators.required],
+    category: ['OTHER', Validators.required],
+    priority: ['MEDIUM', Validators.required],
+  });
+
+  protected readonly maintenanceStatusForm = this.fb.group({
+    status: ['REPORTED' as MaintenanceStatus, Validators.required],
+    resolutionNotes: [''],
+  });
+
+  protected readonly maintenanceImages = signal<File[]>([]);
 
   protected readonly vehicleForm = this.fb.group({
     brand: ['', Validators.required],
@@ -155,6 +183,7 @@ export class WorkspacePageComponent {
       { id: 'bookings', label: 'Bookings', description: 'Property and vehicle reservations' },
       { id: 'messages', label: 'Messages', description: 'Conversation threads and replies' },
       { id: 'notifications', label: 'Notifications', description: 'Alerts and system updates' },
+      { id: 'maintenance', label: 'Maintenance', description: 'Service and repair requests' },
       { id: 'profile', label: 'Profile', description: 'Account details and security' },
     ];
 
@@ -202,6 +231,10 @@ export class WorkspacePageComponent {
         this.session.isLandlord() || this.session.isAdmin()
           ? this.api.getMyProperties()
           : of({ data: [] }),
+      myVehicles:
+        this.session.isLandlord() || this.session.isAdmin()
+          ? this.api.getMyVehicles()
+          : of({ data: [] }),
       analytics: this.session.isAdmin() ? this.api.getAdminAnalytics() : of(null),
       pendingProperties: this.session.isAdmin()
         ? this.api.getPendingProperties()
@@ -210,6 +243,11 @@ export class WorkspacePageComponent {
         ? this.api.getReports()
         : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
       myLeases: this.api.getMyLeases(),
+      myMaintenance: this.api.getMyMaintenanceRequests(),
+      landlordMaintenance:
+        this.session.isLandlord() || this.session.isAdmin()
+          ? this.api.getLandlordMaintenanceRequests()
+          : of([]),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
@@ -217,9 +255,12 @@ export class WorkspacePageComponent {
         this.propertyBookings.set(response.propertyBookings.data);
         this.vehicleBookings.set(response.vehicleBookings.data);
         this.myLeases.set(response.myLeases.data);
+        this.myMaintenanceRequests.set(response.myMaintenance);
+        this.landlordMaintenanceRequests.set(response.landlordMaintenance);
         this.notifications.set(response.notifications.data);
         this.chatRooms.set(response.chatRooms.data);
         this.myProperties.set(response.myProperties.data);
+        this.myVehicles.set(response.myVehicles.data);
         this.analytics.set(response.analytics);
         this.pendingProperties.set(response.pendingProperties.data);
         this.reports.set(response.reports.data);
@@ -409,17 +450,141 @@ export class WorkspacePageComponent {
       });
   }
 
+  protected submitMaintenanceRequest(): void {
+    if (this.maintenanceForm.invalid) return;
+    const value = this.maintenanceForm.getRawValue() as any;
+    this.api
+      .createMaintenanceRequest(value)
+      .pipe(
+        switchMap((req) => {
+          if (this.maintenanceImages().length > 0) {
+            return this.api.uploadMaintenanceImages(req.id, this.maintenanceImages());
+          }
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.maintenanceForm.reset();
+        this.maintenanceImages.set([]);
+        this.loadMaintenanceRequests();
+      });
+  }
+
+  protected loadMaintenanceRequests(): void {
+    this.api
+      .getMyMaintenanceRequests()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((res) => this.myMaintenanceRequests.set(res));
+
+    if (this.session.user()?.role === 'LANDLORD' || this.session.user()?.role === 'ADMIN') {
+      this.api
+        .getLandlordMaintenanceRequests()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((res) => this.landlordMaintenanceRequests.set(res));
+    }
+  }
+
+  protected openMaintenanceDetail(id: string): void {
+    this.selectedMaintenanceRequestId.set(id);
+    this.api
+      .getMaintenanceRequest(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((res) => {
+        this.maintenanceDetail.set(res);
+        this.maintenanceStatusForm.patchValue({
+          status: res.status,
+          resolutionNotes: res.resolutionNotes ?? '',
+        });
+      });
+  }
+
+  protected updateMaintenanceStatus(): void {
+    if (this.maintenanceStatusForm.invalid || !this.maintenanceDetail()) return;
+    const value = this.maintenanceStatusForm.getRawValue() as any;
+    this.api
+      .updateMaintenanceStatus(this.maintenanceDetail()!.id, value)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((res) => {
+        this.maintenanceDetail.set(res);
+        this.loadMaintenanceRequests();
+      });
+  }
+
+  protected onMaintenanceImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.maintenanceImages.set(Array.from(input.files));
+    }
+  }
+
   protected createVehicle(): void {
     if (this.vehicleForm.invalid) {
+      this.vehicleForm.markAllAsTouched();
       return;
     }
 
     this.api
-      .createVehicle(this.vehicleForm.getRawValue())
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .createVehicle(this.vehicleForm.getRawValue() as any)
+      .pipe(
+        switchMap((res) => {
+          if (this.vehicleImages().length > 0) {
+            return this.api.uploadVehicleImages(res.id, this.vehicleImages());
+          }
+          return of(null);
+        }),
+      )
       .subscribe(() => {
         this.hostMessage.set('Vehicle created successfully.');
+        this.vehicleForm.reset();
+        this.vehicleImages.set([]);
+        this.loadMyVehicles();
       });
+  }
+
+  protected loadMyVehicles(): void {
+    this.api.getMyVehicles().subscribe((res) => this.myVehicles.set(res.data));
+  }
+
+  protected editVehicle(vehicle: Vehicle): void {
+    this.selectedHostVehicleId.set(vehicle.id);
+    this.vehicleForm.patchValue(vehicle as any);
+  }
+
+  protected updateVehicle(): void {
+    if (this.vehicleForm.invalid || !this.selectedHostVehicleId()) return;
+
+    this.api
+      .updateVehicle(this.selectedHostVehicleId(), this.vehicleForm.getRawValue() as any)
+      .subscribe(() => {
+        this.hostMessage.set('Vehicle updated successfully.');
+        this.selectedHostVehicleId.set('');
+        this.vehicleForm.reset();
+        this.loadMyVehicles();
+      });
+  }
+
+  protected deleteVehicle(id: string): void {
+    if (!confirm('Are you sure you want to delete this vehicle?')) return;
+
+    this.api.deleteVehicle(id).subscribe(() => {
+      this.hostMessage.set('Vehicle deleted.');
+      this.loadMyVehicles();
+    });
+  }
+
+  protected onVehicleImagesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.vehicleImages.set(Array.from(input.files));
+    }
+  }
+
+  protected loadVehicleConditionReports(id: string): void {
+    this.selectedHostVehicleId.set(id);
+    this.api.getVehicleConditionReports(id).subscribe((res) => {
+      this.selectedHostVehicleConditionReports.set(res.data);
+    });
   }
 
   protected loadHostBookings(propertyId: string): void {

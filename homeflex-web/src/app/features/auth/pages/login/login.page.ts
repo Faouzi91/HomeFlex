@@ -31,4 +31,13 @@ export class LoginPageComponent {
       this.router.navigateByUrl('/workspace');
     });
   }
+
+  protected socialLogin(provider: string): void {
+    // In a real app, you would use Google/Apple/Facebook SDKs here.
+    // For this prototype, we'll demonstrate the flow with a dummy token.
+    const dummyToken = 'dummy-token-' + Date.now();
+    this.session.socialLogin(provider, dummyToken).subscribe(() => {
+      this.router.navigateByUrl('/workspace');
+    });
+  }
 }

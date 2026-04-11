@@ -88,7 +88,7 @@ public class NotificationService {
         }
     }
 
-    private void createNotification(UUID userId, String title, String message,
+    public void createNotification(UUID userId, String title, String message,
                                     NotificationType type, String entityType, UUID entityId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -214,4 +214,25 @@ public class NotificationService {
         sendPushNotification(landlord.getId(), title, message);
     }
 
+    public void sendMaintenanceRequestNotification(UUID landlordId, String tenantName, String propertyTitle, UUID propertyId) {
+        String title = "New Maintenance Request";
+        String message = tenantName + " has reported a new issue for " + propertyTitle;
+
+        createNotification(landlordId, title, message,
+                NotificationType.SYSTEM, "PROPERTY", propertyId);
+
+        sendPushNotification(landlordId, title, message);
+        sendSmsNotification(landlordId, "HomeFlex: New maintenance request from " +
+                tenantName + " for " + propertyTitle, false);
+    }
+
+    public void sendMaintenanceStatusUpdateNotification(UUID tenantId, String titleText, String status, UUID propertyId) {
+        String title = "Maintenance Request Update";
+        String message = "Your maintenance request '" + titleText + "' status changed to " + status;
+
+        createNotification(tenantId, title, message,
+                NotificationType.SYSTEM, "PROPERTY", propertyId);
+
+        sendPushNotification(tenantId, title, message);
+    }
 }

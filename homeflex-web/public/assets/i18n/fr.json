@@ -1,0 +1,24 @@
+{
+  "NAV": {
+    "HOME": "Accueil",
+    "PROPERTIES": "Propriétés",
+    "VEHICLES": "Véhicules",
+    "LOGIN": "Connexion",
+    "REGISTER": "S'inscrire",
+    "WORKSPACE": "Espace de travail"
+  },
+  "PROPERTIES": {
+    "TITLE": "Immobilier à louer",
+    "SUBTITLE": "Parcourez des maisons et appartements de prestige avec des tarifs clairs.",
+    "SEARCH": "Rechercher",
+    "CITY": "Ville",
+    "TYPE": "Type de bien",
+    "MIN_PRICE": "Prix Min",
+    "MAX_PRICE": "Prix Max",
+    "BEDS": "Chambres",
+    "BATHS": "Salles de bain",
+    "APPLY": "Appliquer les filtres",
+    "FOUND": "{{count}} Propriétés trouvées",
+    "NO_RESULTS": "Aucune propriété ne correspond à ces filtres."
+  }
+}

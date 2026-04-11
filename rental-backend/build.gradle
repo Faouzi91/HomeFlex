@@ -60,6 +60,9 @@ dependencies {
     // Prometheus metrics export
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
+    // ELK Logging
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+
     // Resilience4j (circuit breaker, retry — programmatic API, no AOP annotations)
     implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
     implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'

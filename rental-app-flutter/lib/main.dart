@@ -37,6 +37,9 @@ import 'features/admin/screens/user_management_screen.dart';
 import 'features/admin/screens/admin_reports_screen.dart';
 import 'features/kyc/screens/kyc_verification_screen.dart';
 import 'features/landing/screens/landing_screen.dart';
+import 'features/properties/screens/maintenance_list_screen.dart';
+import 'features/properties/screens/maintenance_detail_screen.dart';
+import 'features/properties/screens/create_maintenance_request_screen.dart';
 import 'shared/widgets/responsive_scaffold.dart';
 
 void main() async {
@@ -92,7 +95,8 @@ String? _requiredRole(String path) {
       path == '/my-vehicles' ||
       path == '/vehicles/create' ||
       path.endsWith('/condition') ||
-      path == '/kyc') {
+      path == '/kyc' ||
+      path == '/landlord-maintenance') {
     return 'LANDLORD';
   }
   return null;
@@ -342,6 +346,26 @@ final _routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/vehicles/create',
         builder: (context, state) => const VehicleFormScreen(),
+      ),
+
+      GoRoute(
+        path: '/my-maintenance',
+        builder: (context, state) => const MaintenanceRequestListScreen(),
+      ),
+      GoRoute(
+        path: '/landlord-maintenance',
+        builder: (context, state) =>
+            const MaintenanceRequestListScreen(isLandlord: true),
+      ),
+      GoRoute(
+        path: '/maintenance/:id',
+        builder: (context, state) =>
+            MaintenanceRequestDetailScreen(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/properties/:propertyId/maintenance/create',
+        builder: (context, state) => CreateMaintenanceRequestScreen(
+            propertyId: state.pathParameters['propertyId']!),
       ),
 
       // Admin routes

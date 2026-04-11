@@ -27,23 +27,30 @@ public class PropertyIndexConsumer {
     private final PropertyRepository propertyRepository;
     private final PropertySearchRepository propertySearchRepository;
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @RabbitListener(queues = PropertySearchConfig.QUEUE_NAME)
     public void onPropertyIndexed(OutboxEventMessage message) {
         String propertyId = message.aggregateId().toString();
 
-        log.debug("Received PropertyIndexed event for property {}", propertyId);
+        try {
+            log.debug("Received PropertyIndexed event for property {}", propertyId);
 
-        Property property = propertyRepository.findById(message.aggregateId()).orElse(null);
+            Property property = propertyRepository.findById(message.aggregateId()).orElse(null);
 
-        if (property == null || property.getDeletedAt() != null) {
-            propertySearchRepository.deleteById(propertyId);
-            log.info("Removed property {} from search index (deleted or not found)", propertyId);
-            return;
+            if (property == null || property.getDeletedAt() != null) {
+                propertySearchRepository.deleteById(propertyId);
+                log.info("Removed property {} from search index (deleted or not found)", propertyId);
+                return;
+            }
+
+            PropertyDocument doc = toDocument(property);
+            propertySearchRepository.save(doc);
+            log.info("Indexed property {} into Elasticsearch", propertyId);
+        } catch (Exception e) {
+            log.error("Failed to index property {} into Elasticsearch: {}", propertyId, e.getMessage());
+            // Reject and don't requeue to trigger DLX/DLQ
+            throw new org.springframework.amqp.AmqpRejectAndDontRequeueException("Elasticsearch indexing failed", e);
         }
-
-        PropertyDocument doc = toDocument(property);
-        propertySearchRepository.save(doc);
-        log.info("Indexed property {} into Elasticsearch", propertyId);
     }
 
     private PropertyDocument toDocument(Property property) {
@@ -70,6 +77,9 @@ public class PropertyIndexConsumer {
                 .bedrooms(property.getBedrooms())
                 .bathrooms(property.getBathrooms())
                 .areaSqm(property.getAreaSqm() != null ? property.getAreaSqm().doubleValue() : null)
+                .amenityIds(property.getAmenities().stream()
+                        .map(a -> a.getId().toString())
+                        .collect(java.util.stream.Collectors.toList()))
                 .location(location)
                 .createdAt(property.getCreatedAt())
                 .build();

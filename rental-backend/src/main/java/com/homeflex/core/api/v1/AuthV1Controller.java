@@ -46,10 +46,17 @@ public class AuthV1Controller {
         return ResponseEntity.ok(new AuthResponse(tokens.user()));
     }
 
-    @PostMapping("/google")
-    public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody GoogleLoginRequest request,
-                                                     HttpServletResponse response) {
-        AuthTokens tokens = authService.googleLogin(request.idToken());
+    @PostMapping("/{provider}")
+    public ResponseEntity<AuthResponse> socialLogin(
+            @PathVariable String provider,
+            @Valid @RequestBody com.homeflex.core.dto.request.OAuthLoginRequest request,
+            HttpServletResponse response) {
+        AuthTokens tokens = switch (provider.toLowerCase()) {
+            case "google" -> authService.googleLogin(request.token());
+            case "apple" -> authService.appleLogin(request.token());
+            case "facebook" -> authService.facebookLogin(request.token());
+            default -> throw new com.homeflex.core.exception.DomainException("Unsupported OAuth provider: " + provider);
+        };
         addAuthCookies(response, tokens);
         return ResponseEntity.ok(new AuthResponse(tokens.user()));
     }

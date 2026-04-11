@@ -150,7 +150,7 @@ public class KycService {
 
     // ── Response records ───────────────────────────────────────────────
 
-    public record KycSessionResponse(String sessionId, String clientSecret) {}
+    public record KycSessionResponse(String sessionId, String clientSecret, String publishableKey) {}
 
     public record KycStatusResponse(
             String status,

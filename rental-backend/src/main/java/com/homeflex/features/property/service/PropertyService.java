@@ -123,6 +123,7 @@ public class PropertyService {
     }
 
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = com.homeflex.core.config.CacheConfig.PROPERTIES_CACHE, key = "#id")
     public PropertyDto getPropertyById(UUID id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
@@ -223,6 +224,7 @@ public class PropertyService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = com.homeflex.core.config.CacheConfig.PROPERTIES_CACHE, key = "#id")
     public PropertyDto updateProperty(UUID id, PropertyUpdateRequest request,
                                       List<MultipartFile> images,
                                       List<MultipartFile> videos,
@@ -256,6 +258,7 @@ public class PropertyService {
     }
 
     @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = com.homeflex.core.config.CacheConfig.PROPERTIES_CACHE, key = "#id")
     public void deleteProperty(UUID id, UUID landlordId) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));

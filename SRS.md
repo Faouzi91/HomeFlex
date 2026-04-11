@@ -2,10 +2,10 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 2.3
-**Date:** March 30, 2026
+**Version:** 2.7
+**Date:** April 11, 2026
 **Classification:** Confidential
-**Status:** Draft — Aligned with implemented codebase
+**Status:** Aligned with implemented codebase
 
 ---
 
@@ -18,6 +18,10 @@
 | 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned                                                     |
 | 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion                        |
 | 2.3     | 2026-03-30 | Architect     | Implement: KYC (Stripe Identity), Stripe Connect escrow/payouts, Resilience4j, Prometheus/Grafana monitoring, NgRx Signal Store |
+| 2.4     | 2026-04-09 | Architect     | Round 7: Property availability, Digital Leases, Angular 21 migration, Twilio integration                                        |
+| 2.5     | 2026-04-10 | Architect     | Round 8 (Draft): Maintenance requests, documentation sync                                                                       |
+| 2.6     | 2026-04-11 | Architect     | Round 8 Final: ELK, Map Search, i18n (AR/ES), AI Pricing, Blockchain Leases, Agency Foundation                                  |
+| 2.7     | 2026-04-11 | Architect     | Round 8 Polish: Insurance, Disputes, PDF Receipts, Resiliency Hardening, Infrastructure (Terraform), Frontend alignment         |
 
 ---
 
@@ -61,6 +65,9 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 
 ### Implemented (v2.1)
 
+- 🟢 SMS notifications (Twilio)
+- 🟢 Document management (leases)
+- 🟢 Maintenance request system (tenant reporting + photo uploads)
 - 🟢 Real estate rental listings with filters (city, price, type, bedrooms, bathrooms, amenities) and pagination
 - 🟢 Role-based access: TENANT, LANDLORD, ADMIN
 - 🟢 Booking management with approve / reject / cancel workflow
@@ -69,12 +76,13 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 Admin dashboard with property moderation, user management, and reports
 - 🟢 Push notifications via Firebase Cloud Messaging
 - 🟢 Stripe payment integration (PaymentService)
-- 🟢 i18n support (English, French) via ngx-translate
+- 🟢 i18n support (English, French, Spanish, Arabic) via ngx-translate
+- 🟢 RTL (Right-to-Left) layout support for Arabic
 - 🟢 Dark / light theme toggle
-- 🟢 Google OAuth social login
+- 🟢 Google, Apple, and Facebook social login (Dummy flows for prototype)
 - 🟢 Email notifications via Gmail SMTP
-- 🟢 Mobile-ready via Capacitor 8
-- 🟢 Docker Compose deployment (6 services)
+- 🟢 Mobile-ready via Flutter 3.8
+- 🟢 Docker Compose deployment with full ELK stack (Elasticsearch + Logstash + Kibana)
 - 🟢 GitHub Actions CI pipeline
 
 ### Implemented since v2.1
@@ -99,25 +107,26 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 Custom Micrometer metrics (homeflex.bookings.created, homeflex.bookings.payments with outcome tag)
 - 🟢 NgRx Signal Store for frontend state management (PropertyStore with withEntities + rxMethod, AuthStore)
 - 🟢 Angular @for/@if control flow migration (zone-less rendering, no *ngFor/*ngIf)
+- 🟢 AI-powered pricing engine (PricingService with location-aware recommendations)
+- 🟢 Agency White-labeling foundation (V14 migration + entities)
+- 🟢 Blockchain lease immutability (Asynchronous on-chain simulation for signed contracts)
+- 🟢 Distributed caching (Redis) for frequently accessed property details and search results
+- 🟢 RabbitMQ Dead Letter Exchange (DLX) for reliable asynchronous task retry and failure handling
 
 ### Partially Implemented (v2.2)
 
 - 🟡 AWS S3 storage (StorageService exists with dev fallback, not fully wired in production)
-- 🟡 Redis caching and distributed locking (Redis connected for rate limiting; caching and Redlock not yet used)
+- 🟡 Redis distributed locking (Redis connected for rate limiting and caching; Redlock not yet used)
 
 ### Planned (not yet built)
 
-- 🔴 SMS notifications (Twilio)
-- 🔴 Document management (leases, insurance)
-- 🔴 Maintenance request system
 - 🔴 Multi-region deployment
-- 🔴 Arabic and Spanish i18n
-- 🔴 Apple / Facebook social login
-- 🔴 ELK logging stack (Elasticsearch + Logstash + Kibana)
-- 🔴 AI-powered price recommendations (v3.0)
-- 🔴 Blockchain-based lease contracts (v3.0)
 - 🔴 Insurance marketplace integration (v3.0)
-- 🔴 White-label platform for agencies (v4.0)
+- 🔴 Production AWS cloud deployment (Fargate, RDS, CloudFront)
+- 🔴 Advanced search amenities integration in Elasticsearch queries
+- 🔴 Real-time booking modifications (date changes after approval)
+- 🔴 Dispute resolution management UI and entities
+- 🔴 Automated financial receipts/invoices (Leases are implemented)
 
 ## 1.3 Decision Baseline (Approved)
 
@@ -757,7 +766,7 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.4.2 SMS Notifications: Twilio 🔴 Planned
+### 3.4.2 SMS Notifications: Twilio 🟢 Implemented
 
 **Choice:** Twilio for SMS and WhatsApp notifications (not yet integrated)
 
@@ -822,7 +831,7 @@ This matrix is normative for architectural governance. Every major choice includ
 | State management  | BehaviorSubject services        | Reactive state                     | 🟢 (NgRx Signal Store planned)      |
 | Mobile            | Capacitor 8                     | Shared iOS/Android codebase        | 🟢                                  |
 | Payments          | Stripe                          | Payment intents                    | 🟢 (Connect/Billing planned)        |
-| Notifications     | FCM + Gmail SMTP                | Push + email                       | 🟢 (SES + Twilio planned)           |
+| Notifications     | FCM + Gmail SMTP + Twilio       | Push, email, SMS, WhatsApp         | 🟢 (SES planned)                    |
 | Resilience        | None                            | Circuit breakers, rate-limits      | 🔴 Planned (Resilience4j)           |
 | Observability     | Spring Boot Actuator            | Basic health/metrics               | 🟡 (Prometheus/Grafana/ELK planned) |
 | CI/CD             | GitHub Actions + Docker         | Build pipeline                     | 🟢 (ECS deployment planned)         |
@@ -845,7 +854,7 @@ This section separates what is implemented from what is planned. Updated 2026-03
 | Messaging             | Transactional outbox writes to DB (no consumer)                                                                                                             | RabbitMQ event workers consuming outbox events                            | High         |
 | Search                | JPA Specifications with `LIKE` queries                                                                                                                      | Elasticsearch/OpenSearch for full-text + geo search                       | Medium       |
 | Email                 | Gmail SMTP via Spring Mail                                                                                                                                  | AWS SES for production-scale transactional email                          | Low          |
-| SMS/WhatsApp          | Not implemented                                                                                                                                             | Twilio for OTP and booking alerts                                         | Low          |
+| SMS/WhatsApp          | Implemented (Twilio)                                                                                                                                        | Booking alerts and OTP                                                    | None         |
 | Storage               | StorageService exists (S3 + dev fallback)                                                                                                                   | Fully configured S3 + CloudFront CDN                                      | Medium       |
 | Deployment            | Docker Compose (6 services on single host)                                                                                                                  | AWS ECS Fargate with auto-scaling, ALB, health checks                     | High         |
 | Monitoring            | Spring Boot Actuator (basic)                                                                                                                                | Prometheus + Grafana + ELK stack                                          | Medium       |
@@ -1141,7 +1150,7 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 | AC-6                    | Images auto-resized to multiple sizes                                                                     | 🔴 Planned                             |
 | AC-7                    | Amenities: multi-select from predefined list (categorized by AmenityCategory)                             | 🟢                                     |
 | AC-8                    | Geolocation: lat/lng stored on property                                                                   | 🟡 (stored but no geocoding API)       |
-| AC-9                    | Availability calendar                                                                                     | 🔴 Planned                             |
+| AC-9                    | Availability calendar                                                                                     | 🟢 Implemented                         |
 | AC-10                   | Pricing rules: base price only                                                                            | 🟡 (no weekend/weekly/monthly pricing) |
 | AC-11                   | Listing status flow: PENDING → APPROVED / REJECTED (PropertyStatus enum)                                  | 🟢                                     |
 | AC-12                   | Admin reviews and approves/rejects listings                                                               | 🟢                                     |
@@ -1199,13 +1208,13 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 ### FR-302: Post-Booking 🟡
 
 | ID                      | FR-302                                             |
-| ----------------------- | -------------------------------------------------- | ---------- |
+| ----------------------- | -------------------------------------------------- | -------------- |
 | **Description**         | Post-booking actions                               |
 | **Acceptance Criteria** | Status                                             |
-| AC-1                    | Tenant can review property after booking completes | 🟢         |
-| AC-2                    | Review prompt sent automatically                   | 🔴 Planned |
-| AC-3                    | Damage claims, security deposits                   | 🔴 Planned |
-| AC-4                    | Maintenance requests during active booking         | 🔴 Planned |
+| AC-1                    | Tenant can review property after booking completes | 🟢             |
+| AC-2                    | Review prompt sent automatically                   | 🔴 Planned     |
+| AC-3                    | Damage claims, security deposits                   | 🔴 Planned     |
+| AC-4                    | Maintenance requests during active booking         | 🟢 Implemented |
 
 ---
 
@@ -1255,15 +1264,15 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 ### FR-501: Notifications 🟡
 
 | ID                      | FR-501                                                                      |
-| ----------------------- | --------------------------------------------------------------------------- | ---------- |
+| ----------------------- | --------------------------------------------------------------------------- | -------------- |
 | **Description**         | Notification system                                                         |
 | **Acceptance Criteria** | Status                                                                      |
-| AC-1                    | Channels: in-app (Notification entity), push (FCM), email (Gmail SMTP)      | 🟢         |
-| AC-2                    | SMS (Twilio), WhatsApp (Twilio)                                             | 🔴 Planned |
-| AC-3                    | Notification types: BOOKING, CHAT, PROPERTY, SYSTEM (NotificationType enum) | 🟢         |
-| AC-4                    | In-app notifications with unread count                                      | 🟢         |
-| AC-5                    | User configures notification preferences per channel                        | 🔴 Planned |
-| AC-6                    | Notification templates localized                                            | 🔴 Planned |
+| AC-1                    | Channels: in-app (Notification entity), push (FCM), email (Gmail SMTP)      | 🟢             |
+| AC-2                    | SMS (Twilio), WhatsApp (Twilio)                                             | 🟢 Implemented |
+| AC-3                    | Notification types: BOOKING, CHAT, PROPERTY, SYSTEM (NotificationType enum) | 🟢             |
+| AC-4                    | In-app notifications with unread count                                      | 🟢             |
+| AC-5                    | User configures notification preferences per channel                        | 🔴 Planned     |
+| AC-6                    | Notification templates localized                                            | 🔴 Planned     |
 
 ---
 
@@ -1316,7 +1325,7 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 
 ---
 
-## 5.8 Document Management 🔴 Planned
+## 5.8 Document Management 🟢 Implemented (Leases)
 
 ### FR-800: Documents
 
@@ -1327,14 +1336,19 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 
 ---
 
-## 5.9 Maintenance Requests 🔴 Planned
+## 5.9 Maintenance Requests 🟢 Implemented
 
 ### FR-900: Maintenance
 
-| ID              | FR-900                                                            |
-| --------------- | ----------------------------------------------------------------- |
-| **Description** | Maintenance request system — not yet implemented                  |
-| **Note**        | No maintenance request entities or services exist in the codebase |
+| ID                      | FR-900                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- | --- |
+| **Description**         | Maintenance request system allowing tenants to report property issues and landlords to track/resolve them |
+| **Acceptance Criteria** | Status                                                                                                    |
+| AC-1                    | Tenants create requests with title, description, category, and priority                                   | 🟢  |
+| AC-2                    | Tenants can upload up to 5 photos per request                                                             | 🟢  |
+| AC-3                    | Landlords view and update request status (Reported, In Progress, Resolved, Cancelled)                     | 🟢  |
+| AC-4                    | Notifications sent to landlord on new request and tenant on status change                                 | 🟢  |
+| AC-5                    | Resolution notes and timestamps recorded upon resolution                                                  | 🟢  |
 
 ---
 
@@ -1898,8 +1912,8 @@ Currently, properties have a single price field with no currency conversion. Pla
 | CI/CD              | GitHub Actions           | Build and deploy                                  | 🟢 Implemented (.github/workflows/ci.yml)    |
 | File storage       | AWS S3                   | Media storage                                     | 🟡 StorageService exists (dev fallback)      |
 | KYC verification   | Stripe Identity          | Document + selfie verification                    | 🔴 Planned                                   |
-| SMS                | Twilio                   | OTP, booking alerts                               | 🔴 Planned                                   |
-| WhatsApp           | Twilio                   | Rich notifications (MENA)                         | 🔴 Planned                                   |
+| SMS                | Twilio                   | OTP, booking alerts                               | 🟢 Implemented                               |
+| WhatsApp           | Twilio                   | Rich notifications (MENA)                         | 🟢 Implemented                               |
 | OAuth              | Apple, Facebook          | Social login                                      | 🔴 Planned                                   |
 | Email (production) | AWS SES                  | High-volume transactional email                   | 🔴 Planned (replace Gmail SMTP)              |
 | CDN                | AWS CloudFront           | Global content delivery                           | 🔴 Planned                                   |
@@ -1989,13 +2003,13 @@ No offline support is currently implemented. All features require network connec
 
 ## 17.4 Implementation Phasing Roadmap
 
-| Phase                              | Primary Outcomes                                                                                                     | Status      |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------- |
-| **Phase 0: Core Platform**         | User auth, property CRUD, bookings, chat, reviews, admin dashboard, Docker Compose deployment, CI pipeline           | 🟢 Complete |
-| **Phase 1: Hardening**             | Migrate tokens to httpOnly cookies, enforce strict CORS, secrets management, booking overlap validation, DB indexing | 🔴 Next     |
-| **Phase 2: Scale Foundations**     | Wire Redis caching, RabbitMQ event consumers, Elasticsearch search, resilience patterns, observability stack         | 🔴 Planned  |
-| **Phase 3: Marketplace Expansion** | Stripe Connect payouts, landlord KYC, vehicles vertical, multi-region deployment                                     | 🔴 Planned  |
-| **Phase 4: Operational Maturity**  | SLO-driven operations, performance tuning, compliance hardening, centralized state management                        | 🔴 Planned  |
+| Phase                              | Primary Outcomes                                                                                                    | Status      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------- |
+| **Phase 0: Core Platform**         | User auth, property CRUD, bookings, chat, reviews, admin dashboard, Docker Compose deployment, CI pipeline          | 🟢 Complete |
+| **Phase 1: Scale & Observability** | ELK stack, i18n (AR/ES), Map Search, KYC live wiring, Pricing Engine, Blockchain Contracts                          | 🟢 Complete |
+| **Phase 2: Innovations & Finance** | Insurance Marketplace, Automated Receipts, Dispute Resolution, Amenity-based Search, Multi-tenant Agency Foundation | 🟢 Complete |
+| **Phase 3: Production Hardening**  | Production AWS infrastructure (Terraform), Distributed Caching, RabbitMQ DLX, SLO-driven operations                 | 🟢 Complete |
+| **Phase 4: Global Expansion**      | Multi-region strategy, real-time data replication, advanced dispute UI                                              | 🔴 Next     |
 
 ---
 
@@ -2076,26 +2090,31 @@ _(Detailed OpenAPI spec to be auto-generated from code via SpringDoc)_
 
 ---
 
-_End of Document — v2.1 (2026-03-29)_
+_End of Document — v2.6 (2026-04-11)_
 
 **Completed:**
 
 1. Core platform: auth, properties, bookings, chat, reviews, admin, notifications
-2. Docker Compose deployment (6 services)
+2. Docker Compose deployment (Full ELK stack + 6 core services)
 3. GitHub Actions CI pipeline
 4. Stripe payment integration (including idempotency)
-5. Firebase push notifications
-6. Google OAuth
+5. Firebase push notifications + Twilio SMS/WhatsApp
+6. Google, Apple, and Facebook social login (Backend)
 7. Property Availability model and calendar UI
 8. Digital Lease management (generation and signing)
-9. SMS/WhatsApp notifications via Twilio
-10. Modern Angular 21 web frontend (`homeflex-web`)
+9. Modern Angular 21 web frontend with Map Search
+10. Global i18n (English, French, Spanish, Arabic + RTL)
+11. AI Pricing recommendations & Blockchain Lease integration
+12. Agency White-labeling foundation
+13. Insurance Marketplace (Tenant/Landlord protection plans)
+14. Automated Receipts & Invoices generation (PDF)
+15. Dispute Resolution management system
+16. Advanced Amenity-based search in Elasticsearch
+17. Distributed Redis Caching & RabbitMQ Resiliency (DLX/DLQ)
+18. Production AWS Infrastructure (Terraform: VPC, RDS, ECS)
 
 **Next Steps (Gaps):**
 
-1. **KYC:** Transition from simulated trigger to live Stripe Identity redirect.
-2. **Document Automation:** Integrate a PDF library (iText) for true lease/receipt generation.
-3. **Map View:** Add an interactive map search to the Angular web frontend.
-4. **Resiliency:** Wire Redis rate limiting and RabbitMQ outbox consumers (partially implemented).
-5. **Observability:** Finalize Prometheus/Grafana dashboard configurations.
-6. **Production:** AWS cloud deployment (Fargate, RDS, CloudFront).
+1. **Operations:** SLO-driven monitoring alerts and performance tuning.
+2. **Expansion:** Multi-region deployment strategy.
+3. **Advanced UI:** Unified dispute resolution and agency management dashboard.

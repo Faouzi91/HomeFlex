@@ -68,6 +68,12 @@ class ProfileScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/favorites'),
           ),
+          ListTile(
+            leading: const Icon(Icons.build_circle_outlined),
+            title: const Text('My Maintenance Requests'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/my-maintenance'),
+          ),
           if (user.role == 'LANDLORD' || user.role == 'ADMIN') ...[
             const Divider(),
             ListTile(
@@ -75,6 +81,12 @@ class ProfileScreen extends ConsumerWidget {
               title: const Text('My Properties'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/my-properties'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.build),
+              title: const Text('Property Maintenance'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/landlord-maintenance'),
             ),
             ListTile(
               leading: const Icon(Icons.directions_car),

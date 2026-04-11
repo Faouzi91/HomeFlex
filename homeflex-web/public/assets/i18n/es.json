@@ -1,0 +1,24 @@
+{
+  "NAV": {
+    "HOME": "Inicio",
+    "PROPERTIES": "Propiedades",
+    "VEHICLES": "Vehículos",
+    "LOGIN": "Acceso",
+    "REGISTER": "Registrarse",
+    "WORKSPACE": "Espacio de trabajo"
+  },
+  "PROPERTIES": {
+    "TITLE": "Inmuebles en alquiler",
+    "SUBTITLE": "Explore casas y apartamentos premium con precios claros y detalles de alta calidad.",
+    "SEARCH": "Buscar",
+    "CITY": "Ciudad",
+    "TYPE": "Tipo de propiedad",
+    "MIN_PRICE": "Precio mín",
+    "MAX_PRICE": "Precio máx",
+    "BEDS": "Camas",
+    "BATHS": "Baños",
+    "APPLY": "Aplicar filtros",
+    "FOUND": "{{count}} Propiedades encontradas",
+    "NO_RESULTS": "Ninguna propiedad coincide con esos filtros todavía."
+  }
+}

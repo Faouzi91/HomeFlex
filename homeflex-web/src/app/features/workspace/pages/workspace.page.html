@@ -523,6 +523,266 @@
             </div>
           }
 
+          @if (activeTab() === 'maintenance') {
+            <div class="space-y-12">
+              <header class="border-b border-slate-100 pb-8">
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Maintenance Requests</h1>
+                <p class="text-slate-500">
+                  Report issues with your rental or manage requests for your properties.
+                </p>
+              </header>
+
+              <div class="grid gap-10 lg:grid-cols-[1fr_400px]">
+                <div class="space-y-10">
+                  <!-- Landlord View -->
+                  @if (session.isLandlord() || session.isAdmin()) {
+                    <section class="space-y-6">
+                      <h2 class="text-2xl font-bold text-slate-900">Property Requests</h2>
+                      <div class="grid gap-4">
+                        @for (req of landlordMaintenanceRequests(); track req.id) {
+                          <div
+                            (click)="openMaintenanceDetail(req.id)"
+                            class="p-6 rounded-xl border border-slate-200 bg-white hover:border-brand-500 transition-all cursor-pointer flex items-center justify-between"
+                          >
+                            <div>
+                              <div class="flex items-center gap-3 mb-1">
+                                <h4 class="font-bold text-slate-900">{{ req.title }}</h4>
+                                <span
+                                  class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                                  [class]="
+                                    req.priority === 'URGENT' || req.priority === 'HIGH'
+                                      ? 'bg-rose-50 text-rose-600'
+                                      : 'bg-slate-100 text-slate-600'
+                                  "
+                                >
+                                  {{ req.priority }}
+                                </span>
+                              </div>
+                              <p class="text-sm text-slate-500">{{ req.propertyTitle }}</p>
+                              <p class="text-[10px] font-bold text-slate-400 uppercase mt-2">
+                                {{ date(req.createdAt) }} • {{ req.category }}
+                              </p>
+                            </div>
+                            <div class="text-right">
+                              <span
+                                class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-sm"
+                                [class]="
+                                  req.status === 'RESOLVED'
+                                    ? 'bg-emerald-500 text-white'
+                                    : req.status === 'IN_PROGRESS'
+                                      ? 'bg-amber-500 text-white'
+                                      : 'bg-slate-100 text-slate-600'
+                                "
+                              >
+                                {{ req.status }}
+                              </span>
+                            </div>
+                          </div>
+                        } @empty {
+                          <p class="py-10 text-center text-slate-400 font-bold italic">
+                            No property maintenance requests.
+                          </p>
+                        }
+                      </div>
+                    </section>
+                  }
+
+                  <!-- Tenant View -->
+                  <section class="space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900">My Reports</h2>
+                    <div class="grid gap-4">
+                      @for (req of myMaintenanceRequests(); track req.id) {
+                        <div
+                          (click)="openMaintenanceDetail(req.id)"
+                          class="p-6 rounded-xl border border-slate-200 bg-white hover:border-brand-500 transition-all cursor-pointer flex items-center justify-between"
+                        >
+                          <div>
+                            <h4 class="font-bold text-slate-900 mb-1">{{ req.title }}</h4>
+                            <p class="text-sm text-slate-500">{{ req.propertyTitle }}</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase mt-2">
+                              {{ date(req.createdAt) }} • {{ req.status }}
+                            </p>
+                          </div>
+                          <button
+                            class="text-brand-600 font-bold text-xs uppercase tracking-widest"
+                          >
+                            View
+                          </button>
+                        </div>
+                      } @empty {
+                        <p class="py-10 text-center text-slate-400 font-bold italic">
+                          You haven't reported any issues.
+                        </p>
+                      }
+                    </div>
+                  </section>
+                </div>
+
+                <aside class="space-y-8">
+                  <!-- Report Form -->
+                  <div class="p-8 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-6">
+                    <h3 class="text-xl font-bold text-slate-900">Report an Issue</h3>
+                    <form
+                      class="space-y-4"
+                      [formGroup]="maintenanceForm"
+                      (ngSubmit)="submitMaintenanceRequest()"
+                    >
+                      <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                          >Property</label
+                        >
+                        <select
+                          formControlName="propertyId"
+                          class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                        >
+                          <option value="">Select Property</option>
+                          @for (booking of propertyBookings(); track booking.id) {
+                            @if (booking.status === 'APPROVED' || booking.status === 'COMPLETED') {
+                              <option [value]="booking.property.id">
+                                {{ booking.property.title }}
+                              </option>
+                            }
+                          }
+                        </select>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Short Summary"
+                        formControlName="title"
+                        class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                      />
+                      <textarea
+                        rows="4"
+                        placeholder="Detailed Description"
+                        formControlName="description"
+                        class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                      ></textarea>
+                      <div class="grid grid-cols-2 gap-4">
+                        <select
+                          formControlName="category"
+                          class="w-full rounded-md border border-slate-200 px-3 py-2 text-xs font-bold bg-slate-50 focus:border-brand-500"
+                        >
+                          <option value="PLUMBING">Plumbing</option>
+                          <option value="ELECTRICAL">Electrical</option>
+                          <option value="APPLIANCE">Appliance</option>
+                          <option value="STRUCTURAL">Structural</option>
+                          <option value="OTHER">Other</option>
+                        </select>
+                        <select
+                          formControlName="priority"
+                          class="w-full rounded-md border border-slate-200 px-3 py-2 text-xs font-bold bg-slate-50 focus:border-brand-500"
+                        >
+                          <option value="LOW">Low</option>
+                          <option value="MEDIUM">Medium</option>
+                          <option value="HIGH">High</option>
+                          <option value="URGENT">Urgent</option>
+                        </select>
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                          >Evidence (Photos)</label
+                        >
+                        <input
+                          type="file"
+                          multiple
+                          (change)="onMaintenanceImageSelected($event)"
+                          class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+                        />
+                      </div>
+                      <button
+                        class="w-full rounded-md bg-brand-500 py-3 text-sm font-bold text-white hover:bg-brand-600 shadow-lg shadow-brand-100 transition-colors"
+                        type="submit"
+                        [disabled]="maintenanceForm.invalid"
+                      >
+                        Submit Report
+                      </button>
+                    </form>
+                  </div>
+
+                  <!-- Detail View / Modal Substitute -->
+                  @if (maintenanceDetail()) {
+                    <div
+                      class="p-8 rounded-2xl border border-brand-100 bg-brand-50/30 space-y-6 sticky top-8"
+                    >
+                      <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-slate-900">Request Detail</h3>
+                        <button (click)="maintenanceDetail.set(null)" class="text-slate-400">
+                          &times;
+                        </button>
+                      </div>
+                      <div>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
+                          {{ maintenanceDetail()?.category }} •
+                          {{ maintenanceDetail()?.priority }}
+                        </p>
+                        <h4 class="text-lg font-bold text-slate-900">
+                          {{ maintenanceDetail()?.title }}
+                        </h4>
+                        <p class="text-sm text-slate-600 mt-2">
+                          {{ maintenanceDetail()?.description }}
+                        </p>
+                      </div>
+
+                      @if (maintenanceDetail()?.imageUrls?.length) {
+                        <div class="grid grid-cols-3 gap-2">
+                          @for (url of maintenanceDetail()?.imageUrls; track url) {
+                            <img [src]="url" class="rounded aspect-square object-cover" />
+                          }
+                        </div>
+                      }
+
+                      @if (session.isLandlord() || session.isAdmin()) {
+                        <form
+                          class="pt-6 border-t border-brand-100 space-y-4"
+                          [formGroup]="maintenanceStatusForm"
+                          (ngSubmit)="updateMaintenanceStatus()"
+                        >
+                          <select
+                            formControlName="status"
+                            class="w-full rounded-md border border-slate-200 px-3 py-2 text-xs font-bold bg-white focus:border-brand-500"
+                          >
+                            <option value="REPORTED">Reported</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="RESOLVED">Resolved</option>
+                            <option value="CANCELLED">Cancelled</option>
+                          </select>
+                          <textarea
+                            rows="3"
+                            placeholder="Resolution notes..."
+                            formControlName="resolutionNotes"
+                            class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
+                          ></textarea>
+                          <button
+                            class="w-full rounded-md bg-slate-900 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors"
+                            type="submit"
+                          >
+                            Update Status
+                          </button>
+                        </form>
+                      } @else {
+                        <div class="pt-6 border-t border-brand-100">
+                          <p
+                            class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1"
+                          >
+                            Current Status
+                          </p>
+                          <p class="text-sm font-bold text-brand-600">
+                            {{ maintenanceDetail()?.status }}
+                          </p>
+                          @if (maintenanceDetail()?.resolutionNotes) {
+                            <p class="text-xs text-slate-500 mt-2 italic">
+                              "{{ maintenanceDetail()?.resolutionNotes }}"
+                            </p>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </aside>
+              </div>
+            </div>
+          }
+
           @if (activeTab() === 'profile') {
             <div class="space-y-12">
               <header class="border-b border-slate-100 pb-8">
@@ -750,6 +1010,53 @@
                     </div>
                   </div>
 
+                  <div class="space-y-6">
+                    <h2 class="text-2xl font-bold text-slate-900">Your Vehicles</h2>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      @for (vehicle of myVehicles(); track vehicle.id) {
+                        <div
+                          class="p-6 rounded-xl border border-slate-200 bg-white hover:border-brand-500 transition-all group flex flex-col justify-between"
+                        >
+                          <div>
+                            <h4
+                              class="font-bold text-slate-900 group-hover:text-brand-600 transition-colors"
+                            >
+                              {{ vehicle.brand }} {{ vehicle.model }}
+                            </h4>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                              {{ vehicle.pickupCity || 'No Location' }}
+                            </p>
+                          </div>
+                          <div class="mt-4 flex items-center justify-between">
+                            <div class="flex gap-3">
+                              <button
+                                (click)="editVehicle(vehicle)"
+                                class="text-[10px] font-bold text-brand-600 uppercase tracking-widest hover:underline"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                (click)="deleteVehicle(vehicle.id)"
+                                class="text-[10px] font-bold text-rose-500 uppercase tracking-widest hover:underline"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                            <span class="text-sm font-extrabold text-slate-900">{{
+                              price(vehicle.dailyPrice, vehicle.currency)
+                            }}</span>
+                          </div>
+                        </div>
+                      } @empty {
+                        <p
+                          class="col-span-full py-10 text-center border-2 border-dashed border-slate-100 rounded-xl text-slate-400 font-bold italic"
+                        >
+                          No vehicles listed yet.
+                        </p>
+                      }
+                    </div>
+                  </div>
+
                   @if (selectedHostPropertyId() && selectedHostPropertyAvailability().length) {
                     <div class="space-y-6 pt-10 border-t border-slate-100">
                       <h2 class="text-2xl font-bold text-slate-900">Calendar & Availability</h2>
@@ -952,8 +1259,14 @@
                   </div>
 
                   <div class="p-8 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-6">
-                    <h3 class="text-xl font-bold text-slate-900">New Vehicle</h3>
-                    <form class="space-y-4" [formGroup]="vehicleForm" (ngSubmit)="createVehicle()">
+                    <h3 class="text-xl font-bold text-slate-900">
+                      {{ selectedHostVehicleId() ? 'Edit Vehicle' : 'New Vehicle' }}
+                    </h3>
+                    <form
+                      class="space-y-4"
+                      [formGroup]="vehicleForm"
+                      (ngSubmit)="selectedHostVehicleId() ? updateVehicle() : createVehicle()"
+                    >
                       <div class="grid grid-cols-2 gap-4">
                         <input
                           type="text"
@@ -982,12 +1295,39 @@
                           class="w-full rounded-md border border-slate-200 px-4 py-2 text-sm focus:border-brand-500 outline-none"
                         />
                       </div>
-                      <button
-                        class="w-full rounded-md border border-brand-500 py-3 text-sm font-bold text-brand-600 hover:bg-brand-50 transition-colors"
-                        type="submit"
-                      >
-                        Create Vehicle
-                      </button>
+
+                      @if (!selectedHostVehicleId()) {
+                        <div class="space-y-1">
+                          <label
+                            class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                            >Photos</label
+                          >
+                          <input
+                            type="file"
+                            multiple
+                            (change)="onVehicleImagesSelected($event)"
+                            class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+                          />
+                        </div>
+                      }
+
+                      <div class="flex gap-2">
+                        <button
+                          class="flex-grow rounded-md border border-brand-500 py-3 text-sm font-bold text-brand-600 hover:bg-brand-50 transition-colors"
+                          type="submit"
+                        >
+                          {{ selectedHostVehicleId() ? 'Save Changes' : 'Create Vehicle' }}
+                        </button>
+                        @if (selectedHostVehicleId()) {
+                          <button
+                            (click)="selectedHostVehicleId.set(''); vehicleForm.reset()"
+                            class="px-4 py-3 rounded-md border border-slate-200 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-colors"
+                            type="button"
+                          >
+                            Cancel
+                          </button>
+                        }
+                      </div>
                     </form>
                   </div>
                 </aside>

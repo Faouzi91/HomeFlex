@@ -39,6 +39,7 @@ public class LeaseService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final BlockchainLeaseService blockchainLeaseService;
 
     @Transactional
     public PropertyLease generateLease(UUID bookingId) {
@@ -146,7 +147,12 @@ public class LeaseService {
         lease.setStatus("SIGNED");
         lease.setSignedAt(LocalDateTime.now());
 
-        return leaseRepository.save(lease);
+        PropertyLease savedLease = leaseRepository.save(lease);
+        
+        // Trigger async blockchain recording
+        blockchainLeaseService.recordLeaseOnChain(savedLease.getId());
+
+        return savedLease;
     }
 
     @Transactional(readOnly = true)
