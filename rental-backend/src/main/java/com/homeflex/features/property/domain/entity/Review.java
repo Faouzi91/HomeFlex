@@ -2,6 +2,7 @@ package com.homeflex.features.property.domain.entity;
 
 import com.homeflex.core.domain.entity.User;
 
+import com.homeflex.features.property.domain.enums.ReviewType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -21,9 +22,17 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ReviewType type = ReviewType.PROPERTY;
+
     @ManyToOne
-    @JoinColumn(name = "property_id", nullable = false)
+    @JoinColumn(name = "property_id")
     private Property property;
+
+    @ManyToOne
+    @JoinColumn(name = "target_user_id")
+    private User targetUser;
 
     @ManyToOne
     @JoinColumn(name = "reviewer_id", nullable = false)

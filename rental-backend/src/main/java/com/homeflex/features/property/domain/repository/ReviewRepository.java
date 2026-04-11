@@ -1,6 +1,7 @@
 package com.homeflex.features.property.domain.repository;
 
 import com.homeflex.features.property.domain.entity.Review;
+import com.homeflex.features.property.domain.enums.ReviewType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,13 +11,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-// ReviewRepository.java
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
-    List<Review> findByPropertyIdOrderByCreatedAtDesc(UUID propertyId);
+    List<Review> findByPropertyIdAndTypeOrderByCreatedAtDesc(UUID propertyId, ReviewType type);
 
-    Optional<Review> findByPropertyIdAndReviewerId(UUID propertyId, UUID reviewerId);
+    List<Review> findByTargetUserIdAndTypeOrderByCreatedAtDesc(UUID targetUserId, ReviewType type);
 
-    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.property.id = :propertyId")
+    Optional<Review> findByPropertyIdAndReviewerIdAndType(UUID propertyId, UUID reviewerId, ReviewType type);
+
+    Optional<Review> findByTargetUserIdAndReviewerIdAndType(UUID targetUserId, UUID reviewerId, ReviewType type);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.property.id = :propertyId AND r.type = 'PROPERTY'")
     Double getAverageRatingByPropertyId(@Param("propertyId") UUID propertyId);
+
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.targetUser.id = :userId AND r.type = 'TENANT'")
+    Double getAverageRatingByUserId(@Param("userId") UUID userId);
 }

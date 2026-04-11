@@ -175,13 +175,24 @@ export interface VehicleBooking {
   createdAt: string;
 }
 
+export type ReviewType = 'PROPERTY' | 'TENANT';
+
 export interface Review {
   id: string;
-  propertyId: string;
+  type: ReviewType;
+  propertyId?: string;
+  targetUser?: User;
   reviewer: User;
   rating: number;
   comment: string | null;
   createdAt: string;
+}
+
+export interface ReviewCreateRequest {
+  propertyId?: string;
+  targetUserId?: string;
+  rating: number;
+  comment: string;
 }
 
 export interface ChatRoom {

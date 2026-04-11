@@ -37,8 +37,18 @@ public class ReviewController {
     }
 
     @GetMapping("/property/{propertyId}/average")
-    public ResponseEntity<ApiValueResponse<Double>> getAverageRating(@PathVariable UUID propertyId) {
-        return ResponseEntity.ok(new ApiValueResponse<>(reviewService.getAverageRating(propertyId)));
+    public ResponseEntity<ApiValueResponse<Double>> getAveragePropertyRating(@PathVariable UUID propertyId) {
+        return ResponseEntity.ok(new ApiValueResponse<>(reviewService.getAveragePropertyRating(propertyId)));
+    }
+
+    @GetMapping("/tenant/{userId}")
+    public ResponseEntity<ApiListResponse<ReviewDto>> getTenantReviews(@PathVariable UUID userId) {
+        return ResponseEntity.ok(new ApiListResponse<>(reviewService.getTenantReviews(userId)));
+    }
+
+    @GetMapping("/tenant/{userId}/average")
+    public ResponseEntity<ApiValueResponse<Double>> getAverageTenantRating(@PathVariable UUID userId) {
+        return ResponseEntity.ok(new ApiValueResponse<>(reviewService.getAverageTenantRating(userId)));
     }
 
     @DeleteMapping("/{id}")

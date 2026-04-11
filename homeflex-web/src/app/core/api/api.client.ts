@@ -465,6 +465,48 @@ export class ApiClient {
     });
   }
 
+  // --- Reviews ---
+
+  createReview(request: ReviewCreateRequest): Observable<Review> {
+    return this.http.post<Review>(`${this.baseUrl}/reviews`, request);
+  }
+
+  getPropertyReviews(propertyId: string): Observable<ApiListResponse<Review>> {
+    return this.http.get<ApiListResponse<Review>>(`${this.baseUrl}/reviews/property/${propertyId}`);
+  }
+
+  getAveragePropertyRating(propertyId: string): Observable<ApiValueResponse<number>> {
+    return this.http.get<ApiValueResponse<number>>(
+      `${this.baseUrl}/reviews/property/${propertyId}/average`,
+    );
+  }
+
+  getTenantReviews(userId: string): Observable<ApiListResponse<Review>> {
+    return this.http.get<ApiListResponse<Review>>(`${this.baseUrl}/reviews/tenant/${userId}`);
+  }
+
+  getAverageTenantRating(userId: string): Observable<ApiValueResponse<number>> {
+    return this.http.get<ApiValueResponse<number>>(
+      `${this.baseUrl}/reviews/tenant/${userId}/average`,
+    );
+  }
+
+  deleteReview(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/reviews/${id}`);
+  }
+
+  // --- Currencies ---
+
+  getCurrencyRates(): Observable<Record<string, number>> {
+    return this.http.get<Record<string, number>>(`${this.baseUrl}/currencies/rates`);
+  }
+
+  convertCurrency(amount: number, from: string, to: string): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/currencies/convert`, {
+      params: this.buildParams({ amount, from, to }),
+    });
+  }
+
   // --- AI Pricing ---
 
   getPricingRecommendation(propertyId: string): Observable<PricingRecommendation> {

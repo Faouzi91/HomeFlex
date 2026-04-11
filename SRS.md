@@ -112,21 +112,23 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 Blockchain lease immutability (Asynchronous on-chain simulation for signed contracts)
 - 🟢 Distributed caching (Redis) for frequently accessed property details and search results
 - 🟢 RabbitMQ Dead Letter Exchange (DLX) for reliable asynchronous task retry and failure handling
+- 🟢 Distributed locking (Redlock via Redisson) for double-booking prevention in concurrent environments
+- 🟢 Two-Way Review system (Landlords review tenants and vice-versa)
+- 🟢 Multi-Currency engine with real-time conversion simulation
 
 ### Partially Implemented (v2.2)
 
 - 🟡 AWS S3 storage (StorageService exists with dev fallback, not fully wired in production)
-- 🟡 Redis distributed locking (Redis connected for rate limiting and caching; Redlock not yet used)
 
 ### Planned (not yet built)
 
 - 🔴 Multi-region deployment
-- 🔴 Insurance marketplace integration (v3.0)
-- 🔴 Production AWS cloud deployment (Fargate, RDS, CloudFront)
-- 🔴 Advanced search amenities integration in Elasticsearch queries
+- 🔴 SLO-driven operations and performance tuning
+- 🔴 Advanced UI for Agency and Disputes
 - 🔴 Real-time booking modifications (date changes after approval)
-- 🔴 Dispute resolution management UI and entities
-- 🔴 Automated financial receipts/invoices (Leases are implemented)
+- 🔴 Two-way reviews contributes to global Trust Score calculation
+- 🔴 App-level field encryption for PII
+- 🔴 GDPR data portability and erasure tooling
 
 ## 1.3 Decision Baseline (Approved)
 

@@ -28,6 +28,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     boolean existsByPropertyIdAndTenantIdAndStatusIn(UUID propertyId, UUID tenantId, List<BookingStatus> statuses);
 
+    boolean existsByTenantIdAndPropertyLandlordIdAndStatusIn(UUID tenantId, UUID landlordId, List<BookingStatus> statuses);
+
     List<Booking> findByStatus(BookingStatus status);
 
     // Analytics methods

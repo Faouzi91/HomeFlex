@@ -22,6 +22,8 @@ import com.stripe.model.PaymentIntent;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +48,7 @@ public class BookingService {
     private final BookingMapper bookingMapper;
     private final PropertyAvailabilityService availabilityService;
     private final com.homeflex.features.finance.service.FinanceService financeService;
+    private final RedissonClient redissonClient;
 
     private final Counter bookingsCreatedCounter;
     private final Counter paymentsSucceededCounter;
@@ -59,6 +62,7 @@ public class BookingService {
                           BookingMapper bookingMapper,
                           PropertyAvailabilityService availabilityService,
                           com.homeflex.features.finance.service.FinanceService financeService,
+                          RedissonClient redissonClient,
                           MeterRegistry meterRegistry) {
         this.bookingRepository = bookingRepository;
         this.propertyRepository = propertyRepository;
@@ -68,6 +72,7 @@ public class BookingService {
         this.bookingMapper = bookingMapper;
         this.availabilityService = availabilityService;
         this.financeService = financeService;
+        this.redissonClient = redissonClient;
 
         this.bookingsCreatedCounter = Counter.builder("homeflex.bookings.created")
                 .description("Total bookings created")
@@ -83,6 +88,27 @@ public class BookingService {
     }
 
     public BookingDto createBooking(BookingCreateRequest request, UUID tenantId) {
+        String lockKey = "lock:booking:property:" + request.propertyId();
+        RLock lock = redissonClient.getLock(lockKey);
+
+        try {
+            // Wait for up to 10 seconds to acquire the lock, lease for 30 seconds
+            if (lock.tryLock(10, 30, java.util.concurrent.TimeUnit.SECONDS)) {
+                try {
+                    return executeCreateBooking(request, tenantId);
+                } finally {
+                    lock.unlock();
+                }
+            } else {
+                throw new DomainException("Could not acquire booking lock. Please try again.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new DomainException("Booking interrupted");
+        }
+    }
+
+    private BookingDto executeCreateBooking(BookingCreateRequest request, UUID tenantId) {
         // Get property
         Property property = propertyRepository.findById(request.propertyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
