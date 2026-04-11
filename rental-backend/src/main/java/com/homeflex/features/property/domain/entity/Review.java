@@ -43,8 +43,38 @@ public class Review {
     @Max(5)
     private Integer rating;
 
+    @Column(name = "cleanliness_rating")
+    @Min(1) @Max(5)
+    private Integer cleanlinessRating;
+
+    @Column(name = "accuracy_rating")
+    @Min(1) @Max(5)
+    private Integer accuracyRating;
+
+    @Column(name = "communication_rating")
+    @Min(1) @Max(5)
+    private Integer communicationRating;
+
+    @Column(name = "location_rating")
+    @Min(1) @Max(5)
+    private Integer locationRating;
+
+    @Column(name = "checkin_rating")
+    @Min(1) @Max(5)
+    private Integer checkinRating;
+
+    @Column(name = "value_rating")
+    @Min(1) @Max(5)
+    private Integer valueRating;
+
     @Column(columnDefinition = "TEXT")
     private String comment;
+
+    @Column(name = "landlord_reply", columnDefinition = "TEXT")
+    private String landlordReply;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt;
 
     @CreationTimestamp
     @Column(name = "created_at")
@@ -53,4 +83,7 @@ public class Review {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

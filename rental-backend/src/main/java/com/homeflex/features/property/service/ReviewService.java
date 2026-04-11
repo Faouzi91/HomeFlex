@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -70,9 +71,25 @@ public class ReviewService {
         review.setProperty(property);
         review.setReviewer(reviewer);
         review.setRating(request.rating());
+        review.setCleanlinessRating(request.cleanlinessRating());
+        review.setAccuracyRating(request.accuracyRating());
+        review.setCommunicationRating(request.communicationRating());
+        review.setLocationRating(request.locationRating());
+        review.setCheckinRating(request.checkinRating());
+        review.setValueRating(request.valueRating());
         review.setComment(request.comment());
 
-        return reviewMapper.toDto(reviewRepository.save(review));
+        Review savedReview = reviewRepository.save(review);
+
+        // Update landlord's trust score
+        User landlord = property.getLandlord();
+        Double newTrustScore = reviewRepository.getAveragePropertyRatingByLandlordId(landlord.getId());
+        if (newTrustScore != null) {
+            landlord.setTrustScore(newTrustScore);
+            userRepository.save(landlord);
+        }
+
+        return reviewMapper.toDto(savedReview);
     }
 
     private ReviewDto createTenantReview(ReviewCreateRequest request, UUID reviewerId) {
@@ -102,6 +119,12 @@ public class ReviewService {
         review.setTargetUser(targetUser);
         review.setReviewer(reviewer);
         review.setRating(request.rating());
+        review.setCleanlinessRating(request.cleanlinessRating());
+        review.setAccuracyRating(request.accuracyRating());
+        review.setCommunicationRating(request.communicationRating());
+        review.setLocationRating(request.locationRating());
+        review.setCheckinRating(request.checkinRating());
+        review.setValueRating(request.valueRating());
         review.setComment(request.comment());
 
         Review savedReview = reviewRepository.save(review);
@@ -158,5 +181,24 @@ public class ReviewService {
             tenant.setTrustScore(newTrustScore != null ? newTrustScore : 5.0);
             userRepository.save(tenant);
         }
+    }
+
+    @Transactional
+    public ReviewDto replyToReview(UUID reviewId, String reply, UUID landlordId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
+
+        if (review.getType() != ReviewType.PROPERTY) {
+            throw new DomainException("Can only reply to property reviews");
+        }
+
+        if (!review.getProperty().getLandlord().getId().equals(landlordId)) {
+            throw new UnauthorizedException("Not authorized to reply to this review");
+        }
+
+        review.setLandlordReply(reply);
+        review.setRepliedAt(LocalDateTime.now());
+
+        return reviewMapper.toDto(reviewRepository.save(review));
     }
 }

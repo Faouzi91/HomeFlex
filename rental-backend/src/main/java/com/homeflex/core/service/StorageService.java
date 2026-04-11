@@ -3,6 +3,7 @@ package com.homeflex.core.service;
 import com.homeflex.core.exception.DomainException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +14,12 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.UUID;
 
@@ -63,6 +69,20 @@ public class StorageService {
 
     public String uploadFile(MultipartFile file, String folder) {
         String fileName = folder + "/" + UUID.randomUUID() + "-" + sanitizeFilename(file.getOriginalFilename());
+        
+        byte[] finalData;
+        String contentType = file.getContentType();
+
+        try {
+            if (contentType != null && contentType.startsWith("image/")) {
+                finalData = resizeImage(file.getInputStream(), contentType);
+            } else {
+                finalData = file.getBytes();
+            }
+        } catch (IOException e) {
+            log.error("Failed to read file input stream", e);
+            throw new DomainException("Failed to process file upload");
+        }
 
         if (s3Client == null) {
             log.debug("S3 not configured. Would upload: {}", fileName);
@@ -73,11 +93,10 @@ public class StorageService {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
                     .key(fileName)
-                    .contentType(file.getContentType())
+                    .contentType(contentType)
                     .build();
 
-            s3Client.putObject(putObjectRequest,
-                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(finalData));
 
             String url;
             if (endpoint != null && !endpoint.isEmpty()) {
@@ -90,7 +109,7 @@ public class StorageService {
             log.debug("File uploaded to S3: {}", url);
             return url;
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Failed to upload file to S3: {}", fileName, e);
             throw new DomainException("File upload failed. Please try again.");
         }
@@ -127,6 +146,20 @@ public class StorageService {
         } catch (Exception e) {
             log.error("Failed to upload byte array to S3: {}", fullPath, e);
             throw new DomainException("File upload failed. Please try again.");
+        }
+    }
+
+    private byte[] resizeImage(InputStream inputStream, String contentType) throws IOException {
+        BufferedImage originalImage = ImageIO.read(inputStream);
+        if (originalImage == null) return new byte[0];
+
+        // Max width 1200px, maintain aspect ratio
+        BufferedImage resizedImage = Scalr.resize(originalImage, Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, 1200);
+        
+        String formatName = contentType.substring(contentType.indexOf("/") + 1);
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ImageIO.write(resizedImage, formatName, baos);
+            return baos.toByteArray();
         }
     }
 

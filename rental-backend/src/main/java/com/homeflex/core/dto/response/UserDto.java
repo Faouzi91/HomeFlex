@@ -17,5 +17,6 @@ public record UserDto(
         UUID agencyId,
         String agencyRole,
         Double trustScore,
+        Integer profileCompleteness,
         LocalDateTime createdAt
 ) {}

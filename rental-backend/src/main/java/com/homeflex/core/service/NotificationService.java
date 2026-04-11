@@ -106,12 +106,17 @@ public class NotificationService {
     }
 
     private void sendPushNotification(UUID userId, String title, String body) {
-        firebaseNotificationGateway.sendPush(userId, title, body);
+        userRepository.findById(userId).ifPresent(user -> {
+            if (Boolean.TRUE.equals(user.getPushNotificationsEnabled())) {
+                firebaseNotificationGateway.sendPush(userId, title, body);
+            }
+        });
     }
 
     private void sendSmsNotification(UUID userId, String body, boolean preferWhatsApp) {
         userRepository.findById(userId).ifPresent(user -> {
-            if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
+            if (Boolean.TRUE.equals(user.getSmsNotificationsEnabled()) && 
+                user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
                 if (preferWhatsApp) {
                     twilioSmsGateway.sendWhatsApp(user.getPhoneNumber(), body);
                 } else {

@@ -126,12 +126,19 @@ public class BookingService {
         validateNoDateOverlap(request);
 
         // Compute total price for rental bookings
-        BigDecimal totalPrice = null;
-        BigDecimal platformFee = null;
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        BigDecimal platformFee = BigDecimal.ZERO;
+        BigDecimal cleaningFee = property.getCleaningFee() != null ? property.getCleaningFee() : BigDecimal.ZERO;
+        BigDecimal taxAmount = BigDecimal.ZERO;
+
         if (request.startDate() != null && request.endDate() != null && property.getPrice() != null) {
             long days = ChronoUnit.DAYS.between(request.startDate(), request.endDate()) + 1;
-            totalPrice = property.getPrice().multiply(BigDecimal.valueOf(days));
-            platformFee = paymentService.computePlatformFee(totalPrice);
+            BigDecimal basePrice = property.getPrice().multiply(BigDecimal.valueOf(days));
+            
+            platformFee = basePrice.multiply(new BigDecimal("0.15")).setScale(2, java.math.RoundingMode.HALF_UP);
+            taxAmount = basePrice.multiply(new BigDecimal("0.05")).setScale(2, java.math.RoundingMode.HALF_UP); // 5% tax
+            
+            totalPrice = basePrice.add(cleaningFee).add(taxAmount);
         }
 
         // Create booking
@@ -147,6 +154,8 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING);
         booking.setTotalPrice(totalPrice);
         booking.setPlatformFee(platformFee);
+        booking.setCleaningFee(cleaningFee);
+        booking.setTaxAmount(taxAmount);
 
         booking = bookingRepository.save(booking);
         bookingsCreatedCounter.increment();
@@ -463,35 +472,24 @@ public class BookingService {
         return bookingMapper.toDto(booking);
     }
 
-    public BookingDto rejectModification(UUID bookingId, String reason, UUID landlordId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 0 * * * *") // Every hour
+    public void autoRejectExpiredPendingBookings() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
+        List<Booking> expiredBookings = bookingRepository.findByStatusAndCreatedAtBefore(
+                BookingStatus.PENDING, cutoff);
 
-        if (!booking.getProperty().getLandlord().getId().equals(landlordId)) {
-            throw new UnauthorizedException("Not authorized to reject this modification");
+        for (Booking booking : expiredBookings) {
+            log.info("Auto-rejecting expired pending booking {}", booking.getId());
+            booking.setStatus(BookingStatus.REJECTED);
+            booking.setLandlordResponse("Auto-rejected due to landlord inactivity (24h timeout).");
+            booking.setRespondedAt(LocalDateTime.now());
+            bookingRepository.save(booking);
+
+            notificationService.sendBookingResponseNotification(
+                    booking.getTenant().getId(),
+                    booking.getProperty(),
+                    false
+            );
         }
-
-        if (booking.getStatus() != BookingStatus.PENDING_MODIFICATION) {
-            throw new DomainException("No pending modification request found");
-        }
-
-        booking.setStatus(BookingStatus.APPROVED); // Revert to approved
-        booking.setLandlordResponse(reason);
-        booking.setProposedStartDate(null);
-        booking.setProposedEndDate(null);
-        booking.setModificationReason(null);
-
-        booking = bookingRepository.save(booking);
-
-        notificationService.createNotification(
-                booking.getTenant().getId(),
-                "Modification Rejected",
-                "Your date change request for " + booking.getProperty().getTitle() + " was rejected.",
-                com.homeflex.core.domain.enums.NotificationType.SYSTEM,
-                "BOOKING",
-                booking.getId()
-        );
-
-        return bookingMapper.toDto(booking);
     }
 }

@@ -52,6 +52,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final UserMapper userMapper;
+    private final com.homeflex.core.security.LoginAttemptService loginAttemptService;
 
     @Value("${app.google.client-id:dummy-client-id-for-development}")
     private String googleClientId;
@@ -90,12 +91,21 @@ public class AuthService {
     }
 
     public AuthTokens login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.email(),
-                        request.password()
-                )
-        );
+        if (loginAttemptService.isBlocked(request.email())) {
+            throw new DomainException("Your account is temporarily locked due to too many failed login attempts. Please try again later.");
+        }
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.email(),
+                            request.password()
+                    )
+            );
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            loginAttemptService.loginFailed(request.email());
+            throw e;
+        }
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -104,6 +114,7 @@ public class AuthService {
             throw new DomainException("Account is suspended");
         }
 
+        loginAttemptService.loginSucceeded(request.email());
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
 

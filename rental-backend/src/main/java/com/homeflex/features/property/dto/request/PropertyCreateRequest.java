@@ -27,10 +27,16 @@ public record PropertyCreateRequest(
         BigDecimal areaSqm,
         Integer floorNumber,
         Integer totalFloors,
+        String cancellationPolicy,
+        BigDecimal cleaningFee,
+        BigDecimal securityDeposit,
         LocalDate availableFrom,
         List<UUID> amenityIds
 ) {
     public PropertyCreateRequest {
         if (currency == null || currency.isBlank()) currency = "XAF";
+        if (cancellationPolicy == null || cancellationPolicy.isBlank()) cancellationPolicy = "FLEXIBLE";
+        if (cleaningFee == null) cleaningFee = BigDecimal.ZERO;
+        if (securityDeposit == null) securityDeposit = BigDecimal.ZERO;
     }
 }

@@ -74,4 +74,32 @@ public class AdminController {
         String notes = request != null ? request.reason() : null;
         return ResponseEntity.ok(adminService.resolveReport(id, adminId, notes));
     }
+
+    // ── System Configuration ────────────────────────────────────────────
+
+    @GetMapping("/configs")
+    public ResponseEntity<java.util.List<com.homeflex.core.domain.entity.SystemConfig>> getConfigs() {
+        return ResponseEntity.ok(adminService.getAllConfigs());
+    }
+
+    @PatchMapping("/configs/{key}")
+    public ResponseEntity<com.homeflex.core.domain.entity.SystemConfig> updateConfig(
+            @PathVariable String key,
+            @RequestParam String value) {
+        return ResponseEntity.ok(adminService.updateConfig(key, value));
+    }
+
+    // ── Amenity Management ──────────────────────────────────────────────
+
+    @PostMapping("/amenities")
+    public ResponseEntity<com.homeflex.features.property.domain.entity.Amenity> createAmenity(
+            @RequestBody com.homeflex.features.property.domain.entity.Amenity amenity) {
+        return ResponseEntity.ok(adminService.createAmenity(amenity));
+    }
+
+    @DeleteMapping("/amenities/{id}")
+    public ResponseEntity<Void> deleteAmenity(@PathVariable UUID id) {
+        adminService.deleteAmenity(id);
+        return ResponseEntity.noContent().build();
+    }
 }

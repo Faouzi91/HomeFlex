@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.time.LocalDate;
@@ -31,6 +32,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     boolean existsByTenantIdAndPropertyLandlordIdAndStatusIn(UUID tenantId, UUID landlordId, List<BookingStatus> statuses);
 
     List<Booking> findByStatus(BookingStatus status);
+
+    List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, LocalDateTime createdAt);
 
     // Analytics methods
     long countByStatus(BookingStatus status);

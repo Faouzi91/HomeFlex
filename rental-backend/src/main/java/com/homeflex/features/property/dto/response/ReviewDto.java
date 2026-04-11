@@ -13,6 +13,14 @@ public record ReviewDto(
         UserDto targetUser,
         UserDto reviewer,
         Integer rating,
+        Integer cleanlinessRating,
+        Integer accuracyRating,
+        Integer communicationRating,
+        Integer locationRating,
+        Integer checkinRating,
+        Integer valueRating,
         String comment,
+        String landlordReply,
+        LocalDateTime repliedAt,
         LocalDateTime createdAt
 ) {}

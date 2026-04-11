@@ -103,7 +103,21 @@ public class AuthV1Controller {
         return ResponseEntity.ok(new ApiValueResponse<>("Password reset successful"));
     }
 
+    @PostMapping("/otp/send")
+    public ResponseEntity<ApiValueResponse<String>> sendOtp(@RequestParam String phoneNumber) {
+        otpService.sendOtp(phoneNumber);
+        return ResponseEntity.ok(new ApiValueResponse<>("OTP sent successfully"));
+    }
+
+    @PostMapping("/otp/verify")
+    public ResponseEntity<ApiValueResponse<Boolean>> verifyOtp(@RequestParam String phoneNumber, @RequestParam String otp) {
+        boolean verified = otpService.verifyOtp(phoneNumber, otp);
+        return ResponseEntity.ok(new ApiValueResponse<>(verified));
+    }
+
     // ── Cookie helpers ──────────────────────────────────────────────────
+
+    private final com.homeflex.core.service.OtpService otpService;
 
     private void addAuthCookies(HttpServletResponse response, AuthTokens tokens) {
         var cookieCfg = appProperties.getJwt().getCookie();

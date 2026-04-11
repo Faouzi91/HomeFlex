@@ -141,6 +141,20 @@ public class ChatService {
         messageRepository.save(message);
     }
 
+    public void markRoomAsRead(UUID roomId, UUID userId) {
+        List<Message> unreadMessages = messageRepository.findByChatRoomIdAndIsReadFalse(roomId).stream()
+                .filter(m -> !m.getSender().getId().equals(userId))
+                .collect(Collectors.toList());
+
+        LocalDateTime now = LocalDateTime.now();
+        unreadMessages.forEach(m -> {
+            m.setIsRead(true);
+            m.setReadAt(now);
+        });
+
+        messageRepository.saveAll(unreadMessages);
+    }
+
     public int getUnreadMessageCount(UUID userId) {
         return messageRepository.countUnreadMessagesForUser(userId);
     }

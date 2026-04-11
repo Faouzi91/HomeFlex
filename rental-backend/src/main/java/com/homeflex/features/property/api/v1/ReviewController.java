@@ -60,4 +60,14 @@ public class ReviewController {
         reviewService.deleteReview(id, userId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{id}/reply")
+    @PreAuthorize("hasRole('LANDLORD')")
+    public ResponseEntity<ReviewDto> replyToReview(
+            @PathVariable UUID id,
+            @RequestParam String reply,
+            Authentication authentication) {
+        UUID landlordId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(reviewService.replyToReview(id, reply, landlordId));
+    }
 }

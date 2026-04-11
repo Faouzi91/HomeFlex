@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Audited(withModifiedFlag = true)
 public class Booking {
 
     @Id
@@ -68,6 +70,12 @@ public class Booking {
     @Column(name = "platform_fee", precision = 12, scale = 2)
     private BigDecimal platformFee;
 
+    @Column(name = "cleaning_fee", precision = 12, scale = 2)
+    private BigDecimal cleaningFee;
+
+    @Column(name = "tax_amount", precision = 12, scale = 2)
+    private BigDecimal taxAmount;
+
     @Column(name = "stripe_payment_intent_id")
     private String stripePaymentIntentId;
 
@@ -99,5 +107,7 @@ public class Booking {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-}
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+}

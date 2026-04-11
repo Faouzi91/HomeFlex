@@ -133,4 +133,9 @@ public class PropertyV1Controller {
     public ResponseEntity<ApiListResponse<ReportDto>> getReportsByProperty(@PathVariable UUID id) {
         return ResponseEntity.ok(new ApiListResponse<>(adminService.getReportsByProperty(id)));
     }
+
+    @GetMapping("/compare")
+    public ResponseEntity<ApiListResponse<PropertyDto>> compareProperties(@RequestParam List<UUID> ids) {
+        return ResponseEntity.ok(new ApiListResponse<>(propertyService.getPropertiesByIds(ids)));
+    }
 }

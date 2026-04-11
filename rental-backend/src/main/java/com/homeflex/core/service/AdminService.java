@@ -14,8 +14,12 @@ import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.features.property.domain.repository.BookingRepository;
 import com.homeflex.core.domain.repository.MessageRepository;
 import com.homeflex.features.property.domain.repository.ReportedListingRepository;
+import com.homeflex.core.domain.repository.SystemConfigRepository;
+import com.homeflex.features.property.domain.repository.AmenityRepository;
 import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.domain.entity.User;
+import com.homeflex.core.domain.entity.SystemConfig;
+import com.homeflex.features.property.domain.entity.Amenity;
 import com.homeflex.features.property.domain.entity.ReportedListing;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.enums.BookingStatus;
@@ -41,6 +45,8 @@ public class AdminService {
     private final BookingRepository bookingRepository;
     private final MessageRepository messageRepository;
     private final ReportedListingRepository reportedListingRepository;
+    private final SystemConfigRepository systemConfigRepository;
+    private final AmenityRepository amenityRepository;
     private final NotificationService notificationService;
     private final PropertyMapper propertyMapper;
     private final UserMapper userMapper;
@@ -103,74 +109,52 @@ public class AdminService {
         return userMapper.toDto(user);
     }
 
-    // helper to convert List<Object[]> to Map<String, Long>
     private Map<String, Long> toMapFromObjectArray(List<Object[]> rows) {
         if (rows == null) return Collections.emptyMap();
         return rows.stream()
                 .filter(r -> r != null && r.length >= 2)
                 .collect(Collectors.toMap(
-                        r -> String.valueOf(r[0]),                      // group key as string
-                        r -> ((Number) r[1]).longValue()               // count as long
+                        r -> String.valueOf(r[0]),
+                        r -> ((Number) r[1]).longValue()
                 ));
     }
 
     public AnalyticsDto getAnalytics() {
-        // User statistics
         long totalUsers = userRepository.count();
         long totalTenants = userRepository.countByRole(UserRole.TENANT);
         long totalLandlords = userRepository.countByRole(UserRole.LANDLORD);
 
-        // Property statistics
         long totalProperties = propertyRepository.count();
         long pendingProperties = propertyRepository.countByStatus(PropertyStatus.PENDING);
         long approvedProperties = propertyRepository.countByStatus(PropertyStatus.APPROVED);
 
-        // Booking statistics
         long totalBookings = bookingRepository.count();
         long pendingBookings = bookingRepository.countByStatus(BookingStatus.PENDING);
         long approvedBookings = bookingRepository.countByStatus(BookingStatus.APPROVED);
 
-        // Message statistics
         long totalMessages = messageRepository.count();
 
-        // Properties by type
-        // Properties by type
         List<Object[]> propsByTypeRows = propertyRepository.countByPropertyType();
         Map<String, Long> propertiesByType = toMapFromObjectArray(propsByTypeRows);
 
-        // Properties by city
         List<Object[]> propsByCityRows = propertyRepository.countByCity();
         Map<String, Long> propertiesByCity = toMapFromObjectArray(propsByCityRows);
 
-        // Bookings by status
         List<Object[]> bookingsByStatusRows = bookingRepository.countByStatusGrouped();
         Map<String, Long> bookingsByStatus = toMapFromObjectArray(bookingsByStatusRows);
 
-
-        // Top viewed properties
         List<TopPropertyDto> topViewedProperties = adminMapper.toTopPropertyDtoList(
                 propertyRepository.findTop10ByOrderByViewCountDesc());
 
-        // Top favorited properties
         List<TopPropertyDto> topFavoritedProperties = adminMapper.toTopPropertyDtoList(
                 propertyRepository.findTop10ByOrderByFavoriteCountDesc());
 
         return new AnalyticsDto(
-                totalUsers,
-                totalTenants,
-                totalLandlords,
-                totalProperties,
-                pendingProperties,
-                approvedProperties,
-                totalBookings,
-                pendingBookings,
-                approvedBookings,
-                totalMessages,
-                propertiesByType,
-                propertiesByCity,
-                bookingsByStatus,
-                topViewedProperties,
-                topFavoritedProperties
+                totalUsers, totalTenants, totalLandlords,
+                totalProperties, pendingProperties, approvedProperties,
+                totalBookings, pendingBookings, approvedBookings,
+                totalMessages, propertiesByType, propertiesByCity, bookingsByStatus,
+                topViewedProperties, topFavoritedProperties
         );
     }
 
@@ -192,7 +176,6 @@ public class AdminService {
         report.setResolvedAt(LocalDateTime.now());
         report = reportedListingRepository.save(report);
 
-        // Notify the reporter that their report was reviewed
         notificationService.sendReportResolvedNotification(report.getReporter(), report.getProperty(), notes);
 
         return reportMapper.toDto(report);
@@ -222,5 +205,24 @@ public class AdminService {
                 .stream()
                 .map(reportMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    public List<SystemConfig> getAllConfigs() {
+        return systemConfigRepository.findAll();
+    }
+
+    public SystemConfig updateConfig(String key, String value) {
+        SystemConfig config = systemConfigRepository.findByConfigKey(key)
+                .orElseThrow(() -> new ResourceNotFoundException("Config not found: " + key));
+        config.setConfigValue(value);
+        return systemConfigRepository.save(config);
+    }
+
+    public Amenity createAmenity(Amenity amenity) {
+        return amenityRepository.save(amenity);
+    }
+
+    public void deleteAmenity(UUID id) {
+        amenityRepository.deleteById(id);
     }
 }

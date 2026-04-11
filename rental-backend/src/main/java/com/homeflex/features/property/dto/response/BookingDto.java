@@ -20,6 +20,8 @@ public record BookingDto(
         Integer numberOfOccupants,
         BigDecimal totalPrice,
         BigDecimal platformFee,
+        BigDecimal cleaningFee,
+        BigDecimal taxAmount,
         String stripePaymentIntentId,
         String landlordResponse,
         LocalDateTime respondedAt,

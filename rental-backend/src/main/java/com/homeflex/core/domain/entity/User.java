@@ -16,6 +16,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@org.hibernate.envers.Audited
 public class User {
 
     @Id
@@ -73,6 +74,15 @@ public class User {
     @Column(name = "trust_score")
     private Double trustScore = 5.0;
 
+    @Column(name = "email_notifications_enabled")
+    private Boolean emailNotificationsEnabled = true;
+
+    @Column(name = "push_notifications_enabled")
+    private Boolean pushNotificationsEnabled = true;
+
+    @Column(name = "sms_notifications_enabled")
+    private Boolean smsNotificationsEnabled = true;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -83,4 +93,7 @@ public class User {
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }

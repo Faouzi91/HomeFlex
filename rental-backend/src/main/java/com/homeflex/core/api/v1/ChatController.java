@@ -78,5 +78,15 @@ public class ChatController {
         chatService.markMessageAsRead(messageId, userId);
         return ResponseEntity.ok().build();
     }
+
+    @PatchMapping("/rooms/{roomId}/read")
+    public ResponseEntity<Void> markRoomAsRead(
+            @PathVariable UUID roomId,
+            Authentication authentication) {
+
+        UUID userId = UUID.fromString(authentication.getName());
+        chatService.markRoomAsRead(roomId, userId);
+        return ResponseEntity.ok().build();
+    }
 }
 

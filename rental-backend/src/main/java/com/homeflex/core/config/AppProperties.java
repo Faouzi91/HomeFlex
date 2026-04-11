@@ -25,6 +25,13 @@ public class AppProperties {
     private Outbox outbox = new Outbox();
     private RateLimit rateLimit = new RateLimit();
     private Monitoring monitoring = new Monitoring();
+    private Auth auth = new Auth();
+
+    @Data
+    public static class Auth {
+        private int maxFailedAttempts = 5;
+        private int lockTimeDurationMinutes = 30;
+    }
 
     @Data
     public static class Jwt {

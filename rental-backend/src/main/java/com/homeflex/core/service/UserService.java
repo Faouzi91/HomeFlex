@@ -29,7 +29,13 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return userMapper.toDto(user);
+        UserDto dto = userMapper.toDto(user);
+        return new UserDto(
+                dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
+                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
+                dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
+                calculateProfileCompleteness(user), dto.createdAt()
+        );
     }
 
     public UserDto updateUser(UUID userId, UserUpdateRequest request) {
@@ -54,7 +60,13 @@ public class UserService {
 
         user = userRepository.save(user);
 
-        return userMapper.toDto(user);
+        UserDto dto = userMapper.toDto(user);
+        return new UserDto(
+                dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
+                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
+                dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
+                calculateProfileCompleteness(user), dto.createdAt()
+        );
     }
 
     public UserDto updateAvatar(UUID userId, MultipartFile file) {
@@ -73,7 +85,13 @@ public class UserService {
         user.setProfilePictureUrl(avatarUrl);
         user = userRepository.save(user);
 
-        return userMapper.toDto(user);
+        UserDto dto = userMapper.toDto(user);
+        return new UserDto(
+                dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
+                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
+                dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
+                calculateProfileCompleteness(user), dto.createdAt()
+        );
     }
 
     public void changePassword(UUID userId, String currentPassword, String newPassword) {
@@ -104,6 +122,16 @@ public class UserService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+    }
+
+    public int calculateProfileCompleteness(User user) {
+        int score = 0;
+        if (user.getFirstName() != null && !user.getFirstName().isBlank()) score += 20;
+        if (user.getLastName() != null && !user.getLastName().isBlank()) score += 20;
+        if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) score += 20;
+        if (user.getProfilePictureUrl() != null && !user.getProfilePictureUrl().isBlank()) score += 20;
+        if (user.getIsVerified()) score += 20;
+        return score;
     }
 
 }

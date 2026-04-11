@@ -10,6 +10,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,6 +26,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Audited(withModifiedFlag = true)
 public class Property {
 
     @Id
@@ -97,6 +100,15 @@ public class Property {
     @Column(name = "total_floors")
     private Integer totalFloors;
 
+    @Column(name = "cancellation_policy", length = 20)
+    private String cancellationPolicy = "FLEXIBLE";
+
+    @Column(name = "cleaning_fee", precision = 12, scale = 2)
+    private BigDecimal cleaningFee = BigDecimal.ZERO;
+
+    @Column(name = "security_deposit", precision = 12, scale = 2)
+    private BigDecimal securityDeposit = BigDecimal.ZERO;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agency_id")
     private com.homeflex.core.domain.entity.Agency agency;
@@ -115,9 +127,11 @@ public class Property {
 
     // Metadata
     @Column(name = "view_count")
+    @NotAudited
     private Integer viewCount = 0;
 
     @Column(name = "favorite_count")
+    @NotAudited
     private Integer favoriteCount = 0;
 
     // Relationships
@@ -125,12 +139,14 @@ public class Property {
     @JsonIgnoreProperties({"property"})
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @NotAudited
     private Set<PropertyImage> images = new HashSet<>();
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"property"})
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @NotAudited
     private Set<PropertyVideo> videos = new HashSet<>();
 
     @ManyToMany
@@ -142,6 +158,7 @@ public class Property {
     @JsonIgnoreProperties({"properties"})
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @NotAudited
     private Set<Amenity> amenities = new HashSet<>();
 
     @CreationTimestamp
