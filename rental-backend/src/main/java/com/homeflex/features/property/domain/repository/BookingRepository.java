@@ -55,6 +55,25 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             @Param("statuses") List<BookingStatus> statuses
     );
 
+    @Query("""
+            SELECT COUNT(b) > 0
+            FROM Booking b
+            WHERE b.property.id = :propertyId
+              AND b.id <> :excludeBookingId
+              AND b.status IN :statuses
+              AND b.startDate IS NOT NULL
+              AND b.endDate IS NOT NULL
+              AND b.startDate <= :endDate
+              AND b.endDate >= :startDate
+            """)
+    boolean existsDateOverlapForPropertyExcludingBooking(
+            @Param("propertyId") UUID propertyId,
+            @Param("excludeBookingId") UUID excludeBookingId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<BookingStatus> statuses
+    );
+
     /**
      * Finds approved bookings that have reached check-in date and whose
      * escrow has not yet been released.

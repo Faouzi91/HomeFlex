@@ -83,6 +83,15 @@ public class Booking {
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
 
+    @Column(name = "proposed_start_date")
+    private LocalDate proposedStartDate;
+
+    @Column(name = "proposed_end_date")
+    private LocalDate proposedEndDate;
+
+    @Column(name = "modification_reason", columnDefinition = "TEXT")
+    private String modificationReason;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

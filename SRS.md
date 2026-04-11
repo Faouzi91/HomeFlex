@@ -117,6 +117,7 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 Multi-Currency engine with real-time conversion simulation
 - 🟢 App-level AES-256 field encryption for highly sensitive PII (First Name, Last Name, Phone Number)
 - 🟢 GDPR Tooling for data portability (export) and "Right to be Forgotten" (erasure)
+- 🟢 Real-time booking modifications (date changes after approval) with re-approval workflow
 
 ### Partially Implemented (v2.2)
 
@@ -127,7 +128,6 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🔴 Multi-region deployment
 - 🔴 SLO-driven operations and performance tuning
 - 🔴 Advanced UI for Agency and Disputes
-- 🔴 Real-time booking modifications (date changes after approval)
 
 ## 1.3 Decision Baseline (Approved)
 

@@ -358,4 +358,140 @@ public class BookingService {
 
         return bookingMapper.toDto(booking);
     }
+
+    public BookingDto requestModification(UUID bookingId, LocalDate newStart, LocalDate newEnd, String reason, UUID tenantId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        if (!booking.getTenant().getId().equals(tenantId)) {
+            throw new UnauthorizedException("Not authorized to modify this booking");
+        }
+
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new DomainException("Only approved bookings can be modified");
+        }
+
+        if (newEnd.isBefore(newStart)) {
+            throw new DomainException("End date must be on or after start date");
+        }
+
+        // Check availability for new dates (excluding this booking's current reservation)
+        boolean overlap = bookingRepository.existsDateOverlapForPropertyExcludingBooking(
+                booking.getProperty().getId(),
+                booking.getId(),
+                newStart,
+                newEnd,
+                Arrays.asList(BookingStatus.PENDING, BookingStatus.APPROVED, BookingStatus.COMPLETED, BookingStatus.PENDING_MODIFICATION)
+        );
+
+        if (overlap) {
+            throw new ConflictException("Selected dates overlap with another booking");
+        }
+
+        booking.setStatus(BookingStatus.PENDING_MODIFICATION);
+        booking.setProposedStartDate(newStart);
+        booking.setProposedEndDate(newEnd);
+        booking.setModificationReason(reason);
+
+        booking = bookingRepository.save(booking);
+
+        // Notify landlord
+        notificationService.createNotification(
+                booking.getProperty().getLandlord().getId(),
+                "Booking Modification Request",
+                "Tenant requested to change dates for " + booking.getProperty().getTitle(),
+                com.homeflex.core.domain.enums.NotificationType.SYSTEM,
+                "BOOKING",
+                booking.getId()
+        );
+
+        return bookingMapper.toDto(booking);
+    }
+
+    public BookingDto approveModification(UUID bookingId, UUID landlordId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        if (!booking.getProperty().getLandlord().getId().equals(landlordId)) {
+            throw new UnauthorizedException("Not authorized to approve this modification");
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING_MODIFICATION) {
+            throw new DomainException("No pending modification request found");
+        }
+
+        // Release old dates
+        availabilityService.releaseForBooking(booking.getId());
+
+        // Update to new dates
+        booking.setStartDate(booking.getProposedStartDate());
+        booking.setEndDate(booking.getProposedEndDate());
+        
+        // Recalculate price
+        long days = ChronoUnit.DAYS.between(booking.getStartDate(), booking.getEndDate()) + 1;
+        BigDecimal newTotalPrice = booking.getProperty().getPrice().multiply(BigDecimal.valueOf(days));
+        booking.setTotalPrice(newTotalPrice);
+        booking.setPlatformFee(paymentService.computePlatformFee(newTotalPrice));
+
+        // Clear proposal
+        booking.setProposedStartDate(null);
+        booking.setProposedEndDate(null);
+        booking.setModificationReason(null);
+        booking.setStatus(BookingStatus.APPROVED);
+
+        booking = bookingRepository.save(booking);
+
+        // Reserve new dates
+        availabilityService.reserveForBooking(
+                booking.getProperty().getId(),
+                booking.getId(),
+                booking.getStartDate(),
+                booking.getEndDate());
+
+        // NOTE: In a real app, we would handle Stripe charge adjustments here (refund partial or charge more).
+        // For the prototype, we assume the price delta is handled outside or manually.
+
+        notificationService.createNotification(
+                booking.getTenant().getId(),
+                "Modification Approved",
+                "Your date change request for " + booking.getProperty().getTitle() + " was approved.",
+                com.homeflex.core.domain.enums.NotificationType.SYSTEM,
+                "BOOKING",
+                booking.getId()
+        );
+
+        return bookingMapper.toDto(booking);
+    }
+
+    public BookingDto rejectModification(UUID bookingId, String reason, UUID landlordId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        if (!booking.getProperty().getLandlord().getId().equals(landlordId)) {
+            throw new UnauthorizedException("Not authorized to reject this modification");
+        }
+
+        if (booking.getStatus() != BookingStatus.PENDING_MODIFICATION) {
+            throw new DomainException("No pending modification request found");
+        }
+
+        booking.setStatus(BookingStatus.APPROVED); // Revert to approved
+        booking.setLandlordResponse(reason);
+        booking.setProposedStartDate(null);
+        booking.setProposedEndDate(null);
+        booking.setModificationReason(null);
+
+        booking = bookingRepository.save(booking);
+
+        notificationService.createNotification(
+                booking.getTenant().getId(),
+                "Modification Rejected",
+                "Your date change request for " + booking.getProperty().getTitle() + " was rejected.",
+                com.homeflex.core.domain.enums.NotificationType.SYSTEM,
+                "BOOKING",
+                booking.getId()
+        );
+
+        return bookingMapper.toDto(booking);
+    }
 }

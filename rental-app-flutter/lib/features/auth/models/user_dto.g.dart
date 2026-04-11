@@ -19,6 +19,7 @@ _UserDto _$UserDtoFromJson(Map<String, dynamic> json) => _UserDto(
   languagePreference: json['languagePreference'] as String?,
   agencyId: json['agencyId'] as String?,
   agencyRole: json['agencyRole'] as String?,
+  trustScore: (json['trustScore'] as num?)?.toDouble() ?? 5.0,
   createdAt: json['createdAt'] as String,
 );
 
@@ -35,5 +36,6 @@ Map<String, dynamic> _$UserDtoToJson(_UserDto instance) => <String, dynamic>{
   'languagePreference': instance.languagePreference,
   'agencyId': instance.agencyId,
   'agencyRole': instance.agencyRole,
+  'trustScore': instance.trustScore,
   'createdAt': instance.createdAt,
 };

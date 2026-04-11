@@ -24,6 +24,9 @@ abstract class BookingDto with _$BookingDto {
     String? paymentConfirmedAt,
     String? escrowReleasedAt,
     String? landlordResponse,
+    String? proposedStartDate,
+    String? proposedEndDate,
+    String? modificationReason,
     String? respondedAt,
     required String createdAt,
   }) = _BookingDto;

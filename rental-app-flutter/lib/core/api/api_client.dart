@@ -66,6 +66,9 @@ class ApiClient {
   Future<Response> getBooking(String id) => dio.get('/bookings/$id');
   Future<Response> approveBooking(String id, String response) => dio.patch('/bookings/$id/approve', queryParameters: {'response': response});
   Future<Response> rejectBooking(String id, String reason) => dio.patch('/bookings/$id/reject', queryParameters: {'reason': reason});
+  Future<Response> requestBookingModification(String id, Map<String, dynamic> data) => dio.post('/bookings/$id/modify', data: data);
+  Future<Response> approveBookingModification(String id) => dio.patch('/bookings/$id/modify/approve');
+  Future<Response> rejectBookingModification(String id, String reason) => dio.patch('/bookings/$id/modify/reject', queryParameters: {'message': reason});
 
   // --- Reviews ---
   Future<Response> createReview(Map<String, dynamic> data) => dio.post('/reviews', data: data);

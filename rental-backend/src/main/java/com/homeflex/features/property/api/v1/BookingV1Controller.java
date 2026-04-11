@@ -84,4 +84,36 @@ public class BookingV1Controller {
         UUID tenantId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(bookingService.cancelBooking(id, tenantId));
     }
+
+    @PostMapping("/{id}/modify")
+    @PreAuthorize("hasRole('TENANT')")
+    public ResponseEntity<BookingDto> requestModification(
+            @PathVariable UUID id,
+            @Valid @RequestBody com.homeflex.features.property.dto.request.BookingModificationRequest request,
+            Authentication authentication) {
+        UUID tenantId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(bookingService.requestModification(
+                id, request.startDate(), request.endDate(), request.reason(), tenantId
+        ));
+    }
+
+    @PatchMapping("/{id}/modify/approve")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<BookingDto> approveModification(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        UUID landlordId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(bookingService.approveModification(id, landlordId));
+    }
+
+    @PatchMapping("/{id}/modify/reject")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<BookingDto> rejectModification(
+            @PathVariable UUID id,
+            @RequestBody(required = false) BookingResponseRequest request,
+            Authentication authentication) {
+        UUID landlordId = UUID.fromString(authentication.getName());
+        String reason = request != null ? request.message() : null;
+        return ResponseEntity.ok(bookingService.rejectModification(id, reason, landlordId));
+    }
 }

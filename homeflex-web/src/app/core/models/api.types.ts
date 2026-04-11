@@ -160,8 +160,17 @@ export interface Booking {
   paymentConfirmedAt: string | null;
   escrowReleasedAt: string | null;
   landlordResponse: string | null;
+  proposedStartDate: string | null;
+  proposedEndDate: string | null;
+  modificationReason: string | null;
   respondedAt: string | null;
   createdAt: string;
+}
+
+export interface BookingModificationRequest {
+  startDate: string;
+  endDate: string;
+  reason?: string;
 }
 
 export interface VehicleBooking {

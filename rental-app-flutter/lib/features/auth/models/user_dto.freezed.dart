@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UserDto {
 
- String get id; String get email; String get firstName; String get lastName; String? get phoneNumber; String? get profilePictureUrl; String get role; bool get isActive; bool get isVerified; String? get languagePreference; String? get agencyId; String? get agencyRole; String get createdAt;
+ String get id; String get email; String get firstName; String get lastName; String? get phoneNumber; String? get profilePictureUrl; String get role; bool get isActive; bool get isVerified; String? get languagePreference; String? get agencyId; String? get agencyRole; double get trustScore; String get createdAt;
 /// Create a copy of UserDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $UserDtoCopyWith<UserDto> get copyWith => _$UserDtoCopyWithImpl<UserDto>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.profilePictureUrl, profilePictureUrl) || other.profilePictureUrl == profilePictureUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.languagePreference, languagePreference) || other.languagePreference == languagePreference)&&(identical(other.agencyId, agencyId) || other.agencyId == agencyId)&&(identical(other.agencyRole, agencyRole) || other.agencyRole == agencyRole)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.profilePictureUrl, profilePictureUrl) || other.profilePictureUrl == profilePictureUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.languagePreference, languagePreference) || other.languagePreference == languagePreference)&&(identical(other.agencyId, agencyId) || other.agencyId == agencyId)&&(identical(other.agencyRole, agencyRole) || other.agencyRole == agencyRole)&&(identical(other.trustScore, trustScore) || other.trustScore == trustScore)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,firstName,lastName,phoneNumber,profilePictureUrl,role,isActive,isVerified,languagePreference,agencyId,agencyRole,createdAt);
+int get hashCode => Object.hash(runtimeType,id,email,firstName,lastName,phoneNumber,profilePictureUrl,role,isActive,isVerified,languagePreference,agencyId,agencyRole,trustScore,createdAt);
 
 @override
 String toString() {
-  return 'UserDto(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, profilePictureUrl: $profilePictureUrl, role: $role, isActive: $isActive, isVerified: $isVerified, languagePreference: $languagePreference, agencyId: $agencyId, agencyRole: $agencyRole, createdAt: $createdAt)';
+  return 'UserDto(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, profilePictureUrl: $profilePictureUrl, role: $role, isActive: $isActive, isVerified: $isVerified, languagePreference: $languagePreference, agencyId: $agencyId, agencyRole: $agencyRole, trustScore: $trustScore, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $UserDtoCopyWith<$Res>  {
   factory $UserDtoCopyWith(UserDto value, $Res Function(UserDto) _then) = _$UserDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String email, String firstName, String lastName, String? phoneNumber, String? profilePictureUrl, String role, bool isActive, bool isVerified, String? languagePreference, String? agencyId, String? agencyRole, String createdAt
+ String id, String email, String firstName, String lastName, String? phoneNumber, String? profilePictureUrl, String role, bool isActive, bool isVerified, String? languagePreference, String? agencyId, String? agencyRole, double trustScore, String createdAt
 });
 
 
@@ -65,7 +65,7 @@ class _$UserDtoCopyWithImpl<$Res>
 
 /// Create a copy of UserDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phoneNumber = freezed,Object? profilePictureUrl = freezed,Object? role = null,Object? isActive = null,Object? isVerified = null,Object? languagePreference = freezed,Object? agencyId = freezed,Object? agencyRole = freezed,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phoneNumber = freezed,Object? profilePictureUrl = freezed,Object? role = null,Object? isActive = null,Object? isVerified = null,Object? languagePreference = freezed,Object? agencyId = freezed,Object? agencyRole = freezed,Object? trustScore = null,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -79,7 +79,8 @@ as bool,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore
 as bool,languagePreference: freezed == languagePreference ? _self.languagePreference : languagePreference // ignore: cast_nullable_to_non_nullable
 as String?,agencyId: freezed == agencyId ? _self.agencyId : agencyId // ignore: cast_nullable_to_non_nullable
 as String?,agencyRole: freezed == agencyRole ? _self.agencyRole : agencyRole // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,trustScore: null == trustScore ? _self.trustScore : trustScore // ignore: cast_nullable_to_non_nullable
+as double,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -165,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String firstName,  String lastName,  String? phoneNumber,  String? profilePictureUrl,  String role,  bool isActive,  bool isVerified,  String? languagePreference,  String? agencyId,  String? agencyRole,  String createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String email,  String firstName,  String lastName,  String? phoneNumber,  String? profilePictureUrl,  String role,  bool isActive,  bool isVerified,  String? languagePreference,  String? agencyId,  String? agencyRole,  double trustScore,  String createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserDto() when $default != null:
-return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneNumber,_that.profilePictureUrl,_that.role,_that.isActive,_that.isVerified,_that.languagePreference,_that.agencyId,_that.agencyRole,_that.createdAt);case _:
+return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneNumber,_that.profilePictureUrl,_that.role,_that.isActive,_that.isVerified,_that.languagePreference,_that.agencyId,_that.agencyRole,_that.trustScore,_that.createdAt);case _:
   return orElse();
 
 }
@@ -186,10 +187,10 @@ return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneN
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String firstName,  String lastName,  String? phoneNumber,  String? profilePictureUrl,  String role,  bool isActive,  bool isVerified,  String? languagePreference,  String? agencyId,  String? agencyRole,  String createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String email,  String firstName,  String lastName,  String? phoneNumber,  String? profilePictureUrl,  String role,  bool isActive,  bool isVerified,  String? languagePreference,  String? agencyId,  String? agencyRole,  double trustScore,  String createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _UserDto():
-return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneNumber,_that.profilePictureUrl,_that.role,_that.isActive,_that.isVerified,_that.languagePreference,_that.agencyId,_that.agencyRole,_that.createdAt);case _:
+return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneNumber,_that.profilePictureUrl,_that.role,_that.isActive,_that.isVerified,_that.languagePreference,_that.agencyId,_that.agencyRole,_that.trustScore,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +207,10 @@ return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneN
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String firstName,  String lastName,  String? phoneNumber,  String? profilePictureUrl,  String role,  bool isActive,  bool isVerified,  String? languagePreference,  String? agencyId,  String? agencyRole,  String createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String email,  String firstName,  String lastName,  String? phoneNumber,  String? profilePictureUrl,  String role,  bool isActive,  bool isVerified,  String? languagePreference,  String? agencyId,  String? agencyRole,  double trustScore,  String createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _UserDto() when $default != null:
-return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneNumber,_that.profilePictureUrl,_that.role,_that.isActive,_that.isVerified,_that.languagePreference,_that.agencyId,_that.agencyRole,_that.createdAt);case _:
+return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneNumber,_that.profilePictureUrl,_that.role,_that.isActive,_that.isVerified,_that.languagePreference,_that.agencyId,_that.agencyRole,_that.trustScore,_that.createdAt);case _:
   return null;
 
 }
@@ -221,7 +222,7 @@ return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phoneN
 @JsonSerializable()
 
 class _UserDto implements UserDto {
-  const _UserDto({required this.id, required this.email, required this.firstName, required this.lastName, this.phoneNumber, this.profilePictureUrl, required this.role, required this.isActive, required this.isVerified, this.languagePreference, this.agencyId, this.agencyRole, required this.createdAt});
+  const _UserDto({required this.id, required this.email, required this.firstName, required this.lastName, this.phoneNumber, this.profilePictureUrl, required this.role, required this.isActive, required this.isVerified, this.languagePreference, this.agencyId, this.agencyRole, this.trustScore = 5.0, required this.createdAt});
   factory _UserDto.fromJson(Map<String, dynamic> json) => _$UserDtoFromJson(json);
 
 @override final  String id;
@@ -236,6 +237,7 @@ class _UserDto implements UserDto {
 @override final  String? languagePreference;
 @override final  String? agencyId;
 @override final  String? agencyRole;
+@override@JsonKey() final  double trustScore;
 @override final  String createdAt;
 
 /// Create a copy of UserDto
@@ -251,16 +253,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.profilePictureUrl, profilePictureUrl) || other.profilePictureUrl == profilePictureUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.languagePreference, languagePreference) || other.languagePreference == languagePreference)&&(identical(other.agencyId, agencyId) || other.agencyId == agencyId)&&(identical(other.agencyRole, agencyRole) || other.agencyRole == agencyRole)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserDto&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.profilePictureUrl, profilePictureUrl) || other.profilePictureUrl == profilePictureUrl)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.languagePreference, languagePreference) || other.languagePreference == languagePreference)&&(identical(other.agencyId, agencyId) || other.agencyId == agencyId)&&(identical(other.agencyRole, agencyRole) || other.agencyRole == agencyRole)&&(identical(other.trustScore, trustScore) || other.trustScore == trustScore)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,firstName,lastName,phoneNumber,profilePictureUrl,role,isActive,isVerified,languagePreference,agencyId,agencyRole,createdAt);
+int get hashCode => Object.hash(runtimeType,id,email,firstName,lastName,phoneNumber,profilePictureUrl,role,isActive,isVerified,languagePreference,agencyId,agencyRole,trustScore,createdAt);
 
 @override
 String toString() {
-  return 'UserDto(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, profilePictureUrl: $profilePictureUrl, role: $role, isActive: $isActive, isVerified: $isVerified, languagePreference: $languagePreference, agencyId: $agencyId, agencyRole: $agencyRole, createdAt: $createdAt)';
+  return 'UserDto(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phoneNumber: $phoneNumber, profilePictureUrl: $profilePictureUrl, role: $role, isActive: $isActive, isVerified: $isVerified, languagePreference: $languagePreference, agencyId: $agencyId, agencyRole: $agencyRole, trustScore: $trustScore, createdAt: $createdAt)';
 }
 
 
@@ -271,7 +273,7 @@ abstract mixin class _$UserDtoCopyWith<$Res> implements $UserDtoCopyWith<$Res> {
   factory _$UserDtoCopyWith(_UserDto value, $Res Function(_UserDto) _then) = __$UserDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String email, String firstName, String lastName, String? phoneNumber, String? profilePictureUrl, String role, bool isActive, bool isVerified, String? languagePreference, String? agencyId, String? agencyRole, String createdAt
+ String id, String email, String firstName, String lastName, String? phoneNumber, String? profilePictureUrl, String role, bool isActive, bool isVerified, String? languagePreference, String? agencyId, String? agencyRole, double trustScore, String createdAt
 });
 
 
@@ -288,7 +290,7 @@ class __$UserDtoCopyWithImpl<$Res>
 
 /// Create a copy of UserDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phoneNumber = freezed,Object? profilePictureUrl = freezed,Object? role = null,Object? isActive = null,Object? isVerified = null,Object? languagePreference = freezed,Object? agencyId = freezed,Object? agencyRole = freezed,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phoneNumber = freezed,Object? profilePictureUrl = freezed,Object? role = null,Object? isActive = null,Object? isVerified = null,Object? languagePreference = freezed,Object? agencyId = freezed,Object? agencyRole = freezed,Object? trustScore = null,Object? createdAt = null,}) {
   return _then(_UserDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -302,7 +304,8 @@ as bool,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore
 as bool,languagePreference: freezed == languagePreference ? _self.languagePreference : languagePreference // ignore: cast_nullable_to_non_nullable
 as String?,agencyId: freezed == agencyId ? _self.agencyId : agencyId // ignore: cast_nullable_to_non_nullable
 as String?,agencyRole: freezed == agencyRole ? _self.agencyRole : agencyRole // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,trustScore: null == trustScore ? _self.trustScore : trustScore // ignore: cast_nullable_to_non_nullable
+as double,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

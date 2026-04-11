@@ -6,6 +6,7 @@ All notable changes to the HomeFlex project will be documented in this file.
 
 ### Added — Advanced Web Features (Angular)
 
+- **Real-time Booking Modifications** — Implemented a complex workflow allowing tenants to request date changes for approved bookings, with automated availability checks, price recalculation, and landlord re-approval.
 - **Interactive Map Search** — Integrated Leaflet maps into the property discovery page with a Grid/Map toggle and automated bounds fitting.
 - **Global i18n Expansion** — Added support for **Spanish** and **Arabic**, including full **RTL (Right-to-Left)** layout support for the Arabic locale.
 - **Social Login (Backend)** — Completed the authentication flows for **Apple** and **Facebook** OAuth, enabling seamless user creation for the prototype.

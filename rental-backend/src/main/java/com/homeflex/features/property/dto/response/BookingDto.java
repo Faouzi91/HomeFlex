@@ -23,5 +23,8 @@ public record BookingDto(
         String stripePaymentIntentId,
         String landlordResponse,
         LocalDateTime respondedAt,
+        LocalDate proposedStartDate,
+        LocalDate proposedEndDate,
+        String modificationReason,
         LocalDateTime createdAt
 ) {}

@@ -8,6 +8,7 @@ import {
   ApiValueResponse,
   AuthResponse,
   Booking,
+  BookingModificationRequest,
   ChatRoom,
   Dispute,
   InsurancePlan,
@@ -166,6 +167,20 @@ export class ApiClient {
 
   cancelPropertyBooking(id: string): Observable<Booking> {
     return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/cancel`, {});
+  }
+
+  requestBookingModification(id: string, request: BookingModificationRequest): Observable<Booking> {
+    return this.http.post<Booking>(`${this.baseUrl}/bookings/${id}/modify`, request);
+  }
+
+  approveBookingModification(id: string): Observable<Booking> {
+    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/modify/approve`, {});
+  }
+
+  rejectBookingModification(id: string, reason?: string): Observable<Booking> {
+    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/modify/reject`, {
+      message: reason,
+    });
   }
 
   searchVehicles(params: VehicleSearchParams): Observable<ApiPageResponse<Vehicle>> {

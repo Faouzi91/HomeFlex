@@ -27,6 +27,9 @@ _BookingDto _$BookingDtoFromJson(Map<String, dynamic> json) => _BookingDto(
   paymentConfirmedAt: json['paymentConfirmedAt'] as String?,
   escrowReleasedAt: json['escrowReleasedAt'] as String?,
   landlordResponse: json['landlordResponse'] as String?,
+  proposedStartDate: json['proposedStartDate'] as String?,
+  proposedEndDate: json['proposedEndDate'] as String?,
+  modificationReason: json['modificationReason'] as String?,
   respondedAt: json['respondedAt'] as String?,
   createdAt: json['createdAt'] as String,
 );
@@ -49,6 +52,9 @@ Map<String, dynamic> _$BookingDtoToJson(_BookingDto instance) =>
       'paymentConfirmedAt': instance.paymentConfirmedAt,
       'escrowReleasedAt': instance.escrowReleasedAt,
       'landlordResponse': instance.landlordResponse,
+      'proposedStartDate': instance.proposedStartDate,
+      'proposedEndDate': instance.proposedEndDate,
+      'modificationReason': instance.modificationReason,
       'respondedAt': instance.respondedAt,
       'createdAt': instance.createdAt,
     };
