@@ -1,0 +1,42 @@
+groups:
+  - name: homeflex-slo-alerts
+    rules:
+      # SLO: 99% of requests should be faster than 500ms
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket[5m]))) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High request latency on {{ $labels.instance }}'
+          description: '99th percentile of request latency is above 500ms (current value: {{ $value }}s)'
+
+      # SLO: Error rate should be below 1%
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'High error rate on {{ $labels.instance }}'
+          description: 'HTTP 5xx error rate is above 1% (current value: {{ $value | humanizePercentage }})'
+
+      # Dead Letter Queue monitoring
+      - alert: RabbitMQMessagesInDLQ
+        expr: rabbitmq_queue_messages{queue=~".*\\.dlq"} > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Messages detected in Dead Letter Queue'
+          description: 'Queue {{ $labels.queue }} has {{ $value }} messages waiting for manual intervention.'
+
+      # System Health
+      - alert: BackendServiceDown
+        expr: up{application="homeflex-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'HomeFlex Backend is DOWN'
+          description: 'The backend service has been unreachable for more than 1 minute.'

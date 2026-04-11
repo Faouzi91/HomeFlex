@@ -4,6 +4,17 @@ All notable changes to the HomeFlex project will be documented in this file.
 
 ## [Unreleased] — 2026-04-11 (Round 8 — Gaps & Innovations)
 
+### Added — Enterprise Hardening & Compliance
+
+- **GDPR Tooling** — Added endpoints for data portability (export) and data erasure (Right to be Forgotten), ensuring strict European compliance.
+- **App-Level Encryption (PII)** — Implemented AES-256 field-level database encryption (`PiiEncryptionConverter`) for highly sensitive user data (First Name, Last Name, Phone Number), supplementing standard RDS encryption-at-rest.
+- **Multi-Region Strategy** — Prepared Terraform configurations for Cross-Region RDS Global Clusters and latency-based Route53 routing for high availability.
+- **SLO Monitoring** — Defined Prometheus alerting rules for request latency (99th percentile < 500ms) and error rates (< 1%), enabling proactive operational response.
+- **Dispute Evidence System** — Enhanced the resolution module with multi-party evidence upload support, allowing tenants and landlords to submit photos/documents for mediation.
+- **Distributed Locking (Redlock)** — Integrated Redisson for robust distributed locking across the booking lifecycle, eliminating double-booking risks in clustered environments.
+- **Two-Way Review System** — Expanded reviews to a bidirectional trust model where landlords and tenants can rate each other, contributing to a dynamic global Trust Score.
+- **Multi-Currency Engine** — Built a currency conversion service supporting USD, EUR, GBP, XAF, AED, and SAR with real-time (simulated) exchange rates.
+
 ### Added — Advanced Web Features (Angular)
 
 - **Admin Control Panel Expansion** — Built high-density management views for the **Agency Network** and **Dispute Resolution** modules within the workspace. Admins can now resolve disputes and view the global agency network.
