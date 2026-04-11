@@ -52,7 +52,7 @@
             <div
               class="h-12 w-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-extrabold text-lg"
             >
-              {{ userInitials() }}
+              {{ userInitials(session.user()) }}
             </div>
             <div class="truncate">
               <p class="font-bold text-slate-900 truncate">{{ session.displayName() }}</p>
@@ -1257,7 +1257,7 @@
                         <input
                           type="file"
                           multiple
-                          (change)="onFileSelected($event)"
+                          (change)="onPropertyImagesSelected($event)"
                           class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
                         />
                       </div>

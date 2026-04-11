@@ -1,9 +1,18 @@
+import {
+  CurrencyPipe,
+  DatePipe,
+  DecimalPipe,
+  LowerCasePipe,
+  SlicePipe,
+  TitleCasePipe,
+} from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap, from } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { loadStripe } from '@stripe/stripe-js';
+import { TranslateModule } from '@ngx-translate/core';
 import { ApiClient } from '../../../core/api/api.client';
 import {
   Agency,
@@ -49,7 +58,18 @@ type WorkspaceTabItem = {
 
 @Component({
   selector: 'app-workspace-page',
-  imports: [ReactiveFormsModule, RouterLink],
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    CurrencyPipe,
+    DatePipe,
+    DecimalPipe,
+    SlicePipe,
+    LowerCasePipe,
+    TitleCasePipe,
+    TranslateModule,
+  ],
   templateUrl: './workspace.page.html',
   styleUrl: './workspace.page.scss',
 })
@@ -95,10 +115,39 @@ export class WorkspacePageComponent {
   protected readonly hostMessage = signal('');
   protected readonly propertyImages = signal<File[]>([]);
   protected readonly vehicleImages = signal<File[]>([]);
+  protected readonly maintenanceImages = signal<File[]>([]);
 
   protected readonly unreadNotifications = computed(
     () => this.notifications().filter((item) => !item.isRead).length,
   );
+
+  protected readonly tabs = computed<WorkspaceTabItem[]>(() => {
+    const items: WorkspaceTabItem[] = [
+      { id: 'overview', label: 'Overview', description: 'At a glance summary' },
+      { id: 'favorites', label: 'Favorites', description: 'Saved properties' },
+      { id: 'bookings', label: 'Bookings', description: 'Your active stays' },
+      { id: 'messages', label: 'Messages', description: 'Chat with hosts' },
+      { id: 'notifications', label: 'Alerts', description: 'Recent activity' },
+      { id: 'profile', label: 'Settings', description: 'Account and security' },
+    ];
+
+    if (this.session.isLandlord() || this.session.isAdmin()) {
+      items.push({ id: 'hosting', label: 'Hosting', description: 'Manage your listings' });
+      items.push({ id: 'maintenance', label: 'Work Orders', description: 'Property repairs' });
+    }
+
+    if (this.session.isAdmin()) {
+      items.push({ id: 'admin', label: 'Admin Console', description: 'Platform management' });
+    }
+
+    return items;
+  });
+
+  protected readonly selectedRoomTitle = computed(() => {
+    const roomId = this.selectedRoomId();
+    const room = this.chatRooms().find((r) => r.id === roomId);
+    return room ? room.propertyTitle : 'Select a conversation';
+  });
 
   protected readonly rangeForm = this.fb.group({
     start: ['', Validators.required],
@@ -135,6 +184,19 @@ export class WorkspacePageComponent {
     amenityIds: [[] as string[]],
   });
 
+  protected readonly vehicleForm = this.fb.group({
+    brand: ['', Validators.required],
+    model: ['', Validators.required],
+    year: [new Date().getFullYear(), Validators.required],
+    dailyPrice: [0, Validators.required],
+    currency: ['XAF'],
+    transmission: ['AUTOMATIC', Validators.required],
+    fuelType: ['PETROL', Validators.required],
+    seats: [5, Validators.required],
+    category: ['CAR', Validators.required],
+    description: ['', Validators.required],
+  });
+
   protected readonly maintenanceForm = this.fb.group({
     propertyId: ['', Validators.required],
     title: ['', Validators.required],
@@ -148,90 +210,27 @@ export class WorkspacePageComponent {
     resolutionNotes: [''],
   });
 
-  protected readonly maintenanceImages = signal<File[]>([]);
-
-  protected readonly vehicleForm = this.fb.group({
-    brand: ['', Validators.required],
-    model: ['', Validators.required],
-    year: [2024, Validators.required],
-    transmission: ['AUTOMATIC', Validators.required],
-    fuelType: ['GASOLINE', Validators.required],
-    dailyPrice: [0, Validators.required],
-    currency: ['XAF'],
-    description: [''],
-    mileage: [0],
-    seats: [5],
-    color: ['Black'],
-    licensePlate: [''],
-    pickupCity: ['Douala'],
-    pickupAddress: [''],
-  });
-
   protected readonly messageForm = this.fb.group({
-    message: ['', Validators.required],
+    text: ['', Validators.required],
   });
 
   constructor() {
-    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const chatId = params.get('chat');
-      if (chatId) {
-        this.activeTab.set('messages');
-        this.openRoom(chatId);
+    this.route.queryParams.pipe(takeUntilDestroyed()).subscribe((params) => {
+      if (params['tab']) {
+        this.activeTab.set(params['tab'] as WorkspaceTab);
       }
     });
 
-    this.seedProfileForm();
     this.loadWorkspace();
   }
 
-  protected tabs(): WorkspaceTabItem[] {
-    const tabs: WorkspaceTabItem[] = [
-      { id: 'overview', label: 'Overview', description: 'High-level activity and health' },
-      { id: 'favorites', label: 'Favorites', description: 'Saved property shortlist' },
-      { id: 'bookings', label: 'Bookings', description: 'Property and vehicle reservations' },
-      { id: 'messages', label: 'Messages', description: 'Conversation threads and replies' },
-      { id: 'notifications', label: 'Notifications', description: 'Alerts and system updates' },
-      { id: 'maintenance', label: 'Maintenance', description: 'Service and repair requests' },
-      { id: 'profile', label: 'Profile', description: 'Account details and security' },
-    ];
-
-    if (this.session.isLandlord() || this.session.isAdmin()) {
-      tabs.push({ id: 'hosting', label: 'Hosting', description: 'Listings and booking approvals' });
-    }
-
-    if (this.session.isAdmin()) {
-      tabs.push({ id: 'admin', label: 'Admin', description: 'Approvals, analytics, and reports' });
-    }
-
-    return tabs;
-  }
-
-  protected userInitials(): string {
-    const user = this.session.user();
-    return initials(user?.firstName, user?.lastName);
-  }
-
-  protected selectedRoomTitle(): string {
-    return (
-      this.chatRooms().find((room) => room.id === this.selectedRoomId())?.propertyTitle ??
-      'Conversation'
-    );
-  }
-
   protected loadWorkspace(): void {
-    if (!this.session.isAuthenticated()) {
-      return;
-    }
-
     const user = this.session.user();
-    if (!user) {
-      return;
-    }
+    if (!user) return;
 
     forkJoin({
       favorites: this.api.getFavorites(),
-      propertyBookings:
-        user.role === 'TENANT' ? this.api.getMyPropertyBookings() : of({ data: [] }),
+      propertyBookings: this.api.getMyPropertyBookings(),
       vehicleBookings: this.api.getMyVehicleBookings(),
       notifications: this.api.getNotifications(),
       chatRooms: this.api.getChatRooms(),
@@ -242,7 +241,7 @@ export class WorkspacePageComponent {
       myVehicles:
         this.session.isLandlord() || this.session.isAdmin()
           ? this.api.getMyVehicles()
-          : of({ data: [] }),
+          : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
       analytics: this.session.isAdmin() ? this.api.getAdminAnalytics() : of(null),
       pendingProperties: this.session.isAdmin()
         ? this.api.getPendingProperties()
@@ -264,9 +263,6 @@ export class WorkspacePageComponent {
         this.favorites.set(response.favorites.data);
         this.propertyBookings.set(response.propertyBookings.data);
         this.vehicleBookings.set(response.vehicleBookings.data);
-        this.myLeases.set(response.myLeases.data);
-        this.myMaintenanceRequests.set(response.myMaintenance);
-        this.landlordMaintenanceRequests.set(response.landlordMaintenance);
         this.notifications.set(response.notifications.data);
         this.chatRooms.set(response.chatRooms.data);
         this.myProperties.set(response.myProperties.data);
@@ -280,6 +276,16 @@ export class WorkspacePageComponent {
         if (Array.isArray(response.agencies)) {
           this.agencies.set(response.agencies);
         }
+        this.myLeases.set(response.myLeases.data);
+        this.myMaintenanceRequests.set(response.myMaintenance);
+        this.landlordMaintenanceRequests.set(response.landlordMaintenance);
+
+        this.profileForm.patchValue({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phoneNumber: user.phoneNumber,
+          languagePreference: user.languagePreference || 'en',
+        });
       });
 
     if (this.session.isLandlord() || this.session.isAdmin()) {
@@ -307,13 +313,9 @@ export class WorkspacePageComponent {
           if (error) {
             this.hostMessage.set(`Verification failed: ${error.message}`);
           } else {
-            this.hostMessage.set(
-              'Identity verification submitted successfully. Waiting for results...',
-            );
+            this.hostMessage.set('Verification submitted!');
             this.loadKycStatus();
           }
-        } else {
-          this.hostMessage.set('Failed to initialize Stripe.');
         }
       });
   }
@@ -330,175 +332,129 @@ export class WorkspacePageComponent {
       .onboardConnectAccount()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
-        if (response.url) {
-          window.location.href = response.url;
-        }
+        window.location.href = response.url;
       });
-  }
-
-  protected onFileSelected(event: any): void {
-    const files = event.target.files;
-    if (files) {
-      this.propertyImages.set(Array.from(files));
-    }
-  }
-
-  protected createProperty(): void {
-    if (this.propertyForm.invalid) {
-      return;
-    }
-
-    this.api
-      .createProperty(this.propertyForm.getRawValue())
-      .pipe(
-        switchMap((prop) => {
-          if (this.propertyImages().length > 0) {
-            return this.api.uploadPropertyImages(prop.id, this.propertyImages());
-          }
-          return of(null);
-        }),
-        switchMap(() => this.api.getMyProperties()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((response) => {
-        this.myProperties.set(response.data);
-        this.hostMessage.set('Property created successfully with images.');
-        this.propertyForm.patchValue({
-          title: '',
-          description: '',
-          address: '',
-          city: '',
-        });
-        this.propertyImages.set([]);
-      });
-  }
-
-  protected loadAvailability(propertyId: string): void {
-    this.selectedHostPropertyId.set(propertyId);
-    const start = new Date().toISOString().split('T')[0];
-    const end = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-    this.api
-      .getPropertyAvailability(propertyId, start, end)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        this.selectedHostPropertyAvailability.set(response.data);
-      });
-  }
-
-  protected blockRange(): void {
-    if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
-    const { start, end } = this.rangeForm.getRawValue();
-    this.api
-      .blockPropertyRange(this.selectedHostPropertyId(), start!, end!)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.loadAvailability(this.selectedHostPropertyId());
-        this.hostMessage.set('Dates blocked successfully.');
-      });
-  }
-
-  protected unblockRange(): void {
-    if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
-    const { start, end } = this.rangeForm.getRawValue();
-    this.api
-      .unblockPropertyRange(this.selectedHostPropertyId(), start!, end!)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.loadAvailability(this.selectedHostPropertyId());
-        this.hostMessage.set('Dates unblocked successfully.');
-      });
-  }
-
-  protected generateLease(bookingId: string): void {
-    this.api
-      .generateLease(bookingId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.hostMessage.set('Lease generated successfully.');
-        this.loadLeases();
-      });
-  }
-
-  protected signLease(leaseId: string): void {
-    this.api
-      .signLease(leaseId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.loadLeases();
-      });
-  }
-
-  protected loadLeases(): void {
-    this.api
-      .getMyLeases()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => this.myLeases.set(response.data));
   }
 
   protected saveProfile(): void {
-    const value = this.profileForm.getRawValue();
-    this.session
-      .updateProfile({
-        firstName: value.firstName ?? undefined,
-        lastName: value.lastName ?? undefined,
-        phoneNumber: value.phoneNumber ?? null,
-        languagePreference: value.languagePreference ?? undefined,
-      })
-      .subscribe(() => {
-        this.profileMessage.set('Profile updated successfully.');
-        this.seedProfileForm();
+    this.api
+      .updateProfile(this.profileForm.value as any)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (user) => {
+          this.session.user.set(user);
+          this.profileMessage.set('Profile updated successfully!');
+          setTimeout(() => this.profileMessage.set(''), 3000);
+        },
+        error: () => this.profileMessage.set('Failed to update profile.'),
       });
   }
 
   protected savePassword(): void {
-    if (this.passwordForm.invalid) {
-      return;
-    }
-
-    this.session
-      .changePassword(
-        this.passwordForm.getRawValue() as { currentPassword: string; newPassword: string },
-      )
-      .subscribe((message) => {
-        this.passwordMessage.set(message);
-        this.passwordForm.reset();
-      });
-  }
-
-  protected submitMaintenanceRequest(): void {
-    if (this.maintenanceForm.invalid) return;
-    const value = this.maintenanceForm.getRawValue() as any;
+    if (this.passwordForm.invalid) return;
     this.api
-      .createMaintenanceRequest(value)
-      .pipe(
-        switchMap((req) => {
-          if (this.maintenanceImages().length > 0) {
-            return this.api.uploadMaintenanceImages(req.id, this.maintenanceImages());
-          }
-          return of(null);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(() => {
-        this.maintenanceForm.reset();
-        this.maintenanceImages.set([]);
-        this.loadMaintenanceRequests();
-      });
-  }
-
-  protected loadMaintenanceRequests(): void {
-    this.api
-      .getMyMaintenanceRequests()
+      .changePassword(this.passwordForm.value as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((res) => this.myMaintenanceRequests.set(res));
+      .subscribe({
+        next: () => {
+          this.passwordMessage.set('Password changed successfully!');
+          this.passwordForm.reset();
+          setTimeout(() => this.passwordMessage.set(''), 3000);
+        },
+        error: (err) => this.passwordMessage.set(err.error?.message || 'Failed to change.'),
+      });
+  }
 
-    if (this.session.user()?.role === 'LANDLORD' || this.session.user()?.role === 'ADMIN') {
-      this.api
-        .getLandlordMaintenanceRequests()
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((res) => this.landlordMaintenanceRequests.set(res));
-    }
+  protected openRoom(id: string): void {
+    this.selectedRoomId.set(id);
+    this.api
+      .getChatMessages(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => this.messages.set(response.data));
+  }
+
+  protected sendMessage(): void {
+    if (this.messageForm.invalid || !this.selectedRoomId()) return;
+    this.api
+      .sendMessage(this.selectedRoomId(), this.messageForm.value.text!)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((message) => {
+        this.messages.update((prev) => [...prev, message]);
+        this.messageForm.reset();
+      });
+  }
+
+  protected markNotificationRead(id: string): void {
+    this.api
+      .markNotificationRead(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.notifications.update((items) =>
+          items.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
+        );
+      });
+  }
+
+  protected markAllNotificationsRead(): void {
+    this.api
+      .markAllNotificationsRead()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.notifications.update((items) => items.map((item) => ({ ...item, isRead: true })));
+      });
+  }
+
+  protected deleteNotification(id: string): void {
+    this.api
+      .deleteNotification(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.notifications.update((items) => items.filter((item) => item.id !== id));
+      });
+  }
+
+  protected approvePropertyBooking(id: string): void {
+    this.api
+      .approvePropertyBooking(id, 'Approved from workspace')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadWorkspace());
+  }
+
+  protected rejectPropertyBooking(id: string): void {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+    this.api
+      .rejectPropertyBooking(id, reason)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadWorkspace());
+  }
+
+  protected loadAvailability(id: string): void {
+    this.selectedHostPropertyId.set(id);
+    const start = new Date().toISOString().split('T')[0];
+    const end = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    this.api
+      .getPropertyAvailability(id, start, end)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((res) => this.selectedHostPropertyAvailability.set(res.data));
+  }
+
+  protected blockRange(): void {
+    if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
+    const { start, end } = this.rangeForm.value;
+    this.api
+      .blockPropertyRange(this.selectedHostPropertyId(), start!, end!)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadAvailability(this.selectedHostPropertyId()));
+  }
+
+  protected unblockRange(): void {
+    if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
+    const { start, end } = this.rangeForm.value;
+    this.api
+      .unblockPropertyRange(this.selectedHostPropertyId(), start!, end!)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadAvailability(this.selectedHostPropertyId()));
   }
 
   protected openMaintenanceDetail(id: string): void {
@@ -510,172 +466,137 @@ export class WorkspacePageComponent {
         this.maintenanceDetail.set(res);
         this.maintenanceStatusForm.patchValue({
           status: res.status,
-          resolutionNotes: res.resolutionNotes ?? '',
+          resolutionNotes: res.resolutionNotes,
         });
       });
   }
 
   protected updateMaintenanceStatus(): void {
-    if (this.maintenanceStatusForm.invalid || !this.maintenanceDetail()) return;
-    const value = this.maintenanceStatusForm.getRawValue() as any;
+    if (this.maintenanceStatusForm.invalid || !this.selectedMaintenanceRequestId()) return;
     this.api
-      .updateMaintenanceStatus(this.maintenanceDetail()!.id, value)
+      .updateMaintenanceStatus(
+        this.selectedMaintenanceRequestId(),
+        this.maintenanceStatusForm.value as any,
+      )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((res) => {
         this.maintenanceDetail.set(res);
-        this.loadMaintenanceRequests();
+        this.loadWorkspace();
       });
   }
 
-  protected onMaintenanceImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files) {
-      this.maintenanceImages.set(Array.from(input.files));
-    }
+  protected onPropertyImagesSelected(event: any): void {
+    this.propertyImages.set(Array.from(event.target.files));
+  }
+
+  protected createProperty(): void {
+    if (this.propertyForm.invalid) return;
+    this.api
+      .createProperty(this.propertyForm.value as any)
+      .pipe(
+        switchMap((prop) => {
+          if (this.propertyImages().length > 0) {
+            return this.api
+              .uploadPropertyImages(prop.id, this.propertyImages())
+              .pipe(switchMap(() => of(prop)));
+          }
+          return of(prop);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.propertyForm.reset();
+        this.propertyImages.set([]);
+        this.loadWorkspace();
+      });
+  }
+
+  protected onVehicleImagesSelected(event: any): void {
+    this.vehicleImages.set(Array.from(event.target.files));
+  }
+
+  protected onMaintenanceImageSelected(event: any): void {
+    this.maintenanceImages.set(Array.from(event.target.files));
+  }
+
+  protected submitMaintenanceRequest(): void {
+    if (this.maintenanceForm.invalid) return;
+    this.api
+      .createMaintenanceRequest(this.maintenanceForm.value as any)
+      .pipe(
+        switchMap((req) => {
+          if (this.maintenanceImages().length > 0) {
+            return this.api
+              .uploadMaintenanceImages(req.id, this.maintenanceImages())
+              .pipe(switchMap(() => of(req)));
+          }
+          return of(req);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.maintenanceForm.reset();
+        this.maintenanceImages.set([]);
+        this.loadWorkspace();
+      });
   }
 
   protected createVehicle(): void {
-    if (this.vehicleForm.invalid) {
-      this.vehicleForm.markAllAsTouched();
-      return;
-    }
-
+    if (this.vehicleForm.invalid) return;
     this.api
-      .createVehicle(this.vehicleForm.getRawValue() as any)
+      .createVehicle(this.vehicleForm.value as any)
       .pipe(
-        switchMap((res) => {
+        switchMap((v) => {
           if (this.vehicleImages().length > 0) {
-            return this.api.uploadVehicleImages(res.id, this.vehicleImages());
+            return this.api
+              .uploadVehicleImages(v.id, this.vehicleImages())
+              .pipe(switchMap(() => of(v)));
           }
-          return of(null);
+          return of(v);
         }),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => {
-        this.hostMessage.set('Vehicle created successfully.');
         this.vehicleForm.reset();
         this.vehicleImages.set([]);
-        this.loadMyVehicles();
+        this.loadWorkspace();
       });
-  }
-
-  protected loadMyVehicles(): void {
-    this.api.getMyVehicles().subscribe((res) => this.myVehicles.set(res.data));
   }
 
   protected editVehicle(vehicle: Vehicle): void {
     this.selectedHostVehicleId.set(vehicle.id);
-    this.vehicleForm.patchValue(vehicle as any);
+    this.vehicleForm.patchValue({
+      brand: vehicle.brand,
+      model: vehicle.model,
+      year: vehicle.year,
+      dailyPrice: vehicle.dailyPrice,
+      currency: vehicle.currency,
+      transmission: vehicle.transmission,
+      fuelType: vehicle.fuelType,
+      seats: vehicle.seats,
+      category: vehicle.category,
+      description: vehicle.description,
+    });
   }
 
   protected updateVehicle(): void {
     if (this.vehicleForm.invalid || !this.selectedHostVehicleId()) return;
-
     this.api
-      .updateVehicle(this.selectedHostVehicleId(), this.vehicleForm.getRawValue() as any)
+      .updateVehicle(this.selectedHostVehicleId(), this.vehicleForm.value as any)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.hostMessage.set('Vehicle updated successfully.');
         this.selectedHostVehicleId.set('');
         this.vehicleForm.reset();
-        this.loadMyVehicles();
+        this.loadWorkspace();
       });
   }
 
   protected deleteVehicle(id: string): void {
     if (!confirm('Are you sure you want to delete this vehicle?')) return;
-
-    this.api.deleteVehicle(id).subscribe(() => {
-      this.hostMessage.set('Vehicle deleted.');
-      this.loadMyVehicles();
-    });
-  }
-
-  protected onVehicleImagesSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files) {
-      this.vehicleImages.set(Array.from(input.files));
-    }
-  }
-
-  protected loadVehicleConditionReports(id: string): void {
-    this.selectedHostVehicleId.set(id);
-    this.api.getVehicleConditionReports(id).subscribe((res) => {
-      this.selectedHostVehicleConditionReports.set(res.data);
-    });
-  }
-
-  protected loadHostBookings(propertyId: string): void {
-    this.selectedHostPropertyId.set(propertyId);
     this.api
-      .getPropertyBookings(propertyId)
+      .deleteVehicle(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => {
-        this.hostBookings.set(response.data);
-      });
-  }
-
-  protected approveHostBooking(bookingId: string): void {
-    this.api
-      .approvePropertyBooking(bookingId, 'Approved from HomeFlex web workspace')
-      .pipe(
-        switchMap(() => this.refreshHostBookings()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe();
-  }
-
-  protected rejectHostBooking(bookingId: string): void {
-    this.api
-      .rejectPropertyBooking(bookingId, 'Declined from HomeFlex web workspace')
-      .pipe(
-        switchMap(() => this.refreshHostBookings()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe();
-  }
-
-  protected openRoom(roomId: string): void {
-    this.selectedRoomId.set(roomId);
-    this.api
-      .getChatMessages(roomId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((response) => this.messages.set(response.data));
-  }
-
-  protected sendMessage(): void {
-    if (!this.selectedRoomId() || this.messageForm.invalid) {
-      return;
-    }
-
-    this.api
-      .sendMessage(this.selectedRoomId(), this.messageForm.getRawValue().message ?? '')
-      .pipe(
-        switchMap(() => this.api.getChatMessages(this.selectedRoomId())),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((response) => {
-        this.messages.set(response.data);
-        this.messageForm.patchValue({ message: '' });
-      });
-  }
-
-  protected markNotificationRead(id: string): void {
-    this.api
-      .markNotificationRead(id)
-      .pipe(
-        switchMap(() => this.api.getNotifications()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((response) => this.notifications.set(response.data));
-  }
-
-  protected markAllNotificationsRead(): void {
-    this.api
-      .markAllNotificationsRead()
-      .pipe(
-        switchMap(() => this.api.getNotifications()),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe((response) => this.notifications.set(response.data));
+      .subscribe(() => this.loadWorkspace());
   }
 
   protected approvePendingProperty(id: string): void {
@@ -690,7 +611,7 @@ export class WorkspacePageComponent {
 
   protected rejectPendingProperty(id: string): void {
     this.api
-      .rejectProperty(id, 'Rejected from HomeFlex web workspace')
+      .rejectProperty(id, 'Rejected')
       .pipe(
         switchMap(() => this.api.getPendingProperties()),
         takeUntilDestroyed(this.destroyRef),
@@ -701,7 +622,6 @@ export class WorkspacePageComponent {
   protected resolveDispute(id: string): void {
     const notes = prompt('Enter resolution notes:');
     if (!notes) return;
-
     this.api
       .resolveDispute(id, notes)
       .pipe(
@@ -711,47 +631,80 @@ export class WorkspacePageComponent {
       .subscribe((res) => this.disputes.set(res));
   }
 
+  protected generateLease(bookingId: string): void {
+    this.api
+      .generateLease(bookingId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadWorkspace());
+  }
+
+  protected signLease(leaseId: string): void {
+    this.api
+      .signLease(leaseId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadWorkspace());
+  }
+
+  protected approveHostBooking(id: string): void {
+    this.api
+      .approvePropertyBooking(id, 'Approved')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadWorkspace());
+  }
+
+  protected rejectHostBooking(id: string): void {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+    this.api
+      .rejectPropertyBooking(id, reason)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadWorkspace());
+  }
+
   protected logout(): void {
     this.session.logout().subscribe(() => {
       this.router.navigateByUrl('/');
     });
   }
 
-  protected price(value: number | null, currency: string): string {
-    return formatCurrency(value, currency);
+  protected date(val: string | null): string {
+    return val ? formatDate(val) : '-';
   }
 
-  protected date(value: string | null): string {
-    return formatDate(value);
+  protected dateTime(val: string): string {
+    return formatDateTime(val);
   }
 
-  protected dateTime(value: string | null): string {
-    return formatDateTime(value);
+  protected currency(val: number, cur = 'XAF'): string {
+    return formatCurrency(val, cur);
   }
 
-  private seedProfileForm(): void {
-    const user = this.session.user();
-    if (!user) {
-      return;
-    }
+  protected price(val: number | null | undefined, cur = 'XAF'): string {
+    return val !== null && val !== undefined ? formatCurrency(val, cur) : '-';
+  }
 
-    this.profileForm.patchValue({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: user.phoneNumber ?? '',
-      languagePreference: user.languagePreference ?? 'en',
+  protected userInitials(user: User | null): string {
+    if (!user) return '?';
+    return initials(user.firstName, user.lastName);
+  }
+
+  protected loadVehicleConditionReports(id: string): void {
+    this.selectedHostVehicleId.set(id);
+    this.api.getVehicleConditionReports(id).subscribe((res) => {
+      this.selectedHostVehicleConditionReports.set(res.data);
     });
   }
 
-  private refreshHostBookings() {
-    const propertyId = this.selectedHostPropertyId();
-    return propertyId
-      ? this.api.getPropertyBookings(propertyId).pipe(
-          switchMap((response) => {
-            this.hostBookings.set(response.data);
-            return of(response);
-          }),
-        )
-      : of({ data: [] });
+  protected loadHostBookings(propertyId: string): void {
+    this.selectedHostPropertyId.set(propertyId);
+    this.api
+      .getPropertyBookings(propertyId)
+      .pipe(
+        switchMap((response) => {
+          this.hostBookings.set(response.data);
+          return of(response);
+        }),
+      )
+      .subscribe();
   }
 }

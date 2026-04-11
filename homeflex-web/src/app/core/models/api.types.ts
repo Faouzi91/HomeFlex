@@ -114,6 +114,7 @@ export interface Vehicle {
   year: number;
   transmission: string;
   fuelType: string;
+  category?: string;
   dailyPrice: number;
   currency: string;
   status: string;

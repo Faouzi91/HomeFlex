@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
+  Agency,
   Analytics,
   ApiListResponse,
   ApiPageResponse,
@@ -25,6 +26,7 @@ import {
   Receipt,
   ReportItem,
   Review,
+  ReviewCreateRequest,
   User,
   Vehicle,
   VehicleBooking,
@@ -111,14 +113,6 @@ export class ApiClient {
     return this.http.get<ApiValueResponse<number>>(
       `${this.baseUrl}/reviews/property/${propertyId}/average`,
     );
-  }
-
-  createReview(payload: {
-    propertyId: string;
-    rating: number;
-    comment: string;
-  }): Observable<Review> {
-    return this.http.post<Review>(`${this.baseUrl}/reviews`, payload);
   }
 
   reportProperty(payload: {

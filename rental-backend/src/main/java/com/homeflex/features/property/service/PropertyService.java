@@ -20,6 +20,8 @@ import com.homeflex.features.property.domain.entity.PropertyImage;
 import com.homeflex.features.property.domain.entity.PropertyVideo;
 import com.homeflex.features.property.domain.entity.Amenity;
 import com.homeflex.features.property.domain.enums.PropertyStatus;
+import com.homeflex.features.property.domain.enums.PropertyType;
+import com.homeflex.features.property.domain.enums.ListingType;
 import com.homeflex.core.domain.entity.User;
 import com.homeflex.core.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -62,9 +64,7 @@ public class PropertyService {
                                       UUID landlordId) {
 
         // KYC Guard: Only verified landlords can publish
-        if (!kycStatusService.isUserVerified(landlordId)) {
-            throw new DomainException("Identity verification (KYC) required before listing properties.");
-        }
+        kycStatusService.requireVerified(landlordId);
 
         User landlord = userRepository.findById(landlordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Landlord not found"));
@@ -73,8 +73,8 @@ public class PropertyService {
         property.setLandlord(landlord);
         property.setTitle(request.title());
         property.setDescription(request.description());
-        property.setPropertyType(request.propertyType());
-        property.setListingType(request.listingType());
+        property.setPropertyType(PropertyType.valueOf(request.propertyType()));
+        property.setListingType(ListingType.valueOf(request.listingType()));
         property.setPrice(request.price());
         property.setCurrency(request.currency());
         property.setAddress(request.address());
@@ -127,7 +127,7 @@ public class PropertyService {
         property = propertyRepository.save(property);
 
         // Outbox event for search indexing
-        eventOutboxService.saveEvent("Property", property.getId(), "PropertyCreated", Map.of("title", property.getTitle()));
+        eventOutboxService.enqueue("Property", property.getId(), "PropertyCreated", Map.of("title", property.getTitle()));
 
         // Notify admins
         notificationService.notifyAdminsNewProperty(property);
@@ -181,7 +181,7 @@ public class PropertyService {
 
         property = propertyRepository.save(property);
 
-        eventOutboxService.saveEvent("Property", property.getId(),
+        eventOutboxService.enqueue("Property", property.getId(),
                 "PropertyIndexed", Map.of("action", "updated"));
 
         // Force initialization
