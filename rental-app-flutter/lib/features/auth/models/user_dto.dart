@@ -18,6 +18,7 @@ abstract class UserDto with _$UserDto {
     String? languagePreference,
     String? agencyId,
     String? agencyRole,
+    @Default(5.0) double trustScore,
     required String createdAt,
   }) = _UserDto;
 

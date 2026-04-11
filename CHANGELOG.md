@@ -12,6 +12,8 @@ All notable changes to the HomeFlex project will be documented in this file.
 
 ### Added — Enterprise Resiliency & Observability
 
+- **GDPR Tooling** — Added endpoints for data portability (export) and data erasure (Right to be Forgotten), ensuring strict European compliance.
+- **App-Level Encryption (PII)** — Implemented AES-256 field-level database encryption (`PiiEncryptionConverter`) for highly sensitive user data (First Name, Last Name, Phone Number), supplementing standard RDS encryption-at-rest.
 - **Distributed Caching (Redis)** — Implemented `@Cacheable` for property lookups with configurable TTLs (30m for details, 5m for search). Greatly reduces PostgreSQL load for frequently accessed listings.
 - **RabbitMQ Resiliency (DLX/DLQ)** — Configured a Dead Letter Exchange and dedicated queues for all domain events. Failed tasks (like Elasticsearch indexing) now gracefully fail to a DLQ for manual inspection instead of blocking consumers.
 - **ELK Logging Stack** — Fully integrated Elasticsearch, Logstash, and Kibana. Backend now ships structured JSON logs via TCP to Logstash for real-time analysis.

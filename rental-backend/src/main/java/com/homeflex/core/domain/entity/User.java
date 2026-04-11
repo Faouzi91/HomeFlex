@@ -32,13 +32,16 @@ public class User {
     @Column(name = "password_hash")
     private String passwordHash;
 
-    @Column(name = "phone_number", length = 20)
+    @Column(name = "phone_number", length = 200) // Increased length for Base64 encrypted string
+    @Convert(converter = com.homeflex.core.security.PiiEncryptionConverter.class)
     private String phoneNumber;
 
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(name = "first_name", nullable = false, length = 200)
+    @Convert(converter = com.homeflex.core.security.PiiEncryptionConverter.class)
     private String firstName;
 
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(name = "last_name", nullable = false, length = 200)
+    @Convert(converter = com.homeflex.core.security.PiiEncryptionConverter.class)
     private String lastName;
 
     @Column(name = "profile_picture_url")
@@ -66,6 +69,9 @@ public class User {
 
     @Column(name = "agency_role", length = 20)
     private String agencyRole;
+
+    @Column(name = "trust_score")
+    private Double trustScore = 5.0;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

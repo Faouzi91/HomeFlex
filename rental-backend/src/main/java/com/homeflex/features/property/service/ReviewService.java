@@ -104,7 +104,16 @@ public class ReviewService {
         review.setRating(request.rating());
         review.setComment(request.comment());
 
-        return reviewMapper.toDto(reviewRepository.save(review));
+        Review savedReview = reviewRepository.save(review);
+
+        // Update tenant's trust score
+        Double newTrustScore = reviewRepository.getAverageRatingByUserId(targetUser.getId());
+        if (newTrustScore != null) {
+            targetUser.setTrustScore(newTrustScore);
+            userRepository.save(targetUser);
+        }
+
+        return reviewMapper.toDto(savedReview);
     }
 
     public List<ReviewDto> getPropertyReviews(UUID propertyId) {
@@ -136,5 +145,18 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+
+        // Recalculate trust score after deletion
+        if (review.getType() == ReviewType.PROPERTY) {
+            User landlord = review.getProperty().getLandlord();
+            Double newTrustScore = reviewRepository.getAveragePropertyRatingByLandlordId(landlord.getId());
+            landlord.setTrustScore(newTrustScore != null ? newTrustScore : 5.0);
+            userRepository.save(landlord);
+        } else if (review.getType() == ReviewType.TENANT) {
+            User tenant = review.getTargetUser();
+            Double newTrustScore = reviewRepository.getAverageRatingByUserId(tenant.getId());
+            tenant.setTrustScore(newTrustScore != null ? newTrustScore : 5.0);
+            userRepository.save(tenant);
+        }
     }
 }

@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
     @Mapping(target = "role", expression = "java(user.getRole() != null ? user.getRole().name() : null)")
+    @Mapping(target = "agencyId", source = "agency.id")
     UserDto toDto(User user);
 }

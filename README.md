@@ -248,13 +248,10 @@ The backend includes **ArchUnit** tests that enforce architectural rules (e.g., 
 
 The following features remain to be implemented according to the SRS (Software Requirements Specification):
 
-- **Security Hardening:** Migrate to httpOnly cookies and implement CSRF protection.
-- **Insurance Marketplace (v3.0):** Built-in coverage options for landlords and tenants.
-- **Multi-region Deployment:** Expanding beyond the single-region AWS setup to high-availability multi-region.
-- **Advanced Search:** Deeper integration of amenities and filters into Elasticsearch queries.
-- **Automated Finance:** Automated financial receipts and invoice generation.
-- **Production Infrastructure:** AWS Fargate, RDS, and CloudFront production deployment.
-- **Dispute Resolution:** Backend entities and UI for handling tenant-landlord disputes.
+- **Multi-region Deployment:** Expanding beyond the single-region AWS setup to high-availability multi-region replication.
+- **SLO-Driven Operations:** Setting up automated monitoring alerts and performance tuning for sub-100ms API response times.
+- **Advanced UI:** Unified dispute resolution and agency management dashboards for admins.
+- **Real-time Booking Modifications:** Allowing tenants to request date changes after a booking has been approved.
 
 ## License
 

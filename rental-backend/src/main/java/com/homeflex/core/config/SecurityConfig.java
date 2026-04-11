@@ -132,6 +132,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/disputes").authenticated()
                         .requestMatchers("/api/v1/disputes/**").hasRole("ADMIN")
 
+                        // GDPR endpoints
+                        .requestMatchers("/api/v1/gdpr/**").authenticated()
+
                         // Payment & payout endpoints
                         .requestMatchers("/api/v1/payments/refund").hasRole("ADMIN")
                         .requestMatchers("/api/v1/payments/**").authenticated()

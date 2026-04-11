@@ -25,6 +25,9 @@ export interface User {
   isActive: boolean;
   isVerified: boolean;
   languagePreference: string | null;
+  agencyId?: string | null;
+  agencyRole?: string | null;
+  trustScore?: number;
   createdAt: string;
 }
 

@@ -115,6 +115,8 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 Distributed locking (Redlock via Redisson) for double-booking prevention in concurrent environments
 - 🟢 Two-Way Review system (Landlords review tenants and vice-versa)
 - 🟢 Multi-Currency engine with real-time conversion simulation
+- 🟢 App-level AES-256 field encryption for highly sensitive PII (First Name, Last Name, Phone Number)
+- 🟢 GDPR Tooling for data portability (export) and "Right to be Forgotten" (erasure)
 
 ### Partially Implemented (v2.2)
 
@@ -126,9 +128,6 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🔴 SLO-driven operations and performance tuning
 - 🔴 Advanced UI for Agency and Disputes
 - 🔴 Real-time booking modifications (date changes after approval)
-- 🔴 Two-way reviews contributes to global Trust Score calculation
-- 🔴 App-level field encryption for PII
-- 🔴 GDPR data portability and erasure tooling
 
 ## 1.3 Decision Baseline (Approved)
 

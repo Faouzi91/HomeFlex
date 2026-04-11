@@ -14,5 +14,8 @@ public record UserDto(
         Boolean isActive,
         Boolean isVerified,
         String languagePreference,
+        UUID agencyId,
+        String agencyRole,
+        Double trustScore,
         LocalDateTime createdAt
 ) {}
