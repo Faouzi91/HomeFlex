@@ -127,7 +127,6 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 
 - 🔴 Multi-region deployment
 - 🔴 SLO-driven operations and performance tuning
-- 🔴 Advanced UI for Agency and Disputes
 
 ## 1.3 Decision Baseline (Approved)
 
@@ -2113,9 +2112,10 @@ _End of Document — v2.6 (2026-04-11)_
 16. Advanced Amenity-based search in Elasticsearch
 17. Distributed Redis Caching & RabbitMQ Resiliency (DLX/DLQ)
 18. Production AWS Infrastructure (Terraform: VPC, RDS, ECS)
+19. Advanced Admin Dashboard (Agency & Dispute Management)
+20. Trust Score calculation logic
 
 **Next Steps (Gaps):**
 
 1. **Operations:** SLO-driven monitoring alerts and performance tuning.
 2. **Expansion:** Multi-region deployment strategy.
-3. **Advanced UI:** Unified dispute resolution and agency management dashboard.

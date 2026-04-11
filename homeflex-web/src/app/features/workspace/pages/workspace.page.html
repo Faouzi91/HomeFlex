@@ -153,6 +153,18 @@
                   </p>
                   <p class="text-3xl font-extrabold text-brand-600">{{ unreadNotifications() }}</p>
                 </div>
+                @if (session.user()?.trustScore; as score) {
+                  <div
+                    class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm transition-shadow hover:shadow-md"
+                  >
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                      Trust Score
+                    </p>
+                    <p class="text-3xl font-extrabold text-emerald-600">
+                      {{ score | number: '1.1-1' }}
+                    </p>
+                  </div>
+                }
               </div>
 
               <div class="grid gap-8 lg:grid-cols-2">
@@ -1435,6 +1447,129 @@
                       </div>
                     } @empty {
                       <p class="text-sm text-slate-400 font-medium italic">No reports available.</p>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- New Admin Sections: Disputes & Agencies -->
+              <div class="grid gap-10 lg:grid-cols-2 pt-10 border-t border-slate-100">
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-5 h-5 text-rose-500"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                      />
+                    </svg>
+                    Active Disputes
+                  </h2>
+                  <div class="space-y-4">
+                    @for (dispute of disputes(); track dispute.id) {
+                      <div class="p-6 rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <div class="flex justify-between items-start mb-3">
+                          <div>
+                            <h4 class="font-bold text-slate-900 text-sm">{{ dispute.reason }}</h4>
+                            <p
+                              class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                            >
+                              {{ dispute.status }}
+                            </p>
+                          </div>
+                          @if (dispute.status === 'OPEN') {
+                            <button
+                              (click)="resolveDispute(dispute.id)"
+                              class="px-3 py-1 rounded bg-slate-900 text-white text-[10px] font-bold hover:bg-slate-800 transition-colors uppercase tracking-wider"
+                            >
+                              Resolve
+                            </button>
+                          }
+                        </div>
+                        <p class="text-xs text-slate-600 line-clamp-2 mb-3">
+                          {{ dispute.description }}
+                        </p>
+                        <div
+                          class="flex items-center justify-between text-[10px] font-bold text-slate-400"
+                        >
+                          <span>Ref: {{ dispute.id.slice(0, 8) }}</span>
+                          <span>{{ date(dispute.createdAt) }}</span>
+                        </div>
+                      </div>
+                    } @empty {
+                      <p class="text-sm text-slate-400 font-medium italic">No active disputes.</p>
+                    }
+                  </div>
+                </div>
+
+                <div class="space-y-6">
+                  <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-5 h-5 text-brand-500"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h18"
+                      />
+                    </svg>
+                    Agency Network
+                  </h2>
+                  <div class="space-y-4">
+                    @for (agency of agencies(); track agency.id) {
+                      <div
+                        class="p-6 rounded-xl border border-slate-200 bg-white flex items-center gap-4"
+                      >
+                        <div
+                          class="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400"
+                        >
+                          @if (agency.logoUrl) {
+                            <img
+                              [src]="agency.logoUrl"
+                              class="h-full w-full object-cover rounded-lg"
+                            />
+                          } @else {
+                            <span class="font-bold text-lg">{{ agency.name.slice(0, 1) }}</span>
+                          }
+                        </div>
+                        <div class="flex-grow">
+                          <h4 class="font-bold text-slate-900 text-sm">{{ agency.name }}</h4>
+                          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            {{ agency.email }}
+                          </p>
+                        </div>
+                        @if (agency.isVerified) {
+                          <span class="h-5 w-5 text-emerald-500">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                            >
+                              <path
+                                fill-rule="evenodd"
+                                d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z"
+                                clip-rule="evenodd"
+                              />
+                            </svg>
+                          </span>
+                        }
+                      </div>
+                    } @empty {
+                      <p class="text-sm text-slate-400 font-medium italic">
+                        No agencies registered.
+                      </p>
                     }
                   </div>
                 </div>

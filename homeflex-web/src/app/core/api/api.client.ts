@@ -530,6 +530,20 @@ export class ApiClient {
     );
   }
 
+  // --- Agencies ---
+
+  getAllAgencies(): Observable<Agency[]> {
+    return this.http.get<Agency[]>(`${this.baseUrl}/agencies`);
+  }
+
+  getAgency(id: string): Observable<Agency> {
+    return this.http.get<Agency>(`${this.baseUrl}/agencies/${id}`);
+  }
+
+  verifyAgency(id: string): Observable<Agency> {
+    return this.http.patch<Agency>(`${this.baseUrl}/agencies/${id}/verify`, {});
+  }
+
   getVehicleConditionReports(id: string): Observable<ApiListResponse<any>> {
     return this.http.get<ApiListResponse<any>>(`${this.baseUrl}/vehicles/${id}/condition`);
   }

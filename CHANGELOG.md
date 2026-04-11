@@ -6,6 +6,7 @@ All notable changes to the HomeFlex project will be documented in this file.
 
 ### Added — Advanced Web Features (Angular)
 
+- **Admin Control Panel Expansion** — Built high-density management views for the **Agency Network** and **Dispute Resolution** modules within the workspace. Admins can now resolve disputes and view the global agency network.
 - **Real-time Booking Modifications** — Implemented a complex workflow allowing tenants to request date changes for approved bookings, with automated availability checks, price recalculation, and landlord re-approval.
 - **Interactive Map Search** — Integrated Leaflet maps into the property discovery page with a Grid/Map toggle and automated bounds fitting.
 - **Global i18n Expansion** — Added support for **Spanish** and **Arabic**, including full **RTL (Right-to-Left)** layout support for the Arabic locale.
@@ -23,6 +24,7 @@ All notable changes to the HomeFlex project will be documented in this file.
 
 ### Added — Future-Proof Innovations (v3.0/v4.0)
 
+- **Agency Network (v4.0)** — Completed the backend controller and service for agency management, allowing administrators to verify and manage real estate agencies.
 - **Insurance Marketplace (v3.0)** — Built a comprehensive insurance foundation including `InsuranceProvider`, `InsurancePlan`, and `InsurancePolicy` entities. Tenants can now purchase protection plans during the booking flow.
 - **Automated Finance** — Implemented an automated receipt generation system using OpenPDF. Receipts are now automatically issued and stored as PDFs upon successful payment confirmation.
 - **Dispute Resolution** — Added a core dispute management system allowing tenants to open disputes for bookings, which can then be reviewed and resolved by administrators.

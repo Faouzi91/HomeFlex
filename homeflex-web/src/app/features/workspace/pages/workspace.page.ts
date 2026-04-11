@@ -6,14 +6,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { loadStripe } from '@stripe/stripe-js';
 import { ApiClient } from '../../../core/api/api.client';
 import {
+  Agency,
   Analytics,
   Booking,
   ChatRoom,
+  Dispute,
+  InsurancePolicy,
   MaintenanceRequest,
   MaintenanceStatus,
   Message,
   NotificationItem,
   Property,
+  Receipt,
   ReportItem,
   User,
   Vehicle,
@@ -73,6 +77,10 @@ export class WorkspacePageComponent {
   protected readonly analytics = signal<Analytics | null>(null);
   protected readonly pendingProperties = signal<Property[]>([]);
   protected readonly reports = signal<ReportItem[]>([]);
+  protected readonly disputes = signal<Dispute[]>([]);
+  protected readonly agencies = signal<Agency[]>([]);
+  protected readonly allReceipts = signal<Receipt[]>([]);
+  protected readonly allInsurancePolicies = signal<InsurancePolicy[]>([]);
   protected readonly kycStatus = signal<any>(null);
   protected readonly payoutSummary = signal<any>(null);
   protected readonly selectedHostPropertyAvailability = signal<any[]>([]);
@@ -242,6 +250,8 @@ export class WorkspacePageComponent {
       reports: this.session.isAdmin()
         ? this.api.getReports()
         : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
+      disputes: this.session.isAdmin() ? this.api.getAllDisputes() : of([]),
+      agencies: this.session.isAdmin() ? this.api.getAllAgencies() : of([]),
       myLeases: this.api.getMyLeases(),
       myMaintenance: this.api.getMyMaintenanceRequests(),
       landlordMaintenance:
@@ -264,6 +274,12 @@ export class WorkspacePageComponent {
         this.analytics.set(response.analytics);
         this.pendingProperties.set(response.pendingProperties.data);
         this.reports.set(response.reports.data);
+        if (Array.isArray(response.disputes)) {
+          this.disputes.set(response.disputes);
+        }
+        if (Array.isArray(response.agencies)) {
+          this.agencies.set(response.agencies);
+        }
       });
 
     if (this.session.isLandlord() || this.session.isAdmin()) {
@@ -680,6 +696,19 @@ export class WorkspacePageComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((response) => this.pendingProperties.set(response.data));
+  }
+
+  protected resolveDispute(id: string): void {
+    const notes = prompt('Enter resolution notes:');
+    if (!notes) return;
+
+    this.api
+      .resolveDispute(id, notes)
+      .pipe(
+        switchMap(() => this.api.getAllDisputes()),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => this.disputes.set(res));
   }
 
   protected logout(): void {

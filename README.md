@@ -250,7 +250,6 @@ The following features remain to be implemented according to the SRS (Software R
 
 - **Multi-region Deployment:** Expanding beyond the single-region AWS setup to high-availability multi-region replication.
 - **SLO-Driven Operations:** Setting up automated monitoring alerts and performance tuning for sub-100ms API response times.
-- **Advanced UI:** Unified dispute resolution and agency management dashboards for admins.
 
 ## License
 
