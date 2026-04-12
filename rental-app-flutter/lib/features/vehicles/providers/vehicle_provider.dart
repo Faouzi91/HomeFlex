@@ -7,7 +7,7 @@ import 'package:dio/dio.dart';
 final vehiclesProvider = FutureProvider<List<VehicleResponse>>((ref) async {
   final apiClient = ApiClient();
   final response = await apiClient.dio.get('/vehicles/search');
-  final List<dynamic> content = response.data['content'];
+  final List<dynamic> content = response.data['data'];
   return content.map((json) => VehicleResponse.fromJson(json)).toList();
 });
 
@@ -17,7 +17,7 @@ final vehicleSearchProvider =
   final queryParams = Map<String, dynamic>.from(params)
     ..removeWhere((key, value) => value == null || value == '');
   final response = await apiClient.dio.get('/vehicles/search', queryParameters: queryParams);
-  final List<dynamic> content = response.data['content'];
+  final List<dynamic> content = response.data['data'];
   return content.map((json) => VehicleResponse.fromJson(json)).toList();
 });
 
@@ -168,7 +168,7 @@ class PaginatedVehicleNotifier extends Notifier<PaginatedVehicleState> {
       }..removeWhere((key, value) => value == null || value == '');
 
       final response = await _apiClient.dio.get('/vehicles/search', queryParameters: queryParams);
-      final List<dynamic> content = response.data['content'];
+      final List<dynamic> content = response.data['data'];
       final totalPages = response.data['totalPages'] as int? ?? 1;
       final vehicles = content.map((json) => VehicleResponse.fromJson(json)).toList();
 
@@ -197,7 +197,7 @@ class PaginatedVehicleNotifier extends Notifier<PaginatedVehicleState> {
       }..removeWhere((key, value) => value == null || value == '');
 
       final response = await _apiClient.dio.get('/vehicles/search', queryParameters: queryParams);
-      final List<dynamic> content = response.data['content'];
+      final List<dynamic> content = response.data['data'];
       final totalPages = response.data['totalPages'] as int? ?? 1;
       final newVehicles = content.map((json) => VehicleResponse.fromJson(json)).toList();
 

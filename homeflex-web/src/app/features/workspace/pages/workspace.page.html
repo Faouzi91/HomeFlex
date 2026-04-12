@@ -867,6 +867,60 @@
                       Save Changes
                     </button>
                   </form>
+
+                  <!-- GDPR Compliance Section -->
+                  <div class="pt-10 border-t border-slate-100 space-y-6">
+                    <h2 class="text-xl font-bold text-slate-900">Data Management (GDPR)</h2>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                      Under GDPR regulations, you have the right to portability and erasure. You can
+                      download a machine-readable export of all your platform data or request the
+                      permanent deletion of your account.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                      <button
+                        (click)="exportMyData()"
+                        type="button"
+                        class="px-4 py-2 rounded border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="2"
+                          stroke="currentColor"
+                          class="w-4 h-4"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                          />
+                        </svg>
+                        Export Data (JSON)
+                      </button>
+                      <button
+                        (click)="eraseMyData()"
+                        type="button"
+                        class="px-4 py-2 rounded border border-rose-100 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-2"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="2"
+                          stroke="currentColor"
+                          class="w-4 h-4"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m14.74 9-.34 12m-4.77 0L9.26 9m9.96-1.99L18.75 5.25a2.25 2.25 0 0 0-2.25-2.25h-9a2.25 2.25 0 0 0-2.25 2.25L5.04 7.01m14.74 0a2.25 2.25 0 0 1 2.25 2.25v13.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V9.26a2.25 2.25 0 0 1 2.25-2.25m14.74 0H5.04"
+                          />
+                        </svg>
+                        Delete Account
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Security Form -->

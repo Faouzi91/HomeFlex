@@ -1,21 +1,14 @@
-FROM node:20-alpine AS builder
-
+# Build Angular
+FROM node:24-alpine AS builder
 WORKDIR /app
-
 COPY package*.json ./
-COPY angular.json tsconfig*.json ./
-COPY .postcssrc.json ./
-COPY public ./public
-COPY src ./src
-
-RUN npm ci
+RUN npm config set fetch-retry-maxtimeout 120000 && npm ci
+COPY . .
 RUN npm run build
 
+# Runtime
 FROM nginx:1.27-alpine
-
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/dist/homeflex-web/browser /usr/share/nginx/html
-
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]

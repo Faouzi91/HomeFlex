@@ -6,7 +6,7 @@ import '../../../core/api/api_client.dart';
 final chatRoomsProvider = FutureProvider<List<ChatRoomDto>>((ref) async {
   final apiClient = ApiClient();
   final response = await apiClient.dio.get('/chat/rooms');
-  final List<dynamic> data = response.data;
+  final List<dynamic> data = response.data['data'];
   return data.map((json) => ChatRoomDto.fromJson(json)).toList();
 });
 
@@ -14,7 +14,7 @@ final chatMessagesProvider =
     FutureProvider.family<List<MessageDto>, String>((ref, roomId) async {
   final apiClient = ApiClient();
   final response = await apiClient.dio.get('/chat/rooms/$roomId/messages');
-  final List<dynamic> data = response.data;
+  final List<dynamic> data = response.data['data'];
   return data.map((json) => MessageDto.fromJson(json)).toList();
 });
 

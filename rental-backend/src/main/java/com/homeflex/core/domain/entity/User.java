@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import com.homeflex.core.domain.enums.UserRole;
 
 import java.time.LocalDateTime;
@@ -16,7 +18,6 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@org.hibernate.envers.Audited
 public class User {
 
     @Id
@@ -66,6 +67,7 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agency_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Agency agency;
 
     @Column(name = "agency_role", length = 20)

@@ -11,6 +11,8 @@ public interface KycVerificationRepository extends JpaRepository<KycVerification
 
     Optional<KycVerification> findByStripeSessionId(String stripeSessionId);
 
+    Optional<KycVerification> findByUserId(UUID userId);
+
     Optional<KycVerification> findTopByUserIdOrderByCreatedAtDesc(UUID userId);
 
     boolean existsByUserIdAndStatus(UUID userId, KycStatus status);

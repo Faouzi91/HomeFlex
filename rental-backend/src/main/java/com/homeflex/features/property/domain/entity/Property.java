@@ -1,7 +1,6 @@
 package com.homeflex.features.property.domain.entity;
 
 import com.homeflex.core.domain.entity.User;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.homeflex.features.property.domain.enums.ListingType;
 import com.homeflex.features.property.domain.enums.PropertyStatus;
@@ -12,6 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,7 +26,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@Audited(withModifiedFlag = true)
 public class Property {
 
     @Id
@@ -64,7 +63,6 @@ public class Property {
     @Column(length = 3)
     private String currency = "XAF";
 
-    // Location
     @Column(nullable = false, columnDefinition = "TEXT")
     private String address;
 
@@ -86,9 +84,7 @@ public class Property {
     @Column(precision = 11, scale = 8)
     private BigDecimal longitude;
 
-    // Property Details
     private Integer bedrooms;
-
     private Integer bathrooms;
 
     @Column(name = "area_sqm", precision = 10, scale = 2)
@@ -111,21 +107,19 @@ public class Property {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agency_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private com.homeflex.core.domain.entity.Agency agency;
 
-    // Availability
     @Column(name = "is_available")
     private Boolean isAvailable = true;
 
     @Column(name = "available_from")
     private LocalDate availableFrom;
 
-    // Status
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private PropertyStatus status = PropertyStatus.PENDING;
 
-    // Metadata
     @Column(name = "view_count")
     @NotAudited
     private Integer viewCount = 0;
@@ -134,7 +128,6 @@ public class Property {
     @NotAudited
     private Integer favoriteCount = 0;
 
-    // Relationships
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"property"})
     @ToString.Exclude

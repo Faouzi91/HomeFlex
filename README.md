@@ -64,9 +64,11 @@ Once all containers are healthy (~60s):
 
 | Service             | URL                                    |
 | ------------------- | -------------------------------------- |
-| Frontend            | http://localhost                       |
+| Web Frontend        | http://localhost                       |
+| Mobile Web Frontend | http://localhost/app/                  |
 | Backend API         | http://localhost:8080/api/v1           |
 | Swagger UI          | http://localhost:8080/swagger-ui.html  |
+| Kibana Dashboard    | http://localhost:5601                  |
 | RabbitMQ Management | http://localhost:15672 (guest / guest) |
 
 ### Monitoring (optional)

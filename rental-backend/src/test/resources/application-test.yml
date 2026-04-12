@@ -5,9 +5,9 @@ spring:
     password: postgres
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
   flyway:
-    enabled: false
+    enabled: true
   data:
     redis:
       host: localhost

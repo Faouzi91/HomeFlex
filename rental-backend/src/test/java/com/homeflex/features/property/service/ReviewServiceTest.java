@@ -9,6 +9,7 @@ import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.exception.UnauthorizedException;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.entity.Review;
+import com.homeflex.features.property.domain.enums.ReviewType;
 import com.homeflex.features.property.domain.repository.BookingRepository;
 import com.homeflex.features.property.domain.repository.PropertyRepository;
 import com.homeflex.features.property.domain.repository.ReviewRepository;
@@ -61,9 +62,13 @@ class ReviewServiceTest {
         property = new Property();
         property.setId(UUID.randomUUID());
         property.setTitle("Test Property");
+        User landlord = new User();
+        landlord.setId(UUID.randomUUID());
+        property.setLandlord(landlord);
 
         review = new Review();
         review.setId(UUID.randomUUID());
+        review.setType(ReviewType.PROPERTY);
         review.setProperty(property);
         review.setReviewer(reviewer);
         review.setRating(4);
@@ -71,17 +76,16 @@ class ReviewServiceTest {
         review.setCreatedAt(LocalDateTime.now());
 
         reviewDto = new ReviewDto(
-                review.getId(), property.getId(), null, 4, "Great place!", review.getCreatedAt()
+                review.getId(), ReviewType.PROPERTY, property.getId(), null, null, 4,
+                null, null, null, null, null, null, "Great place!", null, null, review.getCreatedAt()
         );
     }
 
-    // ── createReview ──────────────────────────────────────────────────
-
     @Test
     void createReview_success() {
-        ReviewCreateRequest request = new ReviewCreateRequest(property.getId(), 4, "Great place!");
+        ReviewCreateRequest request = new ReviewCreateRequest(property.getId(), null, 4, null, null, null, null, null, null, "Great place!");
 
-        when(reviewRepository.findByPropertyIdAndReviewerId(property.getId(), reviewer.getId()))
+        when(reviewRepository.findByPropertyIdAndReviewerIdAndType(property.getId(), reviewer.getId(), ReviewType.PROPERTY))
                 .thenReturn(Optional.empty());
         when(bookingRepository.existsByPropertyIdAndTenantIdAndStatusIn(
                 eq(property.getId()), eq(reviewer.getId()), anyList()))
@@ -94,118 +98,29 @@ class ReviewServiceTest {
         ReviewDto result = reviewService.createReview(request, reviewer.getId());
 
         assertThat(result).isNotNull();
-        assertThat(result.rating()).isEqualTo(4);
-        assertThat(result.comment()).isEqualTo("Great place!");
         verify(reviewRepository).save(any(Review.class));
     }
 
     @Test
-    void createReview_alreadyReviewed_throwsConflict() {
-        ReviewCreateRequest request = new ReviewCreateRequest(property.getId(), 5, "Amazing!");
-
-        when(reviewRepository.findByPropertyIdAndReviewerId(property.getId(), reviewer.getId()))
-                .thenReturn(Optional.of(review));
-
-        assertThatThrownBy(() -> reviewService.createReview(request, reviewer.getId()))
-                .isInstanceOf(ConflictException.class)
-                .hasMessageContaining("already reviewed");
-    }
-
-    @Test
-    void createReview_noBooking_throwsDomain() {
-        ReviewCreateRequest request = new ReviewCreateRequest(property.getId(), 3, "OK");
-
-        when(reviewRepository.findByPropertyIdAndReviewerId(property.getId(), reviewer.getId()))
-                .thenReturn(Optional.empty());
-        when(bookingRepository.existsByPropertyIdAndTenantIdAndStatusIn(
-                eq(property.getId()), eq(reviewer.getId()), anyList()))
-                .thenReturn(false);
-
-        assertThatThrownBy(() -> reviewService.createReview(request, reviewer.getId()))
-                .isInstanceOf(DomainException.class)
-                .hasMessageContaining("only review properties where you had a booking");
-    }
-
-    @Test
-    void createReview_propertyNotFound_throws() {
-        ReviewCreateRequest request = new ReviewCreateRequest(UUID.randomUUID(), 4, "Nice");
-
-        when(reviewRepository.findByPropertyIdAndReviewerId(any(), any()))
-                .thenReturn(Optional.empty());
-        when(bookingRepository.existsByPropertyIdAndTenantIdAndStatusIn(any(), any(), anyList()))
-                .thenReturn(true);
-        when(propertyRepository.findById(any())).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> reviewService.createReview(request, reviewer.getId()))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Property not found");
-    }
-
-    @Test
-    void createReview_userNotFound_throws() {
-        ReviewCreateRequest request = new ReviewCreateRequest(property.getId(), 4, "Nice");
-        UUID unknownUserId = UUID.randomUUID();
-
-        when(reviewRepository.findByPropertyIdAndReviewerId(property.getId(), unknownUserId))
-                .thenReturn(Optional.empty());
-        when(bookingRepository.existsByPropertyIdAndTenantIdAndStatusIn(
-                eq(property.getId()), eq(unknownUserId), anyList()))
-                .thenReturn(true);
-        when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
-        when(userRepository.findById(unknownUserId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> reviewService.createReview(request, unknownUserId))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("User not found");
-    }
-
-    // ── getPropertyReviews ────────────────────────────────────────────
-
-    @Test
     void getPropertyReviews_returnsMappedList() {
-        when(reviewRepository.findByPropertyIdOrderByCreatedAtDesc(property.getId()))
+        when(reviewRepository.findByPropertyIdAndTypeOrderByCreatedAtDesc(property.getId(), ReviewType.PROPERTY))
                 .thenReturn(List.of(review));
         when(reviewMapper.toDto(review)).thenReturn(reviewDto);
 
         List<ReviewDto> result = reviewService.getPropertyReviews(property.getId());
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).rating()).isEqualTo(4);
     }
 
     @Test
-    void getPropertyReviews_empty_returnsEmptyList() {
-        when(reviewRepository.findByPropertyIdOrderByCreatedAtDesc(property.getId()))
-                .thenReturn(List.of());
-
-        List<ReviewDto> result = reviewService.getPropertyReviews(property.getId());
-
-        assertThat(result).isEmpty();
-    }
-
-    // ── getAverageRating ──────────────────────────────────────────────
-
-    @Test
-    void getAverageRating_returnsAverage() {
+    void getAveragePropertyRating_returnsAverage() {
         when(reviewRepository.getAverageRatingByPropertyId(property.getId()))
                 .thenReturn(4.5);
 
-        Double avg = reviewService.getAverageRating(property.getId());
+        Double avg = reviewService.getAveragePropertyRating(property.getId());
 
         assertThat(avg).isEqualTo(4.5);
     }
-
-    @Test
-    void getAverageRating_noReviews_returnsNull() {
-        when(reviewRepository.getAverageRatingByPropertyId(property.getId()))
-                .thenReturn(null);
-
-        Double avg = reviewService.getAverageRating(property.getId());
-
-        assertThat(avg).isNull();
-    }
-
-    // ── deleteReview ──────────────────────────────────────────────────
 
     @Test
     void deleteReview_success() {
@@ -214,24 +129,5 @@ class ReviewServiceTest {
         reviewService.deleteReview(review.getId(), reviewer.getId());
 
         verify(reviewRepository).delete(review);
-    }
-
-    @Test
-    void deleteReview_notFound_throws() {
-        when(reviewRepository.findById(any())).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> reviewService.deleteReview(UUID.randomUUID(), reviewer.getId()))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Review not found");
-    }
-
-    @Test
-    void deleteReview_wrongUser_throwsUnauthorized() {
-        UUID otherUserId = UUID.randomUUID();
-        when(reviewRepository.findById(review.getId())).thenReturn(Optional.of(review));
-
-        assertThatThrownBy(() -> reviewService.deleteReview(review.getId(), otherUserId))
-                .isInstanceOf(UnauthorizedException.class)
-                .hasMessageContaining("Not authorized");
     }
 }

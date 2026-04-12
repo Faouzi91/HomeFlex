@@ -349,8 +349,11 @@ export class ApiClient {
     return this.http.get<any>(`${this.baseUrl}/payouts/summary`);
   }
 
-  onboardConnectAccount(): Observable<{ url: string }> {
-    return this.http.post<any>(`${this.baseUrl}/payouts/connect/onboard`, {});
+  onboardConnectAccount(refreshUrl: string, returnUrl: string): Observable<{ url: string }> {
+    return this.http.post<any>(`${this.baseUrl}/payouts/connect/onboard`, {
+      refreshUrl,
+      returnUrl,
+    });
   }
 
   // --- Property Availability ---
@@ -502,6 +505,16 @@ export class ApiClient {
 
   deleteReview(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/reviews/${id}`);
+  }
+
+  // --- GDPR Compliance ---
+
+  exportData(): Observable<Record<string, unknown>> {
+    return this.http.get<Record<string, unknown>>(`${this.baseUrl}/gdpr/export`);
+  }
+
+  eraseData(): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/gdpr/erase`);
   }
 
   // --- Currencies ---

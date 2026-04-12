@@ -112,6 +112,16 @@ public class PropertyV1Controller {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/images")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<PropertyDto> uploadImages(
+            @PathVariable UUID id,
+            @RequestPart("images") List<MultipartFile> images,
+            Authentication authentication) {
+        UUID landlordId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(propertyService.addImages(id, images, landlordId));
+    }
+
     @GetMapping("/{id}/similar")
     public ResponseEntity<ApiListResponse<PropertyDto>> getSimilarProperties(@PathVariable UUID id) {
         return ResponseEntity.ok(new ApiListResponse<>(propertyService.getSimilarProperties(id)));

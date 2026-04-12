@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 final propertiesProvider = FutureProvider<List<PropertyDto>>((ref) async {
   final apiClient = ApiClient();
   final response = await apiClient.dio.get('/properties/search');
-  final List<dynamic> content = response.data['content'];
+  final List<dynamic> content = response.data['data'];
   return content.map((json) => PropertyDto.fromJson(json)).toList();
 });
 
@@ -16,7 +16,7 @@ final propertySearchProvider =
   final queryParams = Map<String, dynamic>.from(params)
     ..removeWhere((key, value) => value == null || value == '');
   final response = await apiClient.dio.get('/properties/search', queryParameters: queryParams);
-  final List<dynamic> content = response.data['content'];
+  final List<dynamic> content = response.data['data'];
   return content.map((json) => PropertyDto.fromJson(json)).toList();
 });
 
@@ -144,7 +144,7 @@ class PaginatedPropertyNotifier extends Notifier<PaginatedPropertyState> {
       }..removeWhere((key, value) => value == null || value == '');
 
       final response = await _apiClient.dio.get('/properties/search', queryParameters: queryParams);
-      final List<dynamic> content = response.data['content'];
+      final List<dynamic> content = response.data['data'];
       final totalPages = response.data['totalPages'] as int? ?? 1;
       final properties = content.map((json) => PropertyDto.fromJson(json)).toList();
 
@@ -173,7 +173,7 @@ class PaginatedPropertyNotifier extends Notifier<PaginatedPropertyState> {
       }..removeWhere((key, value) => value == null || value == '');
 
       final response = await _apiClient.dio.get('/properties/search', queryParameters: queryParams);
-      final List<dynamic> content = response.data['content'];
+      final List<dynamic> content = response.data['data'];
       final totalPages = response.data['totalPages'] as int? ?? 1;
       final newProperties = content.map((json) => PropertyDto.fromJson(json)).toList();
 

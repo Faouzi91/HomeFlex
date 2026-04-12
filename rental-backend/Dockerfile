@@ -1,23 +1,24 @@
-# Build Stage — full JDK for compilation
+# Build Stage
 FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 
-# Copy Gradle wrapper and config first (layer caching — dependencies rarely change)
+# Copy gradle wrapper first
+COPY gradlew ./
 COPY gradle ./gradle
+RUN chmod +x gradlew
+
+# Copy config and source
 COPY build.gradle settings.gradle ./
-
-# Download Gradle distribution via wrapper jar (avoids broken gradlew script on Windows)
-RUN java -jar gradle/wrapper/gradle-wrapper.jar dependencies --no-daemon || true
-
-# Copy source and build
 COPY src ./src
-RUN java -jar gradle/wrapper/gradle-wrapper.jar bootJar --no-daemon -x test
 
-# Runtime Stage — JRE-slim for smaller image (~200MB vs ~600MB)
+# Build the JAR (skipping tests for speed and reliability)
+RUN ./gradlew bootJar --no-daemon -x test
+
+# Runtime Stage
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Non-root user for security
+# Non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
@@ -25,6 +26,7 @@ COPY --from=build /app/build/libs/rental-backend.jar app.jar
 
 EXPOSE 8080
 
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
   CMD wget -q -O - http://localhost:8080/actuator/health || exit 1
 

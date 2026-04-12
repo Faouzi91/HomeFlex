@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:v3.4.0
+    image: prom/prometheus:v3.5.0
     container_name: homeflex-prometheus
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro

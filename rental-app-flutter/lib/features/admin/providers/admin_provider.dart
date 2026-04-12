@@ -8,14 +8,14 @@ import '../../../core/api/api_client.dart';
 final pendingPropertiesProvider = FutureProvider<List<PropertyDto>>((ref) async {
   final apiClient = ApiClient();
   final response = await apiClient.dio.get('/admin/properties/pending');
-  final List<dynamic> content = response.data['content'];
+  final List<dynamic> content = response.data['data'];
   return content.map((json) => PropertyDto.fromJson(json)).toList();
 });
 
 final allUsersProvider = FutureProvider<List<UserDto>>((ref) async {
   final apiClient = ApiClient();
   final response = await apiClient.dio.get('/admin/users');
-  final List<dynamic> content = response.data['content'];
+  final List<dynamic> content = response.data['data'];
   return content.map((json) => UserDto.fromJson(json)).toList();
 });
 
@@ -28,7 +28,7 @@ final analyticsProvider = FutureProvider<AnalyticsDto>((ref) async {
 final reportsProvider = FutureProvider<List<ReportDto>>((ref) async {
   final apiClient = ApiClient();
   final response = await apiClient.dio.get('/admin/reports');
-  final List<dynamic> content = response.data['content'];
+  final List<dynamic> content = response.data['data'];
   return content.map((json) => ReportDto.fromJson(json)).toList();
 });
 

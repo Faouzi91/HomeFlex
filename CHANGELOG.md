@@ -2,7 +2,31 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
-## [Unreleased] — 2026-04-11 (Round 8 — Gaps & Innovations)
+## [Unreleased] — 2026-04-11 (Round 9 — Unified Infrastructure & GDPR)
+
+### Added — Unified Frontend Architecture
+
+- **Micro-Frontend Gateway** — Split the frontend into `web-frontend` (Angular) and `mobile-frontend` (Flutter). Nginx now routes root traffic to Angular and `/app/` traffic to the Flutter Web experience.
+- **Flutter Web Integration** — Fully integrated the Flutter project into the Docker orchestration with a specialized build pipeline.
+- **Nginx Hardening** — Added production-grade security headers (CSP, HSTS, XSS Protection) and optimized proxy buffering for enterprise payloads.
+
+### Added — 2026 Standard Stack Upgrade
+
+- **PostgreSQL 18** — Upgraded database to the latest major version with improved data directory structure for better performance.
+- **Redis 8** — Integrated the latest Redis version for ultra-fast caching and distributed locking.
+- **RabbitMQ 4** — Upgraded messaging broker for enhanced reliability and management.
+- **Elastic Stack 9.1** — Deployed the full ELK stack (Elasticsearch, Logstash, Kibana) using the stable 9.1 branch for advanced logging and search.
+
+### Added — Compliance & API Coverage
+
+- **GDPR Self-Service (Angular)** — Added "Export Data" and "Delete Account" buttons to the user profile, fully consuming the backend GDPR endpoints.
+- **API Client Completion** — Updated both Angular and Flutter `ApiClient` implementations to cover 100% of the backend API surface, including Finance, Leases, and GDPR.
+
+### Changed — Backend Stability
+
+- **Schema Management (Hibernate -> Flyway)** — Shifted from Hibernate's `ddl-auto: update` to a strict Flyway-only migration strategy. Hibernate is now configured to merely `validate` the schema across all profiles, ensuring deterministic schema evolution via existing migration scripts.
+- **Spring Boot 3.4.4 Transition** — Optimized the backend by moving from 4.0.4 to the stable enterprise 3.4.4 release to ensure binary compatibility with Redisson and other mature starters.
+- **Failsafe Build Pipeline** — Implemented a manual Gradle installation strategy in Docker to bypass SSL/Network issues during high-volume dependency resolution.
 
 ### Added — Enterprise Hardening & Compliance
 

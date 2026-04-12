@@ -30,10 +30,6 @@ public class KycService {
     private final UserRepository userRepository;
     private final AppProperties appProperties;
 
-    /**
-     * Creates a Stripe Identity Verification Session for a landlord.
-     * Returns the client_secret so the frontend can mount the verification UI.
-     */
     @Transactional
     public KycSessionResponse createVerificationSession(UUID userId) {
         User user = userRepository.findById(userId)
@@ -47,7 +43,6 @@ public class KycService {
             throw new ConflictException("User is already verified");
         }
 
-        // Check for an existing pending session
         if (kycRepository.existsByUserIdAndStatus(userId, KycStatus.PENDING)) {
             throw new ConflictException("A verification session is already pending");
         }
@@ -75,16 +70,10 @@ public class KycService {
         }
     }
 
-    /**
-     * Handles the identity.verification_session.verified event from Stripe.
-     */
     @Transactional
     public void handleVerified(String stripeSessionId) {
         KycVerification kyc = kycRepository.findByStripeSessionId(stripeSessionId)
-                .orElseThrow(() -> {
-                    log.warn("Received verified event for unknown session: {}", stripeSessionId);
-                    return new ResourceNotFoundException("KYC session not found: " + stripeSessionId);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("KYC session not found: " + stripeSessionId));
 
         kyc.setStatus(KycStatus.VERIFIED);
         kyc.setVerifiedAt(LocalDateTime.now());
@@ -98,16 +87,10 @@ public class KycService {
         log.info("KYC verified: userId={}, sessionId={}", kyc.getUserId(), stripeSessionId);
     }
 
-    /**
-     * Handles the identity.verification_session.requires_input (rejection) event from Stripe.
-     */
     @Transactional
     public void handleRejected(String stripeSessionId, String reason) {
         KycVerification kyc = kycRepository.findByStripeSessionId(stripeSessionId)
-                .orElseThrow(() -> {
-                    log.warn("Received rejected event for unknown session: {}", stripeSessionId);
-                    return new ResourceNotFoundException("KYC session not found: " + stripeSessionId);
-                });
+                .orElseThrow(() -> new ResourceNotFoundException("KYC session not found: " + stripeSessionId));
 
         kyc.setStatus(KycStatus.REJECTED);
         kyc.setRejectionReason(reason);
@@ -116,9 +99,6 @@ public class KycService {
         log.info("KYC rejected: userId={}, sessionId={}, reason={}", kyc.getUserId(), stripeSessionId, reason);
     }
 
-    /**
-     * Returns the current KYC status for a user.
-     */
     @Transactional(readOnly = true)
     public KycStatusResponse getStatus(UUID userId) {
         return kycRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
@@ -130,25 +110,25 @@ public class KycService {
                 .orElse(new KycStatusResponse("NOT_STARTED", null, null, null));
     }
 
-    /**
-     * Checks whether the given user has completed KYC. Admins bypass this check.
-     */
     @Transactional(readOnly = true)
     public void requireVerified(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
         if (user.getRole() == UserRole.ADMIN) {
-            return; // Admins bypass KYC
+            return;
         }
 
         if (!Boolean.TRUE.equals(user.getIsVerified())) {
-            throw new DomainException("KYC verification required before publishing listings. "
-                    + "Please complete identity verification at /api/v1/kyc/session.");
+            throw new DomainException("KYC verification required.");
         }
     }
 
-    // ── Response records ───────────────────────────────────────────────
+    public boolean isUserVerified(UUID userId) {
+        return kycRepository.findByUserId(userId)
+                .map(k -> k.getStatus() == KycStatus.VERIFIED)
+                .orElse(false);
+    }
 
     public record KycSessionResponse(String sessionId, String clientSecret, String publishableKey) {}
 

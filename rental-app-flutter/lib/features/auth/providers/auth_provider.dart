@@ -189,7 +189,7 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await _apiClient.dio.post('/auth/google', data: {
-        'idToken': idToken,
+        'token': idToken,
       });
       final authResponse = AuthResponse.fromJson(response.data);
       state = state.copyWith(user: authResponse.user, isLoading: false);

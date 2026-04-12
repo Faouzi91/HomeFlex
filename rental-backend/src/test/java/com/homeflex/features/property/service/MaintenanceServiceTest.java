@@ -99,7 +99,7 @@ class MaintenanceServiceTest {
 
         assertNotNull(response);
         verify(maintenanceRequestRepository).save(any());
-        verify(notificationService).createNotification(any(), any(), any(), any(), any(), any());
+        verify(notificationService).sendMaintenanceRequestNotification(any(), any(), any(), any());
     }
 
     @Test
@@ -137,6 +137,6 @@ class MaintenanceServiceTest {
 
         assertNotNull(response);
         assertEquals(MaintenanceStatus.IN_PROGRESS, request.getStatus());
-        verify(notificationService).createNotification(any(), any(), any(), any(), any(), any());
+        verify(notificationService).sendMaintenanceStatusUpdateNotification(any(), any(), any(), any());
     }
 }

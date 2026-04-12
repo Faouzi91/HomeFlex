@@ -276,4 +276,35 @@ public class PropertyService {
                 })
                 .collect(Collectors.toList());
     }
+    @Transactional
+    @org.springframework.cache.annotation.CacheEvict(value = com.homeflex.core.config.CacheConfig.PROPERTIES_CACHE, key = "#propertyId")
+    public PropertyDto addImages(UUID propertyId, List<MultipartFile> images, UUID landlordId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+
+        if (!property.getLandlord().getId().equals(landlordId)) {
+            throw new UnauthorizedException("Not authorized to update this property");
+        }
+
+        int startOrder = property.getImages().size();
+        for (int i = 0; i < images.size(); i++) {
+            String url = storageService.uploadFile(images.get(i), "properties/images");
+            PropertyImage img = new PropertyImage();
+            img.setProperty(property);
+            img.setImageUrl(url);
+            img.setDisplayOrder(startOrder + i);
+            img.setIsPrimary(property.getImages().isEmpty() && i == 0);
+            property.getImages().add(img);
+        }
+
+        property = propertyRepository.save(property);
+
+        // Force initialization
+        property.getImages().size();
+        property.getVideos().size();
+        property.getAmenities().size();
+        property.getLandlord().getEmail();
+
+        return propertyMapper.toDto(property);
+    }
 }

@@ -252,6 +252,8 @@ export class WorkspacePageComponent {
       disputes: this.session.isAdmin() ? this.api.getAllDisputes() : of([]),
       agencies: this.session.isAdmin() ? this.api.getAllAgencies() : of([]),
       myLeases: this.api.getMyLeases(),
+      myReceipts: this.api.getMyReceipts(),
+      myInsurance: this.api.getInsurancePlans('TENANT'),
       myMaintenance: this.api.getMyMaintenanceRequests(),
       landlordMaintenance:
         this.session.isLandlord() || this.session.isAdmin()
@@ -277,6 +279,7 @@ export class WorkspacePageComponent {
           this.agencies.set(response.agencies);
         }
         this.myLeases.set(response.myLeases.data);
+        this.allReceipts.set(response.myReceipts);
         this.myMaintenanceRequests.set(response.myMaintenance);
         this.landlordMaintenanceRequests.set(response.landlordMaintenance);
 
@@ -328,8 +331,9 @@ export class WorkspacePageComponent {
   }
 
   protected onboardConnect(): void {
+    const currentUrl = window.location.href;
     this.api
-      .onboardConnectAccount()
+      .onboardConnectAccount(currentUrl, currentUrl)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
         window.location.href = response.url;
@@ -631,6 +635,20 @@ export class WorkspacePageComponent {
       .subscribe((res) => this.disputes.set(res));
   }
 
+  protected openDispute(bookingId: string): void {
+    const reason = prompt('Enter dispute reason (e.g., DAMAGE, DEPOSIT_RETURN):');
+    const description = prompt('Enter dispute description:');
+    if (!reason || !description) return;
+
+    this.api
+      .openDispute(bookingId, reason, description)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        alert('Dispute opened successfully. An admin will review it.');
+        this.loadWorkspace();
+      });
+  }
+
   protected generateLease(bookingId: string): void {
     this.api
       .generateLease(bookingId)
@@ -665,6 +683,36 @@ export class WorkspacePageComponent {
     this.session.logout().subscribe(() => {
       this.router.navigateByUrl('/');
     });
+  }
+
+  protected exportMyData(): void {
+    this.api
+      .exportData()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data) => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `homeflex-data-export-${new Date().toISOString()}.json`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      });
+  }
+
+  protected eraseMyData(): void {
+    const confirmation = prompt(
+      'WARNING: This will permanently delete your account and all associated data. Type "DELETE" to confirm:',
+    );
+    if (confirmation !== 'DELETE') return;
+
+    this.api
+      .eraseData()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        alert('Your data has been erased. You will now be logged out.');
+        this.logout();
+      });
   }
 
   protected date(val: string | null): string {

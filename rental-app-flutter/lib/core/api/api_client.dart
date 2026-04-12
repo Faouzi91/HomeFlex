@@ -62,10 +62,10 @@ class ApiClient {
 
   // --- Bookings ---
   Future<Response> createBooking(Map<String, dynamic> data) => dio.post('/bookings', data: data);
-  Future<Response> getMyBookings() => dio.get('/bookings/my');
+  Future<Response> getMyBookings() => dio.get('/bookings/my-bookings');
   Future<Response> getBooking(String id) => dio.get('/bookings/$id');
-  Future<Response> approveBooking(String id, String response) => dio.patch('/bookings/$id/approve', queryParameters: {'response': response});
-  Future<Response> rejectBooking(String id, String reason) => dio.patch('/bookings/$id/reject', queryParameters: {'reason': reason});
+  Future<Response> approveBooking(String id, String response) => dio.patch('/bookings/$id/approve', data: {'message': response});
+  Future<Response> rejectBooking(String id, String reason) => dio.patch('/bookings/$id/reject', data: {'message': reason});
   Future<Response> requestBookingModification(String id, Map<String, dynamic> data) => dio.post('/bookings/$id/modify', data: data);
   Future<Response> approveBookingModification(String id) => dio.patch('/bookings/$id/modify/approve');
   Future<Response> rejectBookingModification(String id, String reason) => dio.patch('/bookings/$id/modify/reject', queryParameters: {'message': reason});
@@ -93,4 +93,13 @@ class ApiClient {
   Future<Response> getCurrencyRates() => dio.get('/currencies/rates');
   Future<Response> convertCurrency(double amount, String from, String to) => 
       dio.get('/currencies/convert', queryParameters: {'amount': amount, 'from': from, 'to': to});
+
+  // --- Leases ---
+  Future<Response> getMyLeases() => dio.get('/leases/my');
+  Future<Response> getLeaseByBooking(String bookingId) => dio.get('/leases/booking/$bookingId');
+  Future<Response> signLease(String leaseId) => dio.post('/leases/$leaseId/sign');
+
+  // --- GDPR ---
+  Future<Response> exportMyData() => dio.get('/gdpr/export');
+  Future<Response> eraseMyData() => dio.delete('/gdpr/erase');
 }
