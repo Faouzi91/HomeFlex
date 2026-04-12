@@ -62,7 +62,7 @@ dependencies {
     implementation 'com.twilio.sdk:twilio:10.6.3'
 
     // OpenPDF
-    implementation 'com.github.librepdf:openpdf:1.3.36'
+    implementation 'com.github.librepdf:openpdf:3.0.3'
 
     // Monitoring
     implementation 'io.micrometer:micrometer-registry-prometheus'
