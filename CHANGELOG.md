@@ -2,6 +2,42 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-12 (Round 10 — API Coverage Audit & DevOps Hardening)
+
+### Added — Full Angular API Parity
+
+- **26 missing API methods** added to the Angular `ApiClient`, achieving 100% backend endpoint coverage:
+  - Auth: `resetPassword`, `sendOtp`, `verifyOtp`
+  - User: `uploadAvatar`, `getUserById`
+  - Chat: `markMessageAsRead`, `markChatRoomAsRead`
+  - Notifications: `registerFcmToken`
+  - Property: `updateProperty`, `deleteProperty`, `compareProperties`, `getPropertyReports`
+  - Booking: `getBookingById`
+  - Reviews: `replyToReview`
+  - Disputes: `uploadDisputeEvidence`, `getDisputeEvidence`
+  - Vehicles: `createVehicleConditionReport`, `getVehicleActiveBookings`
+  - Admin: `getAdminUsers`, `suspendUser`, `activateUser`, `resolveReport`, `getSystemConfigs`, `updateSystemConfig`, `createAmenity`, `deleteAmenity`
+- **New TypeScript interfaces** — `SystemConfig`, `DisputeEvidence`, `ConditionReport` added to `api.types.ts`.
+- **Stronger typing** — `getVehicleConditionReports` return type upgraded from `any` to `ConditionReport`.
+
+### Fixed — DevOps & Infrastructure
+
+- **nginx.conf** — Removed dead `/app/` proxy block that referenced disabled `mobile-frontend` service, preventing 502 errors.
+- **CI Pipeline** — Changed frontend build from `--configuration=development` to `--configuration=production` for realistic CI validation.
+- **Prometheus** — Replaced hardcoded `changeme-metrics-token` with env var reference `${METRICS_BEARER_TOKEN:-dev-metrics-token}`.
+- **Logstash** — Added structured log filters: JSON parsing, log level extraction, ISO8601 timestamp parsing, and exception tagging.
+
+### Fixed — Angular Build Warnings
+
+- Removed unused `DatePipe` and `TitleCasePipe` imports from `WorkspacePageComponent`.
+
+### Changed — Documentation
+
+- **README** — Updated tech stack versions (PostgreSQL 18, Redis 8, RabbitMQ 4), removed obsolete Mobile Web Frontend URL.
+- **CHANGELOG** — Added Round 10 entry.
+
+---
+
 ## [Unreleased] — 2026-04-11 (Round 9 — Unified Infrastructure & GDPR)
 
 ### Added — Unified Frontend Architecture

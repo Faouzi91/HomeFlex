@@ -1,11 +1,4 @@
-import {
-  CurrencyPipe,
-  DatePipe,
-  DecimalPipe,
-  LowerCasePipe,
-  SlicePipe,
-  TitleCasePipe,
-} from '@angular/common';
+import { CurrencyPipe, DecimalPipe, LowerCasePipe, SlicePipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -63,11 +56,9 @@ type WorkspaceTabItem = {
     ReactiveFormsModule,
     RouterLink,
     CurrencyPipe,
-    DatePipe,
     DecimalPipe,
     SlicePipe,
     LowerCasePipe,
-    TitleCasePipe,
     TranslateModule,
   ],
   templateUrl: './workspace.page.html',

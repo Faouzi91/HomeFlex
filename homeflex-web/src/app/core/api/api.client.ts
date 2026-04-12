@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   Agency,
+  Amenity,
   Analytics,
   ApiListResponse,
   ApiPageResponse,
@@ -11,7 +12,9 @@ import {
   Booking,
   BookingModificationRequest,
   ChatRoom,
+  ConditionReport,
   Dispute,
+  DisputeEvidence,
   InsurancePlan,
   InsurancePolicy,
   MaintenanceRequest,
@@ -27,6 +30,7 @@ import {
   ReportItem,
   Review,
   ReviewCreateRequest,
+  SystemConfig,
   User,
   Vehicle,
   VehicleBooking,
@@ -163,6 +167,10 @@ export class ApiClient {
     return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/cancel`, {});
   }
 
+  getBookingById(id: string): Observable<Booking> {
+    return this.http.get<Booking>(`${this.baseUrl}/bookings/${id}`);
+  }
+
   requestBookingModification(id: string, request: BookingModificationRequest): Observable<Booking> {
     return this.http.post<Booking>(`${this.baseUrl}/bookings/${id}/modify`, request);
   }
@@ -238,6 +246,25 @@ export class ApiClient {
     });
   }
 
+  resetPassword(token: string, newPassword: string): Observable<ApiValueResponse<string>> {
+    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/auth/reset-password`, {
+      token,
+      newPassword,
+    });
+  }
+
+  sendOtp(phoneNumber: string): Observable<ApiValueResponse<string>> {
+    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/auth/otp/send`, null, {
+      params: this.buildParams({ phoneNumber }),
+    });
+  }
+
+  verifyOtp(phoneNumber: string, otp: string): Observable<ApiValueResponse<boolean>> {
+    return this.http.post<ApiValueResponse<boolean>>(`${this.baseUrl}/auth/otp/verify`, null, {
+      params: this.buildParams({ phoneNumber, otp }),
+    });
+  }
+
   refresh(): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/auth/refresh`, {});
   }
@@ -266,6 +293,16 @@ export class ApiClient {
     return this.http.put<ApiValueResponse<string>>(`${this.baseUrl}/users/me/password`, payload);
   }
 
+  uploadAvatar(file: File): Observable<User> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<User>(`${this.baseUrl}/users/me/avatar`, formData);
+  }
+
+  getUserById(id: string): Observable<User> {
+    return this.http.get<User>(`${this.baseUrl}/users/${id}`);
+  }
+
   createChatRoom(payload: {
     propertyId: string;
     tenantId: string;
@@ -286,6 +323,14 @@ export class ApiClient {
     return this.http.post<Message>(`${this.baseUrl}/chat/rooms/${roomId}/messages`, { message });
   }
 
+  markMessageAsRead(messageId: string): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/chat/messages/${messageId}/read`, {});
+  }
+
+  markChatRoomAsRead(roomId: string): Observable<void> {
+    return this.http.patch<void>(`${this.baseUrl}/chat/rooms/${roomId}/read`, {});
+  }
+
   getNotifications(unreadOnly = false): Observable<ApiListResponse<NotificationItem>> {
     return this.http.get<ApiListResponse<NotificationItem>>(`${this.baseUrl}/notifications`, {
       params: this.buildParams({ unreadOnly }),
@@ -304,6 +349,12 @@ export class ApiClient {
     return this.http.delete<void>(`${this.baseUrl}/notifications/${id}`);
   }
 
+  registerFcmToken(token: string): Observable<ApiValueResponse<string>> {
+    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/notifications/fcm-token`, {
+      token,
+    });
+  }
+
   getStats(): Observable<ApiValueResponse<Record<string, number>>> {
     return this.http.get<ApiValueResponse<Record<string, number>>>(`${this.baseUrl}/stats`);
   }
@@ -320,6 +371,26 @@ export class ApiClient {
     const formData = new FormData();
     files.forEach((file) => formData.append('images', file));
     return this.http.post<void>(`${this.baseUrl}/properties/${id}/images`, formData);
+  }
+
+  updateProperty(id: string, payload: Record<string, unknown>): Observable<Property> {
+    return this.http.put<Property>(`${this.baseUrl}/properties/${id}`, payload);
+  }
+
+  deleteProperty(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/properties/${id}`);
+  }
+
+  compareProperties(ids: string[]): Observable<ApiListResponse<Property>> {
+    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/properties/compare`, {
+      params: this.buildParams({ ids: ids.join(',') }),
+    });
+  }
+
+  getPropertyReports(propertyId: string): Observable<ApiListResponse<ReportItem>> {
+    return this.http.get<ApiListResponse<ReportItem>>(
+      `${this.baseUrl}/properties/${propertyId}/reports`,
+    );
   }
 
   // --- KYC Verification ---
@@ -477,6 +548,19 @@ export class ApiClient {
     });
   }
 
+  uploadDisputeEvidence(id: string, file: File, description?: string): Observable<DisputeEvidence> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (description) {
+      formData.append('description', description);
+    }
+    return this.http.post<DisputeEvidence>(`${this.baseUrl}/disputes/${id}/evidence`, formData);
+  }
+
+  getDisputeEvidence(id: string): Observable<DisputeEvidence[]> {
+    return this.http.get<DisputeEvidence[]>(`${this.baseUrl}/disputes/${id}/evidence`);
+  }
+
   // --- Reviews ---
 
   createReview(request: ReviewCreateRequest): Observable<Review> {
@@ -505,6 +589,12 @@ export class ApiClient {
 
   deleteReview(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/reviews/${id}`);
+  }
+
+  replyToReview(id: string, reply: string): Observable<Review> {
+    return this.http.post<Review>(`${this.baseUrl}/reviews/${id}/reply`, null, {
+      params: this.buildParams({ reply }),
+    });
   }
 
   // --- GDPR Compliance ---
@@ -551,8 +641,23 @@ export class ApiClient {
     return this.http.patch<Agency>(`${this.baseUrl}/agencies/${id}/verify`, {});
   }
 
-  getVehicleConditionReports(id: string): Observable<ApiListResponse<any>> {
-    return this.http.get<ApiListResponse<any>>(`${this.baseUrl}/vehicles/${id}/condition`);
+  getVehicleConditionReports(id: string): Observable<ApiListResponse<ConditionReport>> {
+    return this.http.get<ApiListResponse<ConditionReport>>(
+      `${this.baseUrl}/vehicles/${id}/condition`,
+    );
+  }
+
+  createVehicleConditionReport(
+    id: string,
+    report: Record<string, unknown>,
+  ): Observable<ConditionReport> {
+    return this.http.post<ConditionReport>(`${this.baseUrl}/vehicles/${id}/condition`, report);
+  }
+
+  getVehicleActiveBookings(id: string): Observable<ApiListResponse<VehicleBooking>> {
+    return this.http.get<ApiListResponse<VehicleBooking>>(
+      `${this.baseUrl}/vehicles/${id}/bookings`,
+    );
   }
 
   getAdminAnalytics(): Observable<Analytics> {
@@ -577,6 +682,47 @@ export class ApiClient {
     return this.http.get<ApiPageResponse<ReportItem>>(`${this.baseUrl}/admin/reports`, {
       params: this.buildParams({ page, size }),
     });
+  }
+
+  resolveReport(id: string, reason?: string): Observable<ReportItem> {
+    return this.http.patch<ReportItem>(`${this.baseUrl}/admin/reports/${id}/resolve`, { reason });
+  }
+
+  getAdminUsers(page = 0, size = 20): Observable<ApiPageResponse<User>> {
+    return this.http.get<ApiPageResponse<User>>(`${this.baseUrl}/admin/users`, {
+      params: this.buildParams({ page, size }),
+    });
+  }
+
+  suspendUser(id: string): Observable<User> {
+    return this.http.patch<User>(`${this.baseUrl}/admin/users/${id}/suspend`, {});
+  }
+
+  activateUser(id: string): Observable<User> {
+    return this.http.patch<User>(`${this.baseUrl}/admin/users/${id}/activate`, {});
+  }
+
+  getSystemConfigs(): Observable<SystemConfig[]> {
+    return this.http.get<SystemConfig[]>(`${this.baseUrl}/admin/configs`);
+  }
+
+  updateSystemConfig(key: string, value: string): Observable<SystemConfig> {
+    return this.http.patch<SystemConfig>(`${this.baseUrl}/admin/configs/${key}`, null, {
+      params: this.buildParams({ value }),
+    });
+  }
+
+  createAmenity(amenity: {
+    name: string;
+    nameFr: string;
+    icon: string;
+    category: string;
+  }): Observable<Amenity> {
+    return this.http.post<Amenity>(`${this.baseUrl}/admin/amenities`, amenity);
+  }
+
+  deleteAmenity(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/admin/amenities/${id}`);
   }
 
   private buildParams(values: object): HttpParams {

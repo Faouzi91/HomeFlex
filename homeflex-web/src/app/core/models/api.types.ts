@@ -401,3 +401,31 @@ export interface PricingRecommendation {
   confidenceLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   reasoning: string;
 }
+
+export interface SystemConfig {
+  key: string;
+  value: string;
+  description: string | null;
+}
+
+export interface DisputeEvidence {
+  id: string;
+  disputeId: string;
+  fileUrl: string;
+  description: string | null;
+  uploadedById: string;
+  createdAt: string;
+}
+
+export interface ConditionReport {
+  id: string;
+  vehicleId: string;
+  reportedById: string;
+  exteriorCondition: string | null;
+  interiorCondition: string | null;
+  mileageAtReport: number | null;
+  fuelLevel: string | null;
+  notes: string | null;
+  imageUrls: string[];
+  createdAt: string;
+}

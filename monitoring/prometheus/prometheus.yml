@@ -9,7 +9,8 @@ scrape_configs:
   - job_name: 'homeflex-backend'
     metrics_path: /actuator/prometheus
     scrape_interval: 10s
-    bearer_token: 'changeme-metrics-token'
+    # In production, use bearer_token_file with a mounted secret instead
+    bearer_token: '${METRICS_BEARER_TOKEN:-dev-metrics-token}'
     static_configs:
       - targets: ['backend:8080']
         labels:

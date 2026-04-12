@@ -8,9 +8,9 @@ A full-stack real estate rental platform where tenants can search and book prope
 | ------------- | -------------------------------------------- |
 | Frontend      | Angular 21, TailwindCSS 4, TypeScript 5.9    |
 | Backend       | Spring Boot 4, Java 21, Gradle               |
-| Database      | PostgreSQL 16, Flyway migrations             |
-| Cache         | Redis 7                                      |
-| Messaging     | RabbitMQ 3                                   |
+| Database      | PostgreSQL 18, Flyway migrations             |
+| Cache         | Redis 8                                      |
+| Messaging     | RabbitMQ 4                                   |
 | Search        | Elasticsearch 9                              |
 | Mobile        | Capacitor 8 (Android / iOS)                  |
 | State         | NgRx Signal Store (`@ngrx/signals` 21)       |
@@ -65,7 +65,6 @@ Once all containers are healthy (~60s):
 | Service             | URL                                    |
 | ------------------- | -------------------------------------- |
 | Web Frontend        | http://localhost                       |
-| Mobile Web Frontend | http://localhost/app/                  |
 | Backend API         | http://localhost:8080/api/v1           |
 | Swagger UI          | http://localhost:8080/swagger-ui.html  |
 | Kibana Dashboard    | http://localhost:5601                  |

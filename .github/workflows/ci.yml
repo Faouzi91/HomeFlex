@@ -161,5 +161,5 @@ jobs:
         working-directory: homeflex-web
 
       - name: Build
-        run: npm run build -- --configuration=development
+        run: npm run build -- --configuration=production
         working-directory: homeflex-web
