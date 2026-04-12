@@ -56,7 +56,7 @@ dependencies {
     implementation 'com.google.api-client:google-api-client:2.9.0'
 
     // Stripe payments
-    implementation 'com.stripe:stripe-java:28.3.0'
+    implementation 'com.stripe:stripe-java:32.0.0'
 
     // Twilio
     implementation 'com.twilio.sdk:twilio:10.6.3'
