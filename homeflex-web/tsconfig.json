@@ -13,7 +13,9 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "ESNext", // Change this from "preserve"
+    "moduleResolution": "bundler", // Essential for Angular 21/Vite/esbuild
+    "useDefineForClassFields": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

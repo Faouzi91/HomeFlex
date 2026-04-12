@@ -12,10 +12,12 @@ class CreateMaintenanceRequestScreen extends ConsumerStatefulWidget {
   const CreateMaintenanceRequestScreen({super.key, required this.propertyId});
 
   @override
-  ConsumerState<CreateMaintenanceRequestScreen> createState() => _CreateMaintenanceRequestScreenState();
+  ConsumerState<CreateMaintenanceRequestScreen> createState() =>
+      _CreateMaintenanceRequestScreenState();
 }
 
-class _CreateMaintenanceRequestScreenState extends ConsumerState<CreateMaintenanceRequestScreen> {
+class _CreateMaintenanceRequestScreenState
+    extends ConsumerState<CreateMaintenanceRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -63,9 +65,9 @@ class _CreateMaintenanceRequestScreenState extends ConsumerState<CreateMaintenan
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create request: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create request: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -85,12 +87,16 @@ class _CreateMaintenanceRequestScreenState extends ConsumerState<CreateMaintenan
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Summary', hintText: 'e.g. Broken AC'),
-                validator: (val) => val == null || val.isEmpty ? 'Please enter a title' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Summary',
+                  hintText: 'e.g. Broken AC',
+                ),
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Please enter a title' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<MaintenanceCategory>(
-                value: _category,
+                initialValue: _category,
                 decoration: const InputDecoration(labelText: 'Category'),
                 items: MaintenanceCategory.values
                     .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
@@ -99,7 +105,7 @@ class _CreateMaintenanceRequestScreenState extends ConsumerState<CreateMaintenan
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<MaintenancePriority>(
-                value: _priority,
+                initialValue: _priority,
                 decoration: const InputDecoration(labelText: 'Priority'),
                 items: MaintenancePriority.values
                     .map((p) => DropdownMenuItem(value: p, child: Text(p.name)))
@@ -109,33 +115,49 @@ class _CreateMaintenanceRequestScreenState extends ConsumerState<CreateMaintenan
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description', alignLabelWithHint: true),
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  alignLabelWithHint: true,
+                ),
                 maxLines: 5,
-                validator: (val) => val == null || val.isEmpty ? 'Please describe the issue' : null,
+                validator: (val) => val == null || val.isEmpty
+                    ? 'Please describe the issue'
+                    : null,
               ),
               const SizedBox(height: 24),
-              const Text('Photos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text(
+                'Photos',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  ..._images.map((img) => Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(File(img.path), width: 80, height: 80, fit: BoxFit.cover),
-                      ),
-                      Positioned(
-                        right: -4,
-                        top: -4,
-                        child: IconButton(
-                          icon: const Icon(Icons.cancel, color: Colors.red),
-                          onPressed: () => setState(() => _images.remove(img)),
+                  ..._images.map(
+                    (img) => Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(img.path),
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                      ),
-                    ],
-                  )),
+                        Positioned(
+                          right: -4,
+                          top: -4,
+                          child: IconButton(
+                            icon: const Icon(Icons.cancel, color: Colors.red),
+                            onPressed: () =>
+                                setState(() => _images.remove(img)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   GestureDetector(
                     onTap: _pickImages,
                     child: Container(
@@ -144,7 +166,10 @@ class _CreateMaintenanceRequestScreenState extends ConsumerState<CreateMaintenan
                       decoration: BoxDecoration(
                         color: Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey.shade400, style: BorderStyle.none),
+                        border: Border.all(
+                          color: Colors.grey.shade400,
+                          style: BorderStyle.none,
+                        ),
                       ),
                       child: const Icon(Icons.add_a_photo, color: Colors.grey),
                     ),
