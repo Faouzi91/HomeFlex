@@ -3,7 +3,7 @@ import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
-import { ApiClient } from '../../../core/api/api.client';
+import { PropertyApi } from '../../../core/api/services/property.api';
 import { Property, PropertySearchParams } from '../../../core/models/api.types';
 import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
 import { MapComponent } from '../../../shared/ui/map/map.component';
@@ -16,7 +16,7 @@ import { MapComponent } from '../../../shared/ui/map/map.component';
 })
 export class PropertiesPageComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly api = inject(ApiClient);
+  private readonly propertyApi = inject(PropertyApi);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -49,8 +49,8 @@ export class PropertiesPageComponent {
       size: 24,
     };
 
-    this.api
-      .searchProperties(payload)
+    this.propertyApi
+      .search(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => this.properties.set(response.data));
   }

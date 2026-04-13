@@ -22,6 +22,7 @@ import java.util.UUID;
 public class AdminController {
 
     private final AdminService adminService;
+    private final com.homeflex.features.property.service.PropertyService propertyService;
 
     @GetMapping("/properties/pending")
     public ResponseEntity<ApiPageResponse<PropertyDto>> getPendingProperties(Pageable pageable) {
@@ -101,5 +102,13 @@ public class AdminController {
     public ResponseEntity<Void> deleteAmenity(@PathVariable UUID id) {
         adminService.deleteAmenity(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Search Reindex ─────────────────────────────────────────────────
+
+    @PostMapping("/properties/reindex")
+    public ResponseEntity<java.util.Map<String, Object>> reindexProperties() {
+        int count = propertyService.reindexAll();
+        return ResponseEntity.ok(java.util.Map.of("enqueued", count));
     }
 }

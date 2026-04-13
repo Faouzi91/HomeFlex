@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { ApiClient } from '../api/api.client';
+import { AuthApi } from '../api/services/auth.api';
+import { UserApi } from '../api/services/user.api';
 import { SessionStore } from './session.store';
 
 describe('SessionStore', () => {
   it('sets the authenticated user after login', () => {
-    const api = {
+    const authApi = {
       login: () =>
         of({
           user: {
@@ -22,10 +23,16 @@ describe('SessionStore', () => {
             createdAt: new Date().toISOString(),
           },
         }),
-    } as Partial<ApiClient>;
+    } as Partial<AuthApi>;
+
+    const userApi = {} as Partial<UserApi>;
 
     TestBed.configureTestingModule({
-      providers: [SessionStore, { provide: ApiClient, useValue: api }],
+      providers: [
+        SessionStore,
+        { provide: AuthApi, useValue: authApi },
+        { provide: UserApi, useValue: userApi },
+      ],
     });
 
     const store = TestBed.inject(SessionStore);

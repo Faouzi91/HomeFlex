@@ -91,6 +91,16 @@ public class PropertyV1Controller {
         return ResponseEntity.ok(propertyService.updateProperty(id, request, images, videos, landlordId));
     }
 
+    @PutMapping("/{id}/json")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<PropertyDto> updatePropertyJson(
+            @PathVariable UUID id,
+            @Valid @RequestBody PropertyUpdateRequest request,
+            Authentication authentication) {
+        UUID landlordId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(propertyService.updateProperty(id, request, null, null, landlordId));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
     public ResponseEntity<Void> deleteProperty(@PathVariable UUID id, Authentication authentication) {

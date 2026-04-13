@@ -1,9 +1,9 @@
 # Runtime-only image — JAR is pre-built locally via: ./gradlew bootJar -x test
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 USER appuser
 
 COPY build/libs/rental-backend.jar app.jar

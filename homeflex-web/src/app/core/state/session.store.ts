@@ -1,13 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { EMPTY, Observable, catchError, finalize, map, of, tap } from 'rxjs';
-import { ApiClient } from '../api/api.client';
+import { AuthApi } from '../api/services/auth.api';
+import { UserApi } from '../api/services/user.api';
 import { User } from '../models/api.types';
 import { NotificationService } from '../service/notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
-  private readonly api = inject(ApiClient);
+  private readonly authApi = inject(AuthApi);
+  private readonly userApi = inject(UserApi);
   private readonly notifications = inject(NotificationService);
 
   readonly user = signal<User | null>(null);
@@ -34,13 +36,13 @@ export class SessionStore {
     this.initialized.set(true);
     this.loading.set(true);
 
-    this.api
+    this.userApi
       .getMe()
       .pipe(
         tap((user) => this.user.set(user)),
         catchError((error) => {
           if (error instanceof HttpErrorResponse && error.status === 401) {
-            return this.api.refresh().pipe(
+            return this.authApi.refresh().pipe(
               map((response) => response.user),
               tap((user) => this.user.set(user)),
               catchError(() => {
@@ -63,7 +65,7 @@ export class SessionStore {
     this.notifications.setLoading(true);
     this.error.set(null);
 
-    return this.api.login({ email, password }).pipe(
+    return this.authApi.login({ email, password }).pipe(
       tap((response) => {
         this.user.set(response.user);
         this.notifications.success('Welcome back to HomeFlex!');
@@ -82,7 +84,7 @@ export class SessionStore {
     this.notifications.setLoading(true);
     this.error.set(null);
 
-    return this.api.socialLogin(provider, token).pipe(
+    return this.authApi.socialLogin(provider, token).pipe(
       tap((response) => {
         this.user.set(response.user);
         this.notifications.success('Social login successful!');
@@ -108,7 +110,7 @@ export class SessionStore {
     this.notifications.setLoading(true);
     this.error.set(null);
 
-    return this.api.register(payload).pipe(
+    return this.authApi.register(payload).pipe(
       tap((response) => {
         this.user.set(response.user);
         this.notifications.success('Account created successfully!');
@@ -127,7 +129,7 @@ export class SessionStore {
     this.notifications.setLoading(true);
     this.error.set(null);
 
-    return this.api.forgotPassword(email).pipe(
+    return this.authApi.forgotPassword(email).pipe(
       map((response) => response.data),
       tap(() => this.notifications.info('Reset instructions sent to your email.')),
       catchError((error) => this.handleError(error)),
@@ -142,7 +144,7 @@ export class SessionStore {
     this.pending.set(true);
     this.notifications.setLoading(true);
 
-    return this.api.logout().pipe(
+    return this.authApi.logout().pipe(
       tap(() => {
         this.user.set(null);
         this.notifications.info('You have been logged out.');
@@ -169,7 +171,7 @@ export class SessionStore {
     this.notifications.setLoading(true);
     this.error.set(null);
 
-    return this.api.updateProfile(payload).pipe(
+    return this.userApi.updateProfile(payload).pipe(
       tap((user) => {
         this.user.set(user);
         this.notifications.success('Profile updated successfully.');
@@ -187,7 +189,7 @@ export class SessionStore {
     this.notifications.setLoading(true);
     this.error.set(null);
 
-    return this.api.changePassword(payload).pipe(
+    return this.userApi.changePassword(payload).pipe(
       map((response) => response.data),
       tap(() => this.notifications.success('Password changed successfully.')),
       catchError((error) => this.handleError(error)),

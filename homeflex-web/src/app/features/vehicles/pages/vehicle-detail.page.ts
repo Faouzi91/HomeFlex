@@ -3,25 +3,29 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ApiClient } from '../../../core/api/api.client';
-import { Vehicle } from '../../../core/models/api.types';
+import { VehicleApi } from '../../../core/api/services/vehicle.api';
+import { UserApi } from '../../../core/api/services/user.api';
+import { User, Vehicle } from '../../../core/models/api.types';
 import { SessionStore } from '../../../core/state/session.store';
 import { formatCurrency, formatDate, vehicleImage } from '../../../core/utils/formatters';
+import { SlicePipe } from '@angular/common';
 
 @Component({
   selector: 'app-vehicle-detail-page',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, SlicePipe],
   templateUrl: './vehicle-detail.page.html',
   styleUrl: './vehicle-detail.page.scss',
 })
 export class VehicleDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
-  private readonly api = inject(ApiClient);
+  private readonly vehicleApi = inject(VehicleApi);
+  private readonly userApi = inject(UserApi);
   protected readonly session = inject(SessionStore);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly vehicle = signal<Vehicle | null>(null);
+  protected readonly owner = signal<User | null>(null);
   protected readonly availability = signal<boolean | null>(null);
   protected readonly availabilityMessage = signal('');
 
@@ -40,13 +44,21 @@ export class VehicleDetailPageComponent {
             return of(null);
           }
 
-          this.api.trackVehicleView(id).subscribe({ error: () => void 0 });
-          return this.api.getVehicle(id);
+          this.vehicleApi.trackView(id).subscribe({ error: () => void 0 });
+          return this.vehicleApi.getById(id);
         }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((vehicle) => {
         this.vehicle.set(vehicle);
+        if (vehicle?.ownerId) {
+          this.userApi
+            .getUserById(vehicle.ownerId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((owner: User) => {
+              this.owner.set(owner);
+            });
+        }
       });
   }
 
@@ -67,8 +79,8 @@ export class VehicleDetailPageComponent {
     }
 
     const { startDate, endDate } = this.bookingForm.getRawValue();
-    this.api
-      .getVehicleAvailability(vehicle.id, startDate ?? '', endDate ?? '')
+    this.vehicleApi
+      .getAvailability(vehicle.id, startDate ?? '', endDate ?? '')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((available) => {
         this.availability.set(available);
@@ -87,8 +99,8 @@ export class VehicleDetailPageComponent {
     }
 
     const { startDate, endDate, message } = this.bookingForm.getRawValue();
-    this.api
-      .createVehicleBooking({
+    this.vehicleApi
+      .createBooking({
         vehicleId: vehicle.id,
         startDate: startDate ?? '',
         endDate: endDate ?? '',

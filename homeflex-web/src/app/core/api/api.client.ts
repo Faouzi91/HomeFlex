@@ -1,4 +1,3 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
@@ -19,7 +18,6 @@ import {
   InsurancePolicy,
   MaintenanceRequest,
   MaintenanceRequestCreateRequest,
-  MaintenanceStatus,
   MaintenanceStatusUpdateRequest,
   Message,
   NotificationItem,
@@ -36,100 +34,234 @@ import {
   VehicleBooking,
   VehicleSearchParams,
 } from '../models/api.types';
+import {
+  AdminApi,
+  AgencyApi,
+  AuthApi,
+  BookingApi,
+  ChatApi,
+  CurrencyApi,
+  DisputeApi,
+  FavoriteApi,
+  FinanceApi,
+  GdprApi,
+  InsuranceApi,
+  KycApi,
+  LeaseApi,
+  MaintenanceApi,
+  NotificationApi,
+  PayoutApi,
+  PropertyApi,
+  ReviewApi,
+  StatsApi,
+  UserApi,
+  VehicleApi,
+} from './services';
 
+/**
+ * Backward-compatible facade that delegates to domain-specific API services.
+ *
+ * New code should inject the domain services directly (e.g. PropertyApi, BookingApi).
+ * This class exists only to avoid a big-bang migration of every consumer at once.
+ *
+ * @deprecated Import domain services from `@core/api/services` instead.
+ */
 @Injectable({ providedIn: 'root' })
 export class ApiClient {
-  private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/v1';
+  private readonly auth = inject(AuthApi);
+  private readonly users = inject(UserApi);
+  private readonly properties = inject(PropertyApi);
+  private readonly vehicles = inject(VehicleApi);
+  private readonly bookings = inject(BookingApi);
+  private readonly favorites = inject(FavoriteApi);
+  private readonly reviews = inject(ReviewApi);
+  private readonly chat = inject(ChatApi);
+  private readonly notifs = inject(NotificationApi);
+  private readonly maintenance = inject(MaintenanceApi);
+  private readonly disputes = inject(DisputeApi);
+  private readonly leases = inject(LeaseApi);
+  private readonly insurance = inject(InsuranceApi);
+  private readonly finance = inject(FinanceApi);
+  private readonly kyc = inject(KycApi);
+  private readonly payouts = inject(PayoutApi);
+  private readonly admin = inject(AdminApi);
+  private readonly agencies = inject(AgencyApi);
+  private readonly currencies = inject(CurrencyApi);
+  private readonly gdpr = inject(GdprApi);
+  private readonly stats = inject(StatsApi);
 
-  createMaintenanceRequest(
-    payload: MaintenanceRequestCreateRequest,
-  ): Observable<MaintenanceRequest> {
-    return this.http.post<MaintenanceRequest>(`${this.baseUrl}/maintenance`, payload);
+  // --- Auth ---
+  login(payload: { email: string; password: string }): Observable<AuthResponse> {
+    return this.auth.login(payload);
+  }
+  socialLogin(provider: string, token: string): Observable<AuthResponse> {
+    return this.auth.socialLogin(provider, token);
+  }
+  register(payload: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string | null;
+    role: string;
+  }): Observable<AuthResponse> {
+    return this.auth.register(payload);
+  }
+  forgotPassword(email: string): Observable<ApiValueResponse<string>> {
+    return this.auth.forgotPassword(email);
+  }
+  resetPassword(token: string, newPassword: string): Observable<ApiValueResponse<string>> {
+    return this.auth.resetPassword(token, newPassword);
+  }
+  sendOtp(phoneNumber: string): Observable<ApiValueResponse<string>> {
+    return this.auth.sendOtp(phoneNumber);
+  }
+  verifyOtp(phoneNumber: string, otp: string): Observable<ApiValueResponse<boolean>> {
+    return this.auth.verifyOtp(phoneNumber, otp);
+  }
+  refresh(): Observable<AuthResponse> {
+    return this.auth.refresh();
+  }
+  logout(): Observable<void> {
+    return this.auth.logout();
   }
 
-  uploadMaintenanceImages(id: string, files: File[]): Observable<void> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
-    return this.http.post<void>(`${this.baseUrl}/maintenance/${id}/images`, formData);
+  // --- User ---
+  getMe(): Observable<User> {
+    return this.users.getMe();
+  }
+  updateProfile(payload: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string | null;
+    languagePreference?: string;
+  }): Observable<User> {
+    return this.users.updateProfile(payload);
+  }
+  changePassword(payload: {
+    currentPassword: string;
+    newPassword: string;
+  }): Observable<ApiValueResponse<string>> {
+    return this.users.changePassword(payload);
+  }
+  uploadAvatar(file: File): Observable<User> {
+    return this.users.uploadAvatar(file);
+  }
+  getUserById(id: string): Observable<User> {
+    return this.users.getUserById(id);
   }
 
-  updateMaintenanceStatus(
-    id: string,
-    payload: MaintenanceStatusUpdateRequest,
-  ): Observable<MaintenanceRequest> {
-    return this.http.patch<MaintenanceRequest>(`${this.baseUrl}/maintenance/${id}/status`, payload);
-  }
-
-  getMyMaintenanceRequests(): Observable<MaintenanceRequest[]> {
-    return this.http.get<MaintenanceRequest[]>(`${this.baseUrl}/maintenance/my`);
-  }
-
-  getLandlordMaintenanceRequests(): Observable<MaintenanceRequest[]> {
-    return this.http.get<MaintenanceRequest[]>(`${this.baseUrl}/maintenance/landlord`);
-  }
-
-  getMaintenanceRequest(id: string): Observable<MaintenanceRequest> {
-    return this.http.get<MaintenanceRequest>(`${this.baseUrl}/maintenance/${id}`);
-  }
-
+  // --- Properties ---
   searchProperties(params: PropertySearchParams): Observable<ApiPageResponse<Property>> {
-    return this.http.get<ApiPageResponse<Property>>(`${this.baseUrl}/properties/search`, {
-      params: this.buildParams(params),
-    });
+    return this.properties.search(params);
   }
-
   getProperty(id: string): Observable<Property> {
-    return this.http.get<Property>(`${this.baseUrl}/properties/${id}`);
+    return this.properties.getById(id);
   }
-
   trackPropertyView(id: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/properties/${id}/view`, {});
+    return this.properties.trackView(id);
   }
-
   getSimilarProperties(id: string): Observable<ApiListResponse<Property>> {
-    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/properties/${id}/similar`);
+    return this.properties.getSimilar(id);
   }
-
-  getFavorites(): Observable<ApiListResponse<Property>> {
-    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/favorites`);
+  getMyProperties(): Observable<ApiListResponse<Property>> {
+    return this.properties.getMine();
   }
-
-  isFavorite(propertyId: string): Observable<ApiValueResponse<boolean>> {
-    return this.http.get<ApiValueResponse<boolean>>(
-      `${this.baseUrl}/favorites/check/${propertyId}`,
-    );
+  createProperty(payload: Record<string, unknown>): Observable<Property> {
+    return this.properties.create(payload);
   }
-
-  addFavorite(propertyId: string): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/favorites/${propertyId}`, {});
+  uploadPropertyImages(id: string, files: File[]): Observable<void> {
+    return this.properties.uploadImages(id, files);
   }
-
-  removeFavorite(propertyId: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/favorites/${propertyId}`);
+  updateProperty(id: string, payload: Record<string, unknown>): Observable<Property> {
+    return this.properties.update(id, payload);
   }
-
-  getReviews(propertyId: string): Observable<ApiListResponse<Review>> {
-    return this.http.get<ApiListResponse<Review>>(`${this.baseUrl}/reviews/property/${propertyId}`);
+  deleteProperty(id: string): Observable<void> {
+    return this.properties.delete(id);
   }
-
-  getAverageRating(propertyId: string): Observable<ApiValueResponse<number>> {
-    return this.http.get<ApiValueResponse<number>>(
-      `${this.baseUrl}/reviews/property/${propertyId}/average`,
-    );
+  compareProperties(ids: string[]): Observable<ApiListResponse<Property>> {
+    return this.properties.compare(ids);
   }
-
+  getPropertyReports(propertyId: string): Observable<ApiListResponse<ReportItem>> {
+    return this.properties.getReports(propertyId);
+  }
   reportProperty(payload: {
     propertyId: string;
     reason: string;
     description: string;
   }): Observable<ReportItem> {
-    return this.http.post<ReportItem>(`${this.baseUrl}/properties/${payload.propertyId}/report`, {
-      reason: payload.reason,
-      description: payload.description,
-    });
+    return this.properties.report(payload);
+  }
+  getPropertyAvailability(
+    propertyId: string,
+    start: string,
+    end: string,
+  ): Observable<ApiListResponse<{ date: string; status: string; bookingId?: string }>> {
+    return this.properties.getAvailability(propertyId, start, end);
+  }
+  blockPropertyRange(propertyId: string, start: string, end: string): Observable<void> {
+    return this.properties.blockRange(propertyId, start, end);
+  }
+  unblockPropertyRange(propertyId: string, start: string, end: string): Observable<void> {
+    return this.properties.unblockRange(propertyId, start, end);
+  }
+  getPricingRecommendation(propertyId: string): Observable<PricingRecommendation> {
+    return this.properties.getPricingRecommendation(propertyId);
   }
 
+  // --- Vehicles ---
+  searchVehicles(params: VehicleSearchParams): Observable<ApiPageResponse<Vehicle>> {
+    return this.vehicles.search(params);
+  }
+  getVehicle(id: string): Observable<Vehicle> {
+    return this.vehicles.getById(id);
+  }
+  trackVehicleView(id: string): Observable<void> {
+    return this.vehicles.trackView(id);
+  }
+  getVehicleAvailability(id: string, startDate: string, endDate: string): Observable<boolean> {
+    return this.vehicles.getAvailability(id, startDate, endDate);
+  }
+  createVehicleBooking(payload: {
+    vehicleId: string;
+    startDate: string;
+    endDate: string;
+    message?: string | null;
+  }): Observable<VehicleBooking> {
+    return this.vehicles.createBooking(payload);
+  }
+  getMyVehicleBookings(): Observable<ApiListResponse<VehicleBooking>> {
+    return this.vehicles.getMyBookings();
+  }
+  createVehicle(payload: Record<string, unknown>): Observable<Vehicle> {
+    return this.vehicles.create(payload);
+  }
+  updateVehicle(id: string, payload: Record<string, unknown>): Observable<Vehicle> {
+    return this.vehicles.update(id, payload);
+  }
+  deleteVehicle(id: string): Observable<void> {
+    return this.vehicles.delete(id);
+  }
+  getMyVehicles(): Observable<ApiPageResponse<Vehicle>> {
+    return this.vehicles.getMine();
+  }
+  uploadVehicleImages(id: string, files: File[]): Observable<void> {
+    return this.vehicles.uploadImages(id, files);
+  }
+  getVehicleConditionReports(id: string): Observable<ApiListResponse<ConditionReport>> {
+    return this.vehicles.getConditionReports(id);
+  }
+  createVehicleConditionReport(
+    id: string,
+    report: Record<string, unknown>,
+  ): Observable<ConditionReport> {
+    return this.vehicles.createConditionReport(id, report);
+  }
+  getVehicleActiveBookings(id: string): Observable<ApiListResponse<VehicleBooking>> {
+    return this.vehicles.getActiveBookings(id);
+  }
+
+  // --- Bookings ---
   createPropertyBooking(payload: {
     propertyId: string;
     bookingType: string;
@@ -139,262 +271,195 @@ export class ApiClient {
     message?: string | null;
     numberOfOccupants?: number | null;
   }): Observable<Booking> {
-    return this.http.post<Booking>(`${this.baseUrl}/bookings`, payload);
+    return this.bookings.create(payload);
   }
-
   getMyPropertyBookings(): Observable<ApiListResponse<Booking>> {
-    return this.http.get<ApiListResponse<Booking>>(`${this.baseUrl}/bookings/my-bookings`);
+    return this.bookings.getMine();
   }
-
   getPropertyBookings(propertyId: string): Observable<ApiListResponse<Booking>> {
-    return this.http.get<ApiListResponse<Booking>>(
-      `${this.baseUrl}/bookings/property/${propertyId}`,
-    );
+    return this.bookings.getByProperty(propertyId);
   }
-
   approvePropertyBooking(id: string, message?: string): Observable<Booking> {
-    return this.http.patch<Booking>(
-      `${this.baseUrl}/bookings/${id}/approve`,
-      message ? { message } : {},
-    );
+    return this.bookings.approve(id, message);
   }
-
   rejectPropertyBooking(id: string, message: string): Observable<Booking> {
-    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/reject`, { message });
+    return this.bookings.reject(id, message);
   }
-
   cancelPropertyBooking(id: string): Observable<Booking> {
-    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/cancel`, {});
+    return this.bookings.cancel(id);
   }
-
   getBookingById(id: string): Observable<Booking> {
-    return this.http.get<Booking>(`${this.baseUrl}/bookings/${id}`);
+    return this.bookings.getById(id);
   }
-
   requestBookingModification(id: string, request: BookingModificationRequest): Observable<Booking> {
-    return this.http.post<Booking>(`${this.baseUrl}/bookings/${id}/modify`, request);
+    return this.bookings.requestModification(id, request);
   }
-
   approveBookingModification(id: string): Observable<Booking> {
-    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/modify/approve`, {});
+    return this.bookings.approveModification(id);
   }
-
   rejectBookingModification(id: string, reason?: string): Observable<Booking> {
-    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/modify/reject`, {
-      message: reason,
-    });
+    return this.bookings.rejectModification(id, reason);
   }
 
-  searchVehicles(params: VehicleSearchParams): Observable<ApiPageResponse<Vehicle>> {
-    return this.http.get<ApiPageResponse<Vehicle>>(`${this.baseUrl}/vehicles/search`, {
-      params: this.buildParams(params),
-    });
+  // --- Favorites ---
+  getFavorites(): Observable<ApiListResponse<Property>> {
+    return this.favorites.getAll();
+  }
+  isFavorite(propertyId: string): Observable<ApiValueResponse<boolean>> {
+    return this.favorites.check(propertyId);
+  }
+  addFavorite(propertyId: string): Observable<unknown> {
+    return this.favorites.add(propertyId);
+  }
+  removeFavorite(propertyId: string): Observable<void> {
+    return this.favorites.remove(propertyId);
   }
 
-  getVehicle(id: string): Observable<Vehicle> {
-    return this.http.get<Vehicle>(`${this.baseUrl}/vehicles/${id}`);
+  // --- Reviews ---
+  createReview(request: ReviewCreateRequest): Observable<Review> {
+    return this.reviews.create(request);
+  }
+  getReviews(propertyId: string): Observable<ApiListResponse<Review>> {
+    return this.reviews.getByProperty(propertyId);
+  }
+  getAverageRating(propertyId: string): Observable<ApiValueResponse<number>> {
+    return this.reviews.getPropertyAverage(propertyId);
+  }
+  getPropertyReviews(propertyId: string): Observable<ApiListResponse<Review>> {
+    return this.reviews.getByProperty(propertyId);
+  }
+  getAveragePropertyRating(propertyId: string): Observable<ApiValueResponse<number>> {
+    return this.reviews.getPropertyAverage(propertyId);
+  }
+  getTenantReviews(userId: string): Observable<ApiListResponse<Review>> {
+    return this.reviews.getByTenant(userId);
+  }
+  getAverageTenantRating(userId: string): Observable<ApiValueResponse<number>> {
+    return this.reviews.getTenantAverage(userId);
+  }
+  deleteReview(id: string): Observable<void> {
+    return this.reviews.delete(id);
+  }
+  replyToReview(id: string, reply: string): Observable<Review> {
+    return this.reviews.reply(id, reply);
   }
 
-  trackVehicleView(id: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/vehicles/${id}/view`, {});
-  }
-
-  getVehicleAvailability(id: string, startDate: string, endDate: string): Observable<boolean> {
-    return this.http.get<boolean>(`${this.baseUrl}/vehicles/${id}/availability`, {
-      params: this.buildParams({ startDate, endDate }),
-    });
-  }
-
-  createVehicleBooking(payload: {
-    vehicleId: string;
-    startDate: string;
-    endDate: string;
-    message?: string | null;
-  }): Observable<VehicleBooking> {
-    return this.http.post<VehicleBooking>(
-      `${this.baseUrl}/vehicles/${payload.vehicleId}/bookings`,
-      payload,
-    );
-  }
-
-  getMyVehicleBookings(): Observable<ApiListResponse<VehicleBooking>> {
-    return this.http.get<ApiListResponse<VehicleBooking>>(`${this.baseUrl}/vehicles/my-bookings`);
-  }
-
-  login(payload: { email: string; password: string }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/login`, payload);
-  }
-
-  socialLogin(provider: string, token: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/${provider}`, { token });
-  }
-
-  register(payload: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber?: string | null;
-    role: string;
-  }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/register`, payload);
-  }
-
-  forgotPassword(email: string): Observable<ApiValueResponse<string>> {
-    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/auth/forgot-password`, {
-      email,
-    });
-  }
-
-  resetPassword(token: string, newPassword: string): Observable<ApiValueResponse<string>> {
-    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/auth/reset-password`, {
-      token,
-      newPassword,
-    });
-  }
-
-  sendOtp(phoneNumber: string): Observable<ApiValueResponse<string>> {
-    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/auth/otp/send`, null, {
-      params: this.buildParams({ phoneNumber }),
-    });
-  }
-
-  verifyOtp(phoneNumber: string, otp: string): Observable<ApiValueResponse<boolean>> {
-    return this.http.post<ApiValueResponse<boolean>>(`${this.baseUrl}/auth/otp/verify`, null, {
-      params: this.buildParams({ phoneNumber, otp }),
-    });
-  }
-
-  refresh(): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/auth/refresh`, {});
-  }
-
-  logout(): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/auth/logout`, {});
-  }
-
-  getMe(): Observable<User> {
-    return this.http.get<User>(`${this.baseUrl}/users/me`);
-  }
-
-  updateProfile(payload: {
-    firstName?: string;
-    lastName?: string;
-    phoneNumber?: string | null;
-    languagePreference?: string;
-  }): Observable<User> {
-    return this.http.put<User>(`${this.baseUrl}/users/me`, payload);
-  }
-
-  changePassword(payload: {
-    currentPassword: string;
-    newPassword: string;
-  }): Observable<ApiValueResponse<string>> {
-    return this.http.put<ApiValueResponse<string>>(`${this.baseUrl}/users/me/password`, payload);
-  }
-
-  uploadAvatar(file: File): Observable<User> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<User>(`${this.baseUrl}/users/me/avatar`, formData);
-  }
-
-  getUserById(id: string): Observable<User> {
-    return this.http.get<User>(`${this.baseUrl}/users/${id}`);
-  }
-
+  // --- Chat ---
   createChatRoom(payload: {
     propertyId: string;
     tenantId: string;
     landlordId: string;
   }): Observable<ChatRoom> {
-    return this.http.post<ChatRoom>(`${this.baseUrl}/chat/rooms`, payload);
+    return this.chat.createRoom(payload);
   }
-
   getChatRooms(): Observable<ApiListResponse<ChatRoom>> {
-    return this.http.get<ApiListResponse<ChatRoom>>(`${this.baseUrl}/chat/rooms`);
+    return this.chat.getRooms();
   }
-
   getChatMessages(roomId: string): Observable<ApiListResponse<Message>> {
-    return this.http.get<ApiListResponse<Message>>(`${this.baseUrl}/chat/rooms/${roomId}/messages`);
+    return this.chat.getMessages(roomId);
   }
-
   sendMessage(roomId: string, message: string): Observable<Message> {
-    return this.http.post<Message>(`${this.baseUrl}/chat/rooms/${roomId}/messages`, { message });
+    return this.chat.sendMessage(roomId, message);
   }
-
   markMessageAsRead(messageId: string): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/chat/messages/${messageId}/read`, {});
+    return this.chat.markMessageAsRead(messageId);
   }
-
   markChatRoomAsRead(roomId: string): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/chat/rooms/${roomId}/read`, {});
+    return this.chat.markRoomAsRead(roomId);
   }
 
+  // --- Notifications ---
   getNotifications(unreadOnly = false): Observable<ApiListResponse<NotificationItem>> {
-    return this.http.get<ApiListResponse<NotificationItem>>(`${this.baseUrl}/notifications`, {
-      params: this.buildParams({ unreadOnly }),
-    });
+    return this.notifs.getAll(unreadOnly);
   }
-
   markNotificationRead(id: string): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/notifications/${id}/read`, {});
+    return this.notifs.markRead(id);
   }
-
   markAllNotificationsRead(): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/notifications/read-all`, {});
+    return this.notifs.markAllRead();
   }
-
   deleteNotification(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/notifications/${id}`);
+    return this.notifs.delete(id);
   }
-
   registerFcmToken(token: string): Observable<ApiValueResponse<string>> {
-    return this.http.post<ApiValueResponse<string>>(`${this.baseUrl}/notifications/fcm-token`, {
-      token,
-    });
+    return this.notifs.registerFcmToken(token);
   }
 
-  getStats(): Observable<ApiValueResponse<Record<string, number>>> {
-    return this.http.get<ApiValueResponse<Record<string, number>>>(`${this.baseUrl}/stats`);
+  // --- Maintenance ---
+  createMaintenanceRequest(
+    payload: MaintenanceRequestCreateRequest,
+  ): Observable<MaintenanceRequest> {
+    return this.maintenance.create(payload);
+  }
+  uploadMaintenanceImages(id: string, files: File[]): Observable<void> {
+    return this.maintenance.uploadImages(id, files);
+  }
+  updateMaintenanceStatus(
+    id: string,
+    payload: MaintenanceStatusUpdateRequest,
+  ): Observable<MaintenanceRequest> {
+    return this.maintenance.updateStatus(id, payload);
+  }
+  getMyMaintenanceRequests(): Observable<MaintenanceRequest[]> {
+    return this.maintenance.getMine();
+  }
+  getLandlordMaintenanceRequests(): Observable<MaintenanceRequest[]> {
+    return this.maintenance.getLandlord();
+  }
+  getMaintenanceRequest(id: string): Observable<MaintenanceRequest> {
+    return this.maintenance.getById(id);
   }
 
-  getMyProperties(): Observable<ApiListResponse<Property>> {
-    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/properties/my-properties`);
+  // --- Disputes ---
+  openDispute(bookingId: string, reason: string, description: string): Observable<Dispute> {
+    return this.disputes.open(bookingId, reason, description);
+  }
+  getAllDisputes(): Observable<Dispute[]> {
+    return this.disputes.getAll();
+  }
+  resolveDispute(id: string, resolutionNotes: string): Observable<Dispute> {
+    return this.disputes.resolve(id, resolutionNotes);
+  }
+  uploadDisputeEvidence(id: string, file: File, description?: string): Observable<DisputeEvidence> {
+    return this.disputes.uploadEvidence(id, file, description);
+  }
+  getDisputeEvidence(id: string): Observable<DisputeEvidence[]> {
+    return this.disputes.getEvidence(id);
   }
 
-  createProperty(payload: Record<string, unknown>): Observable<Property> {
-    return this.http.post<Property>(`${this.baseUrl}/properties/json`, payload);
+  // --- Leases ---
+  getMyLeases(): Observable<ApiListResponse<any>> {
+    return this.leases.getMine();
+  }
+  getLeaseByBooking(bookingId: string): Observable<any> {
+    return this.leases.getByBooking(bookingId);
+  }
+  generateLease(bookingId: string): Observable<any> {
+    return this.leases.generate(bookingId);
+  }
+  signLease(leaseId: string): Observable<any> {
+    return this.leases.sign(leaseId);
+  }
+  uploadLeaseTemplate(propertyId: string, file: File): Observable<any> {
+    return this.leases.uploadTemplate(propertyId, file);
   }
 
-  uploadPropertyImages(id: string, files: File[]): Observable<void> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('images', file));
-    return this.http.post<void>(`${this.baseUrl}/properties/${id}/images`, formData);
+  // --- Insurance ---
+  getInsurancePlans(
+    type: 'TENANT' | 'LANDLORD' | 'VEHICLE' = 'TENANT',
+  ): Observable<InsurancePlan[]> {
+    return this.insurance.getPlans(type);
+  }
+  purchaseInsurancePolicy(planId: string, bookingId: string): Observable<InsurancePolicy> {
+    return this.insurance.purchase(planId, bookingId);
   }
 
-  updateProperty(id: string, payload: Record<string, unknown>): Observable<Property> {
-    return this.http.put<Property>(`${this.baseUrl}/properties/${id}`, payload);
+  // --- Finance ---
+  getMyReceipts(): Observable<Receipt[]> {
+    return this.finance.getMyReceipts();
   }
 
-  deleteProperty(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/properties/${id}`);
-  }
-
-  compareProperties(ids: string[]): Observable<ApiListResponse<Property>> {
-    return this.http.get<ApiListResponse<Property>>(`${this.baseUrl}/properties/compare`, {
-      params: this.buildParams({ ids: ids.join(',') }),
-    });
-  }
-
-  getPropertyReports(propertyId: string): Observable<ApiListResponse<ReportItem>> {
-    return this.http.get<ApiListResponse<ReportItem>>(
-      `${this.baseUrl}/properties/${propertyId}/reports`,
-    );
-  }
-
-  // --- KYC Verification ---
-
+  // --- KYC ---
   getKycStatus(): Observable<
     ApiValueResponse<{
       status: string;
@@ -403,337 +468,99 @@ export class ApiClient {
       submittedAt?: string;
     }>
   > {
-    return this.http.get<ApiValueResponse<any>>(`${this.baseUrl}/kyc/status`);
+    return this.kyc.getStatus();
   }
-
   createKycSession(): Observable<{
     sessionId: string;
     clientSecret: string;
     publishableKey: string;
   }> {
-    return this.http.post<any>(`${this.baseUrl}/kyc/session`, {});
+    return this.kyc.createSession();
   }
 
-  // --- Stripe Connect & Payouts ---
-
+  // --- Payouts ---
   getPayoutSummary(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/payouts/summary`);
+    return this.payouts.getSummary();
   }
-
   onboardConnectAccount(refreshUrl: string, returnUrl: string): Observable<{ url: string }> {
-    return this.http.post<any>(`${this.baseUrl}/payouts/connect/onboard`, {
-      refreshUrl,
-      returnUrl,
-    });
+    return this.payouts.onboardConnectAccount(refreshUrl, returnUrl);
   }
 
-  // --- Property Availability ---
-
-  getPropertyAvailability(
-    propertyId: string,
-    start: string,
-    end: string,
-  ): Observable<
-    ApiListResponse<{
-      date: string;
-      status: string;
-      bookingId?: string;
-    }>
-  > {
-    return this.http.get<ApiListResponse<any>>(
-      `${this.baseUrl}/properties/${propertyId}/availability`,
-      {
-        params: this.buildParams({ start, end }),
-      },
-    );
-  }
-
-  blockPropertyRange(propertyId: string, start: string, end: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/properties/${propertyId}/availability/block`, {
-      start,
-      end,
-    });
-  }
-
-  unblockPropertyRange(propertyId: string, start: string, end: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/properties/${propertyId}/availability/unblock`, {
-      start,
-      end,
-    });
-  }
-
-  // --- Lease Management ---
-
-  getMyLeases(): Observable<ApiListResponse<any>> {
-    return this.http.get<ApiListResponse<any>>(`${this.baseUrl}/leases/my`);
-  }
-
-  getLeaseByBooking(bookingId: string): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/leases/booking/${bookingId}`);
-  }
-
-  generateLease(bookingId: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/leases/booking/${bookingId}/generate`, {});
-  }
-
-  signLease(leaseId: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/leases/${leaseId}/sign`, {});
-  }
-
-  uploadLeaseTemplate(propertyId: string, file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<any>(`${this.baseUrl}/leases/property/${propertyId}/template`, formData);
-  }
-
-  createVehicle(payload: Record<string, unknown>): Observable<Vehicle> {
-    return this.http.post<Vehicle>(`${this.baseUrl}/vehicles`, payload);
-  }
-
-  updateVehicle(id: string, payload: Record<string, unknown>): Observable<Vehicle> {
-    return this.http.put<Vehicle>(`${this.baseUrl}/vehicles/${id}`, payload);
-  }
-
-  deleteVehicle(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/vehicles/${id}`);
-  }
-
-  getMyVehicles(): Observable<ApiPageResponse<Vehicle>> {
-    return this.http.get<ApiPageResponse<Vehicle>>(`${this.baseUrl}/vehicles/my-vehicles`);
-  }
-
-  uploadVehicleImages(id: string, files: File[]): Observable<void> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('images', file));
-    return this.http.post<void>(`${this.baseUrl}/vehicles/${id}/images`, formData);
-  }
-
-  // --- Insurance Marketplace ---
-
-  getInsurancePlans(
-    type: 'TENANT' | 'LANDLORD' | 'VEHICLE' = 'TENANT',
-  ): Observable<InsurancePlan[]> {
-    return this.http.get<InsurancePlan[]>(`${this.baseUrl}/insurance/plans`, {
-      params: this.buildParams({ type }),
-    });
-  }
-
-  purchaseInsurancePolicy(planId: string, bookingId: string): Observable<InsurancePolicy> {
-    return this.http.post<InsurancePolicy>(`${this.baseUrl}/insurance/purchase`, null, {
-      params: this.buildParams({ planId, bookingId }),
-    });
-  }
-
-  // --- Finance & Receipts ---
-
-  getMyReceipts(): Observable<Receipt[]> {
-    return this.http.get<Receipt[]>(`${this.baseUrl}/finance/receipts`);
-  }
-
-  // --- Disputes ---
-
-  openDispute(bookingId: string, reason: string, description: string): Observable<Dispute> {
-    return this.http.post<Dispute>(`${this.baseUrl}/disputes`, null, {
-      params: this.buildParams({ bookingId, reason, description }),
-    });
-  }
-
-  getAllDisputes(): Observable<Dispute[]> {
-    return this.http.get<Dispute[]>(`${this.baseUrl}/disputes`);
-  }
-
-  resolveDispute(id: string, resolutionNotes: string): Observable<Dispute> {
-    return this.http.patch<Dispute>(`${this.baseUrl}/disputes/${id}/resolve`, null, {
-      params: this.buildParams({ resolutionNotes }),
-    });
-  }
-
-  uploadDisputeEvidence(id: string, file: File, description?: string): Observable<DisputeEvidence> {
-    const formData = new FormData();
-    formData.append('file', file);
-    if (description) {
-      formData.append('description', description);
-    }
-    return this.http.post<DisputeEvidence>(`${this.baseUrl}/disputes/${id}/evidence`, formData);
-  }
-
-  getDisputeEvidence(id: string): Observable<DisputeEvidence[]> {
-    return this.http.get<DisputeEvidence[]>(`${this.baseUrl}/disputes/${id}/evidence`);
-  }
-
-  // --- Reviews ---
-
-  createReview(request: ReviewCreateRequest): Observable<Review> {
-    return this.http.post<Review>(`${this.baseUrl}/reviews`, request);
-  }
-
-  getPropertyReviews(propertyId: string): Observable<ApiListResponse<Review>> {
-    return this.http.get<ApiListResponse<Review>>(`${this.baseUrl}/reviews/property/${propertyId}`);
-  }
-
-  getAveragePropertyRating(propertyId: string): Observable<ApiValueResponse<number>> {
-    return this.http.get<ApiValueResponse<number>>(
-      `${this.baseUrl}/reviews/property/${propertyId}/average`,
-    );
-  }
-
-  getTenantReviews(userId: string): Observable<ApiListResponse<Review>> {
-    return this.http.get<ApiListResponse<Review>>(`${this.baseUrl}/reviews/tenant/${userId}`);
-  }
-
-  getAverageTenantRating(userId: string): Observable<ApiValueResponse<number>> {
-    return this.http.get<ApiValueResponse<number>>(
-      `${this.baseUrl}/reviews/tenant/${userId}/average`,
-    );
-  }
-
-  deleteReview(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/reviews/${id}`);
-  }
-
-  replyToReview(id: string, reply: string): Observable<Review> {
-    return this.http.post<Review>(`${this.baseUrl}/reviews/${id}/reply`, null, {
-      params: this.buildParams({ reply }),
-    });
-  }
-
-  // --- GDPR Compliance ---
-
-  exportData(): Observable<Record<string, unknown>> {
-    return this.http.get<Record<string, unknown>>(`${this.baseUrl}/gdpr/export`);
-  }
-
-  eraseData(): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/gdpr/erase`);
-  }
-
-  // --- Currencies ---
-
-  getCurrencyRates(): Observable<Record<string, number>> {
-    return this.http.get<Record<string, number>>(`${this.baseUrl}/currencies/rates`);
-  }
-
-  convertCurrency(amount: number, from: string, to: string): Observable<number> {
-    return this.http.get<number>(`${this.baseUrl}/currencies/convert`, {
-      params: this.buildParams({ amount, from, to }),
-    });
-  }
-
-  // --- AI Pricing ---
-
-  getPricingRecommendation(propertyId: string): Observable<PricingRecommendation> {
-    return this.http.get<PricingRecommendation>(
-      `${this.baseUrl}/properties/${propertyId}/pricing/recommendation`,
-    );
-  }
-
-  // --- Agencies ---
-
-  getAllAgencies(): Observable<Agency[]> {
-    return this.http.get<Agency[]>(`${this.baseUrl}/agencies`);
-  }
-
-  getAgency(id: string): Observable<Agency> {
-    return this.http.get<Agency>(`${this.baseUrl}/agencies/${id}`);
-  }
-
-  verifyAgency(id: string): Observable<Agency> {
-    return this.http.patch<Agency>(`${this.baseUrl}/agencies/${id}/verify`, {});
-  }
-
-  getVehicleConditionReports(id: string): Observable<ApiListResponse<ConditionReport>> {
-    return this.http.get<ApiListResponse<ConditionReport>>(
-      `${this.baseUrl}/vehicles/${id}/condition`,
-    );
-  }
-
-  createVehicleConditionReport(
-    id: string,
-    report: Record<string, unknown>,
-  ): Observable<ConditionReport> {
-    return this.http.post<ConditionReport>(`${this.baseUrl}/vehicles/${id}/condition`, report);
-  }
-
-  getVehicleActiveBookings(id: string): Observable<ApiListResponse<VehicleBooking>> {
-    return this.http.get<ApiListResponse<VehicleBooking>>(
-      `${this.baseUrl}/vehicles/${id}/bookings`,
-    );
-  }
-
+  // --- Admin ---
   getAdminAnalytics(): Observable<Analytics> {
-    return this.http.get<Analytics>(`${this.baseUrl}/admin/analytics`);
+    return this.admin.getAnalytics();
   }
-
   getPendingProperties(page = 0, size = 6): Observable<ApiPageResponse<Property>> {
-    return this.http.get<ApiPageResponse<Property>>(`${this.baseUrl}/admin/properties/pending`, {
-      params: this.buildParams({ page, size }),
-    });
+    return this.admin.getPendingProperties(page, size);
   }
-
   approveProperty(id: string): Observable<Property> {
-    return this.http.patch<Property>(`${this.baseUrl}/admin/properties/${id}/approve`, {});
+    return this.admin.approveProperty(id);
   }
-
   rejectProperty(id: string, reason: string): Observable<Property> {
-    return this.http.patch<Property>(`${this.baseUrl}/admin/properties/${id}/reject`, { reason });
+    return this.admin.rejectProperty(id, reason);
   }
-
   getReports(page = 0, size = 20): Observable<ApiPageResponse<ReportItem>> {
-    return this.http.get<ApiPageResponse<ReportItem>>(`${this.baseUrl}/admin/reports`, {
-      params: this.buildParams({ page, size }),
-    });
+    return this.admin.getReports(page, size);
   }
-
   resolveReport(id: string, reason?: string): Observable<ReportItem> {
-    return this.http.patch<ReportItem>(`${this.baseUrl}/admin/reports/${id}/resolve`, { reason });
+    return this.admin.resolveReport(id, reason);
   }
-
   getAdminUsers(page = 0, size = 20): Observable<ApiPageResponse<User>> {
-    return this.http.get<ApiPageResponse<User>>(`${this.baseUrl}/admin/users`, {
-      params: this.buildParams({ page, size }),
-    });
+    return this.admin.getUsers(page, size);
   }
-
   suspendUser(id: string): Observable<User> {
-    return this.http.patch<User>(`${this.baseUrl}/admin/users/${id}/suspend`, {});
+    return this.admin.suspendUser(id);
   }
-
   activateUser(id: string): Observable<User> {
-    return this.http.patch<User>(`${this.baseUrl}/admin/users/${id}/activate`, {});
+    return this.admin.activateUser(id);
   }
-
   getSystemConfigs(): Observable<SystemConfig[]> {
-    return this.http.get<SystemConfig[]>(`${this.baseUrl}/admin/configs`);
+    return this.admin.getSystemConfigs();
   }
-
   updateSystemConfig(key: string, value: string): Observable<SystemConfig> {
-    return this.http.patch<SystemConfig>(`${this.baseUrl}/admin/configs/${key}`, null, {
-      params: this.buildParams({ value }),
-    });
+    return this.admin.updateSystemConfig(key, value);
   }
-
   createAmenity(amenity: {
     name: string;
     nameFr: string;
     icon: string;
     category: string;
   }): Observable<Amenity> {
-    return this.http.post<Amenity>(`${this.baseUrl}/admin/amenities`, amenity);
+    return this.admin.createAmenity(amenity);
   }
-
   deleteAmenity(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/admin/amenities/${id}`);
+    return this.admin.deleteAmenity(id);
   }
 
-  private buildParams(values: object): HttpParams {
-    let params = new HttpParams();
+  // --- Agencies ---
+  getAllAgencies(): Observable<Agency[]> {
+    return this.agencies.getAll();
+  }
+  getAgency(id: string): Observable<Agency> {
+    return this.agencies.getById(id);
+  }
+  verifyAgency(id: string): Observable<Agency> {
+    return this.agencies.verify(id);
+  }
 
-    Object.entries(values as Record<string, unknown>).forEach(([key, value]) => {
-      if (value !== null && value !== undefined && value !== '') {
-        params = params.set(key, String(value));
-      }
-    });
+  // --- Currencies ---
+  getCurrencyRates(): Observable<Record<string, number>> {
+    return this.currencies.getRates();
+  }
+  convertCurrency(amount: number, from: string, to: string): Observable<number> {
+    return this.currencies.convert(amount, from, to);
+  }
 
-    return params;
+  // --- Stats ---
+  getStats(): Observable<ApiValueResponse<Record<string, number>>> {
+    return this.stats.get();
+  }
+
+  // --- GDPR ---
+  exportData(): Observable<Record<string, unknown>> {
+    return this.gdpr.exportData();
+  }
+  eraseData(): Observable<void> {
+    return this.gdpr.eraseData();
   }
 }

@@ -1,11 +1,15 @@
 import { Component, DestroyRef, PLATFORM_ID, computed, inject, signal } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, SlicePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
-import { ApiClient } from '../../../core/api/api.client';
+import { PropertyApi } from '../../../core/api/services/property.api';
+import { BookingApi } from '../../../core/api/services/booking.api';
+import { FavoriteApi } from '../../../core/api/services/favorite.api';
+import { ReviewApi } from '../../../core/api/services/review.api';
+import { ChatApi } from '../../../core/api/services/chat.api';
 import { Booking, Property, Review } from '../../../core/models/api.types';
 import { SessionStore } from '../../../core/state/session.store';
 import {
@@ -18,7 +22,7 @@ import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-ca
 
 @Component({
   selector: 'app-property-detail-page',
-  imports: [ReactiveFormsModule, ListingCardComponent],
+  imports: [ReactiveFormsModule, ListingCardComponent, SlicePipe],
   templateUrl: './property-detail.page.html',
   styleUrl: './property-detail.page.scss',
 })
@@ -26,7 +30,11 @@ export class PropertyDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
-  private readonly api = inject(ApiClient);
+  private readonly propertyApi = inject(PropertyApi);
+  private readonly bookingApi = inject(BookingApi);
+  private readonly favoriteApi = inject(FavoriteApi);
+  private readonly reviewApi = inject(ReviewApi);
+  private readonly chatApi = inject(ChatApi);
   protected readonly session = inject(SessionStore);
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
@@ -63,15 +71,15 @@ export class PropertyDetailPageComponent {
             return of(null);
           }
 
-          this.api.trackPropertyView(id).subscribe({ error: () => void 0 });
+          this.propertyApi.trackView(id).subscribe({ error: () => void 0 });
 
           return forkJoin({
-            property: this.api.getProperty(id),
-            reviews: this.api.getReviews(id),
-            average: this.api.getAverageRating(id),
-            similar: this.api.getSimilarProperties(id),
+            property: this.propertyApi.getById(id),
+            reviews: this.reviewApi.getByProperty(id),
+            average: this.reviewApi.getPropertyAverage(id),
+            similar: this.propertyApi.getSimilar(id),
             favorite: this.session.isAuthenticated()
-              ? this.api.isFavorite(id)
+              ? this.favoriteApi.check(id)
               : of({ data: false }),
           });
         }),
@@ -100,7 +108,6 @@ export class PropertyDetailPageComponent {
     const prop = this.property();
     if (!prop || !prop.latitude || !prop.longitude) return;
 
-    // Use default marker icons from CDN to avoid build-time asset resolution issues in the demo
     const iconDefault = L.icon({
       iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -145,8 +152,8 @@ export class PropertyDetailPageComponent {
     }
 
     const request = this.favorite()
-      ? this.api.removeFavorite(property.id)
-      : this.api.addFavorite(property.id);
+      ? this.favoriteApi.remove(property.id)
+      : this.favoriteApi.add(property.id);
 
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.favorite.set(!this.favorite());
@@ -160,8 +167,8 @@ export class PropertyDetailPageComponent {
     }
 
     const form = this.bookingForm.getRawValue();
-    this.api
-      .createPropertyBooking({
+    this.bookingApi
+      .create({
         propertyId: property.id,
         bookingType: form.bookingType ?? 'VIEWING',
         requestedDate: form.requestedDate ?? null,
@@ -184,8 +191,8 @@ export class PropertyDetailPageComponent {
     }
 
     const form = this.reviewForm.getRawValue();
-    this.api
-      .createReview({
+    this.reviewApi
+      .create({
         propertyId,
         rating: Number(form.rating),
         comment: form.comment ?? '',
@@ -193,8 +200,8 @@ export class PropertyDetailPageComponent {
       .pipe(
         switchMap(() =>
           forkJoin({
-            reviews: this.api.getReviews(propertyId),
-            average: this.api.getAverageRating(propertyId),
+            reviews: this.reviewApi.getByProperty(propertyId),
+            average: this.reviewApi.getPropertyAverage(propertyId),
           }),
         ),
         takeUntilDestroyed(this.destroyRef),
@@ -213,15 +220,15 @@ export class PropertyDetailPageComponent {
       return;
     }
 
-    this.api
-      .createChatRoom({
+    this.chatApi
+      .createRoom({
         propertyId: property.id,
         tenantId: user.id,
         landlordId: property.landlord.id,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((room) => {
-        this.router.navigate(['/workspace'], { queryParams: { chat: room.id } });
+        this.router.navigate(['/workspace'], { queryParams: { tab: 'messages', chat: room.id } });
       });
   }
 

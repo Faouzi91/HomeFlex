@@ -1,4 +1,4 @@
-import { CurrencyPipe, DecimalPipe, LowerCasePipe, SlicePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -6,7 +6,23 @@ import { forkJoin, of, switchMap, from } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { loadStripe } from '@stripe/stripe-js';
 import { TranslateModule } from '@ngx-translate/core';
-import { ApiClient } from '../../../core/api/api.client';
+import { AdminApi } from '../../../core/api/services/admin.api';
+import { AgencyApi } from '../../../core/api/services/agency.api';
+import { BookingApi } from '../../../core/api/services/booking.api';
+import { ChatApi } from '../../../core/api/services/chat.api';
+import { DisputeApi } from '../../../core/api/services/dispute.api';
+import { FavoriteApi } from '../../../core/api/services/favorite.api';
+import { FinanceApi } from '../../../core/api/services/finance.api';
+import { GdprApi } from '../../../core/api/services/gdpr.api';
+import { InsuranceApi } from '../../../core/api/services/insurance.api';
+import { KycApi } from '../../../core/api/services/kyc.api';
+import { LeaseApi } from '../../../core/api/services/lease.api';
+import { MaintenanceApi } from '../../../core/api/services/maintenance.api';
+import { NotificationApi } from '../../../core/api/services/notification.api';
+import { PayoutApi } from '../../../core/api/services/payout.api';
+import { PropertyApi } from '../../../core/api/services/property.api';
+import { UserApi } from '../../../core/api/services/user.api';
+import { VehicleApi } from '../../../core/api/services/vehicle.api';
 import {
   Agency,
   Analytics,
@@ -52,20 +68,28 @@ type WorkspaceTabItem = {
 @Component({
   selector: 'app-workspace-page',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    CurrencyPipe,
-    DecimalPipe,
-    SlicePipe,
-    LowerCasePipe,
-    TranslateModule,
-  ],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, DatePipe],
   templateUrl: './workspace.page.html',
   styleUrl: './workspace.page.scss',
 })
 export class WorkspacePageComponent {
-  private readonly api = inject(ApiClient);
+  private readonly adminApi = inject(AdminApi);
+  private readonly agencyApi = inject(AgencyApi);
+  private readonly bookingApi = inject(BookingApi);
+  private readonly chatApi = inject(ChatApi);
+  private readonly disputeApi = inject(DisputeApi);
+  private readonly favoriteApi = inject(FavoriteApi);
+  private readonly financeApi = inject(FinanceApi);
+  private readonly gdprApi = inject(GdprApi);
+  private readonly insuranceApi = inject(InsuranceApi);
+  private readonly kycApi = inject(KycApi);
+  private readonly leaseApi = inject(LeaseApi);
+  private readonly maintenanceApi = inject(MaintenanceApi);
+  private readonly notificationApi = inject(NotificationApi);
+  private readonly payoutApi = inject(PayoutApi);
+  private readonly propertyApi = inject(PropertyApi);
+  private readonly userApi = inject(UserApi);
+  private readonly vehicleApi = inject(VehicleApi);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
@@ -181,10 +205,9 @@ export class WorkspacePageComponent {
     year: [new Date().getFullYear(), Validators.required],
     dailyPrice: [0, Validators.required],
     currency: ['XAF'],
-    transmission: ['AUTOMATIC', Validators.required],
-    fuelType: ['PETROL', Validators.required],
+    transmission: ['AUTO', Validators.required],
+    fuelType: ['GASOLINE', Validators.required],
     seats: [5, Validators.required],
-    category: ['CAR', Validators.required],
     description: ['', Validators.required],
   });
 
@@ -210,9 +233,20 @@ export class WorkspacePageComponent {
       if (params['tab']) {
         this.activeTab.set(params['tab'] as WorkspaceTab);
       }
+      if (params['chat']) {
+        this.selectedRoomId.set(params['chat']);
+        this.openRoom(params['chat']);
+      }
     });
 
-    this.loadWorkspace();
+    // Use effect to reactively load workspace data once the user is authenticated.
+    import('@angular/core').then(({ effect }) => {
+      effect(() => {
+        if (this.session.user()) {
+          this.loadWorkspace();
+        }
+      });
+    });
   }
 
   protected loadWorkspace(): void {
@@ -220,35 +254,35 @@ export class WorkspacePageComponent {
     if (!user) return;
 
     forkJoin({
-      favorites: this.api.getFavorites(),
-      propertyBookings: this.api.getMyPropertyBookings(),
-      vehicleBookings: this.api.getMyVehicleBookings(),
-      notifications: this.api.getNotifications(),
-      chatRooms: this.api.getChatRooms(),
+      favorites: this.favoriteApi.getAll(),
+      propertyBookings: this.bookingApi.getMine(),
+      vehicleBookings: this.vehicleApi.getMyBookings(),
+      notifications: this.notificationApi.getAll(),
+      chatRooms: this.chatApi.getRooms(),
       myProperties:
         this.session.isLandlord() || this.session.isAdmin()
-          ? this.api.getMyProperties()
+          ? this.propertyApi.getMine()
           : of({ data: [] }),
       myVehicles:
         this.session.isLandlord() || this.session.isAdmin()
-          ? this.api.getMyVehicles()
+          ? this.vehicleApi.getMine()
           : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
-      analytics: this.session.isAdmin() ? this.api.getAdminAnalytics() : of(null),
+      analytics: this.session.isAdmin() ? this.adminApi.getAnalytics() : of(null),
       pendingProperties: this.session.isAdmin()
-        ? this.api.getPendingProperties()
+        ? this.adminApi.getPendingProperties()
         : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
       reports: this.session.isAdmin()
-        ? this.api.getReports()
+        ? this.adminApi.getReports()
         : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
-      disputes: this.session.isAdmin() ? this.api.getAllDisputes() : of([]),
-      agencies: this.session.isAdmin() ? this.api.getAllAgencies() : of([]),
-      myLeases: this.api.getMyLeases(),
-      myReceipts: this.api.getMyReceipts(),
-      myInsurance: this.api.getInsurancePlans('TENANT'),
-      myMaintenance: this.api.getMyMaintenanceRequests(),
+      disputes: this.session.isAdmin() ? this.disputeApi.getAll() : of([]),
+      agencies: this.session.isAdmin() ? this.agencyApi.getAll() : of([]),
+      myLeases: this.leaseApi.getMine(),
+      myReceipts: this.financeApi.getMyReceipts(),
+      myInsurance: this.insuranceApi.getPlans('TENANT'),
+      myMaintenance: this.maintenanceApi.getMine(),
       landlordMaintenance:
         this.session.isLandlord() || this.session.isAdmin()
-          ? this.api.getLandlordMaintenanceRequests()
+          ? this.maintenanceApi.getLandlord()
           : of([]),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -289,15 +323,15 @@ export class WorkspacePageComponent {
   }
 
   protected loadKycStatus(): void {
-    this.api
-      .getKycStatus()
+    this.kycApi
+      .getStatus()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => this.kycStatus.set(response.data));
   }
 
   protected startKyc(): void {
-    this.api
-      .createKycSession()
+    this.kycApi
+      .createSession()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(async (response) => {
         this.hostMessage.set('Redirecting to Stripe Identity for verification...');
@@ -315,15 +349,15 @@ export class WorkspacePageComponent {
   }
 
   protected loadPayoutSummary(): void {
-    this.api
-      .getPayoutSummary()
+    this.payoutApi
+      .getSummary()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => this.payoutSummary.set(response));
   }
 
   protected onboardConnect(): void {
     const currentUrl = window.location.href;
-    this.api
+    this.payoutApi
       .onboardConnectAccount(currentUrl, currentUrl)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
@@ -332,7 +366,7 @@ export class WorkspacePageComponent {
   }
 
   protected saveProfile(): void {
-    this.api
+    this.userApi
       .updateProfile(this.profileForm.value as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -347,7 +381,7 @@ export class WorkspacePageComponent {
 
   protected savePassword(): void {
     if (this.passwordForm.invalid) return;
-    this.api
+    this.userApi
       .changePassword(this.passwordForm.value as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -362,15 +396,15 @@ export class WorkspacePageComponent {
 
   protected openRoom(id: string): void {
     this.selectedRoomId.set(id);
-    this.api
-      .getChatMessages(id)
+    this.chatApi
+      .getMessages(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => this.messages.set(response.data));
   }
 
   protected sendMessage(): void {
     if (this.messageForm.invalid || !this.selectedRoomId()) return;
-    this.api
+    this.chatApi
       .sendMessage(this.selectedRoomId(), this.messageForm.value.text!)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((message) => {
@@ -380,8 +414,8 @@ export class WorkspacePageComponent {
   }
 
   protected markNotificationRead(id: string): void {
-    this.api
-      .markNotificationRead(id)
+    this.notificationApi
+      .markRead(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.notifications.update((items) =>
@@ -391,8 +425,8 @@ export class WorkspacePageComponent {
   }
 
   protected markAllNotificationsRead(): void {
-    this.api
-      .markAllNotificationsRead()
+    this.notificationApi
+      .markAllRead()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.notifications.update((items) => items.map((item) => ({ ...item, isRead: true })));
@@ -400,8 +434,8 @@ export class WorkspacePageComponent {
   }
 
   protected deleteNotification(id: string): void {
-    this.api
-      .deleteNotification(id)
+    this.notificationApi
+      .delete(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.notifications.update((items) => items.filter((item) => item.id !== id));
@@ -409,8 +443,8 @@ export class WorkspacePageComponent {
   }
 
   protected approvePropertyBooking(id: string): void {
-    this.api
-      .approvePropertyBooking(id, 'Approved from workspace')
+    this.bookingApi
+      .approve(id, 'Approved from workspace')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadWorkspace());
   }
@@ -418,8 +452,8 @@ export class WorkspacePageComponent {
   protected rejectPropertyBooking(id: string): void {
     const reason = prompt('Enter rejection reason:');
     if (!reason) return;
-    this.api
-      .rejectPropertyBooking(id, reason)
+    this.bookingApi
+      .reject(id, reason)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadWorkspace());
   }
@@ -428,8 +462,8 @@ export class WorkspacePageComponent {
     this.selectedHostPropertyId.set(id);
     const start = new Date().toISOString().split('T')[0];
     const end = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    this.api
-      .getPropertyAvailability(id, start, end)
+    this.propertyApi
+      .getAvailability(id, start, end)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((res) => this.selectedHostPropertyAvailability.set(res.data));
   }
@@ -437,8 +471,8 @@ export class WorkspacePageComponent {
   protected blockRange(): void {
     if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
     const { start, end } = this.rangeForm.value;
-    this.api
-      .blockPropertyRange(this.selectedHostPropertyId(), start!, end!)
+    this.propertyApi
+      .blockRange(this.selectedHostPropertyId(), start!, end!)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadAvailability(this.selectedHostPropertyId()));
   }
@@ -446,16 +480,16 @@ export class WorkspacePageComponent {
   protected unblockRange(): void {
     if (this.rangeForm.invalid || !this.selectedHostPropertyId()) return;
     const { start, end } = this.rangeForm.value;
-    this.api
-      .unblockPropertyRange(this.selectedHostPropertyId(), start!, end!)
+    this.propertyApi
+      .unblockRange(this.selectedHostPropertyId(), start!, end!)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadAvailability(this.selectedHostPropertyId()));
   }
 
   protected openMaintenanceDetail(id: string): void {
     this.selectedMaintenanceRequestId.set(id);
-    this.api
-      .getMaintenanceRequest(id)
+    this.maintenanceApi
+      .getById(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((res) => {
         this.maintenanceDetail.set(res);
@@ -468,11 +502,8 @@ export class WorkspacePageComponent {
 
   protected updateMaintenanceStatus(): void {
     if (this.maintenanceStatusForm.invalid || !this.selectedMaintenanceRequestId()) return;
-    this.api
-      .updateMaintenanceStatus(
-        this.selectedMaintenanceRequestId(),
-        this.maintenanceStatusForm.value as any,
-      )
+    this.maintenanceApi
+      .updateStatus(this.selectedMaintenanceRequestId(), this.maintenanceStatusForm.value as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((res) => {
         this.maintenanceDetail.set(res);
@@ -486,13 +517,13 @@ export class WorkspacePageComponent {
 
   protected createProperty(): void {
     if (this.propertyForm.invalid) return;
-    this.api
-      .createProperty(this.propertyForm.value as any)
+    this.propertyApi
+      .create(this.propertyForm.value as any)
       .pipe(
         switchMap((prop) => {
           if (this.propertyImages().length > 0) {
-            return this.api
-              .uploadPropertyImages(prop.id, this.propertyImages())
+            return this.propertyApi
+              .uploadImages(prop.id, this.propertyImages())
               .pipe(switchMap(() => of(prop)));
           }
           return of(prop);
@@ -516,13 +547,13 @@ export class WorkspacePageComponent {
 
   protected submitMaintenanceRequest(): void {
     if (this.maintenanceForm.invalid) return;
-    this.api
-      .createMaintenanceRequest(this.maintenanceForm.value as any)
+    this.maintenanceApi
+      .create(this.maintenanceForm.value as any)
       .pipe(
         switchMap((req) => {
           if (this.maintenanceImages().length > 0) {
-            return this.api
-              .uploadMaintenanceImages(req.id, this.maintenanceImages())
+            return this.maintenanceApi
+              .uploadImages(req.id, this.maintenanceImages())
               .pipe(switchMap(() => of(req)));
           }
           return of(req);
@@ -538,13 +569,13 @@ export class WorkspacePageComponent {
 
   protected createVehicle(): void {
     if (this.vehicleForm.invalid) return;
-    this.api
-      .createVehicle(this.vehicleForm.value as any)
+    this.vehicleApi
+      .create(this.vehicleForm.value as any)
       .pipe(
         switchMap((v) => {
           if (this.vehicleImages().length > 0) {
-            return this.api
-              .uploadVehicleImages(v.id, this.vehicleImages())
+            return this.vehicleApi
+              .uploadImages(v.id, this.vehicleImages())
               .pipe(switchMap(() => of(v)));
           }
           return of(v);
@@ -569,15 +600,14 @@ export class WorkspacePageComponent {
       transmission: vehicle.transmission,
       fuelType: vehicle.fuelType,
       seats: vehicle.seats,
-      category: vehicle.category,
       description: vehicle.description,
     });
   }
 
   protected updateVehicle(): void {
     if (this.vehicleForm.invalid || !this.selectedHostVehicleId()) return;
-    this.api
-      .updateVehicle(this.selectedHostVehicleId(), this.vehicleForm.value as any)
+    this.vehicleApi
+      .update(this.selectedHostVehicleId(), this.vehicleForm.value as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.selectedHostVehicleId.set('');
@@ -588,27 +618,27 @@ export class WorkspacePageComponent {
 
   protected deleteVehicle(id: string): void {
     if (!confirm('Are you sure you want to delete this vehicle?')) return;
-    this.api
-      .deleteVehicle(id)
+    this.vehicleApi
+      .delete(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadWorkspace());
   }
 
   protected approvePendingProperty(id: string): void {
-    this.api
+    this.adminApi
       .approveProperty(id)
       .pipe(
-        switchMap(() => this.api.getPendingProperties()),
+        switchMap(() => this.adminApi.getPendingProperties()),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((response) => this.pendingProperties.set(response.data));
   }
 
   protected rejectPendingProperty(id: string): void {
-    this.api
+    this.adminApi
       .rejectProperty(id, 'Rejected')
       .pipe(
-        switchMap(() => this.api.getPendingProperties()),
+        switchMap(() => this.adminApi.getPendingProperties()),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((response) => this.pendingProperties.set(response.data));
@@ -617,10 +647,10 @@ export class WorkspacePageComponent {
   protected resolveDispute(id: string): void {
     const notes = prompt('Enter resolution notes:');
     if (!notes) return;
-    this.api
-      .resolveDispute(id, notes)
+    this.disputeApi
+      .resolve(id, notes)
       .pipe(
-        switchMap(() => this.api.getAllDisputes()),
+        switchMap(() => this.disputeApi.getAll()),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((res) => this.disputes.set(res));
@@ -631,8 +661,8 @@ export class WorkspacePageComponent {
     const description = prompt('Enter dispute description:');
     if (!reason || !description) return;
 
-    this.api
-      .openDispute(bookingId, reason, description)
+    this.disputeApi
+      .open(bookingId, reason, description)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         alert('Dispute opened successfully. An admin will review it.');
@@ -641,22 +671,22 @@ export class WorkspacePageComponent {
   }
 
   protected generateLease(bookingId: string): void {
-    this.api
-      .generateLease(bookingId)
+    this.leaseApi
+      .generate(bookingId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadWorkspace());
   }
 
   protected signLease(leaseId: string): void {
-    this.api
-      .signLease(leaseId)
+    this.leaseApi
+      .sign(leaseId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadWorkspace());
   }
 
   protected approveHostBooking(id: string): void {
-    this.api
-      .approvePropertyBooking(id, 'Approved')
+    this.bookingApi
+      .approve(id, 'Approved')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadWorkspace());
   }
@@ -664,8 +694,8 @@ export class WorkspacePageComponent {
   protected rejectHostBooking(id: string): void {
     const reason = prompt('Enter rejection reason:');
     if (!reason) return;
-    this.api
-      .rejectPropertyBooking(id, reason)
+    this.bookingApi
+      .reject(id, reason)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.loadWorkspace());
   }
@@ -677,7 +707,7 @@ export class WorkspacePageComponent {
   }
 
   protected exportMyData(): void {
-    this.api
+    this.gdprApi
       .exportData()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => {
@@ -697,7 +727,7 @@ export class WorkspacePageComponent {
     );
     if (confirmation !== 'DELETE') return;
 
-    this.api
+    this.gdprApi
       .eraseData()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -729,15 +759,15 @@ export class WorkspacePageComponent {
 
   protected loadVehicleConditionReports(id: string): void {
     this.selectedHostVehicleId.set(id);
-    this.api.getVehicleConditionReports(id).subscribe((res) => {
+    this.vehicleApi.getConditionReports(id).subscribe((res) => {
       this.selectedHostVehicleConditionReports.set(res.data);
     });
   }
 
   protected loadHostBookings(propertyId: string): void {
     this.selectedHostPropertyId.set(propertyId);
-    this.api
-      .getPropertyBookings(propertyId)
+    this.bookingApi
+      .getByProperty(propertyId)
       .pipe(
         switchMap((response) => {
           this.hostBookings.set(response.data);

@@ -8,25 +8,24 @@
         </encoder>
     </appender>
 
-    <springProfile name="!dev">
-        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-            <!-- Logstash service is exposed on port 50000 in docker-compose -->
-            <destination>${LOGSTASH_HOST:-localhost}:50000</destination>
-            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-                <customFields>{"app":"homeflex-backend"}</customFields>
-            </encoder>
-        </appender>
-    </springProfile>
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <!-- Logstash service is exposed on port 50000 in docker-compose -->
+        <destination>${LOGSTASH_HOST:-localhost}:50000</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"app":"homeflex-backend"}</customFields>
+        </encoder>
+        <!-- Graceful degradation: don't block startup if Logstash is unavailable -->
+        <connectionStrategy>
+            <roundRobin>
+                <connectionTTL>5 minutes</connectionTTL>
+            </roundRobin>
+        </connectionStrategy>
+    </appender>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOGSTASH"/>
     </root>
-
-    <springProfile name="!dev">
-        <root level="INFO">
-            <appender-ref ref="LOGSTASH"/>
-        </root>
-    </springProfile>
 
     <!-- Silence some verbose loggers -->
     <logger name="org.springframework.web" level="INFO"/>

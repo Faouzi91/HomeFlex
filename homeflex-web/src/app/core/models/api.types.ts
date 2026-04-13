@@ -353,18 +353,14 @@ export interface Agency {
 
 export interface PropertyLease {
   id: string;
+  propertyId: string;
   bookingId: string;
-  tenantId: string;
   landlordId: string;
-  content: string;
+  tenantId: string;
+  leaseUrl: string;
   status: 'PENDING' | 'SIGNED' | 'EXPIRED' | 'CANCELLED';
-  signedAt?: string;
-  blockchainTxHash?: string;
-  onChainStatus: 'NOT_MINTED' | 'PENDING' | 'SUCCESS' | 'FAILED';
-  contractAddress?: string;
-  tokenId?: string;
+  signedAt: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface Receipt {

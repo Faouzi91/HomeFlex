@@ -1,18 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ApiClient } from './api.client';
+import { PropertyApi } from './services/property.api';
 
-describe('ApiClient', () => {
-  let api: ApiClient;
+describe('PropertyApi', () => {
+  let api: PropertyApi;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApiClient, provideHttpClient(), provideHttpClientTesting()],
+      providers: [PropertyApi, provideHttpClient(), provideHttpClientTesting()],
     });
 
-    api = TestBed.inject(ApiClient);
+    api = TestBed.inject(PropertyApi);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
@@ -22,7 +22,7 @@ describe('ApiClient', () => {
 
   it('builds property search query params', () => {
     api
-      .searchProperties({
+      .search({
         q: 'douala',
         city: 'Douala',
         bedrooms: 3,

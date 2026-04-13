@@ -11,6 +11,7 @@ import com.homeflex.features.property.dto.request.PropertyUpdateRequest;
 import com.homeflex.features.property.domain.repository.PropertyRepository;
 import com.homeflex.features.property.domain.repository.BookingRepository;
 import com.homeflex.features.property.domain.repository.AmenityRepository;
+import com.homeflex.features.vehicle.domain.repository.VehicleRepository;
 import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.exception.UnauthorizedException;
@@ -46,6 +47,7 @@ public class PropertyService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final AmenityRepository amenityRepository;
+    private final VehicleRepository vehicleRepository;
     private final StorageService storageService;
     private final EventOutboxService eventOutboxService;
     private final KycService kycStatusService;
@@ -127,7 +129,7 @@ public class PropertyService {
         property = propertyRepository.save(property);
 
         // Outbox event for search indexing
-        eventOutboxService.enqueue("Property", property.getId(), "PropertyCreated", Map.of("title", property.getTitle()));
+        eventOutboxService.enqueue("Property", property.getId(), "PropertyIndexed", Map.of("action", "created"));
 
         // Notify admins
         notificationService.notifyAdminsNewProperty(property);
@@ -225,9 +227,10 @@ public class PropertyService {
     public Map<String, Long> getStats() {
         Map<String, Long> stats = new HashMap<>();
         stats.put("properties", propertyRepository.count());
+        stats.put("vehicles", vehicleRepository.count());
         stats.put("users", userRepository.count());
         stats.put("cities", propertyRepository.findDistinctCitiesCount());
-        stats.put("transactions", bookingRepository.count());
+        stats.put("bookings", bookingRepository.count());
         return stats;
     }
 
@@ -276,6 +279,20 @@ public class PropertyService {
                 })
                 .collect(Collectors.toList());
     }
+    /**
+     * Enqueues a PropertyIndexed outbox event for every APPROVED property
+     * so the relay re-populates the Elasticsearch index.
+     */
+    @Transactional
+    public int reindexAll() {
+        List<Property> approved = propertyRepository.findAllByStatusAndDeletedAtIsNull(PropertyStatus.APPROVED);
+        for (Property p : approved) {
+            eventOutboxService.enqueue("Property", p.getId(), "PropertyIndexed", Map.of("action", "reindex"));
+        }
+        log.info("Enqueued {} properties for reindexing", approved.size());
+        return approved.size();
+    }
+
     @Transactional
     @org.springframework.cache.annotation.CacheEvict(value = com.homeflex.core.config.CacheConfig.PROPERTIES_CACHE, key = "#propertyId")
     public PropertyDto addImages(UUID propertyId, List<MultipartFile> images, UUID landlordId) {

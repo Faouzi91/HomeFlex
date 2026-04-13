@@ -24,6 +24,13 @@ import com.homeflex.features.property.domain.entity.Review;
 import com.homeflex.features.vehicle.domain.entity.Vehicle;
 import com.homeflex.features.vehicle.domain.entity.VehicleImage;
 import com.homeflex.features.vehicle.domain.entity.VehicleBooking;
+import com.homeflex.core.domain.entity.Notification;
+import com.homeflex.core.domain.entity.ChatRoom;
+import com.homeflex.core.domain.entity.Message;
+import com.homeflex.core.domain.enums.NotificationType;
+import com.homeflex.core.domain.repository.NotificationRepository;
+import com.homeflex.core.domain.repository.ChatRoomRepository;
+import com.homeflex.core.domain.repository.MessageRepository;
 import com.homeflex.features.property.domain.enums.AmenityCategory;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
@@ -65,6 +72,9 @@ public class SampleDataInitializer implements CommandLineRunner {
     private final VehicleRepository vehicleRepository;
     private final VehicleImageRepository vehicleImageRepository;
     private final VehicleBookingRepository vehicleBookingRepository;
+    private final NotificationRepository notificationRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final MessageRepository messageRepository;
 
     @Value("${app.data.create-sample-properties:true}")
     private boolean createSampleProperties;
@@ -91,16 +101,21 @@ public class SampleDataInitializer implements CommandLineRunner {
             createSampleBookings();
             createSampleFavorites();
             createSampleReviews();
+            createSampleNotifications();
+            createSampleChatRoomsAndMessages();
 
             log.info("═══════════════════════════════════════════════════════");
             log.info("SAMPLE DATA CREATED SUCCESSFULLY!");
             log.info("═══════════════════════════════════════════════════════");
             log.info("Statistics:");
-            log.info("   - Properties: {}", propertyRepository.count());
-            log.info("   - Vehicles:   {}", vehicleRepository.count());
-            log.info("   - Bookings:   {}", bookingRepository.count());
-            log.info("   - Favorites:  {}", favoriteRepository.count());
-            log.info("   - Reviews:    {}", reviewRepository.count());
+            log.info("   - Properties:    {}", propertyRepository.count());
+            log.info("   - Vehicles:      {}", vehicleRepository.count());
+            log.info("   - Bookings:      {}", bookingRepository.count());
+            log.info("   - Favorites:     {}", favoriteRepository.count());
+            log.info("   - Reviews:       {}", reviewRepository.count());
+            log.info("   - Notifications: {}", notificationRepository.count());
+            log.info("   - Chat rooms:    {}", chatRoomRepository.count());
+            log.info("   - Messages:      {}", messageRepository.count());
             log.info("═══════════════════════════════════════════════════════");
         } catch (Exception e) {
             log.error(" Failed to create sample data: {}", e.getMessage());
@@ -537,5 +552,141 @@ public class SampleDataInitializer implements CommandLineRunner {
             review.setComment(comments[i % comments.length]);
             reviewRepository.save(review);
         }
+    }
+
+    private void createSampleNotifications() {
+        log.info("  → Creating sample notifications...");
+
+        User tenant = userRepository.findByEmail("tenant@test.com").orElse(null);
+        User landlord = userRepository.findByEmail("landlord@test.com").orElse(null);
+        User admin = userRepository.findByEmail("admin@realestate.com").orElse(null);
+        if (tenant == null || landlord == null) return;
+
+        List<Property> properties = propertyRepository.findAll();
+
+        // Tenant notifications
+        createNotification(tenant, "Booking Confirmed",
+                "Your booking for \"" + (properties.isEmpty() ? "a property" : properties.get(0).getTitle()) + "\" has been approved by the landlord.",
+                NotificationType.BOOKING_RESPONSE,
+                properties.isEmpty() ? null : "BOOKING",
+                null);
+
+        createNotification(tenant, "Welcome to HomeFlex!",
+                "Your account has been verified. You can now browse and book properties and vehicles.",
+                NotificationType.SYSTEM, null, null);
+
+        createNotification(tenant, "New message from John",
+                "You have a new message regarding your rental inquiry.",
+                NotificationType.NEW_MESSAGE, null, null);
+
+        createNotification(tenant, "Price drop alert",
+                "A property you favorited in Douala has reduced its price by 15%.",
+                NotificationType.PRICE_DROP,
+                properties.isEmpty() ? null : "PROPERTY",
+                properties.isEmpty() ? null : properties.get(0).getId());
+
+        // Landlord notifications
+        createNotification(landlord, "New booking request",
+                "Jane Tenant has requested a viewing of your property in Bonanjo, Douala.",
+                NotificationType.BOOKING_REQUEST,
+                properties.isEmpty() ? null : "BOOKING",
+                null);
+
+        createNotification(landlord, "Monthly report ready",
+                "Your earnings report for this month is available. Total revenue: 350,000 XAF.",
+                NotificationType.SYSTEM, null, null);
+
+        createNotification(landlord, "New review received",
+                "Jane Tenant left a 5-star review on your Bonanjo apartment.",
+                NotificationType.SYSTEM,
+                properties.isEmpty() ? null : "PROPERTY",
+                properties.isEmpty() ? null : properties.get(0).getId());
+
+        // Admin notifications
+        if (admin != null) {
+            createNotification(admin, "New property pending approval",
+                    "A new property listing in Yaoundé is waiting for your review.",
+                    NotificationType.SYSTEM, "PROPERTY", null);
+
+            createNotification(admin, "System health check",
+                    "All services are running normally. Database backup completed successfully.",
+                    NotificationType.SYSTEM, null, null);
+        }
+
+        log.info("  ✓ Created {} notifications", notificationRepository.count());
+    }
+
+    private void createNotification(User user, String title, String message,
+                                    NotificationType type, String entityType, UUID entityId) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setNotificationType(type);
+        notification.setRelatedEntityType(entityType);
+        notification.setRelatedEntityId(entityId);
+        notification.setIsRead(false);
+        notificationRepository.save(notification);
+    }
+
+    private void createSampleChatRoomsAndMessages() {
+        log.info("  → Creating sample chat rooms and messages...");
+
+        User tenant = userRepository.findByEmail("tenant@test.com").orElse(null);
+        User landlord = userRepository.findByEmail("landlord@test.com").orElse(null);
+        if (tenant == null || landlord == null) return;
+
+        List<Property> properties = propertyRepository.findAll();
+        if (properties.isEmpty()) return;
+
+        // Chat room 1: About the luxury apartment
+        Property prop1 = properties.get(0);
+        ChatRoom room1 = new ChatRoom();
+        room1.setProperty(prop1);
+        room1.setTenant(tenant);
+        room1.setLandlord(landlord);
+        room1.setLastMessageAt(LocalDateTime.now().minusMinutes(15));
+        room1 = chatRoomRepository.save(room1);
+
+        createMessage(room1, tenant,
+                "Hello! I'm interested in the " + prop1.getTitle() + ". Is it still available?");
+        createMessage(room1, landlord,
+                "Hi Jane! Yes, the apartment is still available. Would you like to schedule a visit?");
+        createMessage(room1, tenant,
+                "That would be great! I'm available this Saturday morning. Does that work?");
+        createMessage(room1, landlord,
+                "Saturday at 10am works perfectly. I'll meet you at the property. Please bring a valid ID.");
+        createMessage(room1, tenant,
+                "Perfect, I'll be there. Thank you!");
+
+        // Chat room 2: About a different property
+        if (properties.size() > 2) {
+            Property prop2 = properties.get(2);
+            ChatRoom room2 = new ChatRoom();
+            room2.setProperty(prop2);
+            room2.setTenant(tenant);
+            room2.setLandlord(landlord);
+            room2.setLastMessageAt(LocalDateTime.now().minusHours(3));
+            room2 = chatRoomRepository.save(room2);
+
+            createMessage(room2, tenant,
+                    "Hi, I saw your listing for " + prop2.getTitle() + ". Does the price include utilities?");
+            createMessage(room2, landlord,
+                    "Hello! The price covers water and electricity up to a fair-use limit. Internet is separate.");
+            createMessage(room2, tenant,
+                    "That sounds reasonable. What's the minimum lease duration?");
+        }
+
+        log.info("  ✓ Created {} chat rooms with {} messages",
+                chatRoomRepository.count(), messageRepository.count());
+    }
+
+    private void createMessage(ChatRoom room, User sender, String text) {
+        Message message = new Message();
+        message.setChatRoom(room);
+        message.setSender(sender);
+        message.setMessageText(text);
+        message.setIsRead(false);
+        messageRepository.save(message);
     }
 }

@@ -52,6 +52,7 @@ public class AdminService {
     private final UserMapper userMapper;
     private final ReportMapper reportMapper;
     private final AdminMapper adminMapper;
+    private final EventOutboxService eventOutboxService;
 
     public Page<PropertyDto> getPendingProperties(Pageable pageable) {
         return propertyRepository.findByStatus(PropertyStatus.PENDING, pageable)
@@ -64,6 +65,9 @@ public class AdminService {
 
         property.setStatus(PropertyStatus.APPROVED);
         property = propertyRepository.save(property);
+
+        // Index into Elasticsearch
+        eventOutboxService.enqueue("Property", property.getId(), "PropertyIndexed", java.util.Map.of("action", "approved"));
 
         // Notify landlord
         notificationService.sendPropertyApprovedNotification(property.getLandlord(), property);

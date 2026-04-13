@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ApiClient } from '../../../core/api/api.client';
+import { VehicleApi } from '../../../core/api/services/vehicle.api';
 import { Vehicle, VehicleSearchParams } from '../../../core/models/api.types';
 import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
 
@@ -13,7 +13,7 @@ import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-ca
 })
 export class VehiclesPageComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly api = inject(ApiClient);
+  private readonly vehicleApi = inject(VehicleApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly vehicles = signal<Vehicle[]>([]);
@@ -44,8 +44,8 @@ export class VehiclesPageComponent {
       size: 24,
     };
 
-    this.api
-      .searchVehicles(payload)
+    this.vehicleApi
+      .search(payload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => this.vehicles.set(response.data));
   }

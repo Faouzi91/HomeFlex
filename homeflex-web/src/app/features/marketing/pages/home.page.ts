@@ -2,7 +2,9 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ApiClient } from '../../../core/api/api.client';
+import { PropertyApi } from '../../../core/api/services/property.api';
+import { VehicleApi } from '../../../core/api/services/vehicle.api';
+import { StatsApi } from '../../../core/api/services/stats.api';
 import { Property, Vehicle } from '../../../core/models/api.types';
 import { compactNumber } from '../../../core/utils/formatters';
 import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
@@ -34,7 +36,9 @@ type JourneyStep = {
   styleUrl: './home.page.scss',
 })
 export class HomePageComponent {
-  private readonly api = inject(ApiClient);
+  private readonly propertyApi = inject(PropertyApi);
+  private readonly vehicleApi = inject(VehicleApi);
+  private readonly statsApi = inject(StatsApi);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly properties = signal<Property[]>([]);
@@ -103,9 +107,9 @@ export class HomePageComponent {
 
   constructor() {
     forkJoin({
-      properties: this.api.searchProperties({ size: 4 }),
-      vehicles: this.api.searchVehicles({ size: 4 }),
-      stats: this.api.getStats(),
+      properties: this.propertyApi.search({ size: 4 }),
+      vehicles: this.vehicleApi.search({ size: 4 }),
+      stats: this.statsApi.get(),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(({ properties, vehicles, stats }) => {

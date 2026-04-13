@@ -1,177 +1,25 @@
-# application-dev.yml - Spring Boot Configuration
+# application-dev.yml — Local development overrides only.
+# Base config lives in application.yml; this file adds dev-specific tweaks.
 
 spring:
-  application:
-    name: real-estate-rental-api
-  #  config:
-  #    import: optional:file:.env
-
-  # Database Configuration
-  datasource:
-    url: jdbc:postgresql://localhost:5432/rental_db
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
-
-  # JPA Configuration
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        use_sql_comments: true
-        jdbc:
-          batch_size: 20
-        order_inserts: true
-        order_updates: true
-
-  # File Upload
-  servlet:
-    multipart:
+  devtools:
+    restart:
       enabled: true
-      max-file-size: 10MB
-      max-request-size: 50MB
 
-  # Email Configuration
-  mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+  jpa:
+    show-sql: true
 
-  # WebSocket Configuration
-  websocket:
-    allowed-origins:
-      - http://localhost:4200
-      - https://yourdomain.com
-
-# Server Configuration
+# Show detailed errors in dev (never in prod)
 server:
-  port: 8080
   error:
     include-message: always
     include-binding-errors: always
     include-stacktrace: on_param
-  compression:
-    enabled: true
-    mime-types: application/json,application/xml,text/html,text/xml,text/plain
 
-# Application Configuration
-app:
-  # Admin Configuration
-  admin:
-    email: ${ADMIN_EMAIL:admin@realestate.com}
-    password: ${ADMIN_PASSWORD:Admin@123}
-    first-name: ${ADMIN_FIRST_NAME:Super}
-    last-name: ${ADMIN_LAST_NAME:Admin}
-
-  # JWT Configuration
-  jwt:
-    secret: ${JWT_SECRET:your_super_secret_jwt_key_min_32_characters_long_for_security}
-    expiration: 86400000 # 24 hours in milliseconds
-    refresh-expiration: 604800000 # 7 days in milliseconds
-    cookie:
-      access-token-name: ACCESS_TOKEN
-      refresh-token-name: REFRESH_TOKEN
-      secure: false
-      same-site: Lax
-      max-age-seconds: 604800
-
-  # AWS S3 Configuration
-  aws:
-    s3:
-      access-key: ${AWS_ACCESS_KEY:}
-      secret-key: ${AWS_SECRET_KEY:}
-      region: ${AWS_REGION:us-east-1}
-      bucket-name: ${AWS_S3_BUCKET:rental-app-media}
-      endpoint: ${AWS_S3_ENDPOINT:}
-
-  # Firebase Configuration
-  firebase:
-    enabled: ${FIREBASE_ENABLED:false}
-    credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
-
-  # Google OAuth Configuration
-  google:
-    client-id: ${GOOGLE_CLIENT_ID:}
-    client-secret: ${GOOGLE_CLIENT_SECRET:}
-
-  # CORS Configuration
-  cors:
-    allowed-origins:
-      - http://localhost:4200
-      - http://localhost:8100
-      - http://localhost:5000
-    allowed-methods:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
-      - OPTIONS
-    allowed-headers:
-      - Content-Type
-      - Accept
-      - Authorization
-      - X-Requested-With
-      - X-XSRF-TOKEN
-    exposed-headers: []
-    allow-credentials: true
-    max-age: 3600
-
-# Logging Configuration
+# Verbose security logging for local debugging
 logging:
   level:
-    root: INFO
-    com.homeflex: DEBUG
-    org.springframework.web: INFO
     org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
-    file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
-  file:
-    name: logs/application.log
-    max-size: 10MB
-    max-history: 30
-
-# Actuator Configuration
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-  endpoint:
-    health:
-      show-details: when-authorized
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-
-# Swagger/OpenAPI Configuration
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    operations-sorter: method
-    tags-sorter: alpha
-  show-actuator: false

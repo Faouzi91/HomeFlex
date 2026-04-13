@@ -1,5 +1,6 @@
 package com.homeflex.core.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -19,17 +20,19 @@ public class CacheConfig {
     public static final String SEARCH_CACHE = "propertySearch";
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+
         RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .disableCachingNullValues()
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        
+
         // Property details cache (Longer TTL)
         cacheConfigurations.put(PROPERTIES_CACHE, defaultCacheConfig.entryTtl(Duration.ofMinutes(30)));
-        
+
         // Search results cache (Shorter TTL)
         cacheConfigurations.put(SEARCH_CACHE, defaultCacheConfig.entryTtl(Duration.ofMinutes(5)));
 

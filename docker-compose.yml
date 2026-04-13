@@ -12,7 +12,6 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/homeflex
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
       - SPRING_RABBITMQ_HOST=rabbitmq

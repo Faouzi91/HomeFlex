@@ -20,6 +20,7 @@ import com.homeflex.features.vehicle.mapper.VehicleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,16 +47,19 @@ public class VehicleService {
 
     @Transactional(readOnly = true)
     public Page<VehicleResponse> search(VehicleSearchParams params, Pageable pageable) {
+        // Native query handles ORDER BY internally; strip any JPA-style sort to avoid
+        // camelCase column references that PostgreSQL cannot resolve.
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return vehicleRepository.search(
                 params.brand(),
                 params.model(),
                 params.city(),
-                params.transmission(),
-                params.fuelType(),
-                params.status(),
+                params.transmission() != null ? params.transmission().name() : null,
+                params.fuelType() != null ? params.fuelType().name() : null,
+                params.status() != null ? params.status().name() : null,
                 params.minPrice(),
                 params.maxPrice(),
-                pageable
+                unsorted
         ).map(vehicleMapper::toResponse);
     }
 
