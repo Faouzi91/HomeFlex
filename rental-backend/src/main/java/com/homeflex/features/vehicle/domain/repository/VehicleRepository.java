@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
@@ -53,4 +54,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, UUID> {
 
     @Query("SELECT v FROM Vehicle v WHERE v.ownerId = :ownerId AND v.deletedAt IS NULL")
     Page<Vehicle> findByOwnerId(@Param("ownerId") UUID ownerId, Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT v.pickup_city FROM vehicles.vehicles v WHERE v.deleted_at IS NULL AND v.pickup_city IS NOT NULL ORDER BY v.pickup_city", nativeQuery = true)
+    List<String> findDistinctPickupCities();
 }

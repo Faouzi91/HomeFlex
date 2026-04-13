@@ -1,24 +1,25 @@
 import { Component, DestroyRef, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser, SlicePipe } from '@angular/common';
+import { ConvertCurrencyPipe } from '../../../../core/pipes/convert-currency/convert-currency.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
-import { PropertyApi } from '../../../core/api/services/property.api';
-import { BookingApi } from '../../../core/api/services/booking.api';
-import { FavoriteApi } from '../../../core/api/services/favorite.api';
-import { ReviewApi } from '../../../core/api/services/review.api';
-import { ChatApi } from '../../../core/api/services/chat.api';
-import { Booking, Property, Review } from '../../../core/models/api.types';
-import { SessionStore } from '../../../core/state/session.store';
+import { PropertyApi } from '../../../../core/api/services/property.api';
+import { BookingApi } from '../../../../core/api/services/booking.api';
+import { FavoriteApi } from '../../../../core/api/services/favorite.api';
+import { ReviewApi } from '../../../../core/api/services/review.api';
+import { ChatApi } from '../../../../core/api/services/chat.api';
+import { Booking, Property, Review } from '../../../../core/models/api.types';
+import { SessionStore } from '../../../../core/state/session.store';
 import {
   formatCurrency,
   formatDateTime,
   initials,
   propertyImage,
-} from '../../../core/utils/formatters';
-import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
+} from '../../../../core/utils/formatters';
+import { ListingCardComponent } from '../../../../shared/ui/listing-card/listing-card.component';
 
 @Component({
   selector: 'app-property-detail-page',
@@ -38,6 +39,7 @@ export class PropertyDetailPageComponent {
   protected readonly session = inject(SessionStore);
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly convertCurrencyPipe = inject(ConvertCurrencyPipe);
 
   protected readonly property = signal<Property | null>(null);
   protected readonly reviews = signal<Review[]>([]);
@@ -142,7 +144,9 @@ export class PropertyDetailPageComponent {
 
   protected price(): string {
     const property = this.property();
-    return property ? formatCurrency(property.price, property.currency) : '--';
+    if (!property) return '--';
+    const pref = this.session.currencyPreference();
+    return this.convertCurrencyPipe.transform(property.price, property.currency, pref) || '--';
   }
 
   protected toggleFavorite(): void {
@@ -178,9 +182,15 @@ export class PropertyDetailPageComponent {
         message: form.message ?? null,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((booking: Booking) => {
-        this.bookingMessage.set(`Request sent with status ${booking.status}.`);
-        this.bookingForm.patchValue({ message: '' });
+      .subscribe({
+        next: (booking: Booking) => {
+          this.bookingMessage.set(`Request sent with status ${booking.status}.`);
+          this.bookingForm.patchValue({ message: '' });
+        },
+        error: (err) => {
+          const msg = err.error?.message || err.error?.error || 'Failed to submit booking request.';
+          this.bookingMessage.set(msg);
+        },
       });
   }
 

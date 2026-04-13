@@ -234,6 +234,11 @@ public class PropertyService {
         return stats;
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getCities() {
+        return propertyRepository.findDistinctCities();
+    }
+
     @Transactional
     public void incrementViewCount(UUID propertyId) {
         Property property = propertyRepository.findById(propertyId)

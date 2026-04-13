@@ -495,18 +495,19 @@ public class SampleDataInitializer implements CommandLineRunner {
             bookingRepository.save(booking);
         }
 
-        // Vehicle bookings
-        for (int i = 0; i < Math.min(3, vehicles.size()); i++) {
-            Vehicle vehicle = vehicles.get(i);
+        // Vehicle bookings — only book the first vehicle (leave others free for testing)
+        if (!vehicles.isEmpty()) {
+            Vehicle vehicle = vehicles.get(0);
             VehicleBooking booking = new VehicleBooking();
             booking.setVehicleId(vehicle.getId());
             booking.setTenantId(tenant.getId());
-            booking.setStartDate(LocalDate.now().plusDays(i + 2));
-            booking.setEndDate(LocalDate.now().plusDays(i + 5));
+            // Put the booking in the past so it doesn't block future availability checks
+            booking.setStartDate(LocalDate.now().minusDays(10));
+            booking.setEndDate(LocalDate.now().minusDays(7));
             booking.setTotalPrice(vehicle.getDailyPrice().multiply(new BigDecimal("3")));
             booking.setCurrency(vehicle.getCurrency());
-            booking.setStatus(i % 2 == 0 ? VehicleBookingStatus.CONFIRMED : VehicleBookingStatus.PENDING);
-            booking.setCreatedAt(LocalDateTime.now());
+            booking.setStatus(VehicleBookingStatus.CONFIRMED);
+            booking.setCreatedAt(LocalDateTime.now().minusDays(15));
             vehicleBookingRepository.save(booking);
         }
 

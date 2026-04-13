@@ -20,7 +20,17 @@ export class AppHeaderComponent {
   private readonly translate = inject(TranslateService);
   protected readonly greeting = computed(() => this.session.user()?.firstName ?? 'Account');
   protected readonly menuOpen = signal(false);
+  protected readonly langMenuOpen = signal(false);
+  protected readonly currencyMenuOpen = signal(false);
   protected readonly currentLang = signal(this.translate.currentLang || 'en');
+  protected readonly currentCurrency = computed(() => this.session.currencyPreference());
+
+  protected readonly currencies = [
+    { code: 'XAF', symbol: 'FCFA', label: 'CFA Franc' },
+    { code: 'USD', symbol: '$', label: 'US Dollar' },
+    { code: 'EUR', symbol: '€', label: 'Euro' },
+    { code: 'GBP', symbol: '£', label: 'British Pound' },
+  ];
 
   protected readonly languages = [
     { code: 'en', label: 'English', flag: '🇺🇸' },
@@ -40,6 +50,22 @@ export class AppHeaderComponent {
     this.translate.use(lang);
     this.currentLang.set(lang);
     document.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    this.langMenuOpen.set(false);
+  }
+
+  protected switchCurrency(currencyCode: string): void {
+    this.session.setCurrency(currencyCode);
+    this.currencyMenuOpen.set(false);
+  }
+
+  protected toggleLangMenu(): void {
+    this.langMenuOpen.update(v => !v);
+    this.currencyMenuOpen.set(false);
+  }
+
+  protected toggleCurrencyMenu(): void {
+    this.currencyMenuOpen.update(v => !v);
+    this.langMenuOpen.set(false);
   }
 
   protected toggleMenu(): void {

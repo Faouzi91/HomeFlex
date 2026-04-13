@@ -17,6 +17,7 @@ export class SessionStore {
   readonly pending = signal(false);
   readonly error = signal<string | null>(null);
   readonly initialized = signal(false);
+  readonly currencyPreference = signal<string>('XAF');
 
   readonly isAuthenticated = computed(() => !!this.user());
   readonly role = computed(() => this.user()?.role ?? 'GUEST');
@@ -28,10 +29,24 @@ export class SessionStore {
     return current ? `${current.firstName} ${current.lastName}`.trim() : 'Guest';
   });
 
+  setCurrency(currency: string): void {
+    this.currencyPreference.set(currency);
+    try {
+      localStorage.setItem('homeflex_currency', currency);
+    } catch {}
+  }
+
   init(): void {
     if (this.initialized()) {
       return;
     }
+
+    try {
+      const savedCurrency = localStorage.getItem('homeflex_currency');
+      if (savedCurrency) {
+        this.currencyPreference.set(savedCurrency);
+      }
+    } catch {}
 
     this.initialized.set(true);
     this.loading.set(true);

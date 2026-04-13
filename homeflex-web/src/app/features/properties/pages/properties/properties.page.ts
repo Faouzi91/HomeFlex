@@ -1,12 +1,12 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
-import { PropertyApi } from '../../../core/api/services/property.api';
-import { Property, PropertySearchParams } from '../../../core/models/api.types';
-import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
-import { MapComponent } from '../../../shared/ui/map/map.component';
+import { PropertyApi } from '../../../../core/api/services/property.api';
+import { Property, PropertySearchParams } from '../../../../core/models/api.types';
+import { ListingCardComponent } from '../../../../shared/ui/listing-card/listing-card.component';
+import { MapComponent } from '../../../../shared/ui/map/map.component';
 
 @Component({
   selector: 'app-properties-page',
@@ -18,6 +18,7 @@ export class PropertiesPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly propertyApi = inject(PropertyApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly properties = signal<Property[]>([]);
@@ -33,7 +34,12 @@ export class PropertiesPageComponent {
   });
 
   constructor() {
-    this.search();
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      if (params['query']) {
+        this.filters.patchValue({ q: params['query'] });
+      }
+      this.search();
+    });
   }
 
   protected search(): void {

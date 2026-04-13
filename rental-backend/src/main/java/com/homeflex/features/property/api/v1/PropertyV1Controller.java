@@ -33,6 +33,11 @@ public class PropertyV1Controller {
     private final PropertySearchService propertySearchService;
     private final AdminService adminService;
 
+    @GetMapping("/cities")
+    public ResponseEntity<List<String>> getCities() {
+        return ResponseEntity.ok(propertyService.getCities());
+    }
+
     @GetMapping("/search")
     public ResponseEntity<ApiPageResponse<PropertyDto>> searchProperties(
             @RequestParam(required = false) String q,

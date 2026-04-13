@@ -68,9 +68,18 @@ public class FavoriteService {
         propertyRepository.save(property);
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyDto> getUserFavorites(UUID userId) {
         return favoriteRepository.findByUserId(userId).stream()
-                .map(favorite -> propertyMapper.toDto(favorite.getProperty()))
+                .map(favorite -> {
+                    Property property = favorite.getProperty();
+                    // Force initialization of lazy collections
+                    property.getImages().size();
+                    property.getVideos().size();
+                    property.getAmenities().size();
+                    property.getLandlord().getEmail();
+                    return propertyMapper.toDto(property);
+                })
                 .collect(Collectors.toList());
     }
 

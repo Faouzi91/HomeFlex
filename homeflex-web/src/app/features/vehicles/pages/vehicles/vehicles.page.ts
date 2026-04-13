@@ -1,9 +1,10 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { VehicleApi } from '../../../core/api/services/vehicle.api';
-import { Vehicle, VehicleSearchParams } from '../../../core/models/api.types';
-import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-card.component';
+import { VehicleApi } from '../../../../core/api/services/vehicle.api';
+import { Vehicle, VehicleSearchParams } from '../../../../core/models/api.types';
+import { ListingCardComponent } from '../../../../shared/ui/listing-card/listing-card.component';
 
 @Component({
   selector: 'app-vehicles-page',
@@ -14,6 +15,7 @@ import { ListingCardComponent } from '../../../shared/ui/listing-card/listing-ca
 export class VehiclesPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly vehicleApi = inject(VehicleApi);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly vehicles = signal<Vehicle[]>([]);
@@ -28,7 +30,11 @@ export class VehiclesPageComponent {
   });
 
   constructor() {
-    this.search();
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      if (params['city']) this.filters.patchValue({ city: params['city'] });
+      if (params['transmission']) this.filters.patchValue({ transmission: params['transmission'] });
+      this.search();
+    });
   }
 
   protected search(): void {

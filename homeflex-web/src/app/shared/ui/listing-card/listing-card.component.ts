@@ -1,12 +1,13 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Property, Vehicle } from '../../../core/models/api.types';
 import {
   compactNumber,
-  formatCurrency,
   propertyImage,
   vehicleImage,
 } from '../../../core/utils/formatters';
+import { ConvertCurrencyPipe } from '../../../core/pipes/convert-currency/convert-currency.pipe';
+import { SessionStore } from '../../../core/state/session.store';
 
 @Component({
   selector: 'app-listing-card',
@@ -17,6 +18,9 @@ import {
 export class ListingCardComponent {
   readonly variant = input.required<'property' | 'vehicle'>();
   readonly item = input.required<Property | Vehicle>();
+
+  protected readonly session = inject(SessionStore);
+  private readonly convertCurrencyPipe = inject(ConvertCurrencyPipe);
 
   protected href(): string[] {
     return this.variant() === 'property'
@@ -73,9 +77,13 @@ export class ListingCardComponent {
   }
 
   protected price(): string {
-    return this.variant() === 'property'
-      ? formatCurrency((this.item() as Property).price, (this.item() as Property).currency)
-      : formatCurrency((this.item() as Vehicle).dailyPrice, (this.item() as Vehicle).currency);
+    const pref = this.session.currencyPreference();
+    if (this.variant() === 'property') {
+      const prop = this.item() as Property;
+      return this.convertCurrencyPipe.transform(prop.price, prop.currency, pref) || '';
+    }
+    const veh = this.item() as Vehicle;
+    return this.convertCurrencyPipe.transform(veh.dailyPrice, veh.currency, pref) || '';
   }
 
   protected priceSuffix(): string {

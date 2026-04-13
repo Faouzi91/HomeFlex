@@ -23,7 +23,7 @@ public class BookingV1Controller {
     private final BookingService bookingService;
 
     @PostMapping
-    @PreAuthorize("hasRole('TENANT')")
+    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
     public ResponseEntity<BookingDto> createBooking(
             @Valid @RequestBody BookingCreateRequest request,
             Authentication authentication) {
@@ -33,7 +33,7 @@ public class BookingV1Controller {
     }
 
     @GetMapping("/my-bookings")
-    @PreAuthorize("hasRole('TENANT')")
+    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
     public ResponseEntity<ApiListResponse<BookingDto>> getMyBookings(Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(new ApiListResponse<>(bookingService.getBookingsByTenant(tenantId)));
@@ -77,7 +77,7 @@ public class BookingV1Controller {
     }
 
     @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasRole('TENANT')")
+    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
     public ResponseEntity<BookingDto> cancelBooking(
             @PathVariable UUID id,
             Authentication authentication) {
@@ -86,7 +86,7 @@ public class BookingV1Controller {
     }
 
     @PostMapping("/{id}/modify")
-    @PreAuthorize("hasRole('TENANT')")
+    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
     public ResponseEntity<BookingDto> requestModification(
             @PathVariable UUID id,
             @Valid @RequestBody com.homeflex.features.property.dto.request.BookingModificationRequest request,

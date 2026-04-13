@@ -1,5 +1,7 @@
 package com.homeflex.features.vehicle.dto.response;
 
+import com.homeflex.core.dto.response.UserDto;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +27,7 @@ public record VehicleResponse(
         String pickupAddress,
         int viewCount,
         List<VehicleImageDto> images,
+        UserDto owner,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {}

@@ -3,12 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { VehicleApi } from '../../../core/api/services/vehicle.api';
-import { UserApi } from '../../../core/api/services/user.api';
-import { User, Vehicle } from '../../../core/models/api.types';
-import { SessionStore } from '../../../core/state/session.store';
-import { formatCurrency, formatDate, vehicleImage } from '../../../core/utils/formatters';
+import { VehicleApi } from '../../../../core/api/services/vehicle.api';
+import { User, Vehicle } from '../../../../core/models/api.types';
+import { SessionStore } from '../../../../core/state/session.store';
+import { formatCurrency, formatDate, vehicleImage } from '../../../../core/utils/formatters';
 import { SlicePipe } from '@angular/common';
+import { ConvertCurrencyPipe } from '../../../../core/pipes/convert-currency/convert-currency.pipe';
 
 @Component({
   selector: 'app-vehicle-detail-page',
@@ -19,10 +19,10 @@ import { SlicePipe } from '@angular/common';
 export class VehicleDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly vehicleApi = inject(VehicleApi);
-  private readonly userApi = inject(UserApi);
   protected readonly session = inject(SessionStore);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly convertCurrencyPipe = inject(ConvertCurrencyPipe);
 
   protected readonly vehicle = signal<Vehicle | null>(null);
   protected readonly owner = signal<User | null>(null);
@@ -51,14 +51,7 @@ export class VehicleDetailPageComponent {
       )
       .subscribe((vehicle) => {
         this.vehicle.set(vehicle);
-        if (vehicle?.ownerId) {
-          this.userApi
-            .getUserById(vehicle.ownerId)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((owner: User) => {
-              this.owner.set(owner);
-            });
-        }
+        this.owner.set(vehicle?.owner ?? null);
       });
   }
 
@@ -69,7 +62,9 @@ export class VehicleDetailPageComponent {
 
   protected price(): string {
     const vehicle = this.vehicle();
-    return vehicle ? formatCurrency(vehicle.dailyPrice, vehicle.currency) : '--';
+    if (!vehicle) return '--';
+    const pref = this.session.currencyPreference();
+    return this.convertCurrencyPipe.transform(vehicle.dailyPrice, vehicle.currency, pref) || '--';
   }
 
   protected checkAvailability(): void {
@@ -82,13 +77,19 @@ export class VehicleDetailPageComponent {
     this.vehicleApi
       .getAvailability(vehicle.id, startDate ?? '', endDate ?? '')
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((available) => {
-        this.availability.set(available);
-        this.availabilityMessage.set(
-          available
-            ? 'Vehicle is available for those dates.'
-            : 'Vehicle is already reserved in that window.',
-        );
+      .subscribe({
+        next: (available) => {
+          this.availability.set(available);
+          this.availabilityMessage.set(
+            available
+              ? 'Vehicle is available for those dates.'
+              : 'Vehicle is already reserved in that window.',
+          );
+        },
+        error: (err) => {
+          this.availability.set(false);
+          this.availabilityMessage.set(err.error?.message || 'Failed to check availability.');
+        },
       });
   }
 
@@ -107,9 +108,15 @@ export class VehicleDetailPageComponent {
         message: message ?? '',
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.availabilityMessage.set('Vehicle booking created successfully.');
-        this.availability.set(true);
+      .subscribe({
+        next: () => {
+          this.availabilityMessage.set('Vehicle booking created successfully.');
+          this.availability.set(true);
+        },
+        error: (err) => {
+          this.availability.set(false);
+          this.availabilityMessage.set(err.error?.message || 'Failed to create booking.');
+        },
       });
   }
 

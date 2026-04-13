@@ -18,6 +18,7 @@ public class CacheConfig {
 
     public static final String PROPERTIES_CACHE = "properties";
     public static final String SEARCH_CACHE = "propertySearch";
+    public static final String EXCHANGE_RATES_CACHE = "exchangeRates";
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
@@ -35,6 +36,9 @@ public class CacheConfig {
 
         // Search results cache (Shorter TTL)
         cacheConfigurations.put(SEARCH_CACHE, defaultCacheConfig.entryTtl(Duration.ofMinutes(5)));
+
+        // Exchange rates cache (1 hour TTL — matches scheduled refresh)
+        cacheConfigurations.put(EXCHANGE_RATES_CACHE, defaultCacheConfig.entryTtl(Duration.ofHours(1)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultCacheConfig)

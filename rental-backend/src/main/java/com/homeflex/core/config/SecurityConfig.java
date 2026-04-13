@@ -92,10 +92,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/stats").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/currencies/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/my-properties")
                                 .hasAnyRole("LANDLORD", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/*/reports").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/properties/cities").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/*/similar").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/*").permitAll()

@@ -64,5 +64,8 @@ public interface PropertyRepository extends JpaRepository<Property, UUID>,
     @Query("SELECT COUNT(DISTINCT p.city) FROM Property p")
     Long findDistinctCitiesCount();
 
+    @Query("SELECT DISTINCT p.city FROM Property p WHERE p.status = 'APPROVED' AND p.city IS NOT NULL ORDER BY p.city")
+    List<String> findDistinctCities();
+
     List<Property> findAllByStatusAndDeletedAtIsNull(PropertyStatus status);
 }

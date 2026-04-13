@@ -1,7 +1,10 @@
 package com.homeflex.features.vehicle.service;
 
+import com.homeflex.core.domain.repository.UserRepository;
+import com.homeflex.core.dto.response.UserDto;
 import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.exception.UnauthorizedException;
+import com.homeflex.core.mapper.UserMapper;
 import com.homeflex.core.service.KycService;
 import com.homeflex.core.service.StorageService;
 import com.homeflex.features.vehicle.domain.entity.ConditionReport;
@@ -39,8 +42,10 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehicleImageRepository vehicleImageRepository;
     private final ConditionReportRepository conditionReportRepository;
+    private final UserRepository userRepository;
     private final StorageService storageService;
     private final VehicleMapper vehicleMapper;
+    private final UserMapper userMapper;
     private final KycService kycService;
 
     // ── Queries ─────────────────────────────────────────────────────────
@@ -60,19 +65,33 @@ public class VehicleService {
                 params.minPrice(),
                 params.maxPrice(),
                 unsorted
-        ).map(vehicleMapper::toResponse);
+        ).map(this::toResponseWithOwner);
     }
 
     @Transactional(readOnly = true)
     public VehicleResponse getById(UUID id) {
         Vehicle vehicle = findActiveOrThrow(id);
-        return vehicleMapper.toResponse(vehicle);
+        return toResponseWithOwner(vehicle);
     }
 
     @Transactional(readOnly = true)
     public Page<VehicleResponse> getByOwnerId(UUID ownerId, Pageable pageable) {
         return vehicleRepository.findByOwnerId(ownerId, pageable)
-                .map(vehicleMapper::toResponse);
+                .map(this::toResponseWithOwner);
+    }
+
+    private VehicleResponse toResponseWithOwner(Vehicle vehicle) {
+        VehicleResponse base = vehicleMapper.toResponse(vehicle);
+        UserDto ownerDto = userRepository.findById(vehicle.getOwnerId())
+                .map(userMapper::toDto)
+                .orElse(null);
+        return new VehicleResponse(
+                base.id(), base.ownerId(), base.brand(), base.model(), base.year(),
+                base.transmission(), base.fuelType(), base.dailyPrice(), base.currency(),
+                base.status(), base.description(), base.mileage(), base.seats(), base.color(),
+                base.licensePlate(), base.pickupCity(), base.pickupAddress(), base.viewCount(),
+                base.images(), ownerDto, base.createdAt(), base.updatedAt()
+        );
     }
 
     // ── Create ──────────────────────────────────────────────────────────
@@ -89,7 +108,7 @@ public class VehicleService {
         Vehicle saved = vehicleRepository.save(vehicle);
         log.info("Vehicle created: id={}, owner={}, brand={} model={}",
                 saved.getId(), ownerId, saved.getBrand(), saved.getModel());
-        return vehicleMapper.toResponse(saved);
+        return toResponseWithOwner(saved);
     }
 
     // ── Update ──────────────────────────────────────────────────────────
@@ -108,7 +127,7 @@ public class VehicleService {
 
         vehicle = vehicleRepository.save(vehicle);
         log.info("Vehicle updated: id={}, owner={}", id, ownerId);
-        return vehicleMapper.toResponse(vehicle);
+        return toResponseWithOwner(vehicle);
     }
 
     // ── Soft-delete ─────────────────────────────────────────────────────
@@ -148,7 +167,7 @@ public class VehicleService {
 
         // Refresh to include new images in the response
         vehicle = vehicleRepository.findById(id).orElseThrow();
-        return vehicleMapper.toResponse(vehicle);
+        return toResponseWithOwner(vehicle);
     }
 
     // ── View count ──────────────────────────────────────────────────────

@@ -114,7 +114,6 @@ export interface Vehicle {
   year: number;
   transmission: string;
   fuelType: string;
-  category?: string;
   dailyPrice: number;
   currency: string;
   status: string;
@@ -127,6 +126,7 @@ export interface Vehicle {
   pickupAddress: string | null;
   viewCount: number;
   images: VehicleImage[];
+  owner: User | null;
   createdAt: string;
   updatedAt: string;
 }

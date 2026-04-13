@@ -23,6 +23,7 @@ public interface VehicleMapper {
     @Mapping(target = "fuelType", expression = "java(vehicle.getFuelType() != null ? vehicle.getFuelType().name() : null)")
     @Mapping(target = "status", expression = "java(vehicle.getStatus() != null ? vehicle.getStatus().name() : null)")
     @Mapping(target = "images", expression = "java(toImageList(vehicle.getImages()))")
+    @Mapping(target = "owner", ignore = true)
     VehicleResponse toResponse(Vehicle vehicle);
 
     @Mapping(target = "isPrimary", source = "primary")

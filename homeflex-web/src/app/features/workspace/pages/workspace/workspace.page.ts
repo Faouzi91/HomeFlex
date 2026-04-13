@@ -1,28 +1,28 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap, from } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { loadStripe } from '@stripe/stripe-js';
 import { TranslateModule } from '@ngx-translate/core';
-import { AdminApi } from '../../../core/api/services/admin.api';
-import { AgencyApi } from '../../../core/api/services/agency.api';
-import { BookingApi } from '../../../core/api/services/booking.api';
-import { ChatApi } from '../../../core/api/services/chat.api';
-import { DisputeApi } from '../../../core/api/services/dispute.api';
-import { FavoriteApi } from '../../../core/api/services/favorite.api';
-import { FinanceApi } from '../../../core/api/services/finance.api';
-import { GdprApi } from '../../../core/api/services/gdpr.api';
-import { InsuranceApi } from '../../../core/api/services/insurance.api';
-import { KycApi } from '../../../core/api/services/kyc.api';
-import { LeaseApi } from '../../../core/api/services/lease.api';
-import { MaintenanceApi } from '../../../core/api/services/maintenance.api';
-import { NotificationApi } from '../../../core/api/services/notification.api';
-import { PayoutApi } from '../../../core/api/services/payout.api';
-import { PropertyApi } from '../../../core/api/services/property.api';
-import { UserApi } from '../../../core/api/services/user.api';
-import { VehicleApi } from '../../../core/api/services/vehicle.api';
+import { AdminApi } from '../../../../core/api/services/admin.api';
+import { AgencyApi } from '../../../../core/api/services/agency.api';
+import { BookingApi } from '../../../../core/api/services/booking.api';
+import { ChatApi } from '../../../../core/api/services/chat.api';
+import { DisputeApi } from '../../../../core/api/services/dispute.api';
+import { FavoriteApi } from '../../../../core/api/services/favorite.api';
+import { FinanceApi } from '../../../../core/api/services/finance.api';
+import { GdprApi } from '../../../../core/api/services/gdpr.api';
+import { InsuranceApi } from '../../../../core/api/services/insurance.api';
+import { KycApi } from '../../../../core/api/services/kyc.api';
+import { LeaseApi } from '../../../../core/api/services/lease.api';
+import { MaintenanceApi } from '../../../../core/api/services/maintenance.api';
+import { NotificationApi } from '../../../../core/api/services/notification.api';
+import { PayoutApi } from '../../../../core/api/services/payout.api';
+import { PropertyApi } from '../../../../core/api/services/property.api';
+import { UserApi } from '../../../../core/api/services/user.api';
+import { VehicleApi } from '../../../../core/api/services/vehicle.api';
 import {
   Agency,
   Analytics,
@@ -40,14 +40,14 @@ import {
   User,
   Vehicle,
   VehicleBooking,
-} from '../../../core/models/api.types';
+} from '../../../../core/models/api.types';
 import {
   formatCurrency,
   formatDate,
   formatDateTime,
   initials,
-} from '../../../core/utils/formatters';
-import { SessionStore } from '../../../core/state/session.store';
+} from '../../../../core/utils/formatters';
+import { SessionStore } from '../../../../core/state/session.store';
 
 type WorkspaceTab =
   | 'overview'
@@ -68,7 +68,7 @@ type WorkspaceTabItem = {
 @Component({
   selector: 'app-workspace-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, DatePipe],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe],
   templateUrl: './workspace.page.html',
   styleUrl: './workspace.page.scss',
 })
@@ -239,13 +239,11 @@ export class WorkspacePageComponent {
       }
     });
 
-    // Use effect to reactively load workspace data once the user is authenticated.
-    import('@angular/core').then(({ effect }) => {
-      effect(() => {
-        if (this.session.user()) {
-          this.loadWorkspace();
-        }
-      });
+    // Reactively load workspace data once the user is authenticated.
+    effect(() => {
+      if (this.session.user()) {
+        this.loadWorkspace();
+      }
     });
   }
 
