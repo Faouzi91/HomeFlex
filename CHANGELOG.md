@@ -2,6 +2,41 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-14 (Round 12 — Admin Console & Role-Based Profiles)
+
+### Added — Separated Admin Console
+
+- **Admin Login Page** — Dedicated dark-themed admin login at `/admin/login`. Non-admin users are rejected with an error and logged out. Consumer login redirects admin users to `/admin`.
+- **Admin Route Guard** — `adminGuard` enforces `ADMIN` role on all `/admin/*` routes, redirecting unauthorized users to `/admin/login`.
+- **Admin Layout** — Full sidebar layout (`AdminLayoutComponent`) with navigation (Dashboard, Users, Properties, Reports, Settings), user plate, and logout. Consumer shell chrome (header/footer/support widget) is hidden on admin routes via `isAdminRoute` signal.
+- **Admin Users Page** — Paginated user table with search by name/email, role filter (Tenant/Landlord/Admin), role badges, active/suspended status indicators, and suspend/activate action buttons. Admins cannot be suspended.
+- **Admin Properties Page** — Card grid of pending properties showing images, pricing, specs, landlord info. Approve with one click; reject requires a reason via modal dialog.
+- **Admin Reports Page** — Flagged content table with reporter info, reason tags, status filter (Pending/Resolved), and resolve action with optional notes via modal.
+- **Admin Settings Page** — Admin profile management with avatar upload, personal info form (pre-populated from session), password change, and notification preference toggles.
+- **Admin Dashboard** — Analytics cards (total users, active properties, pending properties, total bookings) consuming `GET /admin/analytics`.
+
+### Added — Role-Based Profile Views
+
+- **Notification Preferences** — Added email, push, and SMS notification toggle switches to both workspace and admin settings. Backend `UserDto` and `UserUpdateRequest` extended with notification fields.
+- **Profile Completeness** — Added `profileCompleteness` to `UserDto` with server-side calculation. Displayed as a progress indicator in the workspace profile tab.
+- **Avatar Upload** — Added `onAvatarSelected()` method to workspace for profile picture uploads via camera overlay UI.
+- **Role-Specific Sections** — Workspace profile tab now shows host status card (KYC + payout status) for landlords/admins, security section, and GDPR section.
+
+### Fixed — UI & UX Bugs
+
+- **Logout not working** — Header dropdown logout was using a `routerLink` with a query param that was never handled. Replaced with a `<button>` calling `session.logout()` and navigating to `/`.
+- **Profile form fields empty** — `profileForm.patchValue()` was inside a `forkJoin` callback. If any API call failed, the form never got patched. Moved to run immediately from session data.
+- **Heading contrast on dark backgrounds** — Added CSS safety net ensuring `h1-h4` inside `.text-white` containers inherit the white color.
+- **Backend test compilation** — Fixed `AuthServiceTest` `UserDto` constructor to include 3 new notification boolean fields.
+
+### Changed — Documentation
+
+- **CLAUDE.md** — Added admin console architecture section, expanded module structure with admin/guard/shell details.
+- **SRS.md** — Bumped to v3.1. Added FR-104 through FR-106 (role-based profiles, notifications, avatar) and FR-600 through FR-606 (admin console).
+- **README.md** — Updated features list, project structure, and API overview to reflect the admin console and management endpoints.
+
+---
+
 ## [Unreleased] — 2026-04-12 (Round 10 — API Coverage Audit & DevOps Hardening)
 
 ### Added — Full Angular API Parity

@@ -28,14 +28,7 @@ public class UserService {
     public UserDto getUserById(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        UserDto dto = userMapper.toDto(user);
-        return new UserDto(
-                dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
-                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
-                dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
-                calculateProfileCompleteness(user), dto.createdAt()
-        );
+        return toDtoWithCompleteness(user);
     }
 
     public UserDto updateUser(UUID userId, UserUpdateRequest request) {
@@ -58,15 +51,20 @@ public class UserService {
             user.setLanguagePreference(request.languagePreference());
         }
 
-        user = userRepository.save(user);
+        if (request.emailNotificationsEnabled() != null) {
+            user.setEmailNotificationsEnabled(request.emailNotificationsEnabled());
+        }
 
-        UserDto dto = userMapper.toDto(user);
-        return new UserDto(
-                dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
-                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
-                dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
-                calculateProfileCompleteness(user), dto.createdAt()
-        );
+        if (request.pushNotificationsEnabled() != null) {
+            user.setPushNotificationsEnabled(request.pushNotificationsEnabled());
+        }
+
+        if (request.smsNotificationsEnabled() != null) {
+            user.setSmsNotificationsEnabled(request.smsNotificationsEnabled());
+        }
+
+        user = userRepository.save(user);
+        return toDtoWithCompleteness(user);
     }
 
     public UserDto updateAvatar(UUID userId, MultipartFile file) {
@@ -84,14 +82,7 @@ public class UserService {
         // Update user
         user.setProfilePictureUrl(avatarUrl);
         user = userRepository.save(user);
-
-        UserDto dto = userMapper.toDto(user);
-        return new UserDto(
-                dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
-                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
-                dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
-                calculateProfileCompleteness(user), dto.createdAt()
-        );
+        return toDtoWithCompleteness(user);
     }
 
     public void changePassword(UUID userId, String currentPassword, String newPassword) {
@@ -122,6 +113,18 @@ public class UserService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+    }
+
+    private UserDto toDtoWithCompleteness(User user) {
+        UserDto dto = userMapper.toDto(user);
+        return new UserDto(
+                dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
+                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
+                dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
+                dto.emailNotificationsEnabled(), dto.pushNotificationsEnabled(),
+                dto.smsNotificationsEnabled(),
+                calculateProfileCompleteness(user), dto.createdAt()
+        );
     }
 
     public int calculateProfileCompleteness(User user) {

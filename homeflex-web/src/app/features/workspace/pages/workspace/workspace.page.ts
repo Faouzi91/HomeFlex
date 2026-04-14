@@ -174,6 +174,9 @@ export class WorkspacePageComponent {
     lastName: [''],
     phoneNumber: [''],
     languagePreference: ['en'],
+    emailNotificationsEnabled: [true],
+    pushNotificationsEnabled: [true],
+    smsNotificationsEnabled: [true],
   });
 
   protected readonly passwordForm = this.fb.group({
@@ -251,6 +254,17 @@ export class WorkspacePageComponent {
     const user = this.session.user();
     if (!user) return;
 
+    // Patch profile form immediately — don't wait for forkJoin which may fail
+    this.profileForm.patchValue({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      languagePreference: user.languagePreference || 'en',
+      emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
+      pushNotificationsEnabled: user.pushNotificationsEnabled ?? true,
+      smsNotificationsEnabled: user.smsNotificationsEnabled ?? true,
+    });
+
     forkJoin({
       favorites: this.favoriteApi.getAll(),
       propertyBookings: this.bookingApi.getMine(),
@@ -305,13 +319,6 @@ export class WorkspacePageComponent {
         this.allReceipts.set(response.myReceipts);
         this.myMaintenanceRequests.set(response.myMaintenance);
         this.landlordMaintenanceRequests.set(response.landlordMaintenance);
-
-        this.profileForm.patchValue({
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phoneNumber: user.phoneNumber,
-          languagePreference: user.languagePreference || 'en',
-        });
       });
 
     if (this.session.isLandlord() || this.session.isAdmin()) {
@@ -360,6 +367,23 @@ export class WorkspacePageComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
         window.location.href = response.url;
+      });
+  }
+
+  protected onAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.userApi
+      .uploadAvatar(file)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (user) => {
+          this.session.user.set(user);
+          this.profileMessage.set('Profile picture updated!');
+          setTimeout(() => this.profileMessage.set(''), 3000);
+        },
+        error: () => this.profileMessage.set('Failed to upload avatar.'),
       });
   }
 

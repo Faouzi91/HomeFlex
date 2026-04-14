@@ -57,7 +57,7 @@
             <div class="truncate">
               <p class="font-bold text-slate-900 truncate">{{ session.displayName() }}</p>
               <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                {{ session.role() }}
+                {{ session.roleLabel() }}
               </p>
             </div>
           </div>
@@ -67,17 +67,24 @@
               <button
                 type="button"
                 (click)="activeTab.set(tab.id)"
-                class="w-full flex flex-col items-start px-4 py-3 rounded-lg text-sm transition-colors group"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm transition-colors group"
                 [class.bg-brand-50]="activeTab() === tab.id"
                 [class.text-brand-700]="activeTab() === tab.id"
                 [class.text-slate-600]="activeTab() !== tab.id"
                 [class.hover:bg-slate-50]="activeTab() !== tab.id"
               >
-                <span class="font-bold">{{ tab.label }}</span>
-                <span
-                  class="text-[10px] uppercase tracking-wider font-bold opacity-60 group-hover:opacity-100"
-                  >{{ tab.description }}</span
-                >
+                <div class="flex flex-col items-start">
+                  <span class="font-bold">{{ tab.label }}</span>
+                  <span
+                    class="text-[10px] uppercase tracking-wider font-bold opacity-60 group-hover:opacity-100"
+                    >{{ tab.description }}</span
+                  >
+                </div>
+                @if (tab.id === 'notifications' && unreadNotifications() > 0) {
+                  <span class="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white leading-none">
+                    {{ unreadNotifications() > 99 ? '99+' : unreadNotifications() }}
+                  </span>
+                }
               </button>
             }
           </nav>
@@ -796,175 +803,271 @@
           }
 
           @if (activeTab() === 'profile') {
-            <div class="space-y-12">
+            <div class="space-y-10">
               <header class="border-b border-slate-100 pb-8">
-                <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Account Settings</h1>
-                <p class="text-slate-500">
-                  Manage your personal information and security preferences.
-                </p>
-              </header>
-
-              <div class="grid gap-10 lg:grid-cols-2">
-                <!-- Profile Form -->
-                <div class="space-y-6">
-                  <h2 class="text-xl font-bold text-slate-900">Personal Information</h2>
-                  @if (profileMessage()) {
-                    <div
-                      class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100"
-                    >
-                      {{ profileMessage() }}
+                <div class="flex items-center gap-4 mb-4">
+                  <!-- Avatar -->
+                  <div class="relative">
+                    <div class="h-16 w-16 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xl font-bold">
+                      @if (session.user()?.profilePictureUrl) {
+                        <img [src]="session.user()?.profilePictureUrl" alt="Avatar" class="h-16 w-16 rounded-full object-cover" />
+                      } @else {
+                        {{ userInitials(session.user()) }}
+                      }
                     </div>
-                  }
-                  <form class="space-y-4" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-                          >First Name</label
-                        >
-                        <input
-                          type="text"
-                          formControlName="firstName"
-                          class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
-                        />
-                      </div>
-                      <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-                          >Last Name</label
-                        >
-                        <input
-                          type="text"
-                          formControlName="lastName"
-                          class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-                        >Phone Number</label
-                      >
-                      <input
-                        type="tel"
-                        formControlName="phoneNumber"
-                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
-                      />
-                    </div>
-                    <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-                        >Preferred Language</label
-                      >
-                      <select
-                        formControlName="languagePreference"
-                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 bg-white outline-none focus:border-brand-500"
-                      >
-                        <option value="en">English (US)</option>
-                        <option value="fr">Français (FR)</option>
-                      </select>
-                    </div>
-                    <button
-                      class="inline-flex items-center justify-center rounded-md bg-brand-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors"
-                      type="submit"
-                    >
-                      Save Changes
-                    </button>
-                  </form>
-
-                  <!-- GDPR Compliance Section -->
-                  <div class="pt-10 border-t border-slate-100 space-y-6">
-                    <h2 class="text-xl font-bold text-slate-900">Data Management (GDPR)</h2>
-                    <p class="text-xs text-slate-500 leading-relaxed">
-                      Under GDPR regulations, you have the right to portability and erasure. You can
-                      download a machine-readable export of all your platform data or request the
-                      permanent deletion of your account.
-                    </p>
-                    <div class="flex flex-wrap gap-4">
-                      <button
-                        (click)="exportMyData()"
-                        type="button"
-                        class="px-4 py-2 rounded border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke-width="2"
-                          stroke="currentColor"
-                          class="w-4 h-4"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                          />
-                        </svg>
-                        Export Data (JSON)
-                      </button>
-                      <button
-                        (click)="eraseMyData()"
-                        type="button"
-                        class="px-4 py-2 rounded border border-rose-100 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-2"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke-width="2"
-                          stroke="currentColor"
-                          class="w-4 h-4"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="m14.74 9-.34 12m-4.77 0L9.26 9m9.96-1.99L18.75 5.25a2.25 2.25 0 0 0-2.25-2.25h-9a2.25 2.25 0 0 0-2.25 2.25L5.04 7.01m14.74 0a2.25 2.25 0 0 1 2.25 2.25v13.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V9.26a2.25 2.25 0 0 1 2.25-2.25m14.74 0H5.04"
-                          />
-                        </svg>
-                        Delete Account
-                      </button>
+                    <label class="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors shadow-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-slate-500">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Z" />
+                      </svg>
+                      <input type="file" accept="image/*" class="hidden" (change)="onAvatarSelected($event)" />
+                    </label>
+                  </div>
+                  <div>
+                    <h1 class="text-3xl font-extrabold text-slate-900">Account Settings</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-600">{{ session.roleLabel() }}</span>
+                      @if (session.user()?.isVerified) {
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-600">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+                            <path fill-rule="evenodd" d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+                          </svg>
+                          Verified
+                        </span>
+                      }
+                      @if (session.user()?.profileCompleteness != null) {
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Profile {{ session.user()?.profileCompleteness }}% complete</span>
+                      }
                     </div>
                   </div>
                 </div>
+              </header>
 
-                <!-- Security Form -->
-                <div class="space-y-6">
-                  <h2 class="text-xl font-bold text-slate-900">Security</h2>
-                  @if (passwordMessage()) {
-                    <div
-                      class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100"
-                    >
-                      {{ passwordMessage() }}
-                    </div>
-                  }
-                  <form class="space-y-4" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
-                    <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-                        >Current Password</label
-                      >
-                      <input
-                        type="password"
-                        formControlName="currentPassword"
-                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div class="space-y-1">
-                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider"
-                        >New Password</label
-                      >
-                      <input
-                        type="password"
-                        formControlName="newPassword"
-                        class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 outline-none"
-                        placeholder="Min. 8 characters"
-                      />
-                    </div>
-                    <button
-                      class="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-8 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                      type="submit"
-                    >
-                      Update Password
-                    </button>
-                  </form>
+              @if (profileMessage()) {
+                <div class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100">
+                  {{ profileMessage() }}
                 </div>
-              </div>
+              }
+
+              <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="space-y-10">
+                <!-- Personal Information -->
+                <section class="space-y-5">
+                  <div class="flex items-center gap-3">
+                    <div class="h-8 w-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                      </svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-900">Personal Information</h2>
+                  </div>
+
+                  <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">First Name</label>
+                      <input type="text" formControlName="firstName" class="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" />
+                    </div>
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Last Name</label>
+                      <input type="text" formControlName="lastName" class="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" />
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Phone Number</label>
+                    <input type="tel" formControlName="phoneNumber" placeholder="+237 6XX XXX XXX" class="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Preferred Language</label>
+                    <select formControlName="languagePreference" class="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 bg-white outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                      <option value="en">English (US)</option>
+                      <option value="fr">Fran&ccedil;ais (FR)</option>
+                      <option value="es">Espa&ntilde;ol (ES)</option>
+                      <option value="ar">العربية (AR)</option>
+                    </select>
+                  </div>
+                </section>
+
+                <!-- Notification Preferences -->
+                <section class="space-y-5 pt-8 border-t border-slate-100">
+                  <div class="flex items-center gap-3">
+                    <div class="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 class="text-lg font-bold text-slate-900">Notification Preferences</h2>
+                      <p class="text-xs text-slate-400">Choose how you want to be notified about bookings, messages, and updates.</p>
+                    </div>
+                  </div>
+
+                  <div class="space-y-4">
+                    <label class="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer">
+                      <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-400">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                        </svg>
+                        <div>
+                          <p class="text-sm font-bold text-slate-700">Email Notifications</p>
+                          <p class="text-xs text-slate-400">Booking confirmations, messages, and account alerts</p>
+                        </div>
+                      </div>
+                      <div class="relative">
+                        <input type="checkbox" formControlName="emailNotificationsEnabled" class="peer sr-only" />
+                        <div class="h-6 w-11 rounded-full bg-slate-200 peer-checked:bg-brand-500 transition-colors"></div>
+                        <div class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"></div>
+                      </div>
+                    </label>
+
+                    <label class="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer">
+                      <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-400">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                        </svg>
+                        <div>
+                          <p class="text-sm font-bold text-slate-700">Push Notifications</p>
+                          <p class="text-xs text-slate-400">Real-time alerts on your device</p>
+                        </div>
+                      </div>
+                      <div class="relative">
+                        <input type="checkbox" formControlName="pushNotificationsEnabled" class="peer sr-only" />
+                        <div class="h-6 w-11 rounded-full bg-slate-200 peer-checked:bg-brand-500 transition-colors"></div>
+                        <div class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"></div>
+                      </div>
+                    </label>
+
+                    <label class="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors cursor-pointer">
+                      <div class="flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-400">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                        </svg>
+                        <div>
+                          <p class="text-sm font-bold text-slate-700">SMS Notifications</p>
+                          <p class="text-xs text-slate-400">Important updates via text message</p>
+                        </div>
+                      </div>
+                      <div class="relative">
+                        <input type="checkbox" formControlName="smsNotificationsEnabled" class="peer sr-only" />
+                        <div class="h-6 w-11 rounded-full bg-slate-200 peer-checked:bg-brand-500 transition-colors"></div>
+                        <div class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-5"></div>
+                      </div>
+                    </label>
+                  </div>
+                </section>
+
+                <!-- Host Quick Status (Landlord/Admin only) -->
+                @if (session.isLandlord() || session.isAdmin()) {
+                  <section class="space-y-5 pt-8 border-t border-slate-100">
+                    <div class="flex items-center gap-3">
+                      <div class="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 class="text-lg font-bold text-slate-900">Host Status</h2>
+                        <p class="text-xs text-slate-400">Quick overview of your hosting account. Manage details in the Hosting tab.</p>
+                      </div>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                      <div class="p-4 rounded-lg border border-slate-200">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Identity (KYC)</p>
+                        @if (kycStatus()?.status === 'VERIFIED') {
+                          <span class="inline-flex items-center gap-1 text-sm font-bold text-emerald-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+                            </svg>
+                            Verified
+                          </span>
+                        } @else {
+                          <span class="text-sm font-bold text-amber-600">Pending verification</span>
+                        }
+                      </div>
+                      <div class="p-4 rounded-lg border border-slate-200">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Payouts</p>
+                        @if (payoutSummary()?.stripeConnected) {
+                          <span class="inline-flex items-center gap-1 text-sm font-bold text-emerald-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                              <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+                            </svg>
+                            Connected
+                          </span>
+                        } @else {
+                          <span class="text-sm font-bold text-amber-600">Not connected</span>
+                        }
+                      </div>
+                    </div>
+                  </section>
+                }
+
+                <!-- Save button -->
+                <div class="pt-4">
+                  <button
+                    class="inline-flex items-center justify-center rounded-lg bg-brand-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors"
+                    type="submit"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+
+              <!-- Security -->
+              <section class="space-y-5 pt-8 border-t border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="h-8 w-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                  </div>
+                  <h2 class="text-lg font-bold text-slate-900">Security</h2>
+                </div>
+                @if (passwordMessage()) {
+                  <div class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100">
+                    {{ passwordMessage() }}
+                  </div>
+                }
+                <form class="space-y-4 max-w-md" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+                  <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Password</label>
+                    <input type="password" formControlName="currentPassword" class="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" placeholder="••••••••" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">New Password</label>
+                    <input type="password" formControlName="newPassword" class="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition" placeholder="Min. 8 characters" />
+                  </div>
+                  <button class="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-8 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors" type="submit">
+                    Update Password
+                  </button>
+                </form>
+              </section>
+
+              <!-- GDPR Compliance Section -->
+              <section class="space-y-5 pt-8 border-t border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">Data Management (GDPR)</h2>
+                    <p class="text-xs text-slate-400">You have the right to data portability and erasure under GDPR regulations.</p>
+                  </div>
+                </div>
+                <div class="flex flex-wrap gap-4">
+                  <button (click)="exportMyData()" type="button" class="px-4 py-2.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    Export Data (JSON)
+                  </button>
+                  <button (click)="eraseMyData()" type="button" class="px-4 py-2.5 rounded-lg border border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                    Delete Account
+                  </button>
+                </div>
+              </section>
             </div>
           }
 

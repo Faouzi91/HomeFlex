@@ -74,7 +74,8 @@ class AuthServiceTest {
         testUserDto = new UserDto(
                 testUser.getId(), testUser.getEmail(), testUser.getFirstName(),
                 testUser.getLastName(), null, null, "TENANT",
-                true, false, "en", null, null, 5.0, 100, LocalDateTime.now()
+                true, false, "en", null, null, 5.0,
+                true, true, true, 100, LocalDateTime.now()
         );
     }
 

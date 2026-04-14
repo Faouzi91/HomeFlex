@@ -1,0 +1,390 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900">Reports & Flagged Content</h1>
+      <p class="mt-1 text-sm text-slate-500">{{ totalElements() }} total reports</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <select
+        class="rounded-lg border border-slate-300 py-2 px-3 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+      >
+        <option value="ALL">All Statuses</option>
+        <option value="PENDING">Pending</option>
+        <option value="RESOLVED">Resolved</option>
+      </select>
+      <button
+        (click)="loadReports(currentPage())"
+        class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="w-4 h-4"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"
+          />
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    @if (loading()) {
+      <div class="flex items-center justify-center py-20">
+        <svg
+          class="h-8 w-8 animate-spin text-brand-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-50">
+            <tr>
+              <th
+                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                Property
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                Reporter
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                Reason
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                Status
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                Filed
+              </th>
+              <th
+                class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-500"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (report of filteredReports(); track report.id) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <!-- Property -->
+                <td class="px-6 py-4">
+                  <div class="max-w-xs">
+                    <p class="text-sm font-semibold text-slate-900 truncate">
+                      {{ report.propertyTitle }}
+                    </p>
+                    <p class="text-xs text-slate-400 font-mono">
+                      {{ report.propertyId | slice: 0 : 8 }}...
+                    </p>
+                  </div>
+                </td>
+
+                <!-- Reporter -->
+                <td class="whitespace-nowrap px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-600"
+                    >
+                      {{ report.reporter?.firstName?.charAt(0) ?? ''
+                      }}{{ report.reporter?.lastName?.charAt(0) ?? '' }}
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-slate-900">
+                        {{ report.reporter?.firstName }} {{ report.reporter?.lastName }}
+                      </p>
+                      <p class="text-xs text-slate-500">{{ report.reporter?.email }}</p>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Reason -->
+                <td class="px-6 py-4">
+                  <div class="max-w-xs">
+                    <span
+                      class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-bold text-red-700 ring-1 ring-inset ring-red-600/10"
+                    >
+                      {{ report.reason }}
+                    </span>
+                    @if (report.description) {
+                      <p class="mt-1 text-xs text-slate-500 line-clamp-2">
+                        {{ report.description }}
+                      </p>
+                    }
+                  </div>
+                </td>
+
+                <!-- Status -->
+                <td class="whitespace-nowrap px-6 py-4">
+                  @if (report.status === 'RESOLVED') {
+                    <span
+                      class="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-bold text-green-700 ring-1 ring-inset ring-green-600/20"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        class="w-3 h-3"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                      Resolved
+                    </span>
+                  } @else {
+                    <span
+                      class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-inset ring-amber-600/20"
+                    >
+                      <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                      Pending
+                    </span>
+                  }
+                </td>
+
+                <!-- Filed Date -->
+                <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                  {{ report.createdAt | date: 'mediumDate' }}
+                </td>
+
+                <!-- Actions -->
+                <td class="whitespace-nowrap px-6 py-4 text-right">
+                  @if (report.status !== 'RESOLVED') {
+                    @if (actionLoading() === report.id) {
+                      <svg
+                        class="ml-auto h-5 w-5 animate-spin text-slate-400"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    } @else {
+                      <button
+                        (click)="openResolveModal(report)"
+                        class="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-700 transition-colors"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="2"
+                          stroke="currentColor"
+                          class="w-3.5 h-3.5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m4.5 12.75 6 6 9-13.5"
+                          />
+                        </svg>
+                        Resolve
+                      </button>
+                    }
+                  } @else {
+                    <div class="text-right">
+                      <p class="text-xs text-slate-400">
+                        {{ report.resolvedAt | date: 'mediumDate' }}
+                      </p>
+                      @if (report.resolvedBy) {
+                        <p class="text-[10px] text-slate-400">
+                          by {{ report.resolvedBy.firstName }} {{ report.resolvedBy.lastName }}
+                        </p>
+                      }
+                    </div>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-6 py-16 text-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="mx-auto h-10 w-10 text-slate-300"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                    />
+                  </svg>
+                  <p class="mt-2 text-sm font-semibold text-slate-900">No reports found</p>
+                  <p class="mt-1 text-sm text-slate-500">No reports match the current filter.</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3">
+          <p class="text-sm text-slate-500">Page {{ currentPage() + 1 }} of {{ totalPages() }}</p>
+          <div class="flex items-center gap-1">
+            <button
+              (click)="goToPage(currentPage() - 1)"
+              [disabled]="currentPage() === 0"
+              class="rounded-lg border border-slate-300 p-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-4 h-4"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 19.5 8.25 12l7.5-7.5"
+                />
+              </svg>
+            </button>
+            @for (page of pages(); track page) {
+              <button
+                (click)="goToPage(page)"
+                class="rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors"
+                [class]="
+                  page === currentPage()
+                    ? 'border-brand-500 bg-brand-50 text-brand-700'
+                    : 'border-slate-300 text-slate-600 hover:bg-slate-50'
+                "
+              >
+                {{ page + 1 }}
+              </button>
+            }
+            <button
+              (click)="goToPage(currentPage() + 1)"
+              [disabled]="currentPage() >= totalPages() - 1"
+              class="rounded-lg border border-slate-300 p-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-4 h-4"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<!-- Resolve Modal -->
+@if (showResolveModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+    <div class="mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="w-5 h-5 text-brand-600"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-900">Resolve Report</h3>
+          <p class="text-sm text-slate-500">Mark this report as resolved.</p>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5"
+          >Resolution notes (optional)</label
+        >
+        <textarea
+          rows="3"
+          placeholder="Add any notes about how this was resolved..."
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none resize-none"
+          [ngModel]="resolveNotes()"
+          (ngModelChange)="resolveNotes.set($event)"
+        ></textarea>
+      </div>
+
+      <div class="mt-5 flex items-center justify-end gap-3">
+        <button
+          (click)="closeResolveModal()"
+          class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="confirmResolve()"
+          class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
+        >
+          Mark as Resolved
+        </button>
+      </div>
+    </div>
+  </div>
+}

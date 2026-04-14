@@ -14,6 +14,9 @@ export class UserApi extends BaseApi {
     lastName?: string;
     phoneNumber?: string | null;
     languagePreference?: string;
+    emailNotificationsEnabled?: boolean;
+    pushNotificationsEnabled?: boolean;
+    smsNotificationsEnabled?: boolean;
   }): Observable<User> {
     return this.http.put<User>(`${this.baseUrl}/users/me`, payload);
   }

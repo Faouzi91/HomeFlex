@@ -30,7 +30,7 @@ export class VehiclesPageComponent {
   });
 
   constructor() {
-    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       if (params['city']) this.filters.patchValue({ city: params['city'] });
       if (params['transmission']) this.filters.patchValue({ transmission: params['transmission'] });
       this.search();

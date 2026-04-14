@@ -1,11 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Property, Vehicle } from '../../../core/models/api.types';
-import {
-  compactNumber,
-  propertyImage,
-  vehicleImage,
-} from '../../../core/utils/formatters';
+import { compactNumber, propertyImage, vehicleImage } from '../../../core/utils/formatters';
 import { ConvertCurrencyPipe } from '../../../core/pipes/convert-currency/convert-currency.pipe';
 import { SessionStore } from '../../../core/state/session.store';
 

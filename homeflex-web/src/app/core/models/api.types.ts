@@ -28,6 +28,10 @@ export interface User {
   agencyId?: string | null;
   agencyRole?: string | null;
   trustScore?: number;
+  emailNotificationsEnabled?: boolean;
+  pushNotificationsEnabled?: boolean;
+  smsNotificationsEnabled?: boolean;
+  profileCompleteness?: number;
   createdAt: string;
 }
 

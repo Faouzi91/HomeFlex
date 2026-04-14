@@ -28,14 +28,15 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Property availability** with sparse date model, calendar UI, and double-booking prevention (V11)
 - **Digital leases** with e-signature support and automated document management (V12)
 - **Vehicle rentals** with image uploads, condition reports, and availability checking
-- **Role-based access**: Tenant, Landlord, Admin
+- **Role-based access**: Tenant, Landlord, Admin with role-specific profile views and notification preferences
+- **Separated Admin Console** with dedicated login, dashboard, user management, property approvals, and report resolution
 - **Booking system** with approve / reject / cancel workflow
 - **Real-time chat** between tenants and landlords (WebSocket + STOMP)
 - **SMS & WhatsApp notifications** via Twilio for booking alerts (SRS-3.4.2)
 - **Push notifications** via Firebase (FCM)
 - **Stripe Connect payments** with platform escrow and idempotency tracking (V10)
 - **Landlord KYC** via Stripe Identity verification
-- **Admin dashboard** with property moderation and operational analytics
+- **Admin console** with separate login, user management (suspend/activate), property approvals (approve/reject), report resolution, and operational analytics
 - **Prometheus + Grafana monitoring** with custom business metrics
 - **Modern Web Dashboard** — Angular 21 + Tailwind 4 operational panel with **Map Search**
 - **Global Reach** — Full i18n support (English, French, Spanish, Arabic) with **RTL support**
@@ -146,16 +147,16 @@ HomeFlex/
 │   ├── src/app/
 │   │   ├── core/                 # Guards, interceptors, services, state
 │   │   ├── features/             # Lazy-loaded feature modules
-│   │   │   ├── admin/            # Admin dashboard, properties, users, reports
+│   │   │   ├── admin/            # Separated admin console
+│   │   │   │   ├── layout/       # Admin sidebar layout
+│   │   │   │   └── pages/        # Login, dashboard, users, properties, reports, settings
 │   │   │   ├── auth/             # Login, register, forgot/reset password
-│   │   │   ├── bookings/         # Booking list and detail
-│   │   │   ├── chat/             # Chat list and room (WebSocket)
-│   │   │   ├── favorites/        # Saved properties
-│   │   │   ├── landing/          # Public landing page
-│   │   │   ├── profile/          # User profile, edit, change password
-│   │   │   └── properties/       # Search, detail, add, my-properties
-│   │   ├── shared/               # Header, footer, loader, skeleton
-│   │   └── models/               # TypeScript interfaces
+│   │   │   ├── marketing/        # Home, support pages
+│   │   │   ├── properties/       # Search, detail
+│   │   │   ├── vehicles/         # Search, detail
+│   │   │   └── workspace/        # Authenticated dashboard (tenant/landlord)
+│   │   ├── shell/                # App shell (header, footer — hidden on admin routes)
+│   │   └── shared/               # Reusable UI components
 │   ├── Dockerfile                # Multi-stage build (Node -> Nginx)
 │   └── nginx.conf                # Reverse proxy, gzip, SPA fallback
 │
@@ -208,8 +209,17 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | POST   | `/chat/rooms`                         | Auth     | Create chat room                    |
 | GET    | `/favorites`                          | Auth     | List favorites                      |
 | POST   | `/favorites/{propertyId}`             | Auth     | Add to favorites                    |
-| GET    | `/admin/users`                        | Admin    | List all users                      |
-| GET    | `/admin/properties`                   | Admin    | List all properties                 |
+| GET    | `/admin/users`                        | Admin    | List all users (paginated)          |
+| PATCH  | `/admin/users/{id}/suspend`           | Admin    | Suspend a user account              |
+| PATCH  | `/admin/users/{id}/activate`          | Admin    | Reactivate a suspended user         |
+| GET    | `/admin/properties/pending`           | Admin    | List pending properties             |
+| PATCH  | `/admin/properties/{id}/approve`      | Admin    | Approve a property listing          |
+| PATCH  | `/admin/properties/{id}/reject`       | Admin    | Reject a property (with reason)     |
+| GET    | `/admin/reports`                      | Admin    | List flagged content reports        |
+| PATCH  | `/admin/reports/{id}/resolve`         | Admin    | Resolve a report                    |
+| GET    | `/admin/analytics`                    | Admin    | Platform analytics dashboard        |
+| GET    | `/admin/configs`                      | Admin    | List system configurations          |
+| PATCH  | `/admin/configs/{key}`                | Admin    | Update a system config value        |
 | GET    | `/vehicles/search`                    | Public   | Search vehicles with filters        |
 | GET    | `/vehicles/{id}`                      | Public   | Vehicle detail                      |
 | POST   | `/vehicles`                           | Landlord | Create vehicle listing              |

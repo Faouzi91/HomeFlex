@@ -1,0 +1,138 @@
+<div class="flex h-screen bg-slate-50 overflow-hidden">
+  <!-- Sidebar -->
+  <aside
+    class="bg-slate-900 text-white w-64 flex-shrink-0 transition-transform duration-300 ease-in-out absolute lg:relative z-20 h-full flex flex-col"
+    [class.-translate-x-full]="!isSidebarOpen()"
+    [class.translate-x-0]="isSidebarOpen()"
+  >
+    <!-- Branding -->
+    <div class="h-16 flex items-center px-6 border-b border-slate-800">
+      <a routerLink="/" class="flex items-center gap-2">
+        <div class="flex h-8 w-8 items-center justify-center rounded bg-brand-500 text-white">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke="currentColor"
+            class="w-5 h-5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"
+            />
+          </svg>
+        </div>
+        <span class="text-xl font-bold tracking-tight text-white">AdminFlex</span>
+      </a>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      @for (item of menuItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="bg-brand-600 text-white"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="w-5 h-5"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.icon" />
+          </svg>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <!-- User Plate -->
+    <div class="p-4 border-t border-slate-800">
+      <div class="flex items-center gap-3 px-2">
+        <div
+          class="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-300"
+        >
+          {{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-white truncate">
+            {{ user()?.firstName }} {{ user()?.lastName }}
+          </p>
+          <p class="text-xs text-slate-400 truncate">{{ user()?.email }}</p>
+        </div>
+        <button
+          (click)="logout()"
+          class="text-slate-400 hover:text-white transition-colors"
+          title="Sign out"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="w-5 h-5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Overlay -->
+  @if (isSidebarOpen()) {
+    <div class="fixed inset-0 bg-slate-900/50 z-10 lg:hidden" (click)="toggleSidebar()"></div>
+  }
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+    <!-- Top Header -->
+    <header
+      class="h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 border-b border-slate-200 bg-white shadow-sm shrink-0"
+    >
+      <button (click)="toggleSidebar()" class="text-slate-500 hover:text-slate-700 lg:hidden">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2.5"
+          stroke="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+          />
+        </svg>
+      </button>
+
+      <div class="flex-1 lg:hidden"></div>
+      <!-- Spacer for mobile -->
+
+      <div class="flex items-center gap-4">
+        <!-- Quick Action / Status -->
+        <span
+          class="inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700 ring-1 ring-inset ring-green-600/20"
+          >System Operational</span
+        >
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+      <router-outlet />
+    </main>
+  </div>
+</div>

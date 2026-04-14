@@ -37,9 +37,13 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 
 - `homeflex-web/`: Angular 21 frontend. Features logic in `src/app/features/`.
   - `src/app/core/api/api.client.ts`: Centralized HTTP client — ALL API calls go through this single service.
+  - `src/app/core/api/services/`: Domain-specific API services (`admin.api.ts`, `user.api.ts`, etc.) extending `BaseApi`.
   - `src/app/core/models/api.types.ts`: All TypeScript interfaces for request/response types.
   - `src/app/core/state/session.store.ts`: NgRx Signal Store for auth session state.
-  - `src/app/features/workspace/`: Main authenticated dashboard (workspace page handles all user roles).
+  - `src/app/core/guards/admin.guard.ts`: Route guard enforcing ADMIN role, redirects to `/admin/login`.
+  - `src/app/features/workspace/`: Main authenticated dashboard (workspace page handles tenant/landlord roles).
+  - `src/app/features/admin/`: Separate admin console with its own layout, login, and pages (dashboard, users, properties, reports, settings).
+  - `src/app/shell/`: App shell with header/footer (hidden on admin routes via `isAdminRoute` signal).
 - `rental-backend/`: Spring Boot 4 / Java 21 API.
   - `core/`: Auth, Security, Infrastructure, Common Services.
   - `features/`: Business modules (Property, Vehicle, Booking, Lease, Finance, Insurance, Dispute).
@@ -85,6 +89,14 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 - `disputes`: Conflict resolution tracking.
 - `outbox_events`: Queue for reliable event delivery.
 - `processed_stripe_events`: Idempotency log for Stripe webhooks.
+
+## Admin Console Architecture
+
+- **Separate login**: `/admin/login` — dark-themed, restricted portal. Non-admin users are rejected and logged out.
+- **Guarded routes**: All `/admin/*` routes protected by `adminGuard` (checks `isAuthenticated && role === 'ADMIN'`).
+- **Dedicated layout**: `AdminLayoutComponent` with sidebar navigation, top bar, and user plate. Consumer shell (header/footer) is hidden.
+- **Admin pages**: Dashboard (analytics), Users (list/suspend/activate), Properties (pending approval/reject), Reports (flagged content/resolve), Settings (profile/password/notifications).
+- **Backend**: `AdminController` with `@PreAuthorize("hasRole('ADMIN')")` — all admin endpoints under `/api/v1/admin/`.
 
 ## API Architecture
 

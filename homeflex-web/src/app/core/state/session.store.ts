@@ -24,6 +24,15 @@ export class SessionStore {
   readonly isTenant = computed(() => this.role() === 'TENANT');
   readonly isLandlord = computed(() => this.role() === 'LANDLORD');
   readonly isAdmin = computed(() => this.role() === 'ADMIN');
+  readonly roleLabel = computed(() => {
+    const roleMap: Record<string, string> = {
+      ADMIN: 'Platform Admin',
+      LANDLORD: 'Host',
+      TENANT: 'Renter',
+      GUEST: 'Guest',
+    };
+    return roleMap[this.role()] ?? this.role();
+  });
   readonly displayName = computed(() => {
     const current = this.user();
     return current ? `${current.firstName} ${current.lastName}`.trim() : 'Guest';
@@ -181,6 +190,9 @@ export class SessionStore {
     lastName?: string;
     phoneNumber?: string | null;
     languagePreference?: string;
+    emailNotificationsEnabled?: boolean;
+    pushNotificationsEnabled?: boolean;
+    smsNotificationsEnabled?: boolean;
   }): Observable<User> {
     this.pending.set(true);
     this.notifications.setLoading(true);

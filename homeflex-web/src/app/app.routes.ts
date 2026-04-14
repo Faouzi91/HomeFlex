@@ -9,6 +9,14 @@ import { VehicleDetailPageComponent } from './features/vehicles/pages/vehicle-de
 import { VehiclesPageComponent } from './features/vehicles/pages/vehicles/vehicles.page';
 import { WorkspacePageComponent } from './features/workspace/pages/workspace/workspace.page';
 import { SupportPageComponent } from './features/marketing/pages/support/support.page';
+import { AdminLayoutComponent } from './features/admin/layout/admin-layout/admin-layout.component';
+import { AdminDashboardPageComponent } from './features/admin/pages/dashboard/dashboard.page';
+import { AdminLoginPageComponent } from './features/admin/pages/admin-login/admin-login.page';
+import { AdminSettingsPageComponent } from './features/admin/pages/settings/admin-settings.page';
+import { AdminUsersPageComponent } from './features/admin/pages/users/admin-users.page';
+import { AdminPropertiesPageComponent } from './features/admin/pages/properties/admin-properties.page';
+import { AdminReportsPageComponent } from './features/admin/pages/reports/admin-reports.page';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, title: 'HomeFlex | Premium rentals' },
@@ -34,5 +42,21 @@ export const routes: Routes = [
   { path: 'auth', redirectTo: 'login', pathMatch: 'full' },
   { path: 'workspace', component: WorkspacePageComponent, title: 'Workspace | HomeFlex' },
   { path: 'support', component: SupportPageComponent, title: 'Support | HomeFlex' },
+
+  // Admin routes
+  { path: 'admin/login', component: AdminLoginPageComponent, title: 'Admin Login | HomeFlex' },
+  {
+    path: 'admin',
+    component: AdminLayoutComponent,
+    canActivate: [adminGuard],
+    children: [
+      { path: '', component: AdminDashboardPageComponent, title: 'Dashboard | Admin' },
+      { path: 'users', component: AdminUsersPageComponent, title: 'Users | Admin' },
+      { path: 'properties', component: AdminPropertiesPageComponent, title: 'Properties | Admin' },
+      { path: 'reports', component: AdminReportsPageComponent, title: 'Reports | Admin' },
+      { path: 'settings', component: AdminSettingsPageComponent, title: 'Settings | Admin' },
+    ],
+  },
+
   { path: '**', redirectTo: '' },
 ];

@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 3.0 (Final)
-**Date:** April 11, 2026
+**Version:** 3.1
+**Date:** April 14, 2026
 **Classification:** Confidential
 **Status:** 100% Implemented — Technical Requirements Met
 
@@ -16,6 +16,7 @@
 | 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                                            |
 | 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                                        |
 | 3.0     | 2026-04-11 | Architect     | 100% Technical Parity: ELK, Maps, i18n, AI, Blockchain, Redlock, GDPR, PII Encryption, Terraform, SLOs, Flutter native. |
+| 3.1     | 2026-04-14 | Architect     | Admin console separation, role-based profiles, notification preferences, user/property/report management pages.         |
 
 ---
 
@@ -27,7 +28,7 @@ This document defines the complete technical and functional requirements for **H
 
 ## 1.2 Implementation Summary
 
-- 🟢 **Core:** Property/Vehicle CRUD, Bookings, Real-time Chat, Reviews, Admin Dash.
+- 🟢 **Core:** Property/Vehicle CRUD, Bookings, Real-time Chat, Reviews, Admin Console (separated login, users, properties, reports).
 - 🟢 **Enterprise:** ELK Stack, Distributed Caching (Redis), Distributed Locking (Redlock), outbox relay.
 - 🟢 **Search:** Elasticsearch full-text, geo-distance, and faceted amenity search.
 - 🟢 **Security:** httpOnly cookies, CSRF (XSRF-TOKEN), PII encryption (AES-256), account locking.
@@ -79,6 +80,9 @@ HomeFlex is the **unified rental marketplace** for properties and vehicles, feat
 - **FR-101:** Authentication (httpOnly cookies + Account locking) 🟢
 - **FR-102:** User Profile (completeness score + soft delete) 🟢
 - **FR-103:** KYC (Stripe Identity) 🟢
+- **FR-104:** Role-based Profile Views (Tenant, Landlord, Admin — each with role-specific sections) 🟢
+- **FR-105:** Notification Preferences (email, push, SMS toggles per user) 🟢
+- **FR-106:** Avatar Upload (profile picture with camera overlay) 🟢
 
 ## 5.2 Listing Management 🟢
 
@@ -102,6 +106,16 @@ HomeFlex is the **unified rental marketplace** for properties and vehicles, feat
 - **FR-500:** Real-time Chat (Read receipts + typing indicators) 🟢
 - **FR-501:** Notifications (Granular user preferences) 🟢
 
+## 5.6 Admin Console 🟢
+
+- **FR-600:** Separate Admin Login (restricted portal at `/admin/login`, non-admin users rejected) 🟢
+- **FR-601:** Admin Dashboard (analytics: total users, properties, bookings, pending items) 🟢
+- **FR-602:** User Management (paginated list, search/filter, suspend/activate actions) 🟢
+- **FR-603:** Property Approvals (pending property review with approve/reject workflow, rejection reason required) 🟢
+- **FR-604:** Report Management (flagged content review, resolve with optional notes) 🟢
+- **FR-605:** Admin Settings (profile management, password change, notification preferences) 🟢
+- **FR-606:** Admin Route Guard (role-based access control, consumer shell hidden on admin routes) 🟢
+
 ---
 
 # 6. Non-Functional Requirements 🟢
@@ -119,5 +133,5 @@ All previously identified risks (R1-R10) have been mitigated via implemented tec
 
 ---
 
-**Final Document v3.0 (2026-04-11)**
+**Final Document v3.1 (2026-04-14)**
 **Implementation Status: 100% Complete.**

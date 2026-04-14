@@ -1,16 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthShowcaseComponent } from '../../components/auth-showcase/auth-showcase.component';
 import { SessionStore } from '../../../../core/state/session.store';
 
 @Component({
-  selector: 'app-login-page',
+  selector: 'app-admin-login-page',
+  standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
-  templateUrl: './login.page.html',
-  styleUrl: './login.page.scss',
+  templateUrl: './admin-login.page.html',
 })
-export class LoginPageComponent {
+export class AdminLoginPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   protected readonly session = inject(SessionStore);
@@ -28,16 +27,13 @@ export class LoginPageComponent {
 
     const value = this.form.getRawValue();
     this.session.login(value.email ?? '', value.password ?? '').subscribe(() => {
-      this.router.navigateByUrl(this.session.isAdmin() ? '/admin' : '/workspace');
-    });
-  }
-
-  protected socialLogin(provider: string): void {
-    // In a real app, you would use Google/Apple/Facebook SDKs here.
-    // For this prototype, we'll demonstrate the flow with a dummy token.
-    const dummyToken = 'dummy-token-' + Date.now();
-    this.session.socialLogin(provider, dummyToken).subscribe(() => {
-      this.router.navigateByUrl(this.session.isAdmin() ? '/admin' : '/workspace');
+      if (this.session.isAdmin()) {
+        this.router.navigateByUrl('/admin');
+      } else {
+        // Not an admin — log them out and show error
+        this.session.logout().subscribe();
+        this.session.error.set('Access denied. This portal is for platform administrators only.');
+      }
     });
   }
 }

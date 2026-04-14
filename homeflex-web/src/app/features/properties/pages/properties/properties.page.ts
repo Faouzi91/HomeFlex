@@ -34,7 +34,7 @@ export class PropertiesPageComponent {
   });
 
   constructor() {
-    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       if (params['query']) {
         this.filters.patchValue({ q: params['query'] });
       }

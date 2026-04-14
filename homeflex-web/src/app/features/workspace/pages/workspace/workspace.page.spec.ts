@@ -28,10 +28,7 @@ describe('WorkspacePageComponent', () => {
 
   beforeEach(async () => {
     const stub = () => vi.fn().mockReturnValue(of({ data: [] }));
-    const emptyMock = new Proxy(
-      {},
-      { get: () => stub() },
-    );
+    const emptyMock = new Proxy({}, { get: () => stub() });
 
     await TestBed.configureTestingModule({
       imports: [WorkspacePageComponent],

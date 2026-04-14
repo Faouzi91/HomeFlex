@@ -17,6 +17,9 @@ public record UserDto(
         UUID agencyId,
         String agencyRole,
         Double trustScore,
+        Boolean emailNotificationsEnabled,
+        Boolean pushNotificationsEnabled,
+        Boolean smsNotificationsEnabled,
         Integer profileCompleteness,
         LocalDateTime createdAt
 ) {}

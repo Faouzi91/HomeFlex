@@ -1,39 +1,28 @@
-<header class="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md">
+<header class="sticky top-0 z-50 w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
   <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-    <!-- Left side: Logo and Desktop Nav -->
+    <!-- Left: Logo + Nav -->
     <div class="flex items-center gap-8">
       <a
-        class="flex items-center gap-2 transition-opacity hover:opacity-90"
+        class="flex items-center gap-2.5 transition-opacity hover:opacity-90"
         routerLink="/"
         (click)="closeMenu()"
       >
         <div
-          class="flex h-9 w-9 items-center justify-center rounded-md bg-brand-500 text-white shadow-sm"
+          class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white shadow-sm"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2.5"
-            stroke="currentColor"
-            class="h-5 w-5 text-white"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
           </svg>
         </div>
-        <span class="text-xl font-bold tracking-tight text-brand-600">HomeFlex</span>
+        <span class="text-xl font-bold tracking-tight text-slate-900">HomeFlex</span>
       </a>
 
       <nav class="hidden items-center gap-1 lg:flex">
         @for (item of navItems; track item.href) {
           <a
-            class="nav-link relative h-16 flex items-center px-4"
+            class="relative h-16 flex items-center px-4 text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors"
             [routerLink]="item.href"
-            routerLinkActive="nav-link--active text-brand-600 after:absolute after:bottom-[-1px] after:left-0 after:h-[2px] after:w-full after:bg-brand-500"
+            routerLinkActive="text-brand-600 after:absolute after:bottom-[-1px] after:left-0 after:h-[2px] after:w-full after:bg-brand-500"
             [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
           >
             {{ 'NAV.' + item.label.toUpperCase() | translate }}
@@ -42,125 +31,195 @@
       </nav>
     </div>
 
-    <!-- Right side: Actions -->
-    <div class="flex items-center gap-4">
-      <!-- Global Settings -->
-      <div class="flex items-center gap-2 mr-2">
-        <!-- Language Dropdown -->
-        <div class="relative">
-          <button (click)="toggleLangMenu()" class="flex items-center gap-1 bg-transparent p-2 rounded-md hover:bg-slate-50 transition-all font-semibold text-slate-700">
-            @for (lang of languages; track lang.code) {
-              @if (currentLang() === lang.code) {
-                <span class="text-lg leading-none">{{ lang.flag }}</span>
-              }
+    <!-- Right: Actions -->
+    <div class="flex items-center gap-1">
+      <!-- Language Selector -->
+      <div class="relative">
+        <button
+          (click)="toggleLangMenu()"
+          class="flex items-center justify-center h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors"
+          title="Language"
+        >
+          @for (lang of languages; track lang.code) {
+            @if (currentLang() === lang.code) {
+              <span class="text-base leading-none">{{ lang.flag }}</span>
             }
-          </button>
-          
-          @if (langMenuOpen()) {
-            <div class="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden z-50">
-              <div class="p-3">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Language</p>
-                <div class="grid grid-cols-2 gap-1">
-                  @for (lang of languages; track lang.code) {
-                    <button
-                      (click)="switchLanguage(lang.code)"
-                      class="flex items-center justify-center p-2 rounded hover:bg-brand-50 hover:text-brand-700 transition-all"
-                      [class.bg-brand-50]="currentLang() === lang.code"
-                      [title]="lang.label"
-                    >
-                      <span class="text-lg">{{ lang.flag }}</span>
-                    </button>
-                  }
-                </div>
-              </div>
-            </div>
           }
-        </div>
+        </button>
 
-        <!-- Currency Dropdown -->
-        <div class="relative">
-          <button (click)="toggleCurrencyMenu()" class="flex items-center gap-1 bg-transparent p-2 rounded-md hover:bg-slate-50 transition-all font-semibold text-slate-700">
-            <span class="text-sm border-l border-slate-300 pl-2 leading-none uppercase">{{ currentCurrency() }}</span>
-          </button>
-          
-          @if (currencyMenuOpen()) {
-            <div class="absolute right-0 top-full mt-1 w-32 bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden z-50">
-              <div class="p-3">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Currency</p>
-                <div class="flex flex-col gap-1">
-                  @for (currency of currencies; track currency.code) {
-                    <button
-                      (click)="switchCurrency(currency.code)"
-                      class="flex items-center justify-between p-2 rounded text-sm hover:bg-brand-50 font-semibold text-slate-700 transition-all"
-                      [class.bg-brand-50]="currentCurrency() === currency.code"
-                    >
-                      <span>{{ currency.code }}</span>
-                      <span class="text-slate-400">{{ currency.symbol }}</span>
-                    </button>
+        @if (langMenuOpen()) {
+          <div class="absolute right-0 top-full mt-2 w-44 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div class="p-2">
+              @for (lang of languages; track lang.code) {
+                <button
+                  (click)="switchLanguage(lang.code)"
+                  class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  [class.bg-brand-50]="currentLang() === lang.code"
+                  [class.text-brand-700]="currentLang() === lang.code"
+                >
+                  <span class="text-base">{{ lang.flag }}</span>
+                  <span>{{ lang.label }}</span>
+                  @if (currentLang() === lang.code) {
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 ml-auto text-brand-500">
+                      <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+                    </svg>
                   }
-                </div>
-              </div>
+                </button>
+              }
             </div>
-          }
-        </div>
+          </div>
+        }
       </div>
 
-      <div class="hidden items-center gap-4 lg:flex">
-        @if (session.isAuthenticated()) {
-          <a
-            class="text-sm font-semibold text-slate-700 hover:text-brand-600"
-            routerLink="/workspace"
+      <!-- Currency Selector -->
+      <div class="relative">
+        <button
+          (click)="toggleCurrencyMenu()"
+          class="flex items-center justify-center h-9 px-2.5 rounded-lg hover:bg-slate-100 transition-colors text-xs font-bold text-slate-600 uppercase"
+          title="Currency"
+        >
+          {{ currentCurrency() }}
+        </button>
+
+        @if (currencyMenuOpen()) {
+          <div class="absolute right-0 top-full mt-2 w-40 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div class="p-2">
+              @for (currency of currencies; track currency.code) {
+                <button
+                  (click)="switchCurrency(currency.code)"
+                  class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  [class.bg-brand-50]="currentCurrency() === currency.code"
+                  [class.text-brand-700]="currentCurrency() === currency.code"
+                >
+                  <span class="font-semibold">{{ currency.code }}</span>
+                  <span class="text-slate-400">{{ currency.symbol }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Divider -->
+      <div class="hidden lg:block h-6 w-px bg-slate-200 mx-2"></div>
+
+      <!-- Authenticated: Notifications + Profile -->
+      @if (session.isAuthenticated()) {
+        <!-- Notification Bell -->
+        <a
+          routerLink="/workspace"
+          [queryParams]="{ tab: 'notifications' }"
+          class="relative flex items-center justify-center h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
+          title="Notifications"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+          </svg>
+          @if (unreadCount() > 0) {
+            <span class="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white leading-none">
+              {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+            </span>
+          }
+        </a>
+
+        <!-- User Avatar / Profile Menu -->
+        <div class="relative hidden lg:block">
+          <button
+            (click)="toggleProfileMenu()"
+            class="flex items-center gap-2.5 h-9 pl-2 pr-3 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            {{ greeting() }}
-          </a>
-        } @else {
+            <div class="h-7 w-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-xs font-bold">
+              {{ userInitials() }}
+            </div>
+            <span class="text-sm font-semibold text-slate-700 max-w-[120px] truncate">{{ greeting() }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-slate-400">
+              <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          @if (profileMenuOpen()) {
+            <div class="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+              <div class="p-3 border-b border-slate-100">
+                <p class="text-sm font-bold text-slate-900 truncate">{{ session.displayName() }}</p>
+                <p class="text-xs text-slate-400 truncate">{{ session.user()?.email }}</p>
+                <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-brand-50 text-brand-600">
+                  {{ session.roleLabel() }}
+                </span>
+              </div>
+              <div class="p-1.5">
+                @if (session.isAdmin()) {
+                  <a routerLink="/admin" (click)="closeAllDropdowns()" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                    </svg>
+                    Admin Console
+                  </a>
+                  <a routerLink="/admin/settings" (click)="closeAllDropdowns()" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                    Settings
+                  </a>
+                } @else {
+                  <a routerLink="/workspace" (click)="closeAllDropdowns()" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                    </svg>
+                    Workspace
+                  </a>
+                  <a routerLink="/workspace" [queryParams]="{ tab: 'profile' }" (click)="closeAllDropdowns()" class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-slate-400">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                    Settings
+                  </a>
+                }
+              </div>
+              <div class="p-1.5 border-t border-slate-100">
+                <button type="button" (click)="logout()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                  </svg>
+                  Sign out
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Not authenticated -->
+        <div class="hidden items-center gap-3 lg:flex">
           <a
-            class="text-sm font-semibold text-slate-700 hover:text-brand-600"
+            class="text-sm font-semibold text-slate-700 hover:text-brand-600 transition-colors px-3 py-2"
             routerLink="/login"
             >{{ 'NAV.LOGIN' | translate }}</a
           >
           <a
-            class="inline-flex items-center rounded-md border border-brand-500 bg-white px-5 py-2 text-sm font-bold text-brand-500 transition hover:bg-brand-50"
+            class="inline-flex items-center rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 shadow-sm"
             routerLink="/register"
           >
             {{ 'NAV.REGISTER' | translate }}
           </a>
-        }
-      </div>
+        </div>
+      }
 
       <!-- Mobile menu button -->
       <button
-        class="flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 text-slate-600 lg:hidden"
+        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden transition-colors"
         type="button"
         (click)="toggleMenu()"
         [attr.aria-expanded]="menuOpen()"
       >
         <span class="sr-only">Toggle menu</span>
         @if (menuOpen()) {
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="h-6 w-6"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
         } @else {
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-            class="h-6 w-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-            />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         }
       </button>
@@ -169,17 +228,17 @@
 
   <!-- Mobile menu -->
   @if (menuOpen()) {
-    <div class="border-t border-slate-100 bg-white p-4 lg:hidden">
+    <div class="border-t border-slate-100 bg-white px-4 py-4 lg:hidden">
       <nav class="flex flex-col gap-1">
         @for (item of navItems; track item.href) {
           <a
-            class="rounded-md px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-600"
+            class="rounded-lg px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-brand-600 transition-colors"
             [routerLink]="item.href"
             routerLinkActive="bg-brand-50 text-brand-600"
             [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
             (click)="closeMenu()"
           >
-            {{ item.label }}
+            {{ 'NAV.' + item.label.toUpperCase() | translate }}
           </a>
         }
       </nav>
@@ -187,20 +246,33 @@
       <div class="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
         @if (!session.isAuthenticated()) {
           <a
-            class="flex justify-center rounded-md border border-slate-200 px-4 py-3 text-base font-bold text-slate-700 hover:bg-slate-50"
+            class="flex justify-center rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
             routerLink="/login"
             (click)="closeMenu()"
             >Sign in</a
           >
           <a
-            class="flex justify-center rounded-md bg-brand-500 px-4 py-3 text-base font-bold text-white hover:bg-brand-600"
+            class="flex justify-center rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
             routerLink="/register"
             (click)="closeMenu()"
             >Get started</a
           >
         } @else {
           <a
-            class="flex justify-center rounded-md bg-brand-500 px-4 py-3 text-base font-bold text-white hover:bg-brand-600"
+            routerLink="/workspace"
+            [queryParams]="{ tab: 'notifications' }"
+            (click)="closeMenu()"
+            class="flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            Notifications
+            @if (unreadCount() > 0) {
+              <span class="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-bold text-white">
+                {{ unreadCount() }}
+              </span>
+            }
+          </a>
+          <a
+            class="flex justify-center rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-700 transition-colors"
             routerLink="/workspace"
             (click)="closeMenu()"
             >Open workspace</a

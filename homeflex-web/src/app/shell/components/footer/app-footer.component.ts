@@ -18,9 +18,10 @@ export class AppFooterComponent {
     {
       title: 'Explore',
       links: [
-        { label: 'Landing', href: '/' },
+        { label: 'Home', href: '/' },
         { label: 'Properties', href: '/properties' },
         { label: 'Vehicles', href: '/vehicles' },
+        { label: 'Support', href: '/support' },
       ],
     },
     {
@@ -29,6 +30,14 @@ export class AppFooterComponent {
         { label: 'Workspace', href: '/workspace' },
         { label: 'Sign in', href: '/login' },
         { label: 'Create account', href: '/register' },
+      ],
+    },
+    {
+      title: 'Hosting',
+      links: [
+        { label: 'List your property', href: '/workspace' },
+        { label: 'List your vehicle', href: '/workspace' },
+        { label: 'Host dashboard', href: '/workspace' },
       ],
     },
   ];
