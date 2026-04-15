@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthShowcaseComponent } from '../../components/auth-showcase/auth-showcase.component';
 import { SessionStore } from '../../../../core/state/session.store';
 
 @Component({
@@ -15,10 +14,16 @@ export class LoginPageComponent {
   private readonly router = inject(Router);
   protected readonly session = inject(SessionStore);
 
+  protected readonly showPassword = signal(false);
+
   protected readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
   });
+
+  protected togglePassword(): void {
+    this.showPassword.update((v) => !v);
+  }
 
   protected submit(): void {
     if (this.form.invalid) {
@@ -33,8 +38,6 @@ export class LoginPageComponent {
   }
 
   protected socialLogin(provider: string): void {
-    // In a real app, you would use Google/Apple/Facebook SDKs here.
-    // For this prototype, we'll demonstrate the flow with a dummy token.
     const dummyToken = 'dummy-token-' + Date.now();
     this.session.socialLogin(provider, dummyToken).subscribe(() => {
       this.router.navigateByUrl(this.session.isAdmin() ? '/admin' : '/workspace');

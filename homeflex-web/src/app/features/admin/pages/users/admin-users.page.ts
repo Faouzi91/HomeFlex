@@ -59,9 +59,7 @@ export class AdminUsersPageComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
-          this.users.update((list) =>
-            list.map((u) => (u.id === updated.id ? updated : u)),
-          );
+          this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
           this.actionLoading.set(null);
         },
         error: () => this.actionLoading.set(null),
@@ -75,9 +73,7 @@ export class AdminUsersPageComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updated) => {
-          this.users.update((list) =>
-            list.map((u) => (u.id === updated.id ? updated : u)),
-          );
+          this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
           this.actionLoading.set(null);
         },
         error: () => this.actionLoading.set(null),

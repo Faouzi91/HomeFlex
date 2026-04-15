@@ -2,6 +2,17 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-15 (Security Hardening & PII Protection)
+
+### Security Hardening 🛡️
+
+- **PII Encryption**: Upgraded from insecure AES/ECB to **AES-256-GCM** (Authenticated Encryption) with random per-record IVs for all sensitive user data.
+- **Secret Management**: Removed all hardcoded default secrets from `application.yml` and `docker-compose.yml`. Secrets like `JWT_SECRET`, `PII_ENCRYPTION_KEY`, and `STRIPE_SECRET_KEY` must now be provided via environment variables.
+- **Infrastructure Isolation**: Restricted all backend infrastructure (PostgreSQL, Redis, RabbitMQ, Elasticsearch, Kibana, Logstash) to the internal Docker network. Host port mappings were removed to prevent external access.
+- **Elasticsearch Security**: Enabled mandatory X-Pack security and authentication for the Elasticsearch cluster.
+- **Secure Cookies**: Enforced `Secure` flag on JWT cookies by default (`app.jwt.cookie.secure: true`).
+- **Prometheus Security**: Replaced hardcoded metrics scrape tokens with environment variable references.
+
 ## [Unreleased] — 2026-04-14 (Round 12 — Admin Console & Role-Based Profiles)
 
 ### Added — Separated Admin Console

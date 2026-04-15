@@ -1,4 +1,12 @@
-import { Component, computed, effect, ElementRef, HostListener, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SessionStore } from '../../../core/state/session.store';

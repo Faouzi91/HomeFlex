@@ -44,7 +44,8 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Innovative Tech** — **Blockchain-backed lease contracts** and **AI-driven pricing recommendations**
 - **B2B Foundation** — Multi-tenant **Agency white-labeling** architecture
 - **Trust & Safety** — Two-way reviews, **Trust Scores**, and **Dispute Resolution** with evidence upload
-- **Compliance** — **App-level PII encryption** and full **GDPR tooling** (Export/Erase)
+- **Compliance** — **AES-256-GCM PII encryption** and full **GDPR tooling** (Export/Erase)
+- **Security Hardening** — Mandatory environment-based secrets, zero-trust infrastructure isolation, and X-Pack enabled Elasticsearch.
 
 ## Quick Start (Docker)
 

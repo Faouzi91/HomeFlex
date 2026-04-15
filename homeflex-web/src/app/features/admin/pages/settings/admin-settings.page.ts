@@ -80,7 +80,8 @@ export class AdminSettingsPageComponent {
           this.passwordForm.reset();
           setTimeout(() => this.passwordMessage.set(''), 3000);
         },
-        error: (err) => this.passwordMessage.set(err.error?.message || 'Failed to change password.'),
+        error: (err) =>
+          this.passwordMessage.set(err.error?.message || 'Failed to change password.'),
       });
   }
 

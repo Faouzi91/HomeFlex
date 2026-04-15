@@ -1,153 +1,633 @@
-<div class="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-  <div class="sm:mx-auto sm:w-full sm:max-w-xl">
-    <div class="flex justify-center">
-      <div
-        class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500 text-white shadow-lg shadow-brand-100"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="2.5"
-          stroke="currentColor"
-          class="h-7 w-7"
+<div class="min-h-screen flex">
+  <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-slate-900">
+    <img
+      src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=80"
+      alt="HomeFlex account journey"
+      class="absolute inset-0 h-full w-full object-cover opacity-40"
+    />
+    <div class="relative z-10 flex w-full flex-col justify-between p-12">
+      <a routerLink="/" class="flex items-center gap-2.5">
+        <div
+          class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-          />
-        </svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke="currentColor"
+            class="h-5 w-5 text-white"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+            />
+          </svg>
+        </div>
+        <span class="text-lg font-bold text-white">HomeFlex</span>
+      </a>
+
+      <div class="max-w-md">
+        <h1 class="text-4xl font-extrabold leading-tight text-white">
+          Create one account for every move you make.
+        </h1>
+        <p class="mt-4 text-lg text-white/70">
+          Start as a renter or host, then keep homes, vehicles, bookings, and conversations in one
+          polished workspace.
+        </p>
+
+        <div class="mt-8 grid gap-4 sm:grid-cols-2">
+          <div class="rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
+            <p class="text-2xl font-extrabold text-white">10K+</p>
+            <p class="mt-1 text-sm text-white/60">Verified homes and rides ready to book.</p>
+          </div>
+          <div class="rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
+            <p class="text-2xl font-extrabold text-white">24/7</p>
+            <p class="mt-1 text-sm text-white/60">
+              Support across requests, payments, and stay flow.
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-8 space-y-4">
+          <div class="flex items-start gap-3">
+            <div
+              class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500/20"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-3.5 h-3.5 text-green-400"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white">Switch from discovery to booking fast</p>
+              <p class="text-sm text-white/50">
+                Favorites, availability, and inquiries stay connected from your first session.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div
+              class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500/20"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="w-3.5 h-3.5 text-green-400"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white">Host with confidence when you're ready</p>
+              <p class="text-sm text-white/50">
+                Start as a tenant today and expand into property or fleet management later.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-md rounded-xl bg-white/10 backdrop-blur-sm p-5">
+        <p class="text-sm text-white/80 italic leading-relaxed">
+          "HomeFlex made it easy to browse apartments, compare vehicles for airport pickup, and keep
+          every confirmation in one place."
+        </p>
+        <div class="mt-3 flex items-center gap-3">
+          <div
+            class="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold text-white"
+          >
+            AM
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-white">Amina M.</p>
+            <p class="text-xs text-white/50">Member since 2025</p>
+          </div>
+        </div>
       </div>
     </div>
-    <h2 class="mt-6 text-center text-3xl font-extrabold text-slate-900">Create your account</h2>
-    <p class="mt-2 text-center text-sm text-slate-600">
-      Already have an account?
-      <a routerLink="/login" class="font-bold text-brand-600 hover:text-brand-500"> Sign in </a>
-    </p>
   </div>
 
-  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-xl">
-    <div class="bg-white py-8 px-4 shadow-zillow border border-slate-100 sm:rounded-2xl sm:px-10">
+  <div
+    class="flex w-full flex-col justify-center overflow-y-auto bg-white px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24"
+  >
+    <div class="mb-8 lg:hidden">
+      <a routerLink="/" class="flex items-center gap-2.5">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2.5"
+            stroke="currentColor"
+            class="h-5 w-5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+            />
+          </svg>
+        </div>
+        <span class="text-lg font-bold text-slate-900">HomeFlex</span>
+      </a>
+    </div>
+
+    <div class="mx-auto w-full max-w-[400px]">
+      <div>
+        <h2 class="text-2xl font-extrabold text-slate-900">Create your account</h2>
+        <p class="mt-1.5 text-sm text-slate-500">
+          Start with the experience that fits you today and keep everything under one login.
+        </p>
+      </div>
+
+      <div class="mt-7 space-y-3">
+        <button
+          (click)="socialLogin('google')"
+          class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
+          Continue with Google
+        </button>
+        <button
+          (click)="socialLogin('apple')"
+          class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+            />
+          </svg>
+          Continue with Apple
+        </button>
+        <button
+          (click)="socialLogin('facebook')"
+          class="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24">
+            <path
+              d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078V12h3.047V9.356c0-3.007 1.791-4.668 4.533-4.668 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874V12h3.328l-.532 3.47h-2.796v8.385C19.612 22.954 24 17.99 24 12z"
+              fill="#1877F2"
+            />
+            <path
+              d="M16.671 15.47L17.203 12h-3.328V9.75c0-.949.465-1.874 1.956-1.874h1.513V4.923s-1.374-.235-2.686-.235c-2.742 0-4.533 1.66-4.533 4.668V12H7.078v3.47h3.047v8.385a12.09 12.09 0 003.75 0V15.47h2.796z"
+              fill="white"
+            />
+          </svg>
+          Continue with Facebook
+        </button>
+      </div>
+
+      <div class="relative my-7">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-slate-200"></div>
+        </div>
+        <div class="relative flex justify-center">
+          <span class="bg-white px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            or create an account with email
+          </span>
+        </div>
+      </div>
+
+      <!-- Error -->
       @if (session.error()) {
-        <div class="mb-6 rounded-md bg-rose-50 p-4 border border-rose-100">
-          <p class="text-sm font-bold text-rose-700">{{ session.error() }}</p>
+        <div class="mb-5 flex items-start gap-3 rounded-lg bg-rose-50 border border-rose-200 p-3.5">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="w-5 h-5 text-rose-500 mt-0.5 shrink-0"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <p class="text-sm font-medium text-rose-700">{{ session.error() }}</p>
         </div>
       }
 
-      <form class="space-y-6" [formGroup]="form" (ngSubmit)="submit()">
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <label for="firstName" class="block text-sm font-bold text-slate-700">
-              First name
-            </label>
-            <div class="mt-1">
-              <input
-                id="firstName"
-                type="text"
-                formControlName="firstName"
-                autocomplete="given-name"
-                required
-                class="appearance-none block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
-                placeholder="e.g. Aboub"
-              />
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+        <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold text-slate-700">How do you want to start?</p>
+              <p class="mt-1 text-xs leading-relaxed text-slate-500">
+                Choose the path that matches your first goal. You can still explore both homes and
+                rides after signing up.
+              </p>
             </div>
+            <span
+              class="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 ring-1 ring-slate-200"
+            >
+              Step 1
+            </span>
           </div>
 
-          <div>
-            <label for="lastName" class="block text-sm font-bold text-slate-700"> Last name </label>
-            <div class="mt-1">
-              <input
-                id="lastName"
-                type="text"
-                formControlName="lastName"
-                autocomplete="family-name"
-                required
-                class="appearance-none block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
-                placeholder="e.g. Njoya"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label for="email" class="block text-sm font-bold text-slate-700"> Email address </label>
-          <div class="mt-1">
-            <input
-              id="email"
-              type="email"
-              formControlName="email"
-              autocomplete="email"
-              required
-              class="appearance-none block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
-              placeholder="you@example.com"
-            />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <label for="phone" class="block text-sm font-bold text-slate-700"> Phone </label>
-            <div class="mt-1">
-              <input
-                id="phone"
-                type="tel"
-                formControlName="phoneNumber"
-                autocomplete="tel"
-                required
-                class="appearance-none block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
-                placeholder="+237 6xx xx xx xx"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label for="role" class="block text-sm font-bold text-slate-700"> Account type </label>
-            <div class="mt-1">
-              <select
-                id="role"
-                formControlName="role"
-                class="block w-full px-4 py-3 border border-slate-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm font-bold text-slate-700"
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              (click)="selectRole('TENANT')"
+              class="relative flex min-h-[132px] flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all"
+              [class]="
+                form.get('role')?.value === 'TENANT'
+                  ? 'border-brand-500 bg-white shadow-sm ring-2 ring-brand-500/15'
+                  : 'border-slate-200 bg-white/80 hover:border-slate-300 hover:bg-white'
+              "
+            >
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-full"
+                [class]="
+                  form.get('role')?.value === 'TENANT'
+                    ? 'bg-brand-100 text-brand-600'
+                    : 'bg-slate-100 text-slate-500'
+                "
               >
-                <option value="TENANT">Renter (Book items)</option>
-                <option value="LANDLORD">Host (List items)</option>
-              </select>
-            </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.7"
+                  stroke="currentColor"
+                  class="h-5 w-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p
+                  class="text-sm font-bold"
+                  [class]="
+                    form.get('role')?.value === 'TENANT' ? 'text-brand-700' : 'text-slate-800'
+                  "
+                >
+                  Find a rental
+                </p>
+                <p
+                  class="mt-1 text-xs leading-relaxed"
+                  [class]="
+                    form.get('role')?.value === 'TENANT' ? 'text-brand-600/80' : 'text-slate-500'
+                  "
+                >
+                  Book properties and vehicles with one clean account.
+                </p>
+              </div>
+              @if (form.get('role')?.value === 'TENANT') {
+                <div
+                  class="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="h-3.5 w-3.5"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+              }
+            </button>
+
+            <button
+              type="button"
+              (click)="selectRole('LANDLORD')"
+              class="relative flex min-h-[132px] flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all"
+              [class]="
+                form.get('role')?.value === 'LANDLORD'
+                  ? 'border-brand-500 bg-white shadow-sm ring-2 ring-brand-500/15'
+                  : 'border-slate-200 bg-white/80 hover:border-slate-300 hover:bg-white'
+              "
+            >
+              <div
+                class="flex h-10 w-10 items-center justify-center rounded-full"
+                [class]="
+                  form.get('role')?.value === 'LANDLORD'
+                    ? 'bg-brand-100 text-brand-600'
+                    : 'bg-slate-100 text-slate-500'
+                "
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.7"
+                  stroke="currentColor"
+                  class="h-5 w-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p
+                  class="text-sm font-bold"
+                  [class]="
+                    form.get('role')?.value === 'LANDLORD' ? 'text-brand-700' : 'text-slate-800'
+                  "
+                >
+                  List my property
+                </p>
+                <p
+                  class="mt-1 text-xs leading-relaxed"
+                  [class]="
+                    form.get('role')?.value === 'LANDLORD' ? 'text-brand-600/80' : 'text-slate-500'
+                  "
+                >
+                  Start earning from your home and manage requests with ease.
+                </p>
+              </div>
+              @if (form.get('role')?.value === 'LANDLORD') {
+                <div
+                  class="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-brand-500 text-white"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="h-3.5 w-3.5"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+              }
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="firstName" class="block text-sm font-semibold text-slate-700 mb-1.5"
+              >First name</label
+            >
+            <input
+              id="firstName"
+              type="text"
+              formControlName="firstName"
+              autocomplete="given-name"
+              placeholder="Jean"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all hover:border-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              [class.border-rose-400]="
+                form.get('firstName')?.invalid && form.get('firstName')?.touched
+              "
+            />
+            @if (form.get('firstName')?.hasError('required') && form.get('firstName')?.touched) {
+              <p class="mt-1 text-xs font-medium text-rose-600">First name is required</p>
+            }
+          </div>
+          <div>
+            <label for="lastName" class="block text-sm font-semibold text-slate-700 mb-1.5"
+              >Last name</label
+            >
+            <input
+              id="lastName"
+              type="text"
+              formControlName="lastName"
+              autocomplete="family-name"
+              placeholder="Dupont"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all hover:border-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              [class.border-rose-400]="
+                form.get('lastName')?.invalid && form.get('lastName')?.touched
+              "
+            />
+            @if (form.get('lastName')?.hasError('required') && form.get('lastName')?.touched) {
+              <p class="mt-1 text-xs font-medium text-rose-600">Last name is required</p>
+            }
           </div>
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-bold text-slate-700"> Password </label>
-          <div class="mt-1">
+          <label for="reg-email" class="block text-sm font-semibold text-slate-700 mb-1.5"
+            >Email address</label
+          >
+          <input
+            id="reg-email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all hover:border-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            [class.border-rose-400]="form.get('email')?.invalid && form.get('email')?.touched"
+          />
+          @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+            <p class="mt-1 text-xs font-medium text-rose-600">Email is required</p>
+          } @else if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+            <p class="mt-1 text-xs font-medium text-rose-600">Please enter a valid email address</p>
+          }
+        </div>
+
+        <div>
+          <label for="phone" class="block text-sm font-semibold text-slate-700 mb-1.5">
+            Phone number
+            <span class="font-normal text-slate-400">(optional)</span>
+          </label>
+          <input
+            id="phone"
+            type="tel"
+            formControlName="phoneNumber"
+            autocomplete="tel"
+            placeholder="+237 6xx xx xx xx"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all hover:border-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+          />
+        </div>
+
+        <div>
+          <label for="reg-password" class="block text-sm font-semibold text-slate-700 mb-1.5"
+            >Password</label
+          >
+          <div class="relative">
             <input
-              id="password"
-              type="password"
+              id="reg-password"
+              [type]="showPassword() ? 'text' : 'password'"
               formControlName="password"
               autocomplete="new-password"
-              required
-              class="appearance-none block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
-              placeholder="Create a strong password"
+              placeholder="Min. 8 characters"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 pr-11 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition-all hover:border-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+              [class.border-rose-400]="
+                form.get('password')?.invalid && form.get('password')?.touched
+              "
             />
+            <button
+              type="button"
+              (click)="togglePassword()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              tabindex="-1"
+            >
+              @if (showPassword()) {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-5 h-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
+                  />
+                </svg>
+              } @else {
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-5 h-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
+                </svg>
+              }
+            </button>
           </div>
+
+          @if (form.get('password')?.value) {
+            <div class="mt-2">
+              <div class="flex gap-1">
+                @for (i of [1, 2, 3, 4]; track i) {
+                  <div
+                    class="h-1 flex-1 rounded-full transition-colors"
+                    [class]="
+                      i <= passwordStrength().score ? passwordStrength().color : 'bg-slate-200'
+                    "
+                  ></div>
+                }
+              </div>
+              <div class="mt-1 flex items-center justify-between">
+                <p
+                  class="text-xs font-medium"
+                  [class]="{
+                    'text-rose-600': passwordStrength().score === 1,
+                    'text-amber-600': passwordStrength().score === 2,
+                    'text-blue-600': passwordStrength().score === 3,
+                    'text-green-600': passwordStrength().score === 4,
+                  }"
+                >
+                  {{ passwordStrength().label }}
+                </p>
+                <p class="text-[11px] text-slate-400">Use letters, numbers, and symbols</p>
+              </div>
+            </div>
+          }
+
+          @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+            <p class="mt-1 text-xs font-medium text-rose-600">Password is required</p>
+          } @else if (
+            form.get('password')?.hasError('minlength') && form.get('password')?.touched
+          ) {
+            <p class="mt-1 text-xs font-medium text-rose-600">
+              Password must be at least 8 characters
+            </p>
+          }
         </div>
 
-        <div>
-          <button
-            type="submit"
-            [disabled]="session.pending()"
-            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-lg text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 shadow-brand-100"
-          >
-            {{ session.pending() ? 'Creating account...' : 'Create account' }}
-          </button>
-        </div>
+        <button
+          type="submit"
+          [disabled]="session.pending()"
+          class="w-full rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          @if (session.pending()) {
+            <span class="flex items-center justify-center gap-2">
+              <svg
+                class="h-4 w-4 animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Creating account...
+            </span>
+          } @else {
+            Create account
+          }
+        </button>
       </form>
 
-      <div class="mt-8 pt-6 border-t border-slate-100">
-        <p class="text-xs text-center text-slate-400 font-medium">
-          By registering, you agree to our <a href="#" class="underline">Terms of Service</a> and
-          <a href="#" class="underline">Privacy Policy</a>.
-        </p>
-      </div>
+      <p class="mt-7 text-center text-sm text-slate-500">
+        Already have an account?
+        <a
+          routerLink="/login"
+          class="font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+          >Sign in</a
+        >
+      </p>
+
+      <p class="mt-6 text-center text-[11px] text-slate-400 leading-relaxed">
+        By creating an account, you agree to our
+        <a href="#" class="underline hover:text-slate-500">Terms of Service</a>
+        and
+        <a href="#" class="underline hover:text-slate-500">Privacy Policy</a>.
+      </p>
     </div>
   </div>
 </div>

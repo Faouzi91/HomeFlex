@@ -2,7 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin, of, switchMap, from } from 'rxjs';
+import { Observable, catchError, forkJoin, of, switchMap, from } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { loadStripe } from '@stripe/stripe-js';
 import { TranslateModule } from '@ngx-translate/core';
@@ -34,7 +34,9 @@ import {
   MaintenanceStatus,
   Message,
   NotificationItem,
+  PropertyLease,
   Property,
+  PropertyImage,
   Receipt,
   ReportItem,
   User,
@@ -100,7 +102,7 @@ export class WorkspacePageComponent {
   protected readonly favorites = signal<Property[]>([]);
   protected readonly propertyBookings = signal<Booking[]>([]);
   protected readonly vehicleBookings = signal<VehicleBooking[]>([]);
-  protected readonly myLeases = signal<any[]>([]);
+  protected readonly myLeases = signal<PropertyLease[]>([]);
   protected readonly myMaintenanceRequests = signal<MaintenanceRequest[]>([]);
   protected readonly landlordMaintenanceRequests = signal<MaintenanceRequest[]>([]);
   protected readonly notifications = signal<NotificationItem[]>([]);
@@ -123,12 +125,15 @@ export class WorkspacePageComponent {
   protected readonly selectedRoomId = signal('');
   protected readonly selectedHostPropertyId = signal('');
   protected readonly selectedHostVehicleId = signal('');
+  protected readonly editingPropertyId = signal('');
   protected readonly selectedMaintenanceRequestId = signal('');
   protected readonly maintenanceDetail = signal<MaintenanceRequest | null>(null);
   protected readonly profileMessage = signal('');
   protected readonly passwordMessage = signal('');
   protected readonly hostMessage = signal('');
   protected readonly propertyImages = signal<File[]>([]);
+  protected readonly propertyImagePreviews = signal<string[]>([]);
+  protected readonly existingPropertyImages = signal<PropertyImage[]>([]);
   protected readonly vehicleImages = signal<File[]>([]);
   protected readonly maintenanceImages = signal<File[]>([]);
 
@@ -253,6 +258,9 @@ export class WorkspacePageComponent {
   protected loadWorkspace(): void {
     const user = this.session.user();
     if (!user) return;
+    const isTenant = this.session.isTenant();
+    const isLandlord = this.session.isLandlord();
+    const isAdmin = this.session.isAdmin();
 
     // Patch profile form immediately — don't wait for forkJoin which may fail
     this.profileForm.patchValue({
@@ -266,36 +274,56 @@ export class WorkspacePageComponent {
     });
 
     forkJoin({
-      favorites: this.favoriteApi.getAll(),
-      propertyBookings: this.bookingApi.getMine(),
-      vehicleBookings: this.vehicleApi.getMyBookings(),
-      notifications: this.notificationApi.getAll(),
-      chatRooms: this.chatApi.getRooms(),
+      favorites: this.safeRequest(this.favoriteApi.getAll(), { data: [] }),
+      propertyBookings:
+        isTenant || isAdmin
+          ? this.safeRequest(this.bookingApi.getMine(), { data: [] })
+          : of({ data: [] }),
+      vehicleBookings: this.safeRequest(this.vehicleApi.getMyBookings(), { data: [] }),
+      notifications: this.safeRequest(this.notificationApi.getAll(), { data: [] }),
+      chatRooms: this.safeRequest(this.chatApi.getRooms(), { data: [] }),
       myProperties:
-        this.session.isLandlord() || this.session.isAdmin()
-          ? this.propertyApi.getMine()
+        isLandlord || isAdmin
+          ? this.safeRequest(this.propertyApi.getMine(), { data: [] })
           : of({ data: [] }),
       myVehicles:
-        this.session.isLandlord() || this.session.isAdmin()
-          ? this.vehicleApi.getMine()
+        isLandlord || isAdmin
+          ? this.safeRequest(this.vehicleApi.getMine(), {
+              data: [],
+              page: 0,
+              size: 0,
+              totalElements: 0,
+              totalPages: 0,
+            })
           : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
-      analytics: this.session.isAdmin() ? this.adminApi.getAnalytics() : of(null),
-      pendingProperties: this.session.isAdmin()
-        ? this.adminApi.getPendingProperties()
+      analytics: isAdmin ? this.safeRequest(this.adminApi.getAnalytics(), null) : of(null),
+      pendingProperties: isAdmin
+        ? this.safeRequest(this.adminApi.getPendingProperties(), {
+            data: [],
+            page: 0,
+            size: 0,
+            totalElements: 0,
+            totalPages: 0,
+          })
         : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
-      reports: this.session.isAdmin()
-        ? this.adminApi.getReports()
+      reports: isAdmin
+        ? this.safeRequest(this.adminApi.getReports(), {
+            data: [],
+            page: 0,
+            size: 0,
+            totalElements: 0,
+            totalPages: 0,
+          })
         : of({ data: [], page: 0, size: 0, totalElements: 0, totalPages: 0 }),
-      disputes: this.session.isAdmin() ? this.disputeApi.getAll() : of([]),
-      agencies: this.session.isAdmin() ? this.agencyApi.getAll() : of([]),
-      myLeases: this.leaseApi.getMine(),
-      myReceipts: this.financeApi.getMyReceipts(),
-      myInsurance: this.insuranceApi.getPlans('TENANT'),
-      myMaintenance: this.maintenanceApi.getMine(),
-      landlordMaintenance:
-        this.session.isLandlord() || this.session.isAdmin()
-          ? this.maintenanceApi.getLandlord()
-          : of([]),
+      disputes: isAdmin ? this.safeRequest(this.disputeApi.getAll(), []) : of([]),
+      agencies: isAdmin ? this.safeRequest(this.agencyApi.getAll(), []) : of([]),
+      myLeases: this.safeRequest(this.leaseApi.getMine(), [] as PropertyLease[]),
+      myReceipts: this.safeRequest(this.financeApi.getMyReceipts(), []),
+      myInsurance: this.safeRequest(this.insuranceApi.getPlans('TENANT'), []),
+      myMaintenance: isTenant ? this.safeRequest(this.maintenanceApi.getMine(), []) : of([]),
+      landlordMaintenance: isLandlord
+        ? this.safeRequest(this.maintenanceApi.getLandlord(), [])
+        : of([]),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((response) => {
@@ -315,16 +343,32 @@ export class WorkspacePageComponent {
         if (Array.isArray(response.agencies)) {
           this.agencies.set(response.agencies);
         }
-        this.myLeases.set(response.myLeases.data);
+        this.myLeases.set(response.myLeases);
         this.allReceipts.set(response.myReceipts);
         this.myMaintenanceRequests.set(response.myMaintenance);
         this.landlordMaintenanceRequests.set(response.landlordMaintenance);
+
+        if ((isLandlord || isAdmin) && response.myProperties.data.length > 0) {
+          const stillSelected = response.myProperties.data.some(
+            (property) => property.id === this.selectedHostPropertyId(),
+          );
+          this.loadHostBookings(
+            stillSelected ? this.selectedHostPropertyId() : response.myProperties.data[0].id,
+          );
+        } else {
+          this.selectedHostPropertyId.set('');
+          this.hostBookings.set([]);
+        }
       });
 
-    if (this.session.isLandlord() || this.session.isAdmin()) {
+    if (isLandlord || isAdmin) {
       this.loadKycStatus();
       this.loadPayoutSummary();
     }
+  }
+
+  private safeRequest<T>(request: Observable<T>, fallback: T): Observable<T> {
+    return request.pipe(catchError(() => of(fallback)));
   }
 
   protected loadKycStatus(): void {
@@ -534,7 +578,28 @@ export class WorkspacePageComponent {
   }
 
   protected onPropertyImagesSelected(event: any): void {
-    this.propertyImages.set(Array.from(event.target.files));
+    const files = Array.from(event.target.files) as File[];
+    this.propertyImages.set([...this.propertyImages(), ...files]);
+
+    // Generate previews
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.propertyImagePreviews.update((prev) => [...prev, e.target.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  protected removeNewImage(index: number): void {
+    this.propertyImages.update((prev) => prev.filter((_, i) => i !== index));
+    this.propertyImagePreviews.update((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  protected removeExistingImage(imageId: string): void {
+    this.existingPropertyImages.update((prev) => prev.filter((img) => img.id !== imageId));
+    // Note: We might want to call an API here if we want immediate deletion,
+    // but for now we'll just track it for the 'update' call or local filtering.
   }
 
   protected createProperty(): void {
@@ -555,6 +620,81 @@ export class WorkspacePageComponent {
       .subscribe(() => {
         this.propertyForm.reset();
         this.propertyImages.set([]);
+        this.propertyImagePreviews.set([]);
+        this.existingPropertyImages.set([]);
+        this.hostMessage.set('Property published successfully!');
+        setTimeout(() => this.hostMessage.set(''), 3000);
+        this.loadWorkspace();
+      });
+  }
+
+  protected editProperty(property: Property): void {
+    this.editingPropertyId.set(property.id);
+    this.propertyForm.patchValue({
+      title: property.title,
+      description: property.description,
+      propertyType: property.propertyType,
+      listingType: property.listingType,
+      price: property.price,
+      currency: property.currency,
+      address: property.address,
+      city: property.city,
+      stateProvince: property.stateProvince,
+      country: property.country,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      areaSqm: property.areaSqm,
+      availableFrom: property.availableFrom ?? '',
+    });
+    this.existingPropertyImages.set(property.images || []);
+    this.propertyImages.set([]);
+    this.propertyImagePreviews.set([]);
+    // Scroll the form into view on mobile
+    document.querySelector('.property-form-aside')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  protected updateProperty(): void {
+    if (this.propertyForm.invalid || !this.editingPropertyId()) return;
+    this.propertyApi
+      .update(this.editingPropertyId(), this.propertyForm.value as any)
+      .pipe(
+        switchMap((prop) => {
+          if (this.propertyImages().length > 0) {
+            return this.propertyApi
+              .uploadImages(prop.id, this.propertyImages())
+              .pipe(switchMap(() => of(prop)));
+          }
+          return of(prop);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.editingPropertyId.set('');
+        this.propertyForm.reset();
+        this.propertyImages.set([]);
+        this.propertyImagePreviews.set([]);
+        this.existingPropertyImages.set([]);
+        this.hostMessage.set('Property updated successfully!');
+        setTimeout(() => this.hostMessage.set(''), 3000);
+        this.loadWorkspace();
+      });
+  }
+
+  protected deleteProperty(id: string): void {
+    if (!confirm('Are you sure you want to delete this property? This action cannot be undone.'))
+      return;
+    this.propertyApi
+      .delete(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.editingPropertyId() === id) {
+          this.editingPropertyId.set('');
+          this.propertyForm.reset();
+        }
+        if (this.selectedHostPropertyId() === id) {
+          this.selectedHostPropertyId.set('');
+          this.hostBookings.set([]);
+        }
         this.loadWorkspace();
       });
   }

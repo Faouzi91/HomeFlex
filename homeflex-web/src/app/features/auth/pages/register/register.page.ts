@@ -1,7 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthShowcaseComponent } from '../../components/auth-showcase/auth-showcase.component';
 import { SessionStore } from '../../../../core/state/session.store';
 
 @Component({
@@ -15,6 +14,8 @@ export class RegisterPageComponent {
   private readonly router = inject(Router);
   protected readonly session = inject(SessionStore);
 
+  protected readonly showPassword = signal(false);
+
   protected readonly form = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
@@ -23,6 +24,31 @@ export class RegisterPageComponent {
     role: ['TENANT', Validators.required],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
+
+  protected readonly passwordStrength = computed(() => {
+    const pw = this.form.get('password')?.value ?? '';
+    if (!pw) return { score: 0, label: '', color: '' };
+
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (pw.length >= 12) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+    if (score <= 1) return { score: 1, label: 'Weak', color: 'bg-rose-500' };
+    if (score <= 2) return { score: 2, label: 'Fair', color: 'bg-amber-500' };
+    if (score <= 3) return { score: 3, label: 'Good', color: 'bg-blue-500' };
+    return { score: 4, label: 'Strong', color: 'bg-green-500' };
+  });
+
+  protected togglePassword(): void {
+    this.showPassword.update((v) => !v);
+  }
+
+  protected selectRole(role: string): void {
+    this.form.get('role')?.setValue(role);
+  }
 
   protected submit(): void {
     if (this.form.invalid) {
@@ -43,5 +69,12 @@ export class RegisterPageComponent {
       .subscribe(() => {
         this.router.navigateByUrl('/workspace');
       });
+  }
+
+  protected socialLogin(provider: string): void {
+    const dummyToken = 'dummy-token-' + Date.now();
+    this.session.socialLogin(provider, dummyToken).subscribe(() => {
+      this.router.navigateByUrl(this.session.isAdmin() ? '/admin' : '/workspace');
+    });
   }
 }

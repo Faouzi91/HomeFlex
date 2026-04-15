@@ -1366,19 +1366,19 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 
 ## 6.4 Security
 
-| ID        | Requirement           | Target                           |
-| --------- | --------------------- | -------------------------------- | ----------------------------- |
-| NFR-SEC1  | Authentication        | JWT Bearer tokens (localStorage) | 🟢 (httpOnly cookies planned) |
-| NFR-SEC2  | Encryption at rest    | AES-256 for data stores          | 🔴 Planned                    |
-| NFR-SEC3  | Encryption in transit | TLS for connections              | 🟡 (Docker internal is HTTP)  |
-| NFR-SEC4  | PCI DSS compliance    | Level 1 (via Stripe)             | 🟢 (Stripe handles card data) |
-| NFR-SEC5  | GDPR compliance       | Right to erasure, consent        | 🔴 Planned                    |
-| NFR-SEC6  | Rate limiting         | Per-user and per-IP              | 🔴 Planned (requires Redis)   |
-| NFR-SEC7  | Input validation      | Jakarta validation on DTOs       | 🟢                            |
-| NFR-SEC8  | WAF                   | AWS WAF                          | 🔴 Planned                    |
-| NFR-SEC9  | Secrets management    | Environment variables            | 🟡 (Secrets Manager planned)  |
-| NFR-SEC10 | Penetration testing   | Annual pentest                   | 🔴 Planned                    |
-| NFR-SEC11 | Dependency scanning   | CVE scanning in CI               | 🔴 Planned                    |
+| ID        | Requirement           | Target                                   | Status                        |
+| --------- | --------------------- | ---------------------------------------- | ----------------------------- |
+| NFR-SEC1  | Authentication        | JWT with httpOnly/Secure cookies         | 🟢 Implemented                |
+| NFR-SEC2  | Encryption at rest    | AES-256-GCM for PII data                 | 🟢 Implemented                |
+| NFR-SEC3  | Encryption in transit | TLS 1.3 for external connections         | 🟡 (Docker internal is HTTP)  |
+| NFR-SEC4  | PCI DSS compliance    | Level 1 (via Stripe)                     | 🟢 (Stripe handles card data) |
+| NFR-SEC5  | GDPR compliance       | Right to erasure, consent tools          | 🟢 Implemented                |
+| NFR-SEC6  | Rate limiting         | Distributed bucket-4j (Redis)            | 🟢 Implemented                |
+| NFR-SEC7  | Input validation      | Jakarta validation on DTOs               | 🟢 Implemented                |
+| NFR-SEC8  | Infrastructure        | Zero-trust isolation (Internal network)  | 🟢 Implemented                |
+| NFR-SEC9  | Secrets management    | Environment-only (Secrets Manager ready) | 🟢 Implemented                |
+| NFR-SEC10 | Penetration testing   | Annual pentest                           | 🔴 Planned                    |
+| NFR-SEC11 | Dependency scanning   | CVE scanning in CI (Dependabot)          | 🟢 Implemented                |
 
 ## 6.5 Accessibility
 

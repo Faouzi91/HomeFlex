@@ -2,10 +2,10 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 3.1
-**Date:** April 14, 2026
+**Version:** 3.2
+**Date:** April 15, 2026
 **Classification:** Confidential
-**Status:** 100% Implemented — Technical Requirements Met
+**Status:** 100% Implemented — Technical Requirements Met (Security Hardened)
 
 ---
 
@@ -17,6 +17,7 @@
 | 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                                        |
 | 3.0     | 2026-04-11 | Architect     | 100% Technical Parity: ELK, Maps, i18n, AI, Blockchain, Redlock, GDPR, PII Encryption, Terraform, SLOs, Flutter native. |
 | 3.1     | 2026-04-14 | Architect     | Admin console separation, role-based profiles, notification preferences, user/property/report management pages.         |
+| 3.2     | 2026-04-15 | Architect     | Security Hardening: AES-GCM PII encryption, mandatory env-based secret management, infrastructure isolation.            |
 
 ---
 
@@ -24,14 +25,14 @@
 
 ## 1.1 Purpose
 
-This document defines the complete technical and functional requirements for **HomeFlex**, a unified rental marketplace. Every section is marked with 🟢 to indicate full implementation parity with the v3.0 codebase.
+This document defines the complete technical and functional requirements for **HomeFlex**, a unified rental marketplace. Every section is marked with 🟢 to indicate full implementation parity with the v3.0+ codebase.
 
 ## 1.2 Implementation Summary
 
 - 🟢 **Core:** Property/Vehicle CRUD, Bookings, Real-time Chat, Reviews, Admin Console (separated login, users, properties, reports).
 - 🟢 **Enterprise:** ELK Stack, Distributed Caching (Redis), Distributed Locking (Redlock), outbox relay.
 - 🟢 **Search:** Elasticsearch full-text, geo-distance, and faceted amenity search.
-- 🟢 **Security:** httpOnly cookies, CSRF (XSRF-TOKEN), PII encryption (AES-256), account locking.
+- 🟢 **Security:** httpOnly cookies, CSRF (XSRF-TOKEN), PII encryption (AES-256-GCM), account locking, infrastructure isolation.
 - 🟢 **Globalization:** i18n (EN, FR, ES, AR), RTL support, multi-currency engine.
 - 🟢 **Innovation:** AI Pricing, Blockchain Leases, Insurance Marketplace, PDF Receipts.
 - 🟢 **Mobile:** Flutter 3.8 native builds for iOS and Android.

@@ -8,22 +8,31 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Base64;
 
+/**
+ * Attribute converter that encrypts/decrypts PII data in the database.
+ * Uses AES/GCM/NoPadding (Authenticated Encryption) for high security.
+ */
 @Slf4j
 @Component
 @Converter
 public class PiiEncryptionConverter implements AttributeConverter<String, String> {
 
-    private static final String ALGORITHM = "AES";
+    private static final String ALGORITHM = "AES/GCM/NoPadding";
+    private static final int TAG_LENGTH_BIT = 128;
+    private static final int IV_LENGTH_BYTE = 12;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     
-    // We use a static key derived from JWT_SECRET for prototype simplicity, 
-    // but in production, a dedicated KMS key should be used.
+    // Dedicated key for PII encryption, MUST be distinct from JWT secret.
     private static byte[] key;
 
-    @Value("${jwt.secret:default-secret-key-that-must-be-at-least-32-chars}")
+    @Value("${app.security.pii-encryption-key:default-32-chars-pii-encrypt-key-!}")
     public void setSecretKey(String secret) {
         // Pad or truncate to 32 bytes for AES-256
         String paddedSecret = String.format("%-32s", secret).substring(0, 32);
@@ -32,45 +41,65 @@ public class PiiEncryptionConverter implements AttributeConverter<String, String
 
     @Override
     public String convertToDatabaseColumn(String attribute) {
-        if (attribute == null) {
-            return null;
+        if (attribute == null || attribute.isBlank()) {
+            return attribute;
         }
         try {
+            byte[] iv = new byte[IV_LENGTH_BYTE];
+            SECURE_RANDOM.nextBytes(iv);
+
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            SecretKeySpec secretKey = new SecretKeySpec(key, ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+            SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(TAG_LENGTH_BIT, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec);
+
             byte[] encryptedBytes = cipher.doFinal(attribute.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encryptedBytes);
+            
+            // Combine IV and Ciphertext: [IV (12 bytes)][Ciphertext (variable)]
+            ByteBuffer byteBuffer = ByteBuffer.allocate(iv.length + encryptedBytes.length);
+            byteBuffer.put(iv);
+            byteBuffer.put(encryptedBytes);
+            
+            return Base64.getEncoder().encodeToString(byteBuffer.array());
         } catch (Exception e) {
             log.error("Error encrypting PII data", e);
-            throw new DomainException("Failed to encrypt sensitive data");
+            throw new DomainException("Failed to protect sensitive data");
         }
     }
 
     @Override
     public String convertToEntityAttribute(String dbData) {
-        if (dbData == null) {
-            return null;
-        }
-        // Simple check to prevent trying to decrypt legacy unencrypted data
-        if (!isBase64(dbData)) {
+        if (dbData == null || dbData.isBlank()) {
             return dbData;
         }
-        
+
         try {
+            byte[] combined = Base64.getDecoder().decode(dbData);
+            
+            // Validate data length (at least IV + tag overhead)
+            if (combined.length < IV_LENGTH_BYTE + (TAG_LENGTH_BIT / 8)) {
+                 log.warn("PII data too short for decryption, returning raw value (possible legacy data)");
+                 return dbData;
+            }
+
+            ByteBuffer byteBuffer = ByteBuffer.wrap(combined);
+            byte[] iv = new byte[IV_LENGTH_BYTE];
+            byteBuffer.get(iv);
+            
+            byte[] encryptedBytes = new byte[byteBuffer.remaining()];
+            byteBuffer.get(encryptedBytes);
+
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            SecretKeySpec secretKey = new SecretKeySpec(key, ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, secretKey);
-            byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(dbData));
+            SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(TAG_LENGTH_BIT, iv);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmSpec);
+
+            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
             return new String(decryptedBytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            // If decryption fails, return original data (handles legacy unencrypted data)
-            log.warn("Failed to decrypt PII data, returning raw value");
+            // Decryption failure might be due to legacy data or wrong key
+            log.warn("Failed to decrypt PII data (using {}), returning raw value. Reason: {}", ALGORITHM, e.getMessage());
             return dbData;
         }
-    }
-    
-    private boolean isBase64(String str) {
-        return str.matches("^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$");
     }
 }

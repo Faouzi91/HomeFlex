@@ -130,6 +130,46 @@
     @apply w-full rounded border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-brand-500 focus:ring-1 focus:ring-brand-500;
   }
 
+  /* ---------- custom select (Booking.com-inspired) ---------- */
+
+  .select-wrap {
+    @apply relative;
+  }
+
+  .select-wrap select,
+  .select-styled {
+    @apply w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-3.5 pr-10 text-sm font-medium text-slate-800
+           appearance-none cursor-pointer
+           transition-all duration-150
+           outline-none
+           hover:border-slate-400
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20
+           bg-no-repeat;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.5' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-size: 16px 16px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+  }
+
+  .select-wrap select:focus,
+  .select-styled:focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.5' stroke='%23006aff'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  }
+
+  .select-wrap select:disabled,
+  .select-styled:disabled {
+    @apply bg-slate-50 text-slate-400 cursor-not-allowed;
+  }
+
+  /* Compact variant for inline/filter selects */
+  .select-wrap--sm select,
+  .select-styled--sm {
+    @apply py-2 pl-3 pr-9 text-xs;
+    background-position: right 10px center;
+    background-size: 14px 14px;
+  }
+
   /* ---------- buttons ---------- */
 
   .button {
@@ -212,4 +252,3 @@
     @apply text-2xl mb-6;
   }
 }
-

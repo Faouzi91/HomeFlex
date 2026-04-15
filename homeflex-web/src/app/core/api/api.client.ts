@@ -21,6 +21,7 @@ import {
   MaintenanceStatusUpdateRequest,
   Message,
   NotificationItem,
+  PropertyLease,
   PricingRecommendation,
   Property,
   PropertySearchParams,
@@ -428,19 +429,19 @@ export class ApiClient {
   }
 
   // --- Leases ---
-  getMyLeases(): Observable<ApiListResponse<any>> {
+  getMyLeases(): Observable<PropertyLease[]> {
     return this.leases.getMine();
   }
-  getLeaseByBooking(bookingId: string): Observable<any> {
+  getLeaseByBooking(bookingId: string): Observable<PropertyLease> {
     return this.leases.getByBooking(bookingId);
   }
-  generateLease(bookingId: string): Observable<any> {
+  generateLease(bookingId: string): Observable<PropertyLease> {
     return this.leases.generate(bookingId);
   }
-  signLease(leaseId: string): Observable<any> {
+  signLease(leaseId: string): Observable<PropertyLease> {
     return this.leases.sign(leaseId);
   }
-  uploadLeaseTemplate(propertyId: string, file: File): Observable<any> {
+  uploadLeaseTemplate(propertyId: string, file: File): Observable<PropertyLease> {
     return this.leases.uploadTemplate(propertyId, file);
   }
 
