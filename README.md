@@ -45,7 +45,7 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **B2B Foundation** — Multi-tenant **Agency white-labeling** architecture
 - **Trust & Safety** — Two-way reviews, **Trust Scores**, and **Dispute Resolution** with evidence upload
 - **Compliance** — **AES-256-GCM PII encryption** and full **GDPR tooling** (Export/Erase)
-- **Security Hardening** — Mandatory environment-based secrets, zero-trust infrastructure isolation, and X-Pack enabled Elasticsearch.
+- **Security Hardening** — Mandatory environment-based secrets, zero-trust infrastructure isolation, X-Pack Elasticsearch, constant-time token comparison, CSP headers, and production-only DataInitializer guard.
 
 ## Quick Start (Docker)
 
@@ -55,22 +55,41 @@ The fastest way to run everything locally. Spins up 6 services: frontend, backen
 
 - Docker & Docker Compose
 
+### Required environment variables
+
+Before starting, copy `.env.example` and fill in secrets. The following variables **must** be set — the application will fail to start without them:
+
+```bash
+cp rental-backend/.env.example rental-backend/.env
+# then edit rental-backend/.env
+```
+
+| Variable            | Purpose                          |
+| ------------------- | -------------------------------- |
+| `JWT_SECRET`        | HS256 signing key (≥ 32 chars)   |
+| `ADMIN_PASSWORD`    | Initial admin account password   |
+| `PII_ENCRYPTION_KEY`| AES-256-GCM key for PII fields   |
+| `MAIL_USERNAME`     | SMTP sender address              |
+| `MAIL_PASSWORD`     | SMTP credential / app password   |
+| `ELASTIC_PASSWORD`  | Elasticsearch `elastic` user password |
+
 ### Run
 
 ```bash
 git clone <repo-url> && cd HomeFlex
+# Set required env vars (see above), then:
 docker-compose up --build
 ```
 
 Once all containers are healthy (~60s):
 
-| Service             | URL                                    |
-| ------------------- | -------------------------------------- |
-| Web Frontend        | http://localhost                       |
-| Backend API         | http://localhost:8080/api/v1           |
-| Swagger UI          | http://localhost:8080/swagger-ui.html  |
-| Kibana Dashboard    | http://localhost:5601                  |
-| RabbitMQ Management | http://localhost:15672 (guest / guest) |
+| Service             | URL                                              |
+| ------------------- | ------------------------------------------------ |
+| Web Frontend        | http://localhost                                 |
+| Backend API         | http://localhost:8080/api/v1                     |
+| Swagger UI          | Dev profile only — not available in `prod`       |
+| Kibana Dashboard    | Internal network only (no host port in prod)     |
+| RabbitMQ Management | Internal network only (no host port in prod)     |
 
 ### Monitoring (optional)
 

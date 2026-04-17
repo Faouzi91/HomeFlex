@@ -183,16 +183,10 @@ public class AuthService {
     }
 
     public AuthTokens appleLogin(String idToken) {
-        if (idToken.startsWith("dummy-token-")) {
-            return processDummyOAuthLogin("APPLE", "dummy-apple-user", "Apple", "User", "apple.user@example.com");
-        }
         throw new DomainException("Apple OAuth is not configured. Please set APPLE_CLIENT_ID environment variable.");
     }
 
     public AuthTokens facebookLogin(String accessToken) {
-        if (accessToken.startsWith("dummy-token-")) {
-            return processDummyOAuthLogin("FACEBOOK", "dummy-facebook-user", "Facebook", "User", "facebook.user@example.com");
-        }
         throw new DomainException("Facebook OAuth is not configured. Please set FACEBOOK_APP_ID environment variable.");
     }
 
@@ -269,8 +263,11 @@ public class AuthService {
     }
 
     public void sendPasswordResetEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        // Silently ignore non-existent emails to prevent user enumeration
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return;
+        }
 
         // Invalidate any existing reset tokens for this user
         passwordResetTokenRepository.deleteByUserId(user.getId());

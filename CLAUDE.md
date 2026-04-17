@@ -107,10 +107,58 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 - CSRF token sent via `X-XSRF-TOKEN` header on mutating requests
 - All requests use `withCredentials: true` for cookie-based auth
 
+## Available Skills
+
+Custom skills live in `.claude/skills/` and are auto-loaded by Claude Code. Always invoke the matching skill instead of generating code freehand.
+
+| Skill                | Trigger phrases                                                        | File                                    |
+| -------------------- | ---------------------------------------------------------------------- | --------------------------------------- |
+| `spring-entity`      | "create entity / domain model / @Entity"                               | `.claude/skills/spring-entity/SKILL.md` |
+| `spring-dto`         | "create DTO / request / response / mapper"                             | `.claude/skills/spring-dto/SKILL.md`    |
+| `spring-service`     | "create service / use case / business logic"                           | `.claude/skills/spring-service/SKILL.md`|
+| `spring-controller`  | "create controller / REST endpoint / API route"                        | `.claude/skills/spring-controller/SKILL.md` |
+| `spring-migration`   | "create migration / add column / add table"                            | `.claude/skills/spring-migration/SKILL.md` |
+| `angular-component`  | "create component / page / form / list / modal"                        | `.claude/skills/angular-component/SKILL.md` |
+| `angular-service`    | "create Angular service / call backend / HTTP client"                  | `.claude/skills/angular-service/SKILL.md` |
+| `angular-feature`    | "scaffold Angular feature / full CRUD module"                          | `.claude/skills/angular-feature/SKILL.md` |
+| `docker-compose`     | "create docker-compose / dockerize / add service"                      | `.claude/skills/docker-compose/SKILL.md` |
+| `security`           | "secure X / harden / audit / OWASP / encrypt / rate-limit"            | `.claude/skills/security/SKILL.md`      |
+| `folder-structure`   | "scaffold project / folder layout / directory structure / architecture" | `.claude/skills/folder-structure/SKILL.md` |
+
+### Security Skill — Key Rules
+
+The `security` skill encodes HomeFlex's security architecture. Always consult it when:
+- Writing any auth, CSRF, session, or token-handling code
+- Adding a new endpoint that needs `@PreAuthorize`
+- Implementing file upload, encryption, or secret management
+- Reviewing or generating rate-limiting logic
+
+Critical rules enforced by this skill:
+1. Secrets: `${VAR}` with **no fallback** for sensitive values — fail fast if unset
+2. `DataInitializer` (and any seed class) must be `@Profile("!prod")`
+3. Token comparisons use `MessageDigest.isEqual()` — never `String.equals()`
+4. Rate-limit IP resolution uses **last** `X-Forwarded-For` entry (Nginx-appended)
+5. Password-reset and OTP flows must return the same response for hit/miss
+6. Swagger UI disabled by default; re-enabled only in `dev` profile
+7. `rental-backend/.env` is git-ignored — use `.env.example` as template
+
+### Folder Structure Skill — Key Rules
+
+The `folder-structure` skill generates idiomatic directory trees for:
+- **Java / Spring Boot**: Layered (current), Hexagonal, Vertical Slice
+- **TypeScript / Angular**: Feature-Sliced Design (current)
+- **Python / FastAPI**: Clean Architecture
+- **Go**: Standard Go layout with Clean Architecture
+- **Rust**: Hexagonal with Axum/Actix
+- **Flutter / Dart**: Feature-First Clean Architecture
+
+Always state the chosen architecture pattern and the 3–5 key conventions that govern it.
+
 ## Important Conventions
 
-- Commit messages follow conventional commits: `feat:`, `fix:`, `chore:`, `docs:`
+- Commit messages follow conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `security:`
 - Prettier is enforced via lint-staged pre-commit hook
 - `.gitignore` excludes `homeflex-web/`, `.github/`, `monitoring/`, `logstash/` — use `git add -f` for these paths
+- `rental-backend/.env` is git-ignored — never commit secrets; copy `.env.example` to get started
 - Frontend build must pass with zero errors before committing
 - Backend tests exclude integration tests by default (tagged `@Tag("integration")`)

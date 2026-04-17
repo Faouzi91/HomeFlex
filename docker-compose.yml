@@ -6,9 +6,9 @@ services:
     ports:
       - '8080:8080'
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - JWT_SECRET=dev-super-secret-jwt-key-change-in-production
-      - STRIPE_API_KEY=sk_test_dummy_key_for_local_dev
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - JWT_SECRET=${JWT_SECRET}
+      - STRIPE_API_KEY=${STRIPE_API_KEY:-}
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/homeflex
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
@@ -129,6 +129,7 @@ services:
       - xpack.security.enabled=true
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-changeme}
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.routing.allocation.disk.threshold_enabled=false
     expose:
       - '9200'
     volumes:

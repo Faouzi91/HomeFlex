@@ -2,6 +2,32 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-17 (Security Audit & Hardening)
+
+### Security 🛡️
+
+This release addresses findings from a full-codebase security audit conducted on 2026-04-17.
+
+#### Critical / High
+
+- **OAuth Authentication Bypass removed** (`AuthService.java`) — Dummy-token shortcut (`if (idToken.startsWith("dummy-token-"))`) in Apple and Facebook login paths allowed any unauthenticated caller to obtain a valid session by sending a token prefixed `dummy-token-*`. The entire `processDummyOAuthLogin` code path has been deleted; both endpoints now unconditionally throw a configuration error until real OAuth credentials are provided.
+- **`DataInitializer` gated to non-production profiles** (`DataInitializer.java`) — The class was annotated `@Profile("!prod")`. Without this guard it created test accounts (`landlord@test.com / Landlord@123`, `tenant@test.com / Tenant@123`) and an admin user in **every** environment including production. These accounts are no longer created when `SPRING_PROFILES_ACTIVE=prod`.
+- **Admin password no longer logged in plaintext** (`DataInitializer.java`) — `log.info(" Password: {}", adminPassword)` was removed. The password value is sensitive and must never appear in application logs.
+- **Hardcoded admin password default removed** (`application.yml`) — `${ADMIN_PASSWORD:Admin@123}` changed to `${ADMIN_PASSWORD}` (no fallback). Application will fail to start if `ADMIN_PASSWORD` env var is not set, preventing silent deployment with a known weak password.
+- **`rental-backend/.env` removed from git tracking** — The file was committed to version control and contained a real Gmail app-password (`MAIL_PASSWORD`). It has been untracked via `git rm --cached`. **Action required: rotate `MAIL_PASSWORD` immediately.**
+- **Hardcoded JWT secret removed from `docker-compose.yml`** — `JWT_SECRET=dev-super-secret-jwt-key-change-in-production` replaced with `JWT_SECRET=${JWT_SECRET}`. The secret must now be supplied via the host environment or a secrets manager.
+- **Docker Compose defaults to production profile** (`docker-compose.yml`) — `SPRING_PROFILES_ACTIVE` changed from hardcoded `dev` to `${SPRING_PROFILES_ACTIVE:-prod}`. Running the stack without an override now activates the `prod` profile (DDL-validate, no devtools, Swagger off, INFO logging).
+
+#### Medium
+
+- **User enumeration fixed in password-reset endpoint** (`AuthService.java`) — `sendPasswordResetEmail()` previously threw `ResourceNotFoundException` for unknown emails, allowing an attacker to enumerate registered users by observing the HTTP response. The endpoint now silently returns without sending an email if the address is not found, returning the same response in both cases.
+- **Constant-time metrics token comparison** (`MetricsTokenFilter.java`) — `token.equals(expectedToken)` replaced with `MessageDigest.isEqual(token.getBytes(), expectedToken.getBytes())` to prevent timing-based token extraction against the Prometheus scrape endpoint.
+- **Rate-limit IP spoofing fixed** (`RateLimitFilter.java`) — `resolveClientIp()` previously used `xff.split(",")[0]` (the client-controlled first entry). Changed to use the **last** entry in `X-Forwarded-For`, which is appended by Nginx and cannot be forged by the client.
+- **Swagger UI disabled in production** (`application.yml`) — `springdoc.api-docs.enabled` and `springdoc.swagger-ui.enabled` default to `false`. Both are re-enabled only under the `dev` profile, preventing full API documentation from being publicly accessible in deployed environments.
+- **Content Security Policy added to Nginx** (`nginx.conf`) — Added strict `Content-Security-Policy`, `Referrer-Policy`, and `Permissions-Policy` headers. All `add_header` directives now carry the `always` flag so headers are included on error responses.
+
+---
+
 ## [Unreleased] — 2026-04-15 (Security Hardening & PII Protection)
 
 ### Security Hardening 🛡️

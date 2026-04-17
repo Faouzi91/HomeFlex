@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 @Order(1)
+@Profile("!prod")  // Never create test data in production
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -62,10 +63,7 @@ public class DataInitializer implements CommandLineRunner {
             log.info(" DEFAULT ADMIN USER CREATED SUCCESSFULLY!");
             log.info("═══════════════════════════════════════════════════════");
             log.info(" Email: {}", adminEmail);
-            log.info(" Password: {}", adminPassword);
             log.info(" Role: ADMIN");
-            log.info("═══════════════════════════════════════════════════════");
-            log.info(" IMPORTANT: Change this password in production!");
             log.info("═══════════════════════════════════════════════════════");
 
         } catch (Exception e) {

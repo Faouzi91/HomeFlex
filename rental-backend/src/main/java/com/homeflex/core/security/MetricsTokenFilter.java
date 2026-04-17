@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.List;
 
 /**
@@ -40,7 +41,7 @@ public class MetricsTokenFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")
                 && expectedToken != null && !expectedToken.isBlank()) {
             String token = authHeader.substring(7);
-            if (token.equals(expectedToken)) {
+            if (MessageDigest.isEqual(token.getBytes(), expectedToken.getBytes())) {
                 var auth = new UsernamePasswordAuthenticationToken(
                         "prometheus", null,
                         List.of(new SimpleGrantedAuthority("ROLE_MONITORING")));

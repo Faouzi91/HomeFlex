@@ -19,6 +19,7 @@
 | 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion                        |
 | 2.3     | 2026-03-30 | Architect     | Implement: KYC (Stripe Identity), Stripe Connect escrow/payouts, Resilience4j, Prometheus/Grafana monitoring, NgRx Signal Store |
 | 2.4     | 2026-04-09 | Architect     | Implement: Property Availability (V11), Digital Leases (V12), Twilio SMS/WhatsApp, Stripe Webhook Idempotency (V10), Angular 21 |
+| 3.2     | 2026-04-17 | Security Eng. | Security audit: remove OAuth dummy-bypass, fix user-enumeration, constant-time token compare, XFF rate-limit fix, CSP headers, DataInitializer profile-gated, Swagger disabled in prod |
 
 ---
 
@@ -1644,7 +1645,7 @@ _(Similar RESTful patterns — full endpoint list in Appendix A)_
     │◀─────────────────────────────│                               │
 ```
 
-> **Note:** Tokens are currently stored in `localStorage` on the client. The target state moves refresh tokens to httpOnly secure cookies with CSRF protection.
+> **Note:** Tokens are stored in httpOnly `Secure` cookies (`ACCESS_TOKEN`, `REFRESH_TOKEN`) with `SameSite=Lax`. CSRF protection is enforced via `X-XSRF-TOKEN` header. `localStorage` is not used.
 
 ## 9.2 Authorization Model (RBAC) 🟢
 
@@ -1663,33 +1664,51 @@ _(Similar RESTful patterns — full endpoint list in Appendix A)_
 
 ## 9.3 Security Controls
 
-| Control          | Implementation                                                       | Status                       |
-| ---------------- | -------------------------------------------------------------------- | ---------------------------- |
-| Input validation | Jakarta Bean Validation on request DTOs                              | 🟢                           |
-| Output encoding  | Jackson auto-escaping                                                | 🟢                           |
-| SQL injection    | JPA parameterized queries (never string concat)                      | 🟢                           |
-| XSS prevention   | Input sanitization                                                   | 🟡 (CSP headers planned)     |
-| CSRF             | Not yet implemented (localStorage tokens, not cookies)               | 🔴 Planned                   |
-| Rate limiting    | Not implemented                                                      | 🔴 Planned (requires Redis)  |
-| Secrets          | Environment variables / .env files                                   | 🟡 (Secrets Manager planned) |
-| Headers          | Security headers via Nginx (X-Frame-Options, X-Content-Type-Options) | 🟢                           |
-| File upload      | Type validation, size limits                                         | 🟡 (virus scan planned)      |
-| Dependencies     | GitHub Actions CI                                                    | 🟡 (Snyk/Dependabot planned) |
+| Control              | Implementation                                                                       | Status                         |
+| -------------------- | ------------------------------------------------------------------------------------ | ------------------------------ |
+| Input validation     | Jakarta Bean Validation on request DTOs                                              | 🟢                             |
+| Output encoding      | Jackson auto-escaping                                                                | 🟢                             |
+| SQL injection        | JPA parameterized queries (never string concat)                                      | 🟢                             |
+| XSS prevention       | Angular default escaping + CSP header via Nginx                                      | 🟢                             |
+| CSRF                 | `CookieCsrfTokenRepository` + `SpaCsrfTokenRequestHandler`; `X-XSRF-TOKEN` header   | 🟢                             |
+| Rate limiting        | Redis Lua atomic INCR+EXPIRE; 100 req/min auth, 20 req/min public                   | 🟢                             |
+| Secrets              | All secrets via environment variables; no hardcoded defaults for sensitive values    | 🟢 (Secrets Manager planned)  |
+| Security headers     | Nginx: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions   | 🟢                             |
+| File upload          | Content-Type validation, UUID filename, size limits (10 MB)                         | 🟡 (magic-number check planned) |
+| Dependencies         | GitHub Actions CI                                                                    | 🟡 (Snyk/Dependabot planned)  |
+| OAuth bypass         | Dummy-token shortcut removed from AuthService                                        | 🟢                             |
+| User enumeration     | Password-reset endpoint silently ignores unknown emails                              | 🟢                             |
+| Timing attacks       | Metrics token compared with `MessageDigest.isEqual()` (constant-time)               | 🟢                             |
+| Rate-limit spoofing  | RateLimitFilter uses last X-Forwarded-For value (set by Nginx, not the client)      | 🟢                             |
+| Test data leakage    | `DataInitializer` annotated `@Profile("!prod")` — never runs in production          | 🟢                             |
+| Swagger exposure     | Swagger UI/api-docs disabled globally; re-enabled only under `dev` profile           | 🟢                             |
 
 ## 9.4 Security Hardening Requirements
 
-| ID     | Requirement                                        | Status                                      |
-| ------ | -------------------------------------------------- | ------------------------------------------- |
-| SEC-01 | Secret management (no secrets in source control)   | 🟡 .env files used, Secrets Manager planned |
-| SEC-02 | CORS policy (explicit allow-list per environment)  | 🟡 Configured but needs per-env strictness  |
-| SEC-03 | Token storage (httpOnly cookies, not localStorage) | 🔴 Currently localStorage                   |
-| SEC-04 | CSRF defense                                       | 🔴 Not needed until cookie-based auth       |
-| SEC-05 | API abuse protection (rate limiting)               | 🔴 Requires Redis                           |
-| SEC-06 | Auditability (security event logging)              | 🔴 Planned                                  |
-| SEC-07 | Soft delete on user-generated entities             | 🔴 Planned                                  |
-| SEC-08 | Optimistic locking on critical entities            | 🔴 Planned                                  |
-| SEC-09 | File upload safety (malware scanning)              | 🔴 Planned                                  |
-| SEC-10 | Dependency CVE scanning in CI                      | 🔴 Planned                                  |
+| ID     | Requirement                                              | Status                                        |
+| ------ | -------------------------------------------------------- | --------------------------------------------- |
+| SEC-01 | Secret management (no secrets in source control)         | 🟢 .env untracked; all secrets via env vars   |
+| SEC-02 | CORS policy (explicit allow-list per environment)        | 🟡 Configured but needs per-env strictness    |
+| SEC-03 | Token storage (httpOnly cookies, not localStorage)       | 🟢 httpOnly cookies with SameSite=Lax         |
+| SEC-04 | CSRF defense                                             | 🟢 CookieCsrfTokenRepository + SPA handler    |
+| SEC-05 | API abuse protection (rate limiting)                     | 🟢 Redis-backed rate limiter                  |
+| SEC-06 | Auditability (security event logging)                    | 🔴 Planned                                    |
+| SEC-07 | Soft delete on user-generated entities                   | 🔴 Planned                                    |
+| SEC-08 | Optimistic locking on critical entities                  | 🔴 Planned                                    |
+| SEC-09 | File upload safety (magic-number validation, AV scan)   | 🔴 Planned                                    |
+| SEC-10 | Dependency CVE scanning in CI                            | 🔴 Planned (Snyk/Dependabot)                  |
+| SEC-11 | Production profile enforced in Docker/CI deployments     | 🟢 docker-compose defaults to prod profile    |
+| SEC-12 | Content Security Policy                                  | 🟢 Strict CSP header in Nginx                 |
+
+## 9.5 Known Remaining Risks (Accepted / Planned)
+
+| Risk                                    | Mitigation Plan                                           |
+| --------------------------------------- | --------------------------------------------------------- |
+| No HTTPS in Docker Compose (dev only)   | TLS terminated at AWS ALB/CloudFront in production (IaC)  |
+| Backend port 8080 exposed in dev stack  | Production: backend only on internal network, no host port |
+| File upload magic-number validation     | Apache Tika integration planned for next sprint           |
+| No AV scanning on uploaded files        | ClamAV / AWS Macie integration planned                    |
+| Dependency CVEs not scanned in CI       | Snyk GitHub Action planned                                |
 
 ---
 
