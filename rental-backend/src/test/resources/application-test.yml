@@ -28,6 +28,11 @@ spring:
 app:
   jwt:
     secret: test-jwt-secret-that-is-long-enough-for-hmac-sha256-algorithm-minimum
+  admin:
+    email: admin@test.com
+    password: test-admin-password
+  security:
+    pii-encryption-key: Y2ktdGVzdC1waWkta2V5LTMyLWJ5dGVzLWxvbmchISE=
   stripe:
     secret-key: sk_test_placeholder
     publishable-key: pk_test_placeholder

@@ -81,6 +81,8 @@ jobs:
 
       # Security
       JWT_SECRET: ci-test-secret-key-at-least-32-chars-long
+      ADMIN_PASSWORD: ci-test-admin-password-not-real
+      PII_ENCRYPTION_KEY: Y2ktdGVzdC1waWkta2V5LTMyLWJ5dGVzLWxvbmchISE=
 
     steps:
       - uses: actions/checkout@v4
@@ -161,7 +163,7 @@ jobs:
         working-directory: homeflex-web
 
       - name: Run Tests
-        run: npx ng test
+        run: npx ng test --watch=false
         working-directory: homeflex-web
 
       - name: Build

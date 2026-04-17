@@ -1,5 +1,6 @@
 package com.homeflex.core.service;
 
+import com.homeflex.core.domain.entity.PasswordResetToken;
 import com.homeflex.core.domain.entity.RefreshToken;
 import com.homeflex.core.domain.entity.User;
 import com.homeflex.core.domain.enums.UserRole;
@@ -140,5 +141,47 @@ class AuthServiceTest {
         UUID userId = UUID.randomUUID();
         authService.logout(userId);
         verify(refreshTokenRepository).deleteByUserId(userId);
+    }
+
+    // ── Password reset — user enumeration prevention ────────────────────────
+
+    @Test
+    void sendPasswordResetEmail_unknownEmail_silentlyReturns() {
+        when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+        // Must not throw — same response as a real user (prevents enumeration)
+        authService.sendPasswordResetEmail("ghost@example.com");
+
+        verify(passwordResetTokenRepository, never()).save(any());
+        verify(emailService, never()).sendPasswordResetEmail(any(User.class), anyString());
+    }
+
+    @Test
+    void sendPasswordResetEmail_knownEmail_savesTokenAndSendsEmail() {
+        testUser.setIsVerified(true);
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(Optional.of(testUser));
+        when(passwordResetTokenRepository.save(any(PasswordResetToken.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        authService.sendPasswordResetEmail(testUser.getEmail());
+
+        verify(passwordResetTokenRepository).deleteByUserId(testUser.getId());
+        verify(passwordResetTokenRepository).save(any(PasswordResetToken.class));
+    }
+
+    // ── OAuth stubs — must unconditionally throw ────────────────────────────
+
+    @Test
+    void appleLogin_alwaysThrowsDomainException() {
+        assertThatThrownBy(() -> authService.appleLogin("any-token"))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Apple OAuth is not configured");
+    }
+
+    @Test
+    void facebookLogin_alwaysThrowsDomainException() {
+        assertThatThrownBy(() -> authService.facebookLogin("any-token"))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Facebook OAuth is not configured");
     }
 }

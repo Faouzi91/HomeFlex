@@ -190,38 +190,6 @@ public class AuthService {
         throw new DomainException("Facebook OAuth is not configured. Please set FACEBOOK_APP_ID environment variable.");
     }
 
-    private AuthTokens processDummyOAuthLogin(String provider, String providerUserId, String firstName, String lastName, String defaultEmail) {
-        User user = userRepository.findByEmail(defaultEmail)
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setEmail(defaultEmail);
-                    newUser.setFirstName(firstName);
-                    newUser.setLastName(lastName);
-                    newUser.setRole(UserRole.TENANT);
-                    newUser.setIsActive(true);
-                    newUser.setIsVerified(true);
-                    newUser.setLanguagePreference("en");
-                    return userRepository.save(newUser);
-                });
-
-        oAuthProviderRepository.findByProviderAndProviderUserId(provider, providerUserId)
-                .orElseGet(() -> {
-                    OAuthProvider oAuthProvider = new OAuthProvider();
-                    oAuthProvider.setUser(user);
-                    oAuthProvider.setProvider(provider);
-                    oAuthProvider.setProviderUserId(providerUserId);
-                    return oAuthProviderRepository.save(oAuthProvider);
-                });
-
-        user.setLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
-
-        String jwtToken = jwtTokenProvider.generateToken(user);
-        String refreshToken = createRefreshToken(user);
-
-        return new AuthTokens(jwtToken, refreshToken, userMapper.toDto(user));
-    }
-
     public AuthTokens refreshToken(String refreshTokenString) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenString)
                 .orElseThrow(() -> new DomainException("Invalid refresh token"));
