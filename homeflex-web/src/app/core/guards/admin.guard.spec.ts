@@ -23,31 +23,21 @@ function mockSession(role: string | null) {
 describe('adminGuard', () => {
   it('allows access when the user is ADMIN', () => {
     TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        { provide: SessionStore, useValue: mockSession('ADMIN') },
-      ],
+      providers: [provideRouter([]), { provide: SessionStore, useValue: mockSession('ADMIN') }],
     });
 
-    const result = TestBed.runInInjectionContext(() =>
-      adminGuard({} as never, {} as never),
-    );
+    const result = TestBed.runInInjectionContext(() => adminGuard({} as never, {} as never));
 
     expect(result).toBe(true);
   });
 
   it('redirects a TENANT to /admin/login', () => {
     TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        { provide: SessionStore, useValue: mockSession('TENANT') },
-      ],
+      providers: [provideRouter([]), { provide: SessionStore, useValue: mockSession('TENANT') }],
     });
 
     const router = TestBed.inject(Router);
-    const result = TestBed.runInInjectionContext(() =>
-      adminGuard({} as never, {} as never),
-    );
+    const result = TestBed.runInInjectionContext(() => adminGuard({} as never, {} as never));
 
     expect(result).toBeInstanceOf(UrlTree);
     expect(router.serializeUrl(result as UrlTree)).toBe('/admin/login');
@@ -55,16 +45,11 @@ describe('adminGuard', () => {
 
   it('redirects an unauthenticated visitor to /admin/login', () => {
     TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        { provide: SessionStore, useValue: mockSession(null) },
-      ],
+      providers: [provideRouter([]), { provide: SessionStore, useValue: mockSession(null) }],
     });
 
     const router = TestBed.inject(Router);
-    const result = TestBed.runInInjectionContext(() =>
-      adminGuard({} as never, {} as never),
-    );
+    const result = TestBed.runInInjectionContext(() => adminGuard({} as never, {} as never));
 
     expect(result).toBeInstanceOf(UrlTree);
     expect(router.serializeUrl(result as UrlTree)).toBe('/admin/login');
