@@ -1,54 +1,71 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 import { adminGuard } from './admin.guard';
 import { SessionStore } from '../state/session.store';
 import { User } from '../models/api.types';
 
-const mockRoute = {} as ActivatedRouteSnapshot;
-const mockState = { url: '/admin/dashboard' } as RouterStateSnapshot;
-
-function buildMockStore(user: Partial<User> | null, authenticated: boolean) {
+function mockSession(role: string | null) {
+  const user =
+    role !== null
+      ? ({ role, email: 'test@test.com', isActive: true } as Partial<User> as User)
+      : null;
   return {
-    user: signal<User | null>(user as User | null),
-    isAuthenticated: signal(authenticated),
+    user: signal<User | null>(user),
+    isAuthenticated: signal(role !== null),
     loading: signal(false),
     pending: signal(false),
     initialized: signal(true),
   };
 }
 
-function runGuard(): boolean | UrlTree {
-  return TestBed.runInInjectionContext(() => adminGuard(mockRoute, mockState));
-}
-
 describe('adminGuard', () => {
-  let router: Router;
-
-  function configure(user: Partial<User> | null, authenticated: boolean) {
+  it('allows access when the user is ADMIN', () => {
     TestBed.configureTestingModule({
       providers: [
-        { provide: SessionStore, useValue: buildMockStore(user, authenticated) },
+        provideRouter([]),
+        { provide: SessionStore, useValue: mockSession('ADMIN') },
       ],
     });
-    router = TestBed.inject(Router);
-  }
 
-  it('allows access when authenticated as ADMIN', () => {
-    configure({ role: 'ADMIN' }, true);
-    expect(runGuard()).toBe(true);
+    const result = TestBed.runInInjectionContext(() =>
+      adminGuard({} as never, {} as never),
+    );
+
+    expect(result).toBe(true);
   });
 
-  it('redirects TENANT to /admin/login', () => {
-    configure({ role: 'TENANT' }, true);
-    const result = runGuard();
+  it('redirects a TENANT to /admin/login', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: SessionStore, useValue: mockSession('TENANT') },
+      ],
+    });
+
+    const router = TestBed.inject(Router);
+    const result = TestBed.runInInjectionContext(() =>
+      adminGuard({} as never, {} as never),
+    );
+
     expect(result).toBeInstanceOf(UrlTree);
     expect(router.serializeUrl(result as UrlTree)).toBe('/admin/login');
   });
 
-  it('redirects unauthenticated visitor to /admin/login', () => {
-    configure(null, false);
-    const result = runGuard();
+  it('redirects an unauthenticated visitor to /admin/login', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        { provide: SessionStore, useValue: mockSession(null) },
+      ],
+    });
+
+    const router = TestBed.inject(Router);
+    const result = TestBed.runInInjectionContext(() =>
+      adminGuard({} as never, {} as never),
+    );
+
     expect(result).toBeInstanceOf(UrlTree);
     expect(router.serializeUrl(result as UrlTree)).toBe('/admin/login');
   });
