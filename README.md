@@ -34,7 +34,7 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Real-time chat** between tenants and landlords (WebSocket + STOMP)
 - **SMS & WhatsApp notifications** via Twilio for booking alerts (SRS-3.4.2)
 - **Push notifications** via Firebase (FCM)
-- **Stripe Connect payments** with platform escrow and idempotency tracking (V10)
+- **Stripe Connect payments** with platform escrow, PaymentIntent client-secret returned to frontend, and `confirmCardPayment` confirmation step on the property detail page
 - **Landlord KYC** via Stripe Identity verification
 - **Admin console** with separate login, user management (suspend/activate), property approvals (approve/reject), report resolution, and operational analytics
 - **Prometheus + Grafana monitoring** with custom business metrics
@@ -128,7 +128,9 @@ Key environment variables (set in `.env` or export):
 | ----------------------- | -------------------------------------- |
 | `JWT_SECRET`            | Signing key for access/refresh tokens  |
 | `SPRING_DATASOURCE_URL` | PostgreSQL JDBC URL                    |
-| `STRIPE_API_KEY`        | Stripe secret key                      |
+| `STRIPE_SECRET_KEY`     | Stripe secret key (`sk_test_...`)      |
+| `STRIPE_PUBLISHABLE_KEY`| Stripe publishable key (`pk_test_...`) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret          |
 | `GOOGLE_CLIENT_ID`      | Google OAuth client ID                 |
 | `FIREBASE_*`            | Firebase config for push notifications |
 
@@ -144,7 +146,7 @@ npm run build                  # production build
 npm test                       # unit tests (Vitest)
 ```
 
-The dev server proxies `/api/*` to `http://localhost:8080` by default. Update `src/app/environments/environment.ts` to change the API URL.
+The dev server proxies `/api/*` to `http://localhost:8080` by default.
 
 ### Full Stack (Docker hybrid)
 
@@ -237,6 +239,7 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | PATCH  | `/admin/properties/{id}/reject`       | Admin    | Reject a property (with reason)     |
 | GET    | `/admin/reports`                      | Admin    | List flagged content reports        |
 | PATCH  | `/admin/reports/{id}/resolve`         | Admin    | Resolve a report                    |
+| GET    | `/config`                             | Public   | Stripe publishable key + public cfg |
 | GET    | `/admin/analytics`                    | Admin    | Platform analytics dashboard        |
 | GET    | `/admin/configs`                      | Admin    | List system configurations          |
 | PATCH  | `/admin/configs/{key}`                | Admin    | Update a system config value        |

@@ -2,10 +2,10 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 3.2
-**Date:** April 15, 2026
+**Version:** 3.4
+**Date:** April 17, 2026
 **Classification:** Confidential
-**Status:** 100% Implemented — Technical Requirements Met (Security Hardened)
+**Status:** 100% Implemented — Technical Requirements Met (Stripe Live, Reactive Unread Counts)
 
 ---
 
@@ -18,6 +18,8 @@
 | 3.0     | 2026-04-11 | Architect     | 100% Technical Parity: ELK, Maps, i18n, AI, Blockchain, Redlock, GDPR, PII Encryption, Terraform, SLOs, Flutter native. |
 | 3.1     | 2026-04-14 | Architect     | Admin console separation, role-based profiles, notification preferences, user/property/report management pages.         |
 | 3.2     | 2026-04-15 | Architect     | Security Hardening: AES-GCM PII encryption, mandatory env-based secret management, infrastructure isolation.            |
+| 3.3     | 2026-04-17 | Architect     | CI hardening, dead-code removal, admin guard tests, SRS test inventory update.                                          |
+| 3.4     | 2026-04-17 | Architect     | Stripe payment flow (client secret, confirmCardPayment), reactive unread counts, landlord booking view, home page fix.  |
 
 ---
 
@@ -96,16 +98,20 @@ HomeFlex is the **unified rental marketplace** for properties and vehicles, feat
 - **FR-300:** Booking Lifecycle (Escrow payments, Confirmed status) 🟢
 - **FR-301:** Modifications (Real-time date changes + re-approval) 🟢
 - **FR-302:** Post-Booking (Review prompts + Dispute resolution) 🟢
+- **FR-303:** Landlord booking view — received bookings per property with approve/reject actions 🟢
+- **FR-304:** Stripe client secret returned at booking creation; frontend confirms payment via `stripe.confirmCardPayment` 🟢
 
 ## 5.4 Payment & Finance 🟢
 
 - **FR-400:** Stripe Connect (Escrow, Payouts, Commissions) 🟢
 - **FR-401:** Automated Finance (PDF Receipts + Multi-currency) 🟢
+- **FR-402:** Public `/api/v1/config` endpoint exposes Stripe publishable key at runtime (no build-time key bundling) 🟢
 
 ## 5.5 Communication 🟢
 
 - **FR-500:** Real-time Chat (Read receipts + typing indicators) 🟢
-- **FR-501:** Notifications (Granular user preferences) 🟢
+- **FR-501:** Notifications (Granular user preferences, mark-read syncs header bell badge) 🟢
+- **FR-502:** Header notification badge reactively combines unread notification + message counts via NgRx Signal computed() 🟢
 
 ## 5.6 Admin Console 🟢
 
@@ -134,5 +140,5 @@ All previously identified risks (R1-R10) have been mitigated via implemented tec
 
 ---
 
-**Final Document v3.1 (2026-04-14)**
+**Final Document v3.4 (2026-04-17)**
 **Implementation Status: 100% Complete.**

@@ -2,6 +2,29 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-17 (Stripe Payment Integration, Unread Counts & Landlord Bookings)
+
+### Added
+
+- **Stripe payment confirmation in property detail** (`property-detail.page.ts/html`) — After creating a booking with a non-zero price, the backend now returns a `stripeClientSecret`. The frontend loads Stripe.js (publishable key fetched from the new `/api/v1/config` endpoint), and shows a "Pay Now (Test)" panel that calls `stripe.confirmCardPayment` with the `pm_card_visa` test payment method.
+- **`GET /api/v1/config` endpoint** (`AppConfigController.java`) — Public endpoint exposing the Stripe publishable key so the Angular frontend can initialise Stripe.js without bundling the key at build time.
+- **`stripeClientSecret` in `BookingDto`** — New field on the response record populated only at creation time from `PaymentIntent.getClientSecret()`. It is stored in a `@Transient` entity field so it is never persisted to the database.
+- **Landlord "Received" bookings view** (`bookings-tab.component.ts/html`) — Landlords see a dedicated sub-tab listing all incoming bookings across their properties, with approve / reject actions and a pending-count badge.
+- **Header bell unread count** (`app-header.component.ts`) — The notification badge now reflects the live sum of `WorkspaceStore.unreadNotificationCount` and `WorkspaceStore.unreadMessageCount`, updated reactively via `computed()`.
+- **`WorkspaceStore.decrementUnreadMessages()`** — New method so opening a chat room decrements the global unread count without a full reload.
+
+### Fixed
+
+- **Message unread count not clearing on open** (`messages-tab.component.ts`) — `openRoom()` now calls `chatApi.markRoomAsRead(roomId)` after loading messages, zeroes the room's local unread counter, and calls `store.decrementUnreadMessages(unread)`.
+- **Home page properties not loading** (`home.page.ts`) — The `forkJoin` now wraps every source with its own `catchError(() => of(fallback))` so a failing stats or cities call no longer silently cancels the property and vehicle loads.
+- **docker-compose Stripe env var mismatch** — `STRIPE_API_KEY` renamed to `STRIPE_SECRET_KEY` to match `application.yml`. Added `STRIPE_PUBLISHABLE_KEY` and `STRIPE_WEBHOOK_SECRET` env vars.
+
+### Changed
+
+- **Security:** `GET /api/v1/config` added to the Spring Security `permitAll` list — the publishable key is public information and requires no authentication.
+
+---
+
 ## [Unreleased] — 2026-04-17 (CI Hardening, Dead-Code Removal & New Tests)
 
 ### Fixed — CI Pipeline

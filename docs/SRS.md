@@ -2,7 +2,7 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 3.3
+**Version:** 3.4
 **Date:** April 17, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
@@ -21,6 +21,7 @@
 | 2.4     | 2026-04-09 | Architect     | Implement: Property Availability (V11), Digital Leases (V12), Twilio SMS/WhatsApp, Stripe Webhook Idempotency (V10), Angular 21 |
 | 3.2     | 2026-04-17 | Security Eng. | Security audit: remove OAuth dummy-bypass, fix user-enumeration, constant-time token compare, XFF rate-limit fix, CSP headers, DataInitializer profile-gated, Swagger disabled in prod |
 | 3.3     | 2026-04-17 | Security Eng. | CI hardening: --watch=false, ADMIN_PASSWORD/PII_ENCRYPTION_KEY in CI env; dead code removal; new tests (password-reset enumeration, OAuth stubs, admin guard); skills: security + folder-structure |
+| 3.4     | 2026-04-17 | Architect     | Stripe payment confirmation (client secret → confirmCardPayment), reactive header unread-count badge, landlord received-bookings view, home page resilience fix, public /api/v1/config endpoint. |
 
 ---
 
@@ -43,6 +44,16 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v3.4 (Stripe Payment Flow, Reactive UI & UX Fixes)
+
+- 🟢 **Stripe Payment Confirmation** — `BookingService` now captures `PaymentIntent.getClientSecret()` and returns it in `BookingDto.stripeClientSecret` (transient field, never persisted). The Angular property-detail page loads Stripe.js using a publishable key fetched from the new public `/api/v1/config` endpoint, then calls `stripe.confirmCardPayment` with the `pm_card_visa` test payment method after booking creation.
+- 🟢 **Public `/api/v1/config` Endpoint** — `AppConfigController` exposes the Stripe publishable key (and future public config) to the frontend without auth, avoiding build-time key bundling.
+- 🟢 **Reactive Header Unread Badge** — The header bell icon now uses `computed(() => workspaceStore.unreadNotificationCount() + workspaceStore.unreadMessageCount())` — live NgRx Signal reaction, no polling or manual refresh needed.
+- 🟢 **Message Unread Count on Open** — `messages-tab` calls `chatApi.markRoomAsRead(roomId)` after loading a room and decrements `WorkspaceStore.unreadMessageCount` so the badge reflects the actual unseen count immediately.
+- 🟢 **Landlord Received-Bookings View** — The workspace bookings tab shows a "Received" sub-tab for landlords listing all incoming bookings per property (loaded via `WorkspaceStore.myProperties()` + `bookingApi.getByProperty()`) with approve / reject actions and a pending-count badge.
+- 🟢 **Home Page Resilience** — `forkJoin` on the home page now wraps each API source with its own `catchError(() => of(fallback))` so a failing stats or cities call no longer silently cancels property and vehicle loads.
+- 🟢 **docker-compose Stripe Env Fix** — `STRIPE_API_KEY` renamed to `STRIPE_SECRET_KEY` (matching `application.yml`); `STRIPE_PUBLISHABLE_KEY` and `STRIPE_WEBHOOK_SECRET` added.
 
 1. [Introduction](#1-introduction)
 2. [System Overview & Vision](#2-system-overview--vision)
@@ -1213,12 +1224,13 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 | **Acceptance Criteria** | Status                                                            |
 | AC-1                    | Payments processed via Stripe; HomeFlex never stores card numbers | 🟢 (PaymentService)         |
 | AC-2                    | Stripe payment intent creation for bookings                       | 🟢                          |
-| AC-3                    | Escrow: funds held until service delivery                         | 🔴 Planned (Stripe Connect) |
-| AC-4                    | Payout to landlord with platform commission                       | 🔴 Planned (Stripe Connect) |
-| AC-5                    | Refund processing                                                 | 🔴 Planned                  |
-| AC-6                    | Multi-currency support                                            | 🔴 Planned                  |
-| AC-7                    | Invoice generation                                                | 🔴 Planned                  |
-| AC-8                    | Recurring monthly rent collection                                 | 🔴 Planned                  |
+| AC-3                    | Client secret returned to frontend; `confirmCardPayment` called   | 🟢 (v3.4)                   |
+| AC-4                    | Escrow: funds held until service delivery                         | 🔴 Planned (Stripe Connect) |
+| AC-5                    | Payout to landlord with platform commission                       | 🔴 Planned (Stripe Connect) |
+| AC-6                    | Refund processing                                                 | 🔴 Planned                  |
+| AC-7                    | Multi-currency support                                            | 🔴 Planned                  |
+| AC-8                    | Invoice generation                                                | 🔴 Planned                  |
+| AC-9                    | Recurring monthly rent collection                                 | 🔴 Planned                  |
 
 ### FR-401: Financial Dashboard (Landlords) 🔴 Planned
 
@@ -1256,8 +1268,9 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 | AC-2                    | SMS (Twilio), WhatsApp (Twilio)                                             | 🔴 Planned |
 | AC-3                    | Notification types: BOOKING, CHAT, PROPERTY, SYSTEM (NotificationType enum) | 🟢         |
 | AC-4                    | In-app notifications with unread count                                      | 🟢         |
-| AC-5                    | User configures notification preferences per channel                        | 🔴 Planned |
-| AC-6                    | Notification templates localized                                            | 🔴 Planned |
+| AC-5                    | Header bell badge reactively combines notification + message unread counts  | 🟢 (v3.4)  |
+| AC-6                    | User configures notification preferences per channel                        | 🔴 Planned |
+| AC-7                    | Notification templates localized                                            | 🔴 Planned |
 
 ---
 
