@@ -1,0 +1,162 @@
+<section class="flex flex-col min-h-full">
+  <!-- Header -->
+  <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-5 shrink-0">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-lg font-bold text-slate-900">Alerts</h1>
+        <p class="text-sm text-slate-500">Your recent platform activity.</p>
+      </div>
+      @if (unreadCount() > 0) {
+        <button
+          (click)="markAllRead()"
+          class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
+        >
+          Mark all read
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="flex-1 px-6 lg:px-8 py-6">
+    @if (loading()) {
+      <div class="space-y-2">
+        @for (i of [1, 2, 3, 4]; track i) {
+          <div class="flex gap-3 p-4 bg-white rounded-2xl border border-slate-100">
+            <div class="h-9 w-9 rounded-xl bg-slate-100 animate-pulse shrink-0"></div>
+            <div class="flex-1 space-y-2 py-0.5">
+              <div class="h-3.5 bg-slate-100 rounded animate-pulse w-2/3"></div>
+              <div class="h-3 bg-slate-100 rounded animate-pulse w-1/2"></div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (notifications().length === 0) {
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-8 h-8 text-slate-300"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+            />
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-slate-900 mb-1">All caught up</h3>
+        <p class="text-sm text-slate-400">No notifications at the moment.</p>
+      </div>
+    } @else {
+      <div class="space-y-6">
+        <!-- Today -->
+        @if (today().length > 0) {
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 px-1">
+              Today
+            </p>
+            <div class="space-y-1">
+              @for (n of today(); track n.id) {
+                <ng-container *ngTemplateOutlet="notifRow; context: { $implicit: n }" />
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Earlier -->
+        @if (earlier().length > 0) {
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 px-1">
+              Earlier
+            </p>
+            <div class="space-y-1">
+              @for (n of earlier(); track n.id) {
+                <ng-container *ngTemplateOutlet="notifRow; context: { $implicit: n }" />
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>
+
+<ng-template #notifRow let-n>
+  <div
+    class="group flex items-start gap-3 p-4 bg-white rounded-2xl border transition-all"
+    [class.border-brand-100]="!n.isRead"
+    [class.border-l-brand-500]="!n.isRead"
+    [class.border-l-4]="!n.isRead"
+    [class.border-slate-100]="n.isRead"
+    [class.opacity-60]="n.isRead"
+  >
+    <!-- Icon -->
+    <div
+      class="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
+      [class.bg-brand-50]="!n.isRead"
+      [class.bg-slate-50]="n.isRead"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.8"
+        stroke="currentColor"
+        class="w-4 h-4"
+        [class.text-brand-600]="!n.isRead"
+        [class.text-slate-400]="n.isRead"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="typeIcon(n.type)" />
+      </svg>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-semibold text-slate-900 leading-snug">{{ n.title }}</p>
+      <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">{{ n.message }}</p>
+      <p class="text-[10px] text-slate-400 mt-1.5">{{ dt(n.createdAt) }}</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      @if (!n.isRead) {
+        <button
+          (click)="markRead(n.id)"
+          title="Mark as read"
+          class="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="w-3.5 h-3.5"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+        </button>
+      }
+      <button
+        (click)="delete(n.id)"
+        title="Delete"
+        class="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="w-3.5 h-3.5"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</ng-template>

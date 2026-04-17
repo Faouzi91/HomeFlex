@@ -1,0 +1,198 @@
+<!-- Full-height chat layout -->
+<div class="flex overflow-hidden" style="height: calc(100vh - 64px)">
+  <!-- ══ CONVERSATION LIST ══ -->
+  <div
+    class="flex flex-col bg-white border-r border-slate-100 w-full sm:w-80 shrink-0"
+    [class.hidden]="false"
+  >
+    <!-- Header -->
+    <div class="px-4 py-4 border-b border-slate-100 shrink-0">
+      <h1 class="text-base font-bold text-slate-900">Messages</h1>
+      <p class="text-xs text-slate-400">
+        {{ rooms().length }} conversation{{ rooms().length !== 1 ? 's' : '' }}
+      </p>
+    </div>
+
+    <div class="flex-1 overflow-y-auto">
+      @if (loading()) {
+        @for (i of [1, 2, 3]; track i) {
+          <div class="flex items-center gap-3 px-4 py-3.5 border-b border-slate-50">
+            <div class="h-10 w-10 rounded-full bg-slate-100 animate-pulse shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3.5 bg-slate-100 rounded animate-pulse w-2/3"></div>
+              <div class="h-3 bg-slate-100 rounded animate-pulse w-1/2"></div>
+            </div>
+          </div>
+        }
+      } @else if (rooms().length === 0) {
+        <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div class="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-7 h-7 text-slate-300"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
+              />
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-700 mb-1">No conversations yet</p>
+          <p class="text-xs text-slate-400">
+            Message a host from a property listing to start a conversation.
+          </p>
+        </div>
+      } @else {
+        @for (room of rooms(); track room.id) {
+          <button
+            (click)="openRoom(room.id)"
+            class="w-full flex items-center gap-3 px-4 py-3.5 border-b border-slate-50 hover:bg-slate-50 transition-colors text-left"
+            [class.bg-brand-50]="selectedRoomId() === room.id"
+          >
+            <!-- Avatar -->
+            <div
+              class="h-10 w-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-xs shrink-0"
+            >
+              {{ roomInitials(room) }}
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1">
+                <p class="text-sm font-semibold text-slate-900 truncate">
+                  {{ room.propertyTitle }}
+                </p>
+                @if (room.unreadCount && room.unreadCount > 0) {
+                  <span
+                    class="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-500 px-1 text-[9px] font-bold text-white shrink-0"
+                  >
+                    {{ room.unreadCount }}
+                  </span>
+                }
+              </div>
+              <p class="text-xs text-slate-400 truncate">{{ roomName(room) }}</p>
+            </div>
+          </button>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- ══ MESSAGE THREAD ══ -->
+  <div class="flex flex-col flex-1 min-w-0">
+    @if (!selectedRoomId()) {
+      <!-- Empty state -->
+      <div class="flex-1 flex flex-col items-center justify-center bg-slate-50 text-center px-4">
+        <div
+          class="h-16 w-16 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center mb-4"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-8 h-8 text-slate-300"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
+            />
+          </svg>
+        </div>
+        <p class="text-sm font-semibold text-slate-700 mb-1">Select a conversation</p>
+        <p class="text-xs text-slate-400 max-w-xs">
+          Choose a conversation from the list to read and reply to messages.
+        </p>
+      </div>
+    } @else {
+      <!-- Thread header -->
+      <div class="flex items-center gap-3 px-5 py-4 bg-white border-b border-slate-100 shrink-0">
+        <div
+          class="h-9 w-9 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-xs shrink-0"
+        >
+          {{ selectedRoom() ? roomInitials(selectedRoom()!) : '?' }}
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-slate-900">
+            {{ selectedRoom()?.propertyTitle ?? 'Conversation' }}
+          </p>
+          <p class="text-xs text-slate-400">
+            {{ selectedRoom() ? roomName(selectedRoom()!) : '' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-slate-50">
+        @if (messages().length === 0) {
+          <div class="flex items-center justify-center h-full text-center">
+            <p class="text-xs text-slate-400">No messages yet. Say hello!</p>
+          </div>
+        }
+        @for (msg of messages(); track msg.id) {
+          <div class="flex" [class.justify-end]="isMine(msg)">
+            <div
+              class="max-w-[72%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+              [class.rounded-br-sm]="isMine(msg)"
+              [class.rounded-bl-sm]="!isMine(msg)"
+              [class.bg-brand-500]="isMine(msg)"
+              [class.text-white]="isMine(msg)"
+              [class.bg-white]="!isMine(msg)"
+              [class.text-slate-800]="!isMine(msg)"
+              [class.border]="!isMine(msg)"
+              [class.border-slate-100]="!isMine(msg)"
+              [class.shadow-sm]="!isMine(msg)"
+            >
+              <p>{{ msg.messageText }}</p>
+              <p
+                class="text-[10px] mt-1"
+                [class.text-brand-200]="isMine(msg)"
+                [class.text-slate-400]="!isMine(msg)"
+              >
+                {{ dt(msg.createdAt) }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Compose bar -->
+      <div class="shrink-0 bg-white border-t border-slate-100 px-4 py-3">
+        <form [formGroup]="messageForm" (ngSubmit)="sendMessage()" class="flex items-center gap-2">
+          <input
+            formControlName="text"
+            type="text"
+            placeholder="Type a message…"
+            class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+          />
+          <button
+            type="submit"
+            [disabled]="messageForm.invalid || sendingMessage()"
+            class="h-10 w-10 flex items-center justify-center rounded-xl bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-4 h-4"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5"
+              />
+            </svg>
+          </button>
+        </form>
+      </div>
+    }
+  </div>
+</div>

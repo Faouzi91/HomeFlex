@@ -1,0 +1,159 @@
+<section class="flex flex-col min-h-full">
+  <!-- Header -->
+  <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-5 shrink-0">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-lg font-bold text-slate-900">Your Shortlist</h1>
+        <p class="text-sm text-slate-500">Properties you've saved for future consideration.</p>
+      </div>
+      <!-- Filter pills -->
+      <div class="flex gap-1 bg-slate-100 rounded-xl p-1">
+        @for (f of ['ALL', 'RENT', 'SALE']; track f) {
+          <button
+            (click)="activeFilter.set($any(f))"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
+            [class.bg-white]="activeFilter() === f"
+            [class.text-slate-900]="activeFilter() === f"
+            [class.shadow-sm]="activeFilter() === f"
+            [class.text-slate-500]="activeFilter() !== f"
+          >
+            {{ f }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 px-6 lg:px-8 py-6">
+    @if (loading()) {
+      <!-- Skeleton -->
+      <div class="space-y-3">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="flex gap-4 p-4 bg-white rounded-2xl border border-slate-100">
+            <div class="h-16 w-16 rounded-xl bg-slate-100 animate-pulse shrink-0"></div>
+            <div class="flex-1 space-y-2 py-1">
+              <div class="h-3.5 bg-slate-100 rounded animate-pulse w-1/2"></div>
+              <div class="h-3 bg-slate-100 rounded animate-pulse w-1/3"></div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (filtered().length === 0) {
+      <!-- Empty state -->
+      <div class="flex flex-col items-center justify-center py-24 text-center">
+        <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-8 h-8 text-slate-300"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+            />
+          </svg>
+        </div>
+        <h3 class="text-sm font-semibold text-slate-900 mb-1">Your shortlist is empty</h3>
+        <p class="text-sm text-slate-400 max-w-xs mb-5">
+          Browse properties and tap the heart icon to save them here.
+        </p>
+        <a routerLink="/properties" class="button button--primary text-sm px-5 py-2.5"
+          >Browse Properties</a
+        >
+      </div>
+    } @else {
+      <div class="space-y-2">
+        @for (property of filtered(); track property.id) {
+          <div
+            class="group flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all"
+          >
+            <!-- Thumbnail -->
+            <div class="h-16 w-16 rounded-xl bg-slate-100 shrink-0 overflow-hidden">
+              @if (thumb(property)) {
+                <img
+                  [src]="thumb(property)!"
+                  [alt]="property.title"
+                  class="h-full w-full object-cover"
+                />
+              } @else {
+                <div class="h-full w-full flex items-center justify-center text-slate-300">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="w-7 h-7"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                    />
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <h3
+                class="text-sm font-semibold text-slate-900 truncate group-hover:text-brand-600 transition-colors"
+              >
+                {{ property.title }}
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">
+                {{ property.city }}, {{ property.country }}
+              </p>
+              <div class="flex items-center gap-2 mt-1.5">
+                <span
+                  class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500"
+                >
+                  {{ property.propertyType }}
+                </span>
+                <span
+                  class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  [class.bg-brand-50]="property.listingType === 'RENT'"
+                  [class.text-brand-600]="property.listingType === 'RENT'"
+                  [class.bg-emerald-50]="property.listingType === 'SALE'"
+                  [class.text-emerald-600]="property.listingType === 'SALE'"
+                >
+                  {{ property.listingType }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Price + action -->
+            <div class="text-right shrink-0">
+              <p class="text-sm font-bold text-slate-900">{{ price(property) }}</p>
+              <a
+                [routerLink]="['/properties', property.id]"
+                class="mt-1.5 inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-800 transition-colors"
+              >
+                View
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2.5"
+                  stroke="currentColor"
+                  class="w-3 h-3"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>

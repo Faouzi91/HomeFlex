@@ -7,7 +7,6 @@ import { PropertiesPageComponent } from './features/properties/pages/properties/
 import { PropertyDetailPageComponent } from './features/properties/pages/property-detail/property-detail.page';
 import { VehicleDetailPageComponent } from './features/vehicles/pages/vehicle-detail/vehicle-detail.page';
 import { VehiclesPageComponent } from './features/vehicles/pages/vehicles/vehicles.page';
-import { WorkspacePageComponent } from './features/workspace/pages/workspace/workspace.page';
 import { SupportPageComponent } from './features/marketing/pages/support/support.page';
 import { AdminLayoutComponent } from './features/admin/layout/admin-layout/admin-layout.component';
 import { AdminDashboardPageComponent } from './features/admin/pages/dashboard/dashboard.page';
@@ -40,7 +39,11 @@ export const routes: Routes = [
     title: 'Reset password | HomeFlex',
   },
   { path: 'auth', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'workspace', component: WorkspacePageComponent, title: 'Workspace | HomeFlex' },
+  {
+    path: 'workspace',
+    loadChildren: () =>
+      import('./features/workspace/workspace.routes').then((m) => m.workspaceRoutes),
+  },
   { path: 'support', component: SupportPageComponent, title: 'Support | HomeFlex' },
 
   // Admin routes

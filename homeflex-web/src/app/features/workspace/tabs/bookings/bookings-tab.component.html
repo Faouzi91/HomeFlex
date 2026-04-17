@@ -1,0 +1,256 @@
+<section class="flex flex-col min-h-full">
+  <!-- Header -->
+  <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-5 shrink-0">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-lg font-bold text-slate-900">Bookings</h1>
+        <p class="text-sm text-slate-500">Your rental history across properties and vehicles.</p>
+      </div>
+      <!-- Sub-tab pills -->
+      <div class="flex gap-1 bg-slate-100 rounded-xl p-1">
+        <button
+          (click)="activeSubTab.set('properties')"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
+          [class.bg-white]="activeSubTab() === 'properties'"
+          [class.text-slate-900]="activeSubTab() === 'properties'"
+          [class.shadow-sm]="activeSubTab() === 'properties'"
+          [class.text-slate-500]="activeSubTab() !== 'properties'"
+        >
+          Properties
+        </button>
+        <button
+          (click)="activeSubTab.set('vehicles')"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
+          [class.bg-white]="activeSubTab() === 'vehicles'"
+          [class.text-slate-900]="activeSubTab() === 'vehicles'"
+          [class.shadow-sm]="activeSubTab() === 'vehicles'"
+          [class.text-slate-500]="activeSubTab() !== 'vehicles'"
+        >
+          Vehicles
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 px-6 lg:px-8 py-6 space-y-8">
+    @if (loading()) {
+      <div class="space-y-3">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="bg-white rounded-2xl border border-slate-100 p-5">
+            <div class="flex justify-between mb-3">
+              <div class="h-4 bg-slate-100 rounded animate-pulse w-1/3"></div>
+              <div class="h-5 w-16 bg-slate-100 rounded-full animate-pulse"></div>
+            </div>
+            <div class="h-3 bg-slate-100 rounded animate-pulse w-1/4 mb-2"></div>
+            <div class="h-3 bg-slate-100 rounded animate-pulse w-1/5"></div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Property bookings -->
+      @if (activeSubTab() === 'properties') {
+        @if (propertyBookings().length === 0) {
+          <div class="flex flex-col items-center justify-center py-20 text-center">
+            <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-8 h-8 text-slate-300"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+                />
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-900 mb-1">No property bookings yet</h3>
+            <p class="text-sm text-slate-400">Book a property to see your stays here.</p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (b of propertyBookings(); track b.id) {
+              <div
+                class="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all"
+              >
+                <!-- Timeline accent -->
+                <div class="flex">
+                  <div
+                    class="w-1 shrink-0"
+                    [class.bg-emerald-400]="b.status === 'CONFIRMED' || b.status === 'APPROVED'"
+                    [class.bg-amber-400]="b.status === 'PENDING'"
+                    [class.bg-rose-400]="b.status === 'CANCELLED' || b.status === 'REJECTED'"
+                    [class.bg-slate-200]="b.status === 'COMPLETED'"
+                  ></div>
+                  <div class="flex-1 p-5">
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <h4 class="text-sm font-semibold text-slate-900">{{ b.property.title }}</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                          {{ b.property.city }}, {{ b.property.country }}
+                        </p>
+                      </div>
+                      <span
+                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0"
+                        [ngClass]="statusClass(b.status)"
+                      >
+                        {{ b.status }}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
+                      @if (b.startDate) {
+                        <span>{{ date(b.startDate) }} — {{ date(b.endDate) }}</span>
+                      }
+                      @if (b.totalPrice) {
+                        <span class="font-semibold text-slate-700">{{ price(b.totalPrice) }}</span>
+                      }
+                      <span>{{ b.bookingType }}</span>
+                    </div>
+                    @if (b.status === 'CONFIRMED') {
+                      <button
+                        (click)="openDispute(b.id)"
+                        class="mt-3 text-xs font-semibold text-slate-400 hover:text-rose-600 transition-colors"
+                      >
+                        Open dispute
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+
+      <!-- Vehicle bookings -->
+      @if (activeSubTab() === 'vehicles') {
+        @if (vehicleBookings().length === 0) {
+          <div class="flex flex-col items-center justify-center py-20 text-center">
+            <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-8 h-8 text-slate-300"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                />
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-900 mb-1">No vehicle rentals yet</h3>
+            <p class="text-sm text-slate-400">Rent a vehicle to see your history here.</p>
+          </div>
+        } @else {
+          <div class="space-y-3">
+            @for (b of vehicleBookings(); track b.id) {
+              <div
+                class="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all"
+              >
+                <div class="flex">
+                  <div
+                    class="w-1 shrink-0"
+                    [class.bg-emerald-400]="b.status === 'CONFIRMED' || b.status === 'APPROVED'"
+                    [class.bg-amber-400]="b.status === 'PENDING'"
+                    [class.bg-rose-400]="b.status === 'CANCELLED' || b.status === 'REJECTED'"
+                    [class.bg-slate-200]="b.status === 'COMPLETED'"
+                  ></div>
+                  <div class="flex-1 p-5">
+                    <div class="flex items-start justify-between gap-3 mb-2">
+                      <h4 class="text-sm font-semibold text-slate-900">Vehicle Rental</h4>
+                      <span
+                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0"
+                        [ngClass]="statusClass(b.status)"
+                      >
+                        {{ b.status }}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
+                      <span>{{ date(b.startDate) }} — {{ date(b.endDate) }}</span>
+                      <span class="font-semibold text-slate-700">{{
+                        price(b.totalPrice, b.currency)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      }
+
+      <!-- Digital Leases -->
+      @if (leases().length > 0) {
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+            Digital Leases
+          </h2>
+          <div class="space-y-2">
+            @for (lease of leases(); track lease.id) {
+              <div
+                class="flex items-center justify-between gap-3 bg-white rounded-2xl border border-slate-100 px-5 py-4"
+              >
+                <div class="flex items-center gap-3">
+                  <div
+                    class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center shrink-0"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="2"
+                      stroke="currentColor"
+                      class="w-4 h-4 text-slate-500"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-slate-900">Lease Agreement</p>
+                    <p class="text-xs text-slate-400">Booking #{{ lease.bookingId.slice(0, 8) }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span
+                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    [ngClass]="leaseStatusClass(lease.status)"
+                  >
+                    {{ lease.status }}
+                  </span>
+                  @if (lease.status === 'PENDING') {
+                    <button
+                      (click)="signLease(lease.id)"
+                      class="button button--primary text-xs px-4 py-2"
+                    >
+                      Sign
+                    </button>
+                  }
+                  @if (lease.leaseUrl) {
+                    <a
+                      [href]="lease.leaseUrl"
+                      target="_blank"
+                      class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
+                    >
+                      View PDF
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+</section>
