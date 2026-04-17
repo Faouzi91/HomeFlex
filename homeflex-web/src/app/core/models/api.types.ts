@@ -162,6 +162,7 @@ export interface Booking {
   totalPrice: number | null;
   platformFee: number | null;
   stripePaymentIntentId: string | null;
+  stripeClientSecret: string | null;
   paymentConfirmedAt: string | null;
   escrowReleasedAt: string | null;
   landlordResponse: string | null;

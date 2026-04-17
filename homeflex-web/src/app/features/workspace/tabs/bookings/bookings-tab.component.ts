@@ -6,10 +6,12 @@ import { BookingApi } from '../../../../core/api/services/booking.api';
 import { DisputeApi } from '../../../../core/api/services/dispute.api';
 import { LeaseApi } from '../../../../core/api/services/lease.api';
 import { VehicleApi } from '../../../../core/api/services/vehicle.api';
+import { SessionStore } from '../../../../core/state/session.store';
+import { WorkspaceStore } from '../../workspace.store';
 import { Booking, PropertyLease, VehicleBooking } from '../../../../core/models/api.types';
 import { formatCurrency, formatDate } from '../../../../core/utils/formatters';
 
-type SubTab = 'properties' | 'vehicles';
+type SubTab = 'properties' | 'vehicles' | 'received';
 
 @Component({
   selector: 'app-bookings-tab',
@@ -22,13 +24,21 @@ export class BookingsTabComponent {
   private readonly vehicleApi = inject(VehicleApi);
   private readonly leaseApi = inject(LeaseApi);
   private readonly disputeApi = inject(DisputeApi);
+  protected readonly session = inject(SessionStore);
+  protected readonly workspaceStore = inject(WorkspaceStore);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly propertyBookings = signal<Booking[]>([]);
   protected readonly vehicleBookings = signal<VehicleBooking[]>([]);
   protected readonly leases = signal<PropertyLease[]>([]);
+  protected readonly receivedBookings = signal<Booking[]>([]);
   protected readonly loading = signal(true);
+  protected readonly approvingId = signal('');
   protected readonly activeSubTab = signal<SubTab>('properties');
+
+  protected readonly pendingReceived = computed(() =>
+    this.receivedBookings().filter((b) => b.status === 'PENDING'),
+  );
 
   constructor() {
     forkJoin({
@@ -45,6 +55,60 @@ export class BookingsTabComponent {
         this.leases.set(res.leases);
         this.loading.set(false);
       });
+
+    if (this.session.isLandlord() || this.session.isAdmin()) {
+      this.activeSubTab.set('received');
+      this.loadReceivedBookings();
+    }
+  }
+
+  private loadReceivedBookings(): void {
+    const properties = this.workspaceStore.myProperties();
+    if (!properties.length) {
+      // Properties may not be loaded yet — wait briefly then retry once
+      setTimeout(() => {
+        const props = this.workspaceStore.myProperties();
+        if (props.length) this.fetchReceivedForProperties(props.map((p) => p.id));
+      }, 1500);
+      return;
+    }
+    this.fetchReceivedForProperties(properties.map((p) => p.id));
+  }
+
+  private fetchReceivedForProperties(propertyIds: string[]): void {
+    if (!propertyIds.length) return;
+    forkJoin(
+      propertyIds.map((id) =>
+        this.bookingApi.getByProperty(id).pipe(catchError(() => of({ data: [] as Booking[] }))),
+      ),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((results) => this.receivedBookings.set(results.flatMap((r) => r.data)));
+  }
+
+  protected approveBooking(id: string): void {
+    this.approvingId.set(id);
+    this.bookingApi
+      .approve(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.receivedBookings.update((bs) => bs.map((b) => (b.id === id ? updated : b)));
+          this.approvingId.set('');
+        },
+        error: () => this.approvingId.set(''),
+      });
+  }
+
+  protected rejectBooking(id: string): void {
+    const reason = prompt('Rejection reason:');
+    if (!reason) return;
+    this.bookingApi
+      .reject(id, reason)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((updated) =>
+        this.receivedBookings.update((bs) => bs.map((b) => (b.id === id ? updated : b))),
+      );
   }
 
   protected signLease(leaseId: string): void {

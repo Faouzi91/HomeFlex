@@ -6,18 +6,39 @@ services:
     ports:
       - '8080:8080'
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev} #prod
+
+      # 🔥 limit JVM memory
+      - JAVA_OPTS=-Xms256m -Xmx512m
+
       - JWT_SECRET=${JWT_SECRET}
-      - STRIPE_API_KEY=${STRIPE_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - PII_ENCRYPTION_KEY=${PII_ENCRYPTION_KEY}
+      - MONITORING_METRICS_TOKEN=${MONITORING_METRICS_TOKEN}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - APP_AWS_ENABLED=${AWS_ENABLED}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_S3_ENDPOINT=${AWS_S3_ENDPOINT}
+
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/homeflex
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
+
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
+
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
+
+      # optional infra
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
       - LOGSTASH_HOST=logstash
     healthcheck:
@@ -33,10 +54,15 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+
+      # 🔥 optional services (don’t block startup)
       elasticsearch:
         condition: service_healthy
+        required: false
       logstash:
         condition: service_started
+        required: false
+
     restart: unless-stopped
     networks:
       - rental-network
@@ -46,11 +72,15 @@ services:
       context: ./homeflex-web
       network: host
     container_name: rental-frontend
+
+    mem_limit: 128m
+
     ports:
-      - '80:80'
+      - '8001:80'
     depends_on:
       backend:
         condition: service_healthy
+
     restart: unless-stopped
     networks:
       - rental-network
@@ -71,15 +101,19 @@ services:
       - POSTGRES_DB=homeflex
       - POSTGRES_USER=${DB_USERNAME:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+
     expose:
       - '5432'
+
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER}']
       interval: 10s
       timeout: 5s
       retries: 5
+
     restart: unless-stopped
     networks:
       - rental-network
@@ -87,15 +121,21 @@ services:
   redis:
     image: redis:8-alpine
     container_name: rental-redis
+
+    mem_limit: 256m
+
     expose:
       - '6379'
+
     volumes:
       - redis-data:/data
+
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
+
     restart: unless-stopped
     networks:
       - rental-network
@@ -103,20 +143,27 @@ services:
   rabbitmq:
     image: rabbitmq:4-management-alpine
     container_name: rental-rabbitmq
+
+    mem_limit: 512m
+
     expose:
       - '5672'
       - '15672'
+
     environment:
       - RABBITMQ_DEFAULT_USER=${SPRING_RABBITMQ_USERNAME:-guest}
       - RABBITMQ_DEFAULT_PASS=${SPRING_RABBITMQ_PASSWORD:-guest}
+
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+
     healthcheck:
       test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
+
     restart: unless-stopped
     networks:
       - rental-network
@@ -124,26 +171,32 @@ services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.1.2
     container_name: rental-elasticsearch
+
+    profiles: ["infra"]
+
+    mem_limit: 1g
+
+
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=true
+      - xpack.security.enabled=false
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-changeme}
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
       - cluster.routing.allocation.disk.threshold_enabled=false
+
     expose:
       - '9200'
+
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
+
     healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'curl -f -u elastic:$${ELASTIC_PASSWORD} http://localhost:9200/_cluster/health || exit 1',
-        ]
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
       start_period: 30s
+
     restart: unless-stopped
     networks:
       - rental-network
@@ -151,13 +204,21 @@ services:
   logstash:
     image: docker.elastic.co/logstash/logstash:9.1.2
     container_name: rental-logstash
+
+    profiles: ["infra"]
+
+    mem_limit: 512m
+
+
     volumes:
       - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     expose:
       - '50000'
+
     depends_on:
       elasticsearch:
         condition: service_healthy
+
     restart: unless-stopped
     networks:
       - rental-network
@@ -165,6 +226,11 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:9.1.2
     container_name: rental-kibana
+
+    profiles: ["infra"]
+
+    mem_limit: 512m
+    
     expose:
       - '5601'
     environment:
@@ -173,6 +239,38 @@ services:
       elasticsearch:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - rental-network
+
+  minio:
+    image: minio/minio
+    container_name: rental-minio
+
+    mem_limit: 512m
+    
+    ports:
+      - "9000:9000" # API
+      - "9001:9001" # Console
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    networks:
+      - rental-network
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-admin} ${MINIO_ROOT_PASSWORD:-minioadmin}); do echo 'Waiting for minio...' && sleep 1; done;
+      /usr/bin/mc mb local/rental-app-media --ignore-existing;
+      /usr/bin/mc anonymous set public local/rental-app-media;
+      exit 0;
+      "
     networks:
       - rental-network
 
@@ -185,3 +283,4 @@ volumes:
   redis-data:
   rabbitmq-data:
   elasticsearch-data:
+  minio-data:

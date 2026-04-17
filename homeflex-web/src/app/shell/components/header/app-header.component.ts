@@ -10,8 +10,7 @@ import {
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SessionStore } from '../../../core/state/session.store';
-import { NotificationApi } from '../../../core/api/services/notification.api';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { WorkspaceStore } from '../../../features/workspace/workspace.store';
 
 type NavItem = {
   label: string;
@@ -27,8 +26,8 @@ type NavItem = {
 })
 export class AppHeaderComponent {
   protected readonly session = inject(SessionStore);
+  private readonly workspaceStore = inject(WorkspaceStore);
   private readonly translate = inject(TranslateService);
-  private readonly notificationApi = inject(NotificationApi);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
 
@@ -44,7 +43,10 @@ export class AppHeaderComponent {
   protected readonly profileMenuOpen = signal(false);
   protected readonly currentLang = signal(this.initLanguage());
   protected readonly currentCurrency = computed(() => this.session.currencyPreference());
-  protected readonly unreadCount = signal(0);
+
+  protected readonly unreadCount = computed(
+    () => this.workspaceStore.unreadNotificationCount() + this.workspaceStore.unreadMessageCount(),
+  );
 
   constructor() {
     this.translate.onLangChange.subscribe((event) => {
@@ -69,12 +71,12 @@ export class AppHeaderComponent {
       }
     });
 
-    // Load unread notification count when user logs in
+    // Trigger workspace load (loads counts) when user authenticates
     effect(() => {
       if (this.session.user()) {
-        this.loadUnreadCount();
+        this.workspaceStore.load();
       } else {
-        this.unreadCount.set(0);
+        this.workspaceStore.reset();
       }
     });
   }
@@ -86,16 +88,6 @@ export class AppHeaderComponent {
       this.currencyMenuOpen.set(false);
       this.profileMenuOpen.set(false);
     }
-  }
-
-  private loadUnreadCount(): void {
-    this.notificationApi
-      .getAll(true)
-      .pipe(takeUntilDestroyed())
-      .subscribe({
-        next: (res) => this.unreadCount.set(res.data?.length ?? 0),
-        error: () => this.unreadCount.set(0),
-      });
   }
 
   private initLanguage(): string {

@@ -51,13 +51,33 @@ export class MessagesTabComponent {
 
   protected openRoom(roomId: string): void {
     this.selectedRoomId.set(roomId);
+
+    const room = this.rooms().find((r) => r.id === roomId);
+    const unread = room?.unreadCount ?? 0;
+
     this.chatApi
       .getMessages(roomId)
       .pipe(
         catchError(() => of({ data: [] as Message[] })),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((res) => this.messages.set(res.data));
+      .subscribe((res) => {
+        this.messages.set(res.data);
+        if (unread > 0) {
+          this.chatApi
+            .markRoomAsRead(roomId)
+            .pipe(
+              catchError(() => of(void 0)),
+              takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => {
+              this.rooms.update((rs) =>
+                rs.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r)),
+              );
+              this.store.decrementUnreadMessages(unread);
+            });
+        }
+      });
   }
 
   protected sendMessage(): void {

@@ -1,7 +1,8 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PropertyApi } from '../../../../core/api/services/property.api';
 import { VehicleApi } from '../../../../core/api/services/vehicle.api';
@@ -49,20 +50,29 @@ export class HomePageComponent {
 
   constructor() {
     forkJoin({
-      properties: this.propertyApi.search({ size: 4 }),
-      vehicles: this.vehicleApi.search({ size: 4 }),
-      stats: this.statsApi.get(),
-      cities: this.propertyApi.getCities(),
+      properties: this.propertyApi
+        .search({ size: 4 })
+        .pipe(
+          catchError(() =>
+            of({ data: [] as Property[], page: 0, size: 4, totalElements: 0, totalPages: 0 }),
+          ),
+        ),
+      vehicles: this.vehicleApi
+        .search({ size: 4 })
+        .pipe(
+          catchError(() =>
+            of({ data: [] as Vehicle[], page: 0, size: 4, totalElements: 0, totalPages: 0 }),
+          ),
+        ),
+      stats: this.statsApi.get().pipe(catchError(() => of({ data: {} as Record<string, number> }))),
+      cities: this.propertyApi.getCities().pipe(catchError(() => of([] as string[]))),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: ({ properties, vehicles, stats, cities }) => {
-          this.properties.set(properties.data);
-          this.vehicles.set(vehicles.data);
-          this.stats.set(stats.data);
-          this.citySuggestions.set(cities);
-        },
-        error: () => {},
+      .subscribe(({ properties, vehicles, stats, cities }) => {
+        this.properties.set(properties.data);
+        this.vehicles.set(vehicles.data);
+        this.stats.set(stats.data);
+        this.citySuggestions.set(cities);
       });
   }
 

@@ -86,4 +86,8 @@ export class WorkspaceStore {
   clearUnreadNotifications(): void {
     this.unreadNotificationCount.set(0);
   }
+
+  decrementUnreadMessages(count = 1): void {
+    this.unreadMessageCount.update((n) => Math.max(0, n - count));
+  }
 }

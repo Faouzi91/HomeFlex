@@ -131,8 +131,7 @@
       @if (session.isAuthenticated()) {
         <!-- Notification Bell -->
         <a
-          routerLink="/workspace"
-          [queryParams]="{ tab: 'notifications' }"
+          routerLink="/workspace/notifications"
           class="relative flex items-center justify-center h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
           title="Notifications"
         >

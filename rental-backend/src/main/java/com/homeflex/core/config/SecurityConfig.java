@@ -92,6 +92,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/stats").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/config").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/currencies/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties/my-properties")

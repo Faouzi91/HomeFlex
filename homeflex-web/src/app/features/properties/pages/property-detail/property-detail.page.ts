@@ -6,11 +6,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
+import { loadStripe, Stripe } from '@stripe/stripe-js';
 import { PropertyApi } from '../../../../core/api/services/property.api';
 import { BookingApi } from '../../../../core/api/services/booking.api';
 import { FavoriteApi } from '../../../../core/api/services/favorite.api';
 import { ReviewApi } from '../../../../core/api/services/review.api';
 import { ChatApi } from '../../../../core/api/services/chat.api';
+import { HttpClient } from '@angular/common/http';
 import { Booking, Property, Review } from '../../../../core/models/api.types';
 import { SessionStore } from '../../../../core/state/session.store';
 import {
@@ -31,6 +33,7 @@ export class PropertyDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
   private readonly propertyApi = inject(PropertyApi);
   private readonly bookingApi = inject(BookingApi);
   private readonly favoriteApi = inject(FavoriteApi);
@@ -47,6 +50,9 @@ export class PropertyDetailPageComponent {
   protected readonly favorite = signal(false);
   protected readonly averageRating = signal<number | null>(null);
   protected readonly bookingMessage = signal('');
+  protected readonly pendingPaymentSecret = signal<string | null>(null);
+  protected readonly paymentProcessing = signal(false);
+  private stripe: Stripe | null = null;
 
   protected readonly bookingForm = this.fb.group({
     bookingType: ['VIEWING', Validators.required],
@@ -184,7 +190,13 @@ export class PropertyDetailPageComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (booking: Booking) => {
-          this.bookingMessage.set(`Request sent with status ${booking.status}.`);
+          if (booking.stripeClientSecret) {
+            this.pendingPaymentSecret.set(booking.stripeClientSecret);
+            this.bookingMessage.set('Booking created! Complete payment below to confirm.');
+            this.initStripe();
+          } else {
+            this.bookingMessage.set(`Booking request sent — waiting for landlord approval.`);
+          }
           this.bookingForm.patchValue({ message: '' });
         },
         error: (err) => {
@@ -192,6 +204,40 @@ export class PropertyDetailPageComponent {
           this.bookingMessage.set(msg);
         },
       });
+  }
+
+  private initStripe(): void {
+    this.http
+      .get<{ stripePublishableKey: string }>('/api/v1/config')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (config) => {
+        if (config.stripePublishableKey) {
+          this.stripe = await loadStripe(config.stripePublishableKey);
+        }
+      });
+  }
+
+  protected async confirmPayment(): Promise<void> {
+    const clientSecret = this.pendingPaymentSecret();
+    if (!this.stripe || !clientSecret) return;
+
+    this.paymentProcessing.set(true);
+    const result = await this.stripe.confirmCardPayment(clientSecret, {
+      payment_method: 'pm_card_visa',
+    });
+
+    this.paymentProcessing.set(false);
+    if (result.error) {
+      this.bookingMessage.set(`Payment failed: ${result.error.message}`);
+    } else {
+      this.pendingPaymentSecret.set(null);
+      this.bookingMessage.set('Payment successful! Your booking is confirmed.');
+    }
+  }
+
+  protected dismissPayment(): void {
+    this.pendingPaymentSecret.set(null);
+    this.bookingMessage.set('Booking pending payment. Complete later from your bookings tab.');
   }
 
   protected submitReview(): void {

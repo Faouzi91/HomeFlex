@@ -23,6 +23,7 @@ public record BookingDto(
         BigDecimal cleaningFee,
         BigDecimal taxAmount,
         String stripePaymentIntentId,
+        String stripeClientSecret,
         String landlordResponse,
         LocalDateTime respondedAt,
         LocalDate proposedStartDate,

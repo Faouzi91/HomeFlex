@@ -79,6 +79,9 @@ public class Booking {
     @Column(name = "stripe_payment_intent_id")
     private String stripePaymentIntentId;
 
+    @Transient
+    private String stripeClientSecret;
+
     @Column(name = "payment_confirmed_at")
     private LocalDateTime paymentConfirmedAt;
 

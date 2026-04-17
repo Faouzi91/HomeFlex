@@ -151,18 +151,21 @@ public class BookingService {
         booking = bookingRepository.save(booking);
         bookingsCreatedCounter.increment();
 
+        String stripeClientSecret = null;
         if (totalPrice != null && totalPrice.compareTo(BigDecimal.ZERO) > 0) {
             String transferGroup = "property_booking_" + booking.getId();
             String description = "HomeFlex booking: " + property.getTitle();
             PaymentIntent pi = paymentService.createBookingPaymentIntent(
                     totalPrice, property.getCurrency(), description, transferGroup);
             booking.setStripePaymentIntentId(pi.getId());
+            stripeClientSecret = pi.getClientSecret();
             booking = bookingRepository.save(booking);
             paymentsSucceededCounter.increment();
         }
 
         notificationService.sendBookingRequestNotification(property.getLandlord().getId(), tenant, property);
 
+        booking.setStripeClientSecret(stripeClientSecret);
         return bookingMapper.toDto(booking);
     }
 
