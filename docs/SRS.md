@@ -2,10 +2,10 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 2.3
-**Date:** March 30, 2026
+**Version:** 3.3
+**Date:** April 17, 2026
 **Classification:** Confidential
-**Status:** Draft — Aligned with implemented codebase
+**Status:** Active — Aligned with implemented codebase
 
 ---
 
@@ -20,6 +20,7 @@
 | 2.3     | 2026-03-30 | Architect     | Implement: KYC (Stripe Identity), Stripe Connect escrow/payouts, Resilience4j, Prometheus/Grafana monitoring, NgRx Signal Store |
 | 2.4     | 2026-04-09 | Architect     | Implement: Property Availability (V11), Digital Leases (V12), Twilio SMS/WhatsApp, Stripe Webhook Idempotency (V10), Angular 21 |
 | 3.2     | 2026-04-17 | Security Eng. | Security audit: remove OAuth dummy-bypass, fix user-enumeration, constant-time token compare, XFF rate-limit fix, CSP headers, DataInitializer profile-gated, Swagger disabled in prod |
+| 3.3     | 2026-04-17 | Security Eng. | CI hardening: --watch=false, ADMIN_PASSWORD/PII_ENCRYPTION_KEY in CI env; dead code removal; new tests (password-reset enumeration, OAuth stubs, admin guard); skills: security + folder-structure |
 
 ---
 
@@ -35,6 +36,13 @@
 - 🟢 **Stripe Webhook Idempotency** — `processed_stripe_events` tracking to ensure exactly-once processing of payment events.
 - 🟢 **Modern Web Dashboard** — Re-introduced and updated `homeflex-web` using Angular 21, Tailwind CSS 4, and NgRx Signal Store.
 - 🟢 **Responsive Workspace** — Unified host/tenant operations panel with KYC status, payout summaries, and availability calendars.
+
+### Implemented since v3.2 (Security Hardening & CI)
+
+- 🟢 **Full Security Audit (10 vulnerabilities)** — OAuth dummy-bypass removed, user-enumeration silenced, constant-time token comparison, X-Forwarded-For spoofing fixed, Swagger UI disabled in prod, `DataInitializer` gated to `!prod`, admin password fallback removed, `.env` untracked from git, hardcoded JWT secret removed from `docker-compose.yml`, Content-Security-Policy added to Nginx.
+- 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
+- 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
+- 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
 
 1. [Introduction](#1-introduction)
 2. [System Overview & Vision](#2-system-overview--vision)
@@ -1946,23 +1954,71 @@ No offline support is currently implemented. All features require network connec
 
 ## 16.1 Testing Pyramid
 
-| Level            | Tool                                            | Status                        | What to Test                                                  |
-| ---------------- | ----------------------------------------------- | ----------------------------- | ------------------------------------------------------------- |
-| **Unit**         | JUnit 5 + Mockito (backend), Jasmine (frontend) | 🟢 Implemented                | Business logic, validators, mappers                           |
-| **Architecture** | ArchUnit                                        | 🟢 Implemented                | Architectural rules (controllers can't access repos directly) |
-| **Integration**  | Testcontainers                                  | 🔴 Planned                    | Repository queries, service interactions                      |
-| **API**          | REST Assured                                    | 🔴 Planned                    | Request/response contracts, auth, validation                  |
-| **Component**    | Angular Testing Library                         | 🟡 Partial (spec files exist) | User interactions, rendering                                  |
-| **E2E**          | Playwright                                      | 🔴 Planned                    | Critical user flows                                           |
-| **Performance**  | k6                                              | 🔴 Planned                    | Load testing                                                  |
-| **Security**     | OWASP ZAP + Snyk                                | 🔴 Planned                    | Vulnerability scanning                                        |
+| Level            | Tool                                             | Status                         | What to Test                                                   |
+| ---------------- | ------------------------------------------------ | ------------------------------ | -------------------------------------------------------------- |
+| **Unit**         | JUnit 5 + Mockito (backend), Vitest (frontend)   | 🟢 Implemented                 | Business logic, validators, mappers, guards, security fixes    |
+| **Architecture** | ArchUnit                                         | 🟢 Implemented                 | Architectural rules (controllers can't access repos directly)  |
+| **Integration**  | Testcontainers (`BaseIntegrationTest`)           | 🟡 Scaffold present            | Repository queries, service interactions (not yet activated)   |
+| **API**          | REST Assured                                     | 🔴 Planned                     | Request/response contracts, auth, validation                   |
+| **Component**    | Vitest + Angular `TestBed`                       | 🟡 Partial (12 of ~54 files)   | Component creation, guard redirects, signal state              |
+| **E2E**          | Playwright                                       | 🔴 Planned                     | Critical user flows                                            |
+| **Performance**  | k6                                               | 🔴 Planned                     | Load testing                                                   |
+| **Security**     | Manual audit (completed); OWASP ZAP + Snyk       | 🟡 Manual done; tooling planned| Vulnerability scanning                                         |
 
-## 16.2 Test Environment
+## 16.2 Current Test Coverage (as of v3.3)
 
-- **Backend**: JUnit 5 + Mockito for unit tests; ArchUnit for architecture enforcement
-- **Frontend**: Jasmine + Karma (spec files generated with components)
-- **CI**: GitHub Actions runs builds on push/PR
-- **Planned**: Testcontainers for integration tests, Stripe test mode for payment tests
+### Backend (8 test classes, 37+ test methods)
+
+| Class | Service Under Test | Methods | Notes |
+|---|---|---|---|
+| `AuthServiceTest` | `AuthService` | 9 | login, register, logout, password-reset enumeration, OAuth stubs |
+| `BookingServiceTest` | `BookingService` | 8 | create, approve, reject, cancel, double-booking prevention |
+| `ReviewServiceTest` | `ReviewService` | 4 | create, ownership enforcement |
+| `MaintenanceServiceTest` | `MaintenanceService` | 3 | create, status update |
+| `VehicleAvailabilityServiceTest` | `VehicleAvailabilityService` | 13 | availability windows, overlap detection |
+| `ArchitectureGuardrailsTest` | Architecture rules | — | Controllers must not import repositories directly |
+| `HomeFlexApplicationTests` | Spring context | 1 | Context loads (`@Tag("integration")`) |
+| `BaseIntegrationTest` | Testcontainers base | — | Scaffold: PostgreSQL + RabbitMQ + Elasticsearch containers |
+
+**Coverage gap**: 30 services and all 25 controllers have no tests. Recommended next sprint.
+
+### Frontend (13 spec files)
+
+| Spec | What is Tested |
+|---|---|
+| `app.spec.ts` | App shell renders |
+| `api.client.spec.ts` | Property search query params |
+| `convert-currency.pipe.spec.ts` | Pipe transforms |
+| `session.store.spec.ts` | Login sets auth state and role signal |
+| `admin.guard.spec.ts` | ADMIN allowed; TENANT + unauthenticated redirect to `/admin/login` |
+| `home.page.spec.ts` | Component creation |
+| `support.page.spec.ts` | FAQ array populated |
+| `properties.page.spec.ts` | Component creation |
+| `property-detail.page.spec.ts` | Component creation with 5 mocked APIs |
+| `vehicles.page.spec.ts` | Component creation |
+| `vehicle-detail.page.spec.ts` | Component creation |
+| `workspace.page.spec.ts` | Component creation with 17 mocked APIs |
+| `app-header.component.spec.ts` | Language/currency menus closed by default |
+
+**Coverage gap**: Admin pages, auth pages, and all API services have no specs.
+
+## 16.3 CI Pipeline (GitHub Actions)
+
+```
+.github/workflows/ci.yml
+├── backend-test job
+│   ├── Services: PostgreSQL 18, Redis 8, RabbitMQ 4, Elasticsearch 9.1.2
+│   ├── Env: JWT_SECRET, ADMIN_PASSWORD, PII_ENCRYPTION_KEY (all required, no fallback)
+│   ├── ./gradlew test --no-daemon
+│   └── ./gradlew build -x test --no-daemon
+└── frontend-build job
+    ├── npm ci
+    ├── npm run lint        (prettier --check .)
+    ├── npx ng test --watch=false
+    └── npm run build -- --configuration=production
+```
+
+**Test profile** (`application-test.yml`) overrides: in-memory MailHog SMTP, disabled Firebase/AWS/outbox relay, static JWT secret, admin password, and PII key — no real external services required to run unit tests.
 
 ---
 
@@ -1993,13 +2049,15 @@ No offline support is currently implemented. All features require network connec
 
 ## 17.4 Implementation Phasing Roadmap
 
-| Phase                              | Primary Outcomes                                                                                                     | Status      |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------- |
-| **Phase 0: Core Platform**         | User auth, property CRUD, bookings, chat, reviews, admin dashboard, Docker Compose deployment, CI pipeline           | 🟢 Complete |
-| **Phase 1: Hardening**             | Migrate tokens to httpOnly cookies, enforce strict CORS, secrets management, booking overlap validation, DB indexing | 🔴 Next     |
-| **Phase 2: Scale Foundations**     | Wire Redis caching, RabbitMQ event consumers, Elasticsearch search, resilience patterns, observability stack         | 🔴 Planned  |
-| **Phase 3: Marketplace Expansion** | Stripe Connect payouts, landlord KYC, vehicles vertical, multi-region deployment                                     | 🔴 Planned  |
-| **Phase 4: Operational Maturity**  | SLO-driven operations, performance tuning, compliance hardening, centralized state management                        | 🔴 Planned  |
+| Phase                              | Primary Outcomes                                                                                                     | Status       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| **Phase 0: Core Platform**         | User auth, property CRUD, bookings, chat, reviews, admin dashboard, Docker Compose deployment, CI pipeline           | 🟢 Complete  |
+| **Phase 1: Hardening**             | httpOnly cookie auth, CSRF, strict CORS, secrets management, Redis rate limiting, booking overlap validation          | 🟢 Complete  |
+| **Phase 2: Scale Foundations**     | Redis caching, RabbitMQ consumers, Elasticsearch search, Resilience4j, ELK observability, Prometheus/Grafana        | 🟢 Complete  |
+| **Phase 3: Marketplace Expansion** | Stripe Connect payouts, landlord KYC (Stripe Identity), vehicle rental vertical, digital leases, Twilio SMS          | 🟢 Complete  |
+| **Phase 4: Operational Maturity**  | Full security audit (10 vulns fixed), CI hardening, `security` + `folder-structure` AI skills, SRS/docs updated      | 🟢 Complete  |
+| **Phase 5: Test Coverage**         | Controller tests, service integration tests, E2E with Playwright, Snyk CVE scanning in CI                           | 🔴 Next      |
+| **Phase 6: Production Readiness**  | AWS ECS/RDS/ElastiCache/OpenSearch deployment via Terraform, CloudFront CDN, WAF, multi-region                       | 🔴 Planned   |
 
 ---
 

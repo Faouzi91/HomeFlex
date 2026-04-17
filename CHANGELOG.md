@@ -2,6 +2,38 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-17 (CI Hardening, Dead-Code Removal & New Tests)
+
+### Fixed — CI Pipeline
+
+- **Angular test step no longer hangs** (`ci.yml`) — `npx ng test` was running in interactive watch mode and would never exit in CI. Added `--watch=false` to the test command.
+- **Backend startup no longer fails in CI** (`ci.yml`, `application-test.yml`) — `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` are now required with no fallback following the security hardening pass, but were missing from both the GitHub Actions env block and the test-profile config. Both values are now provided in `ci.yml` env and `application-test.yml` so backend unit tests can start without external secrets.
+
+### Removed — Dead Code
+
+- **`processDummyOAuthLogin` private method deleted** (`AuthService.java`) — The method became unreachable after the OAuth dummy-bypass was removed. Deleted to keep the codebase clean and prevent confusion.
+
+### Tests Added — Backend
+
+- `AuthServiceTest.sendPasswordResetEmail_unknownEmail_silentlyReturns` — Verifies the user-enumeration fix: no exception thrown, no token saved, no email dispatched for an unknown address.
+- `AuthServiceTest.sendPasswordResetEmail_knownEmail_savesTokenAndSendsEmail` — Verifies the happy path: token is persisted and email is dispatched.
+- `AuthServiceTest.appleLogin_alwaysThrowsDomainException` — Confirms the Apple OAuth endpoint unconditionally rejects requests until credentials are configured.
+- `AuthServiceTest.facebookLogin_alwaysThrowsDomainException` — Same for Facebook OAuth.
+
+### Tests Added — Frontend
+
+- `admin.guard.spec.ts` (new file) — 3 cases covering the `adminGuard` route guard:
+  - Authenticated `ADMIN` user → access granted (`true`)
+  - Authenticated `TENANT` user → redirected to `/admin/login`
+  - Unauthenticated visitor → redirected to `/admin/login`
+
+### Docs
+
+- **SRS.md v3.3** — Bumped version; added v3.3 document-control entry; updated "Implemented since" block with security + CI work; rewrote Section 16 (Testing Strategy) to reflect current actual test inventory (8 backend test classes, 13 frontend spec files), CI pipeline diagram, and test-profile explanation; updated Phase roadmap (Phases 0–4 now complete, Phase 5 test coverage is next).
+- **CHANGELOG.md** — This entry.
+
+---
+
 ## [Unreleased] — 2026-04-17 (Security Audit & Hardening)
 
 ### Security 🛡️
