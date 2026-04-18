@@ -2,6 +2,20 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-18 (MinIO Seed Rehost, Bookings Deep-Link & Unread Diagnostics)
+
+### Added
+
+- **MinIO seed image ingestion** (`SeedImageIngestion.java`) — New `dev`-profile `CommandLineRunner` (order 3) that runs after `SampleDataInitializer`. It scans every `property_images` / `vehicle_images` row whose URL is not already hosted on our MinIO endpoint, downloads the bytes, re-uploads them to the `rental-app-media` bucket via `StorageService`, and replaces the DB URL. All API image responses therefore serve from MinIO rather than external hosts (Unsplash/Picsum). The job is idempotent (skips already-rehosted URLs) and fail-soft (per-URL try/catch).
+- **Clickable booking cards** (`bookings-tab.component.ts/html`) — Property, vehicle, and received bookings now navigate to the matching listing detail page when the card is clicked, passing the booking id as a `?booking=` query param. Inline action buttons (Open dispute / Approve / Reject) use `$event.stopPropagation()` to keep their click scope.
+- **`WorkspaceStore.refreshCounts()`** — New method that re-fetches notification + chat-room counts without the `loaded` gate, letting callers force a fresh unread count after a server-side mutation.
+
+### Fixed / Diagnostics
+
+- **Unread mark-as-read persistence logging** (`NotificationService.markAsRead`, `NotificationService.markAllAsRead`, `ChatService.markRoomAsRead`) — Added structured `INFO` logs on entry and after save so we can confirm from logs whether a PATCH actually reaches the backend and persists, distinguishing a silent frontend/CSRF failure from a DB issue.
+
+---
+
 ## [Unreleased] — 2026-04-17 (Unread Persistence, Avatar Upload & Overview Stats)
 
 ### Fixed

@@ -90,4 +90,16 @@ export class WorkspaceStore {
   decrementUnreadMessages(count = 1): void {
     this.unreadMessageCount.update((n) => Math.max(0, n - count));
   }
+
+  refreshCounts(): void {
+    forkJoin({
+      notifications: this.notificationApi
+        .getAll()
+        .pipe(catchError(() => of({ data: [] as NotificationItem[] }))),
+      rooms: this.chatApi.getRooms().pipe(catchError(() => of({ data: [] as ChatRoom[] }))),
+    }).subscribe((res) => {
+      this.unreadNotificationCount.set(res.notifications.data.filter((n) => !n.isRead).length);
+      this.unreadMessageCount.set(res.rooms.data.reduce((acc, r) => acc + (r.unreadCount ?? 0), 0));
+    });
+  }
 }

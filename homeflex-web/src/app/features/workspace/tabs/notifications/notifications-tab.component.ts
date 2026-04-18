@@ -1,5 +1,6 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { NotificationApi } from '../../../../core/api/services/notification.api';
@@ -17,6 +18,7 @@ export class NotificationsTabComponent {
   private readonly notificationApi = inject(NotificationApi);
   private readonly store = inject(WorkspaceStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   protected readonly notifications = signal<NotificationItem[]>([]);
   protected readonly loading = signal(true);
@@ -44,6 +46,36 @@ export class NotificationsTabComponent {
         this.notifications.set(res.data);
         this.loading.set(false);
       });
+  }
+
+  protected openNotification(n: NotificationItem): void {
+    if (!n.isRead) this.markRead(n.id);
+    const target = this.routeFor(n);
+    if (target) this.router.navigate(target.path, target.extras ?? {});
+  }
+
+  private routeFor(n: NotificationItem): { path: any[]; extras?: any } | null {
+    const type = (n.type ?? '').toUpperCase();
+    const relType = (n.relatedEntityType ?? '').toUpperCase();
+    const relId = n.relatedEntityId;
+
+    // Messages → Messages tab (room id if provided)
+    if (type === 'MESSAGE' || relType === 'CHAT_ROOM' || relType === 'MESSAGE') {
+      return { path: ['/workspace/messages'], extras: { queryParams: relId ? { room: relId } : {} } };
+    }
+    // Bookings → Bookings tab
+    if (type === 'BOOKING' || relType === 'BOOKING' || relType === 'VEHICLE_BOOKING') {
+      return { path: ['/workspace/bookings'], extras: { queryParams: relId ? { booking: relId } : {} } };
+    }
+    // Payments → Bookings (payment is tied to a booking)
+    if (type === 'PAYMENT' || relType === 'PAYMENT') {
+      return { path: ['/workspace/bookings'] };
+    }
+    // Property/Vehicle listings → detail page
+    if (relType === 'PROPERTY' && relId) return { path: ['/properties', relId] };
+    if (relType === 'VEHICLE' && relId) return { path: ['/vehicles', relId] };
+    // Disputes, reviews, system — stay in alerts
+    return null;
   }
 
   protected markRead(id: string): void {

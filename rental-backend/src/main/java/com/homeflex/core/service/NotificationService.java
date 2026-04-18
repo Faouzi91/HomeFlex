@@ -153,6 +153,7 @@ public class NotificationService {
     }
 
     public void markAsRead(UUID notificationId, UUID userId) {
+        log.info("markAsRead: notificationId={} userId={}", notificationId, userId);
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
 
@@ -163,11 +164,13 @@ public class NotificationService {
         notification.setIsRead(true);
         notification.setReadAt(LocalDateTime.now());
         notificationRepository.save(notification);
+        log.info("markAsRead: persisted isRead=true for notificationId={}", notificationId);
     }
 
     public void markAllAsRead(UUID userId) {
         List<Notification> notifications = notificationRepository
                 .findByUserIdAndIsReadFalse(userId);
+        log.info("markAllAsRead: userId={} marking {} notifications", userId, notifications.size());
 
         notifications.forEach(n -> {
             n.setIsRead(true);

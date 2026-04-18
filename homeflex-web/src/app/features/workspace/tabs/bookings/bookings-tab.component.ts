@@ -1,5 +1,6 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of } from 'rxjs';
 import { BookingApi } from '../../../../core/api/services/booking.api';
@@ -27,6 +28,7 @@ export class BookingsTabComponent {
   protected readonly session = inject(SessionStore);
   protected readonly workspaceStore = inject(WorkspaceStore);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   protected readonly propertyBookings = signal<Booking[]>([]);
   protected readonly vehicleBookings = signal<VehicleBooking[]>([]);
@@ -120,6 +122,18 @@ export class BookingsTabComponent {
           ls.map((l) => (l.id === leaseId ? { ...l, status: 'SIGNED' as const } : l)),
         );
       });
+  }
+
+  protected openPropertyBooking(b: Booking): void {
+    if (b.property?.id) {
+      this.router.navigate(['/properties', b.property.id], { queryParams: { booking: b.id } });
+    }
+  }
+
+  protected openVehicleBooking(b: VehicleBooking): void {
+    if (b.vehicleId) {
+      this.router.navigate(['/vehicles', b.vehicleId], { queryParams: { booking: b.id } });
+    }
   }
 
   protected openDispute(bookingId: string): void {

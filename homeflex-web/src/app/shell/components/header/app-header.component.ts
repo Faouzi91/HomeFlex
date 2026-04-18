@@ -1,6 +1,7 @@
 import {
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   HostListener,
@@ -9,6 +10,10 @@ import {
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
+import { NotificationApi } from '../../../core/api/services/notification.api';
+import { NotificationItem } from '../../../core/models/api.types';
 import { SessionStore } from '../../../core/state/session.store';
 import { WorkspaceStore } from '../../../features/workspace/workspace.store';
 
@@ -30,6 +35,8 @@ export class AppHeaderComponent {
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
+  private readonly notificationApi = inject(NotificationApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly greeting = computed(() => this.session.user()?.firstName ?? 'Account');
   protected readonly userInitials = computed(() => {
@@ -41,6 +48,8 @@ export class AppHeaderComponent {
   protected readonly langMenuOpen = signal(false);
   protected readonly currencyMenuOpen = signal(false);
   protected readonly profileMenuOpen = signal(false);
+  protected readonly notifMenuOpen = signal(false);
+  protected readonly recentNotifications = signal<NotificationItem[]>([]);
   protected readonly currentLang = signal(this.initLanguage());
   protected readonly currentCurrency = computed(() => this.session.currencyPreference());
 
@@ -87,7 +96,75 @@ export class AppHeaderComponent {
       this.langMenuOpen.set(false);
       this.currencyMenuOpen.set(false);
       this.profileMenuOpen.set(false);
+      this.notifMenuOpen.set(false);
     }
+  }
+
+  protected toggleNotifMenu(): void {
+    const next = !this.notifMenuOpen();
+    this.notifMenuOpen.set(next);
+    this.langMenuOpen.set(false);
+    this.currencyMenuOpen.set(false);
+    this.profileMenuOpen.set(false);
+    if (next) this.loadRecentNotifications();
+  }
+
+  private loadRecentNotifications(): void {
+    this.notificationApi
+      .getAll()
+      .pipe(
+        catchError(() => of({ data: [] as NotificationItem[] })),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => this.recentNotifications.set(res.data.slice(0, 6)));
+  }
+
+  protected openNotification(n: NotificationItem): void {
+    this.notifMenuOpen.set(false);
+    if (!n.isRead) {
+      this.notificationApi
+        .markRead(n.id)
+        .pipe(
+          catchError(() => of(void 0)),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe(() => this.workspaceStore.decrementUnreadNotifications());
+    }
+    const target = this.routeFor(n);
+    if (target) {
+      this.router.navigate(target.path, target.extras ?? {});
+    } else {
+      this.router.navigate(['/workspace/notifications']);
+    }
+  }
+
+  protected openAllNotifications(): void {
+    this.notifMenuOpen.set(false);
+    this.router.navigate(['/workspace/notifications']);
+  }
+
+  private routeFor(n: NotificationItem): { path: any[]; extras?: any } | null {
+    const type = (n.type ?? '').toUpperCase();
+    const relType = (n.relatedEntityType ?? '').toUpperCase();
+    const relId = n.relatedEntityId;
+    if (type === 'MESSAGE' || relType === 'CHAT_ROOM' || relType === 'MESSAGE') {
+      return {
+        path: ['/workspace/messages'],
+        extras: { queryParams: relId ? { room: relId } : {} },
+      };
+    }
+    if (type === 'BOOKING' || relType === 'BOOKING' || relType === 'VEHICLE_BOOKING') {
+      return {
+        path: ['/workspace/bookings'],
+        extras: { queryParams: relId ? { booking: relId } : {} },
+      };
+    }
+    if (type === 'PAYMENT' || relType === 'PAYMENT') {
+      return { path: ['/workspace/bookings'] };
+    }
+    if (relType === 'PROPERTY' && relId) return { path: ['/properties', relId] };
+    if (relType === 'VEHICLE' && relId) return { path: ['/vehicles', relId] };
+    return null;
   }
 
   private initLanguage(): string {
@@ -141,18 +218,21 @@ export class AppHeaderComponent {
     this.langMenuOpen.update((v) => !v);
     this.currencyMenuOpen.set(false);
     this.profileMenuOpen.set(false);
+    this.notifMenuOpen.set(false);
   }
 
   protected toggleCurrencyMenu(): void {
     this.currencyMenuOpen.update((v) => !v);
     this.langMenuOpen.set(false);
     this.profileMenuOpen.set(false);
+    this.notifMenuOpen.set(false);
   }
 
   protected toggleProfileMenu(): void {
     this.profileMenuOpen.update((v) => !v);
     this.langMenuOpen.set(false);
     this.currencyMenuOpen.set(false);
+    this.notifMenuOpen.set(false);
   }
 
   protected toggleMenu(): void {
@@ -167,6 +247,19 @@ export class AppHeaderComponent {
     this.langMenuOpen.set(false);
     this.currencyMenuOpen.set(false);
     this.profileMenuOpen.set(false);
+    this.notifMenuOpen.set(false);
+  }
+
+  protected notifTime(iso: string): string {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `${d}d`;
+    return new Date(iso).toLocaleDateString();
   }
 
   protected logout(): void {

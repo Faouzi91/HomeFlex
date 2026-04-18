@@ -129,34 +129,98 @@
 
       <!-- Authenticated: Notifications + Profile -->
       @if (session.isAuthenticated()) {
-        <!-- Notification Bell -->
-        <a
-          routerLink="/workspace/notifications"
-          class="relative flex items-center justify-center h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
-          title="Notifications"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-5 h-5"
+        <!-- Notification Bell (dropdown) -->
+        <div class="relative">
+          <button
+            type="button"
+            (click)="toggleNotifMenu()"
+            class="relative flex items-center justify-center h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
+            title="Notifications"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-            />
-          </svg>
-          @if (unreadCount() > 0) {
-            <span
-              class="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white leading-none"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5"
             >
-              {{ unreadCount() > 99 ? '99+' : unreadCount() }}
-            </span>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+              />
+            </svg>
+            @if (unreadCount() > 0) {
+              <span
+                class="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white leading-none"
+              >
+                {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+              </span>
+            }
+          </button>
+
+          @if (notifMenuOpen()) {
+            <div
+              class="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+            >
+              <div
+                class="flex items-center justify-between px-4 py-3 border-b border-slate-100"
+              >
+                <p class="text-sm font-bold text-slate-900">Notifications</p>
+                @if (unreadCount() > 0) {
+                  <span class="text-xs font-semibold text-rose-500">
+                    {{ unreadCount() }} unread
+                  </span>
+                }
+              </div>
+              <div class="max-h-96 overflow-y-auto">
+                @if (recentNotifications().length === 0) {
+                  <p class="px-4 py-8 text-center text-xs text-slate-400">
+                    No notifications yet.
+                  </p>
+                } @else {
+                  @for (n of recentNotifications(); track n.id) {
+                    <button
+                      type="button"
+                      (click)="openNotification(n)"
+                      class="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-b-0 transition-colors"
+                      [class.bg-brand-50]="!n.isRead"
+                    >
+                      <div class="flex items-start gap-3">
+                        <div
+                          class="h-2 w-2 rounded-full mt-1.5 shrink-0"
+                          [class.bg-brand-500]="!n.isRead"
+                          [class.bg-transparent]="n.isRead"
+                        ></div>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-xs font-semibold text-slate-900 truncate">
+                            {{ n.title }}
+                          </p>
+                          <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">
+                            {{ n.message }}
+                          </p>
+                          <p class="text-[10px] text-slate-400 mt-1">
+                            {{ notifTime(n.createdAt) }}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  }
+                }
+              </div>
+              <div class="p-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  (click)="openAllNotifications()"
+                  class="w-full rounded-lg py-2 text-xs font-semibold text-brand-600 hover:bg-brand-50 transition-colors"
+                >
+                  View all notifications
+                </button>
+              </div>
+            </div>
           }
-        </a>
+        </div>
 
         <!-- User Avatar / Profile Menu -->
         <div class="relative hidden lg:block">

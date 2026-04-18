@@ -1,5 +1,6 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { ChatApi } from '../../../../core/api/services/chat.api';
@@ -21,6 +22,7 @@ export class MessagesTabComponent {
   private readonly store = inject(WorkspaceStore);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly rooms = signal<ChatRoom[]>([]);
   protected readonly messages = signal<Message[]>([]);
@@ -46,6 +48,10 @@ export class MessagesTabComponent {
       .subscribe((res) => {
         this.rooms.set(res.data);
         this.loading.set(false);
+        const target = this.route.snapshot.queryParamMap.get('room');
+        if (target && res.data.some((r) => r.id === target)) {
+          this.openRoom(target);
+        }
       });
   }
 
@@ -63,20 +69,20 @@ export class MessagesTabComponent {
       )
       .subscribe((res) => {
         this.messages.set(res.data);
-        if (unread > 0) {
-          this.chatApi
-            .markRoomAsRead(roomId)
-            .pipe(
-              catchError(() => of(void 0)),
-              takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe(() => {
-              this.rooms.update((rs) =>
-                rs.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r)),
-              );
-              this.store.decrementUnreadMessages(unread);
-            });
-        }
+        // Always hit mark-as-read so stale DB state (from earlier bugs) clears
+        // even when the local unreadCount is already 0.
+        this.chatApi
+          .markRoomAsRead(roomId)
+          .pipe(
+            catchError(() => of(void 0)),
+            takeUntilDestroyed(this.destroyRef),
+          )
+          .subscribe(() => {
+            this.rooms.update((rs) =>
+              rs.map((r) => (r.id === roomId ? { ...r, unreadCount: 0 } : r)),
+            );
+            if (unread > 0) this.store.decrementUnreadMessages(unread);
+          });
       });
   }
 

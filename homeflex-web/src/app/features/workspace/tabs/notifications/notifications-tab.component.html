@@ -87,7 +87,8 @@
 
 <ng-template #notifRow let-n>
   <div
-    class="group flex items-start gap-3 p-4 bg-white rounded-2xl border transition-all"
+    (click)="openNotification(n)"
+    class="group flex items-start gap-3 p-4 bg-white rounded-2xl border transition-all cursor-pointer hover:bg-slate-50"
     [class.border-brand-100]="!n.isRead"
     [class.border-l-brand-500]="!n.isRead"
     [class.border-l-4]="!n.isRead"
@@ -125,7 +126,7 @@
     <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       @if (!n.isRead) {
         <button
-          (click)="markRead(n.id)"
+          (click)="markRead(n.id); $event.stopPropagation()"
           title="Mark as read"
           class="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors"
         >
@@ -142,7 +143,7 @@
         </button>
       }
       <button
-        (click)="delete(n.id)"
+        (click)="delete(n.id); $event.stopPropagation()"
         title="Delete"
         class="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
       >

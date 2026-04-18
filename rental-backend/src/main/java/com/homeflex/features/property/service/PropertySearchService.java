@@ -5,10 +5,14 @@ import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import com.homeflex.core.dto.common.ApiPageResponse;
 import com.homeflex.features.property.domain.document.PropertyDocument;
 import com.homeflex.features.property.domain.entity.Property;
+import com.homeflex.features.property.domain.enums.PropertyStatus;
 import com.homeflex.features.property.domain.repository.PropertyRepository;
 import com.homeflex.features.property.dto.response.PropertyDto;
 import com.homeflex.features.property.mapper.PropertyMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -44,6 +48,7 @@ import java.util.stream.Collectors;
  * The returned {@link PropertyDto} instances are always loaded from
  * PostgreSQL so the response is consistent with the source of truth.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PropertySearchService {
@@ -65,19 +70,29 @@ public class PropertySearchService {
                                                Double lng,
                                                Pageable pageable) {
 
-        NativeQuery query = buildQuery(q, propertyType, city, minPrice, maxPrice,
-                bedrooms, bathrooms, amenityIds, lat, lng, pageable);
+        List<UUID> ids;
+        long totalHits;
+        try {
+            NativeQuery query = buildQuery(q, propertyType, city, minPrice, maxPrice,
+                    bedrooms, bathrooms, amenityIds, lat, lng, pageable);
 
-        SearchHits<PropertyDocument> hits =
-                elasticsearchOperations.search(query, PropertyDocument.class);
+            SearchHits<PropertyDocument> hits =
+                    elasticsearchOperations.search(query, PropertyDocument.class);
 
-        List<UUID> ids = hits.getSearchHits().stream()
-                .map(hit -> UUID.fromString(hit.getContent().getId()))
-                .toList();
+            ids = hits.getSearchHits().stream()
+                    .map(hit -> UUID.fromString(hit.getContent().getId()))
+                    .toList();
+            totalHits = hits.getTotalHits();
+        } catch (Exception e) {
+            log.warn("Elasticsearch search failed, falling back to PostgreSQL: {}", e.getMessage());
+            ids = List.of();
+            totalHits = 0;
+        }
 
+        // Fallback: when ES is empty or unavailable, serve approved properties straight from PostgreSQL.
+        // This keeps the landing page resilient before the outbox relay has indexed new listings.
         if (ids.isEmpty()) {
-            return new ApiPageResponse<>(List.of(), pageable.getPageNumber(),
-                    pageable.getPageSize(), 0, 0);
+            return searchFromDatabase(pageable);
         }
 
         // Batch-fetch full entities from PostgreSQL
@@ -93,12 +108,30 @@ public class PropertySearchService {
                 .map(this::initializeAndMap)
                 .toList();
 
-        long totalHits = hits.getTotalHits();
         int totalPages = Math.max(1,
                 (int) Math.ceil((double) totalHits / pageable.getPageSize()));
 
         return new ApiPageResponse<>(dtos, pageable.getPageNumber(),
                 pageable.getPageSize(), totalHits, totalPages);
+    }
+
+    private ApiPageResponse<PropertyDto> searchFromDatabase(Pageable pageable) {
+        Pageable capped = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                pageable.getSort()
+        );
+        Page<Property> page = propertyRepository.findByStatus(PropertyStatus.APPROVED, capped);
+        List<PropertyDto> dtos = page.getContent().stream()
+                .map(this::initializeAndMap)
+                .toList();
+        return new ApiPageResponse<>(
+                dtos,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                Math.max(1, page.getTotalPages())
+        );
     }
 
     // ── private helpers ────────────────────────────────────────────────

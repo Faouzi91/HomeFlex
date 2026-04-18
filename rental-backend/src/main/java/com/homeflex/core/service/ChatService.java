@@ -14,6 +14,7 @@ import com.homeflex.core.domain.entity.Message;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.core.domain.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -145,6 +147,8 @@ public class ChatService {
         List<Message> unreadMessages = messageRepository.findByChatRoomIdAndIsReadFalse(roomId).stream()
                 .filter(m -> !m.getSender().getId().equals(userId))
                 .collect(Collectors.toList());
+        log.info("markRoomAsRead: roomId={} userId={} marking {} messages",
+                roomId, userId, unreadMessages.size());
 
         LocalDateTime now = LocalDateTime.now();
         unreadMessages.forEach(m -> {
