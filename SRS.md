@@ -2,10 +2,10 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 3.4
-**Date:** April 17, 2026
+**Version:** 3.5
+**Date:** April 18, 2026
 **Classification:** Confidential
-**Status:** 100% Implemented — Technical Requirements Met (Stripe Live, Reactive Unread Counts)
+**Status:** 100% Implemented — Technical Requirements Met (Stripe Live, Reactive Unread Counts, Persistent Read State)
 
 ---
 
@@ -20,6 +20,7 @@
 | 3.2     | 2026-04-15 | Architect     | Security Hardening: AES-GCM PII encryption, mandatory env-based secret management, infrastructure isolation.            |
 | 3.3     | 2026-04-17 | Architect     | CI hardening, dead-code removal, admin guard tests, SRS test inventory update.                                          |
 | 3.4     | 2026-04-17 | Architect     | Stripe payment flow (client secret, confirmCardPayment), reactive unread counts, landlord booking view, home page fix.  |
+| 3.5     | 2026-04-18 | Architect     | Unread chat count persists across refresh (repo query fix), robust avatar upload (null-safe + 50M nginx limit), overview stats filter to active bookings. |
 
 ---
 
@@ -140,5 +141,5 @@ All previously identified risks (R1-R10) have been mitigated via implemented tec
 
 ---
 
-**Final Document v3.4 (2026-04-17)**
+**Final Document v3.5 (2026-04-18)**
 **Implementation Status: 100% Complete.**

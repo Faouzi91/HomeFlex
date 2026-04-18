@@ -2,12 +2,17 @@ services:
   prometheus:
     image: prom/prometheus:v3.5.0
     container_name: homeflex-prometheus
+
+    profiles: ["monitoring"]
+    mem_limit: 512m
+
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=15d'
+      - '--storage.tsdb.retention.time=3d'
+      - '--storage.tsdb.retention.size=512MB'
       - '--web.enable-lifecycle'
     ports:
       - '9090:9090'
@@ -23,10 +28,20 @@ services:
   grafana:
     image: grafana/grafana:11.6.0
     container_name: homeflex-grafana
+
+    profiles: ["monitoring"]
+
+    mem_limit: 256m
+
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
+
+      - GF_RENDERING_SERVER_URL=
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+
     volumes:
       - grafana-data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro

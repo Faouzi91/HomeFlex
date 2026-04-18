@@ -72,7 +72,11 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Validate file
-        if (!file.getContentType().startsWith("image/")) {
+        if (file == null || file.isEmpty()) {
+            throw new DomainException("File is required");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
             throw new DomainException("File must be an image");
         }
 

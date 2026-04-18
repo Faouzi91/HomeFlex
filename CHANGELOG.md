@@ -2,6 +2,18 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-17 (Unread Persistence, Avatar Upload & Overview Stats)
+
+### Fixed
+
+- **Chat unread count not persisting** (`MessageRepository.java`, `ChatService.java`) — `countUnreadInRoom` previously counted every unread message in a room, including the current user's own outgoing messages that the other party had not read yet. After `markRoomAsRead` (which only marks messages where sender ≠ current user), the backend still reported the same count, so a page refresh reverted the badge. The query now filters `m.sender.id <> :userId` and both callsites pass the viewing user's ID.
+- **Avatar upload returning 400 Bad Request** (`UserService.updateAvatar`, `homeflex-web/nginx.conf`) —
+  - Added a null/empty-file guard and a null-safe `contentType` check so a browser that omits the MIME type no longer triggers an NPE-mapped 400.
+  - Added `client_max_body_size 50M` to the Angular nginx config so multipart avatar/property uploads are not clipped by nginx's 1 MB default (which surfaces as an opaque 400/413 before Spring sees the request).
+- **Workspace overview showing inflated stats** (`overview-tab.component.ts/html`) — Property and vehicle stat tiles displayed the raw list length, which included `CANCELLED` / `REJECTED` entries. They now count only active bookings (`CONFIRMED`, `PENDING`, `IN_PROGRESS`) via dedicated `activePropertyBookings` / `activeVehicleBookings` computed signals.
+
+---
+
 ## [Unreleased] — 2026-04-17 (Stripe Payment Integration, Unread Counts & Landlord Bookings)
 
 ### Added

@@ -59,13 +59,13 @@ public class ChatService {
                     return chatRoomRepository.save(newRoom);
                 });
 
-        return chatMapper.toDto(chatRoom, messageRepository.countUnreadInRoom(chatRoom.getId()));
+        return chatMapper.toDto(chatRoom, messageRepository.countUnreadInRoom(chatRoom.getId(), requesterId));
     }
 
     public List<ChatRoomDto> getChatRoomsByUser(UUID userId) {
         List<ChatRoom> chatRooms = chatRoomRepository.findByTenantIdOrLandlordId(userId, userId);
         return chatRooms.stream()
-                .map(room -> chatMapper.toDto(room, messageRepository.countUnreadInRoom(room.getId())))
+                .map(room -> chatMapper.toDto(room, messageRepository.countUnreadInRoom(room.getId(), userId)))
                 .collect(Collectors.toList());
     }
 

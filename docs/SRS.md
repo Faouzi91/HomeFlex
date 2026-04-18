@@ -22,6 +22,7 @@
 | 3.2     | 2026-04-17 | Security Eng. | Security audit: remove OAuth dummy-bypass, fix user-enumeration, constant-time token compare, XFF rate-limit fix, CSP headers, DataInitializer profile-gated, Swagger disabled in prod |
 | 3.3     | 2026-04-17 | Security Eng. | CI hardening: --watch=false, ADMIN_PASSWORD/PII_ENCRYPTION_KEY in CI env; dead code removal; new tests (password-reset enumeration, OAuth stubs, admin guard); skills: security + folder-structure |
 | 3.4     | 2026-04-17 | Architect     | Stripe payment confirmation (client secret → confirmCardPayment), reactive header unread-count badge, landlord received-bookings view, home page resilience fix, public /api/v1/config endpoint. |
+| 3.5     | 2026-04-18 | Architect     | Unread persistence fix (countUnreadInRoom excludes sender), robust avatar upload (null-safe contentType + nginx client_max_body_size 50M), overview stats filtered to active bookings only. |
 
 ---
 
@@ -44,6 +45,12 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v3.5 (Unread Persistence, Avatar Upload & Overview Stats)
+
+- 🟢 **Chat unread count persists after refresh** — `MessageRepository.countUnreadInRoom` now excludes the viewing user's own outgoing messages (`m.sender.id <> :userId`). `ChatService` callsites pass the current user's ID. After `markRoomAsRead`, a page refresh now correctly reports zero unread for that room.
+- 🟢 **Avatar upload robustness** — `UserService.updateAvatar` adds null/empty-file and null-safe `contentType` guards. `homeflex-web/nginx.conf` now sets `client_max_body_size 50M` so multipart uploads are not clipped by nginx's 1 MB default (which previously surfaced as an opaque 400 before Spring saw the request).
+- 🟢 **Workspace overview stats reflect active bookings only** — The Property Stays and Vehicle Rentals tiles now use `activePropertyBookings` / `activeVehicleBookings` computed signals filtered to `CONFIRMED | PENDING | IN_PROGRESS`, so cancelled/rejected entries no longer inflate the counts.
 
 ### Implemented since v3.4 (Stripe Payment Flow, Reactive UI & UX Fixes)
 

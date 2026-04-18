@@ -51,10 +51,20 @@ export class OverviewTabComponent {
     return Math.round((fields.filter(Boolean).length / fields.length) * 100);
   });
 
+  protected readonly activePropertyBookings = computed(() =>
+    this.propertyBookings().filter(
+      (b) => b.status === 'CONFIRMED' || b.status === 'PENDING' || b.status === 'IN_PROGRESS',
+    ),
+  );
+
+  protected readonly activeVehicleBookings = computed(() =>
+    this.vehicleBookings().filter(
+      (b) => b.status === 'CONFIRMED' || b.status === 'PENDING' || b.status === 'IN_PROGRESS',
+    ),
+  );
+
   protected readonly upcomingBookings = computed(() =>
-    this.propertyBookings()
-      .filter((b) => b.status === 'CONFIRMED' || b.status === 'PENDING')
-      .slice(0, 3),
+    this.activePropertyBookings().slice(0, 3),
   );
 
   constructor() {
