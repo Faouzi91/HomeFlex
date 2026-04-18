@@ -1,13 +1,11 @@
 package com.homeflex.features.property.api.v1;
 
-import com.homeflex.core.domain.entity.User;
 import com.homeflex.features.property.domain.entity.PropertyLease;
 import com.homeflex.features.property.service.LeaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,12 +18,11 @@ import java.util.UUID;
 public class LeaseController {
 
     private final LeaseService leaseService;
-    private final com.homeflex.core.service.UserService userService;
 
     @GetMapping("/my")
-    public ResponseEntity<List<LeaseDto>> getMyLeases(@AuthenticationPrincipal UserDetails principal) {
-        User user = userService.getUserByEmail(principal.getUsername());
-        var leases = leaseService.getMyLeases(user.getId());
+    public ResponseEntity<List<LeaseDto>> getMyLeases(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        var leases = leaseService.getMyLeases(userId);
         return ResponseEntity.ok(leases.stream().map(LeaseDto::from).toList());
     }
 
@@ -45,9 +42,9 @@ public class LeaseController {
     @PostMapping("/{leaseId}/sign")
     public ResponseEntity<LeaseDto> signLease(
             @PathVariable UUID leaseId,
-            @AuthenticationPrincipal UserDetails principal) {
-        User user = userService.getUserByEmail(principal.getUsername());
-        var lease = leaseService.signLease(leaseId, user.getId());
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        var lease = leaseService.signLease(leaseId, userId);
         return ResponseEntity.ok(LeaseDto.from(lease));
     }
 
@@ -56,9 +53,9 @@ public class LeaseController {
     public ResponseEntity<LeaseDto> uploadTemplate(
             @PathVariable UUID propertyId,
             @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal UserDetails principal) {
-        User user = userService.getUserByEmail(principal.getUsername());
-        var lease = leaseService.uploadLeaseTemplate(propertyId, file, user.getId());
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        var lease = leaseService.uploadLeaseTemplate(propertyId, file, userId);
         return ResponseEntity.ok(LeaseDto.from(lease));
     }
 

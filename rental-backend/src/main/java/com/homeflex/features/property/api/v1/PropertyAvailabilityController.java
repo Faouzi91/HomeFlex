@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -21,7 +20,6 @@ import java.util.UUID;
 public class PropertyAvailabilityController {
 
     private final PropertyAvailabilityService availabilityService;
-    private final com.homeflex.core.service.UserService userService;
 
     /// Public — anyone browsing the listing should see which dates are taken.
     /// Returns one row per unavailable date in the range.
@@ -39,8 +37,8 @@ public class PropertyAvailabilityController {
     public ResponseEntity<Void> block(
             @PathVariable UUID propertyId,
             @RequestBody @NotNull RangeRequest body,
-            @AuthenticationPrincipal UserDetails principal) {
-        var landlordId = userService.getUserByEmail(principal.getUsername()).getId();
+            Authentication authentication) {
+        var landlordId = UUID.fromString(authentication.getName());
         availabilityService.blockRange(propertyId, landlordId, body.start(), body.end());
         return ResponseEntity.noContent().build();
     }
@@ -50,8 +48,8 @@ public class PropertyAvailabilityController {
     public ResponseEntity<Void> unblock(
             @PathVariable UUID propertyId,
             @RequestBody @NotNull RangeRequest body,
-            @AuthenticationPrincipal UserDetails principal) {
-        var landlordId = userService.getUserByEmail(principal.getUsername()).getId();
+            Authentication authentication) {
+        var landlordId = UUID.fromString(authentication.getName());
         availabilityService.unblockRange(propertyId, landlordId, body.start(), body.end());
         return ResponseEntity.noContent().build();
     }

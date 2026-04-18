@@ -38,6 +38,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.homeflex.core.domain.repository.UserRepository;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponseWrapper;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.core.Ordered;
 import java.io.IOException;
 import java.util.function.Supplier;
 
@@ -55,9 +59,11 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        var csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
+
         http
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfRepo)
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                         .ignoringRequestMatchers(
                                 "/api/v1/auth/**",
@@ -154,16 +160,41 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        // Prevent CsrfAuthenticationStrategy from deleting the XSRF-TOKEN cookie
+                        // on every JWT-authenticated request (stateless apps don't rotate CSRF per request)
+                        .sessionAuthenticationStrategy((auth, req, res) -> {})
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(metricsTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class)
-                .addFilterAfter(new CsrfCookieFilter(), RateLimitFilter.class);
+                .addFilterAfter(new CsrfCookieFilter(csrfRepo), RateLimitFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * Registers CsrfDeletionGuard BEFORE Spring Security's FilterChainProxy so that
+     * CsrfFilter itself captures the guarded wrapper — making all saveToken() calls
+     * (including the deferred first-visit write) route through the guard.
+     * This guarantees the XSRF-TOKEN deletion emitted by CsrfAuthenticationStrategy
+     * is silently dropped at every call site in the chain.
+     */
+    @Bean
+    public FilterRegistrationBean<OncePerRequestFilter> csrfDeletionGuardRegistration() {
+        FilterRegistrationBean<OncePerRequestFilter> reg = new FilterRegistrationBean<>(
+                new OncePerRequestFilter() {
+                    @Override
+                    protected void doFilterInternal(HttpServletRequest req,
+                                                    HttpServletResponse resp,
+                                                    FilterChain chain) throws ServletException, IOException {
+                        chain.doFilter(req, new CsrfDeletionGuard(resp));
+                    }
+                });
+        reg.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return reg;
     }
 
     @Bean
@@ -243,18 +274,46 @@ public class SecurityConfig {
     }
 
     /**
-     * Forces the deferred CSRF token to be loaded on every request so
-     * {@link CookieCsrfTokenRepository} always writes the XSRF-TOKEN cookie.
+     * Forces the deferred CSRF token BEFORE the chain executes so that the
+     * Set-Cookie header is written into the response buffer before Spring MVC's
+     * message converters flush/commit the response.
+     *
+     * CsrfDeletionGuard (the outer servlet filter) blocks the XSRF-TOKEN deletion
+     * that CsrfAuthenticationStrategy emits later in the chain (SessionManagementFilter),
+     * so the cookie written here survives to the client.
      */
     static final class CsrfCookieFilter extends OncePerRequestFilter {
+        private final CookieCsrfTokenRepository tokenRepository;
+
+        CsrfCookieFilter(CookieCsrfTokenRepository tokenRepository) {
+            this.tokenRepository = tokenRepository;
+        }
+
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                         FilterChain filterChain) throws ServletException, IOException {
-            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-            if (csrfToken != null) {
-                csrfToken.getToken();
+            // Force deferred token evaluation NOW — before Spring MVC commits the response.
+            // If the client has no cookie yet, this writes Set-Cookie: XSRF-TOKEN=<uuid>.
+            // If it already has one, saveToken() is skipped and the existing cookie persists.
+            CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+            if (token != null) {
+                token.getToken();
             }
             filterChain.doFilter(request, response);
+        }
+    }
+
+    /** Intercepts addCookie to silently drop XSRF-TOKEN deletion calls. */
+    static final class CsrfDeletionGuard extends HttpServletResponseWrapper {
+        CsrfDeletionGuard(HttpServletResponse response) { super(response); }
+
+        @Override
+        public void addCookie(Cookie cookie) {
+            if ("XSRF-TOKEN".equals(cookie.getName())
+                    && (cookie.getMaxAge() == 0 || cookie.getValue() == null || cookie.getValue().isEmpty())) {
+                return; // drop the deletion — client keeps its existing token
+            }
+            super.addCookie(cookie);
         }
     }
 }
