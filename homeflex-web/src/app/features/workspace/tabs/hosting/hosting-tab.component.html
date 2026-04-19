@@ -4,21 +4,21 @@
     <div class="flex items-center justify-between gap-4">
       <div>
         <h1 class="text-lg font-bold text-slate-900">Hosting</h1>
-        <p class="text-sm text-slate-500">Manage your properties, vehicles, and bookings.</p>
+        <p class="text-sm text-slate-500">
+          Manage your properties, vehicles, bookings and payouts.
+        </p>
       </div>
       <div class="flex gap-2">
         <a
           routerLink="/workspace/hosting/new-vehicle"
           class="button button--outline text-xs px-4 py-2"
+          >+ Vehicle</a
         >
-          + Vehicle
-        </a>
         <a
           routerLink="/workspace/hosting/new-property"
           class="button button--primary text-xs px-4 py-2"
+          >+ Property</a
         >
-          + Property
-        </a>
       </div>
     </div>
   </div>
@@ -52,20 +52,19 @@
         s of [
           { id: 'properties', label: 'Properties' },
           { id: 'vehicles', label: 'Vehicles' },
-          { id: 'availability', label: 'Availability' },
           { id: 'bookings', label: 'Bookings' },
+          { id: 'availability', label: 'Availability' },
           { id: 'payments', label: 'Payments' },
         ];
         track s.id
       ) {
         <button
-          (click)="activeSection.set($any(s.id)); s.id === 'payments' && loadPayoutSummary()"
+          (click)="setSection(s.id)"
           class="px-4 py-3.5 text-sm font-medium border-b-2 transition-colors"
           [class.border-brand-500]="activeSection() === s.id"
           [class.text-brand-600]="activeSection() === s.id"
           [class.border-transparent]="activeSection() !== s.id"
           [class.text-slate-500]="activeSection() !== s.id"
-          [class.hover:text-slate-800]="activeSection() !== s.id"
         >
           {{ s.label }}
           @if (s.id === 'bookings' && pendingBookings().length > 0) {
@@ -80,522 +79,1440 @@
     </div>
   </div>
 
-  <div class="flex-1 px-6 lg:px-8 py-6">
-    <!-- ── Properties ── -->
-    @if (activeSection() === 'properties') {
-      @if (store.myProperties().length === 0) {
-        <div class="flex flex-col items-center justify-center py-20 text-center">
-          <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-8 h-8 text-slate-300"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819"
-              />
-            </svg>
-          </div>
-          <h3 class="text-sm font-semibold text-slate-900 mb-1">No properties yet</h3>
-          <p class="text-sm text-slate-400 mb-5">Add your first property to start hosting.</p>
-          <a
-            routerLink="/workspace/hosting/new-property"
-            class="button button--primary text-sm px-5 py-2.5"
-            >Add property</a
-          >
-        </div>
-      } @else {
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          @for (p of store.myProperties(); track p.id) {
-            <div
-              class="group relative bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all"
-            >
-              <!-- Image -->
-              <div class="aspect-video bg-slate-100 relative overflow-hidden">
-                @if (p.images?.[0]?.imageUrl) {
-                  <img
-                    [src]="p.images[0].imageUrl"
-                    [alt]="p.title"
-                    class="w-full h-full object-cover"
-                  />
-                } @else {
-                  <div class="w-full h-full flex items-center justify-center text-slate-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      class="w-10 h-10"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                      />
-                    </svg>
-                  </div>
-                }
-                <!-- Status badge -->
-                <span
-                  class="absolute top-2 left-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                  [class.bg-emerald-100]="p.status === 'APPROVED'"
-                  [class.text-emerald-700]="p.status === 'APPROVED'"
-                  [class.bg-amber-100]="p.status === 'PENDING'"
-                  [class.text-amber-700]="p.status === 'PENDING'"
-                  [class.bg-slate-100]="p.status !== 'APPROVED' && p.status !== 'PENDING'"
-                  [class.text-slate-600]="p.status !== 'APPROVED' && p.status !== 'PENDING'"
-                >
-                  {{ p.status }}
-                </span>
-                <!-- Hover actions -->
-                <div
-                  class="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
-                >
-                  <a
-                    [routerLink]="['/workspace/hosting/edit-property', p.id]"
-                    class="h-9 px-4 flex items-center rounded-lg bg-white text-xs font-bold text-slate-900 hover:bg-slate-50 transition-colors"
-                    >Edit</a
-                  >
-                  <button
-                    (click)="deleteProperty(p.id)"
-                    class="h-9 px-4 flex items-center rounded-lg bg-rose-500 text-xs font-bold text-white hover:bg-rose-600 transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <!-- Info -->
-              <div class="p-4">
-                <p class="text-sm font-semibold text-slate-900 truncate">{{ p.title }}</p>
-                <p class="text-xs text-slate-400 mt-0.5">{{ p.city }}, {{ p.country }}</p>
-                <div class="flex items-center justify-between mt-2">
-                  <p class="text-sm font-bold text-slate-900">{{ price(p.price, p.currency) }}</p>
-                  <button
-                    (click)="selectProperty(p)"
-                    class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
-                  >
-                    Select →
-                  </button>
-                </div>
-              </div>
+  <!-- Main content + detail panel wrapper -->
+  <div class="flex flex-1 min-h-0 overflow-hidden">
+    <!-- Scrollable content area -->
+    <div class="flex-1 overflow-auto flex flex-col">
+      <!-- ══════════════════ PROPERTIES ══════════════════ -->
+      @if (activeSection() === 'properties') {
+        @if (store.myProperties().length === 0) {
+          <div class="flex flex-col items-center justify-center py-24 text-center">
+            <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-8 h-8 text-slate-300"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205 3 1m1.5.5-1.5-.5M6.75 7.364V3h-3v18m3-13.636 10.5-3.819"
+                />
+              </svg>
             </div>
-          }
-        </div>
-      }
-    }
-
-    <!-- ── Vehicles ── -->
-    @if (activeSection() === 'vehicles') {
-      @if (store.myVehicles().length === 0) {
-        <div class="flex flex-col items-center justify-center py-20 text-center">
-          <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-8 h-8 text-slate-300"
+            <h3 class="text-sm font-semibold text-slate-900 mb-1">No properties yet</h3>
+            <p class="text-sm text-slate-400 mb-5">Add your first property to start hosting.</p>
+            <a
+              routerLink="/workspace/hosting/new-property"
+              class="button button--primary text-sm px-5 py-2.5"
+              >Add property</a
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
-              />
-            </svg>
           </div>
-          <h3 class="text-sm font-semibold text-slate-900 mb-1">No vehicles yet</h3>
-          <p class="text-sm text-slate-400 mb-5">List a vehicle to earn from rentals.</p>
-          <a
-            routerLink="/workspace/hosting/new-vehicle"
-            class="button button--primary text-sm px-5 py-2.5"
-            >Add vehicle</a
+        } @else {
+          <!-- Toolbar -->
+          <div
+            class="bg-white border-b border-slate-100 px-6 lg:px-8 py-3 flex items-center gap-3 shrink-0"
           >
-        </div>
-      } @else {
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          @for (v of store.myVehicles(); track v.id) {
-            <div
-              class="group relative bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all"
-            >
-              <div class="aspect-video bg-slate-100 relative overflow-hidden">
-                @if (v.images?.[0]?.imageUrl) {
-                  <img
-                    [src]="v.images[0].imageUrl"
-                    [alt]="v.brand + ' ' + v.model"
-                    class="w-full h-full object-cover"
-                  />
-                } @else {
-                  <div class="w-full h-full flex items-center justify-center text-slate-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="currentColor"
-                      class="w-10 h-10"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-                      />
-                    </svg>
-                  </div>
-                }
-                <div
-                  class="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
-                >
-                  <a
-                    [routerLink]="['/workspace/hosting/edit-vehicle', v.id]"
-                    class="h-9 px-4 flex items-center rounded-lg bg-white text-xs font-bold text-slate-900 hover:bg-slate-50"
-                    >Edit</a
-                  >
-                </div>
-              </div>
-              <div class="p-4">
-                <p class="text-sm font-semibold text-slate-900">
-                  {{ v.brand }} {{ v.model }} ({{ v.year }})
-                </p>
-                <p class="text-xs text-slate-400 mt-0.5">
-                  {{ v.transmission }} · {{ v.fuelType }} · {{ v.seats }} seats
-                </p>
-                <p class="text-sm font-bold text-slate-900 mt-2">
-                  {{ price(v.dailyPrice, v.currency)
-                  }}<span class="text-xs font-normal text-slate-400">/day</span>
-                </p>
-              </div>
+            <div class="relative flex-1 max-w-xs">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search by name, city…"
+                [value]="propSearch()"
+                (input)="setPropSearch($any($event.target).value)"
+                class="w-full pl-8 pr-3 h-9 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-300"
+              />
             </div>
-          }
-        </div>
-      }
-    }
-
-    <!-- ── Availability ── -->
-    @if (activeSection() === 'availability') {
-      @if (store.myProperties().length === 0) {
-        <p class="text-sm text-slate-400">Add a property first to manage its availability.</p>
-      } @else {
-        <div class="max-w-xl space-y-5">
-          <!-- Property selector -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 mb-1.5">Select property</label>
             <select
-              class="select-styled w-full"
-              (change)="selectProperty(store.myProperties()[$any($event.target).selectedIndex])"
+              [value]="propStatusFilter()"
+              (change)="setPropStatus($any($event.target).value)"
+              class="h-9 rounded-xl border border-slate-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-brand-400/40 text-slate-600"
             >
-              <option value="">Choose a property…</option>
-              @for (p of store.myProperties(); track p.id) {
-                <option [value]="p.id">{{ p.title }}</option>
-              }
+              <option value="">All statuses</option>
+              <option value="APPROVED">Approved</option>
+              <option value="PENDING">Pending</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="DRAFT">Draft</option>
             </select>
+            <p class="text-xs text-slate-400 ml-auto">
+              {{ filteredProperties().length }} result{{
+                filteredProperties().length !== 1 ? 's' : ''
+              }}
+            </p>
           </div>
 
-          @if (selectedPropertyId()) {
-            <div class="bg-white rounded-2xl border border-slate-100 p-5 space-y-4">
-              <h3 class="text-sm font-semibold text-slate-900">Block / unblock dates</h3>
-              <form [formGroup]="rangeForm" class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1.5"
-                    >Start date</label
+          <!-- Table -->
+          <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-100">
+                  <th
+                    class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20"
                   >
-                  <input
-                    formControlName="start"
-                    type="date"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold text-slate-500 mb-1.5">End date</label>
-                  <input
-                    formControlName="end"
-                    type="date"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300"
-                  />
-                </div>
-              </form>
-              <div class="flex gap-2">
+                    Photo
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Property
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Type
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Price / night
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Beds · Baths
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                @for (p of pagedProperties(); track p.id) {
+                  <tr
+                    class="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    [class.bg-brand-50/30]="detailProperty()?.id === p.id"
+                    (click)="openPropertyDetail(p, $event)"
+                  >
+                    <td class="px-6 py-3">
+                      <div class="h-11 w-16 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                        @if (p.images[0]?.imageUrl) {
+                          <img
+                            [src]="p.images[0].imageUrl"
+                            [alt]="p.title"
+                            class="h-full w-full object-cover"
+                          />
+                        } @else {
+                          <div class="h-full w-full flex items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke-width="1.5"
+                              stroke="currentColor"
+                              class="w-5 h-5 text-slate-300"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z"
+                              />
+                            </svg>
+                          </div>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 min-w-0 max-w-[220px]">
+                      <p class="text-sm font-semibold text-slate-900 truncate">{{ p.title }}</p>
+                      <p class="text-xs text-slate-400 mt-0.5">{{ p.city }}, {{ p.country }}</p>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="text-xs text-slate-600">{{ titleCase(p.propertyType) }}</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="text-sm font-semibold text-slate-900">{{
+                        price(p.price, p.currency)
+                      }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                      {{ p.bedrooms ?? '—' }} bd · {{ p.bathrooms ?? '—' }} ba
+                    </td>
+                    <td class="px-4 py-3">
+                      <span
+                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                        [ngClass]="statusClass(p.status)"
+                      >
+                        {{ p.status }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3" (click)="$event.stopPropagation()">
+                      <div class="flex items-center justify-end gap-1">
+                        <a
+                          [routerLink]="['/properties', p.id]"
+                          target="_blank"
+                          class="inline-flex items-center h-8 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                          title="View public listing"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            class="w-3.5 h-3.5"
+                          >
+                            <path
+                              d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z"
+                            />
+                            <path
+                              d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5Z"
+                            />
+                          </svg>
+                        </a>
+                        <a
+                          [routerLink]="['/workspace/hosting/edit-property', p.id]"
+                          class="inline-flex items-center h-8 px-3 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                          (click)="$event.stopPropagation()"
+                          >Edit</a
+                        >
+                        <button
+                          (click)="selectPropertyForAvailability(p)"
+                          class="inline-flex items-center h-8 px-3 rounded-lg text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 transition-colors"
+                          title="Manage availability"
+                        >
+                          Availability
+                        </button>
+                        <button
+                          (click)="deleteProperty(p.id)"
+                          class="inline-flex items-center h-8 w-8 justify-center rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          title="Delete property"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            class="w-4 h-4"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                              clip-rule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          @if (propTotalPages() > 1) {
+            <div
+              class="bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between shrink-0"
+            >
+              <p class="text-xs text-slate-500">
+                Page {{ propertiesPage() + 1 }} of {{ propTotalPages() }} ·
+                {{ filteredProperties().length }} properties
+              </p>
+              <div class="flex gap-1">
                 <button
-                  (click)="blockRange()"
-                  [disabled]="rangeForm.invalid"
-                  class="button button--primary text-xs px-4 py-2"
+                  (click)="propertiesPage.update(p => p - 1)"
+                  [disabled]="propertiesPage() === 0"
+                  class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
-                  Block
+                  ‹
                 </button>
                 <button
-                  (click)="unblockRange()"
-                  [disabled]="rangeForm.invalid"
-                  class="button button--ghost text-xs px-4 py-2"
+                  (click)="propertiesPage.update(p => p + 1)"
+                  [disabled]="propertiesPage() >= propTotalPages() - 1"
+                  class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
-                  Unblock
+                  ›
                 </button>
               </div>
+            </div>
+          }
+        }
+      }
 
-              @if (availability().length > 0) {
-                <div>
-                  <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">
-                    Blocked periods
-                  </h4>
-                  <div class="space-y-1.5">
-                    @for (slot of availability(); track slot.id) {
-                      <div
-                        class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-50 border border-rose-100"
-                      >
-                        <span class="text-xs font-medium text-rose-700"
-                          >{{ date(slot.startDate) }} — {{ date(slot.endDate) }}</span
-                        >
-                        <span class="text-[10px] font-bold uppercase text-rose-500">Blocked</span>
+      <!-- ══════════════════ VEHICLES ══════════════════ -->
+      @if (activeSection() === 'vehicles') {
+        @if (store.myVehicles().length === 0) {
+          <div class="flex flex-col items-center justify-center py-24 text-center">
+            <div class="h-16 w-16 rounded-2xl bg-slate-50 flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-8 h-8 text-slate-300"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                />
+              </svg>
+            </div>
+            <h3 class="text-sm font-semibold text-slate-900 mb-1">No vehicles yet</h3>
+            <p class="text-sm text-slate-400 mb-5">List a vehicle to earn from rentals.</p>
+            <a
+              routerLink="/workspace/hosting/new-vehicle"
+              class="button button--primary text-sm px-5 py-2.5"
+              >Add vehicle</a
+            >
+          </div>
+        } @else {
+          <!-- Toolbar -->
+          <div
+            class="bg-white border-b border-slate-100 px-6 lg:px-8 py-3 flex items-center gap-3 shrink-0"
+          >
+            <div class="relative flex-1 max-w-xs">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search by brand, city…"
+                [value]="vehicleSearch()"
+                (input)="setVehicleSearch($any($event.target).value)"
+                class="w-full pl-8 pr-3 h-9 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-300"
+              />
+            </div>
+            <select
+              [value]="vehicleStatusFilter()"
+              (change)="setVehicleStatus($any($event.target).value)"
+              class="h-9 rounded-xl border border-slate-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-brand-400/40 text-slate-600"
+            >
+              <option value="">All statuses</option>
+              <option value="AVAILABLE">Available</option>
+              <option value="UNAVAILABLE">Unavailable</option>
+              <option value="MAINTENANCE">Maintenance</option>
+            </select>
+            <p class="text-xs text-slate-400 ml-auto">
+              {{ filteredVehicles().length }} result{{ filteredVehicles().length !== 1 ? 's' : '' }}
+            </p>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-100">
+                  <th
+                    class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20"
+                  >
+                    Photo
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Vehicle
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Specs
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Daily price
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Pickup city
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-50">
+                @for (v of pagedVehicles(); track v.id) {
+                  <tr
+                    class="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    [class.bg-brand-50/30]="detailVehicle()?.id === v.id"
+                    (click)="openVehicleDetail(v, $event)"
+                  >
+                    <td class="px-6 py-3">
+                      <div class="h-11 w-16 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                        @if (v.images[0]?.imageUrl) {
+                          <img
+                            [src]="v.images[0].imageUrl"
+                            [alt]="v.brand + ' ' + v.model"
+                            class="h-full w-full object-cover"
+                          />
+                        } @else {
+                          <div class="h-full w-full flex items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke-width="1.5"
+                              stroke="currentColor"
+                              class="w-5 h-5 text-slate-300"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z"
+                              />
+                            </svg>
+                          </div>
+                        }
                       </div>
-                    }
+                    </td>
+                    <td class="px-4 py-3 min-w-0">
+                      <p class="text-sm font-semibold text-slate-900">
+                        {{ v.brand }} {{ v.model }}
+                      </p>
+                      <p class="text-xs text-slate-400 mt-0.5">{{ v.year }}</p>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                      {{ titleCase(v.transmission) }} · {{ titleCase(v.fuelType) }}
+                      @if (v.seats) {
+                        · {{ v.seats }} seats
+                      }
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="text-sm font-semibold text-slate-900">{{
+                        price(v.dailyPrice, v.currency)
+                      }}</span>
+                      <span class="text-xs text-slate-400">/day</span>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-slate-500">{{ v.pickupCity ?? '—' }}</td>
+                    <td class="px-4 py-3">
+                      <span
+                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                        [ngClass]="statusClass(v.status)"
+                      >
+                        {{ v.status }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3" (click)="$event.stopPropagation()">
+                      <div class="flex items-center justify-end gap-1">
+                        <a
+                          [routerLink]="['/vehicles', v.id]"
+                          target="_blank"
+                          class="inline-flex items-center h-8 px-2.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                          title="View public listing"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                            class="w-3.5 h-3.5"
+                          >
+                            <path
+                              d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z"
+                            />
+                            <path
+                              d="M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5Z"
+                            />
+                          </svg>
+                        </a>
+                        <a
+                          [routerLink]="['/workspace/hosting/edit-vehicle', v.id]"
+                          class="inline-flex items-center h-8 px-3 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                          (click)="$event.stopPropagation()"
+                          >Edit</a
+                        >
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          @if (vehicleTotalPages() > 1) {
+            <div
+              class="bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between shrink-0"
+            >
+              <p class="text-xs text-slate-500">
+                Page {{ vehiclesPage() + 1 }} of {{ vehicleTotalPages() }} ·
+                {{ filteredVehicles().length }} vehicles
+              </p>
+              <div class="flex gap-1">
+                <button
+                  (click)="vehiclesPage.update(p => p - 1)"
+                  [disabled]="vehiclesPage() === 0"
+                  class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  ‹
+                </button>
+                <button
+                  (click)="vehiclesPage.update(p => p + 1)"
+                  [disabled]="vehiclesPage() >= vehicleTotalPages() - 1"
+                  class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          }
+        }
+      }
+
+      <!-- ══════════════════ BOOKINGS ══════════════════ -->
+      @if (activeSection() === 'bookings') {
+        @if (loadingBookings()) {
+          <div class="px-6 py-6 space-y-3">
+            @for (i of [1, 2, 3, 4]; track i) {
+              <div class="h-14 rounded-xl bg-slate-100 animate-pulse"></div>
+            }
+          </div>
+        } @else {
+          <!-- Toolbar -->
+          <div
+            class="bg-white border-b border-slate-100 px-6 lg:px-8 py-3 flex items-center gap-3 shrink-0"
+          >
+            <div class="relative flex-1 max-w-xs">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search tenant or property…"
+                [value]="bookingSearch()"
+                (input)="setBookingSearch($any($event.target).value)"
+                class="w-full pl-8 pr-3 h-9 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400/40 focus:border-brand-300"
+              />
+            </div>
+            <select
+              [value]="bookingStatusFilter()"
+              (change)="setBookingStatus($any($event.target).value)"
+              class="h-9 rounded-xl border border-slate-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-brand-400/40 text-slate-600"
+            >
+              <option value="">All statuses</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+            @if (pendingBookings().length > 0) {
+              <span
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 rounded-full px-2.5 py-0.5"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                {{ pendingBookings().length }} pending
+              </span>
+            }
+            <p class="text-xs text-slate-400 ml-auto">
+              {{ filteredBookings().length }} result{{ filteredBookings().length !== 1 ? 's' : '' }}
+            </p>
+          </div>
+
+          @if (filteredBookings().length === 0) {
+            <div class="flex flex-col items-center justify-center py-20 text-center">
+              <p class="text-sm font-semibold text-slate-900 mb-1">No bookings found</p>
+              <p class="text-xs text-slate-400">Try adjusting your search or filters.</p>
+            </div>
+          } @else {
+            <div class="overflow-x-auto flex-1">
+              <table class="w-full text-left">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-100">
+                    <th
+                      class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                    >
+                      Tenant
+                    </th>
+                    <th
+                      class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                    >
+                      Property
+                    </th>
+                    <th
+                      class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                    >
+                      Dates
+                    </th>
+                    <th
+                      class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                    >
+                      Amount
+                    </th>
+                    <th
+                      class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider"
+                    >
+                      Status
+                    </th>
+                    <th
+                      class="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right"
+                    >
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                  @for (b of pagedBookings(); track b.id) {
+                    <tr
+                      class="hover:bg-slate-50/60 transition-colors"
+                      [class.bg-amber-50/30]="b.status === 'PENDING'"
+                    >
+                      <td class="px-6 py-3">
+                        <div class="flex items-center gap-2.5">
+                          <div
+                            class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center shrink-0"
+                          >
+                            <span class="text-xs font-bold text-brand-700">{{
+                              initials(b.tenant.firstName, b.tenant.lastName)
+                            }}</span>
+                          </div>
+                          <div class="min-w-0">
+                            <p class="text-sm font-semibold text-slate-900 truncate">
+                              {{ b.tenant.firstName }} {{ b.tenant.lastName }}
+                            </p>
+                            @if (b.message) {
+                              <p
+                                class="text-xs text-slate-400 truncate max-w-[150px]"
+                                [title]="b.message"
+                              >
+                                {{ b.message }}
+                              </p>
+                            }
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3 min-w-0 max-w-[180px]">
+                        <p class="text-xs font-medium text-slate-700 truncate">
+                          {{ b.property.title }}
+                        </p>
+                        <p class="text-xs text-slate-400">{{ b.property.city }}</p>
+                      </td>
+                      <td class="px-4 py-3 text-xs text-slate-600 whitespace-nowrap">
+                        {{ date(b.startDate) }}<br />
+                        <span class="text-slate-400">→ {{ date(b.endDate) }}</span>
+                      </td>
+                      <td class="px-4 py-3">
+                        <span class="text-sm font-semibold text-slate-900">
+                          {{ b.totalPrice ? price(b.totalPrice, b.property.currency) : '—' }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3">
+                        <span
+                          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                          [ngClass]="statusClass(b.status)"
+                        >
+                          {{ b.status }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3">
+                        @if (rejectingId() === b.id) {
+                          <div class="flex items-center gap-2 justify-end">
+                            <input
+                              type="text"
+                              [value]="rejectReason()"
+                              (input)="rejectReason.set($any($event.target).value)"
+                              placeholder="Reason…"
+                              class="h-8 w-36 rounded-lg border border-slate-200 px-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-rose-300"
+                            />
+                            <button
+                              (click)="submitReject(b.id)"
+                              [disabled]="!rejectReason().trim()"
+                              class="h-8 px-3 text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-lg disabled:opacity-40 transition-colors"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              (click)="cancelReject()"
+                              class="h-8 px-3 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        } @else {
+                          <div class="flex items-center gap-1 justify-end">
+                            @if (b.status === 'PENDING') {
+                              <button
+                                (click)="approveBooking(b.id)"
+                                class="inline-flex items-center h-8 px-3 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                (click)="startReject(b.id)"
+                                class="inline-flex items-center h-8 px-3 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors"
+                              >
+                                Reject
+                              </button>
+                            }
+                            @if (b.status === 'APPROVED' || b.status === 'CONFIRMED') {
+                              <button
+                                (click)="generateLease(b.id)"
+                                class="inline-flex items-center h-8 px-3 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                              >
+                                Lease
+                              </button>
+                            }
+                          </div>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if (bookingTotalPages() > 1) {
+              <div
+                class="bg-white border-t border-slate-100 px-6 py-3 flex items-center justify-between shrink-0"
+              >
+                <p class="text-xs text-slate-500">
+                  Page {{ bookingsPage() + 1 }} of {{ bookingTotalPages() }} ·
+                  {{ filteredBookings().length }} bookings
+                </p>
+                <div class="flex gap-1">
+                  <button
+                    (click)="bookingsPage.update(p => p - 1)"
+                    [disabled]="bookingsPage() === 0"
+                    class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    (click)="bookingsPage.update(p => p + 1)"
+                    [disabled]="bookingsPage() >= bookingTotalPages() - 1"
+                    class="h-8 w-8 flex items-center justify-center rounded-lg text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        }
+      }
+
+      <!-- ══════════════════ AVAILABILITY ══════════════════ -->
+      @if (activeSection() === 'availability') {
+        <div class="px-6 lg:px-8 py-6">
+          @if (store.myProperties().length === 0) {
+            <p class="text-sm text-slate-400">Add a property first to manage its availability.</p>
+          } @else {
+            <div class="max-w-xl space-y-5">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Select property</label
+                >
+                <select
+                  class="select-styled w-full"
+                  (change)="
+                    selectProperty(store.myProperties()[$any($event.target).selectedIndex - 1])
+                  "
+                >
+                  <option value="">Choose a property…</option>
+                  @for (p of store.myProperties(); track p.id) {
+                    <option [value]="p.id" [selected]="selectedPropertyId() === p.id">
+                      {{ p.title }}
+                    </option>
+                  }
+                </select>
+              </div>
+
+              @if (selectedPropertyId()) {
+                <div class="bg-white rounded-2xl border border-slate-100 p-5 space-y-4">
+                  <h3 class="text-sm font-semibold text-slate-900">Block / unblock dates</h3>
+                  <form [formGroup]="rangeForm" class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                        >Start date</label
+                      >
+                      <input
+                        formControlName="start"
+                        type="date"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                        >End date</label
+                      >
+                      <input
+                        formControlName="end"
+                        type="date"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300"
+                      />
+                    </div>
+                  </form>
+                  <div class="flex gap-2">
+                    <button
+                      (click)="blockRange()"
+                      [disabled]="rangeForm.invalid"
+                      class="button button--primary text-xs px-4 py-2"
+                    >
+                      Block
+                    </button>
+                    <button
+                      (click)="unblockRange()"
+                      [disabled]="rangeForm.invalid"
+                      class="button button--ghost text-xs px-4 py-2"
+                    >
+                      Unblock
+                    </button>
                   </div>
+                  @if (availability().length > 0) {
+                    <div>
+                      <h4
+                        class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2"
+                      >
+                        Blocked periods
+                      </h4>
+                      <div class="space-y-1.5">
+                        @for (slot of availability(); track slot.id) {
+                          <div
+                            class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-50 border border-rose-100"
+                          >
+                            <span class="text-xs font-medium text-rose-700"
+                              >{{ date(slot.startDate) }} — {{ date(slot.endDate) }}</span
+                            >
+                            <span class="text-[10px] font-bold uppercase text-rose-500"
+                              >Blocked</span
+                            >
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  } @else {
+                    <p class="text-xs text-slate-400">
+                      No blocked periods — all dates are available.
+                    </p>
+                  }
                 </div>
               }
             </div>
           }
         </div>
       }
-    }
 
-    <!-- ── Bookings ── -->
-    @if (activeSection() === 'bookings') {
-      @if (!selectedPropertyId()) {
-        <div class="max-w-sm">
-          <p class="text-sm text-slate-500 mb-3">Select a property to see its bookings.</p>
-          <select
-            class="select-styled w-full"
-            (change)="selectProperty(store.myProperties()[$any($event.target).selectedIndex])"
-          >
-            <option value="">Choose a property…</option>
-            @for (p of store.myProperties(); track p.id) {
-              <option [value]="p.id">{{ p.title }}</option>
-            }
-          </select>
-        </div>
-      } @else if (hostBookings().length === 0) {
-        <p class="text-sm text-slate-400 py-8 text-center">No bookings for this property yet.</p>
-      } @else {
-        <div class="space-y-3 max-w-2xl">
-          @for (b of hostBookings(); track b.id) {
-            <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-              <div class="flex">
-                <div
-                  class="w-1 shrink-0"
-                  [class.bg-amber-400]="b.status === 'PENDING'"
-                  [class.bg-emerald-400]="b.status === 'CONFIRMED' || b.status === 'APPROVED'"
-                  [class.bg-rose-400]="b.status === 'CANCELLED' || b.status === 'REJECTED'"
-                  [class.bg-slate-200]="b.status === 'COMPLETED'"
-                ></div>
-                <div class="flex-1 p-5">
-                  <div class="flex items-start justify-between gap-3 mb-2">
-                    <div>
+      <!-- ══════════════════ PAYMENTS ══════════════════ -->
+      @if (activeSection() === 'payments') {
+        <div class="px-6 lg:px-8 py-6">
+          <div class="max-w-2xl space-y-6">
+            <!-- Stripe Connect card -->
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">Stripe Connect Account</h3>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    Required to receive payouts from approved bookings.
+                  </p>
+                </div>
+                @if (payoutLoading()) {
+                  <svg
+                    class="animate-spin h-4 w-4 text-slate-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                }
+              </div>
+              <div class="px-6 py-5">
+                @if (payoutSummary()?.stripeAccountConnected) {
+                  <div class="flex items-center gap-4">
+                    <div
+                      class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        class="w-5 h-5 text-emerald-600"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-sm font-semibold text-slate-900">Stripe account connected</p>
+                      <p class="text-xs text-slate-500 mt-0.5">
+                        Payouts will be sent to your Stripe account after each completed stay.
+                      </p>
+                    </div>
+                    <button
+                      (click)="reconnectStripe()"
+                      [disabled]="stripeOnboardingLoading()"
+                      class="shrink-0 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    >
+                      {{ stripeOnboardingLoading() ? 'Loading…' : 'Update account' }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="flex items-start gap-4">
+                    <div
+                      class="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        class="w-5 h-5 text-amber-600"
+                      >
+                        <path
+                          fill-rule="evenodd"
+                          d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                          clip-rule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
                       <p class="text-sm font-semibold text-slate-900">
+                        Connect Stripe to receive payouts
+                      </p>
+                      <p class="text-xs text-slate-500 mt-0.5 mb-4">
+                        You won't receive payment for approved bookings until your Stripe account is
+                        set up. It only takes a few minutes.
+                      </p>
+                      <button
+                        type="button"
+                        (click)="connectStripe()"
+                        [disabled]="stripeOnboardingLoading()"
+                        class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#635bff] hover:bg-[#4f46e5] rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        @if (stripeOnboardingLoading()) {
+                          <svg
+                            class="animate-spin h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              class="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              stroke-width="4"
+                            ></circle>
+                            <path
+                              class="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v8z"
+                            ></path>
+                          </svg>
+                          Connecting…
+                        } @else {
+                          <!-- Stripe logo mark -->
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            viewBox="0 0 28 28"
+                            fill="currentColor"
+                          >
+                            <path
+                              d="M13.4 10.2c0-.9.7-1.2 1.9-1.2 1.7 0 3.8.5 5.5 1.4V5.2C19 4.4 17 4 15 4 10.6 4 7.6 6.3 7.6 10.4c0 6.4 8.8 5.4 8.8 8.2 0 1-.9 1.4-2.2 1.4-1.9 0-4.3-.8-6.2-1.8v5.2c2.1.9 4.2 1.3 6.2 1.3 4.5 0 7.6-2.2 7.6-6.4-.1-6.9-8.8-5.7-8.8-8.1z"
+                            />
+                          </svg>
+                          Connect with Stripe
+                        }
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                @if (stripeOnboardingError()) {
+                  <div
+                    class="mt-4 flex items-start gap-2.5 rounded-xl bg-rose-50 border border-rose-200 px-4 py-3"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                    <p class="text-sm text-rose-700">{{ stripeOnboardingError() }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Payout summary -->
+            @if (payoutSummary()) {
+              <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div class="px-6 py-5 border-b border-slate-100">
+                  <h3 class="text-sm font-bold text-slate-900">Payout Summary</h3>
+                </div>
+                <div class="grid grid-cols-2 divide-x divide-y divide-slate-100">
+                  <div class="px-6 py-5">
+                    <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
+                      Available
+                    </p>
+                    <p class="text-xl font-bold text-emerald-600">
+                      {{ formatAmount(payoutSummary()!.availableBalance) }}
+                    </p>
+                  </div>
+                  <div class="px-6 py-5">
+                    <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
+                      Pending
+                    </p>
+                    <p class="text-xl font-bold text-slate-900">
+                      {{ formatAmount(payoutSummary()!.pendingBalance) }}
+                    </p>
+                  </div>
+                  <div class="px-6 py-5">
+                    <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
+                      In escrow
+                    </p>
+                    <p class="text-xl font-bold text-amber-600">
+                      {{ formatAmount(payoutSummary()!.escrowHeld) }}
+                    </p>
+                  </div>
+                  <div class="px-6 py-5">
+                    <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
+                      Lifetime earnings
+                    </p>
+                    <p class="text-xl font-bold text-slate-900">
+                      {{ formatAmount(payoutSummary()!.totalEarnings) }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+    <!-- end scrollable content -->
+
+    <!-- ══════════════════ PROPERTY DETAIL PANEL ══════════════════ -->
+    @if (detailProperty()) {
+      <!-- Backdrop -->
+      <div class="fixed inset-0 z-30 bg-slate-900/20" (click)="closeDetail()"></div>
+      <!-- Panel -->
+      <aside
+        class="relative z-40 w-96 shrink-0 border-l border-slate-200 bg-white flex flex-col overflow-hidden"
+      >
+        <!-- Panel header -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+          <h2 class="text-sm font-bold text-slate-900 truncate pr-4">
+            {{ detailProperty()!.title }}
+          </h2>
+          <button
+            (click)="closeDetail()"
+            class="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors shrink-0"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="w-4 h-4"
+            >
+              <path
+                d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Scrollable content -->
+        <div class="flex-1 overflow-y-auto">
+          <!-- Image -->
+          <div class="aspect-video bg-slate-100 shrink-0">
+            @if (detailProperty()!.images[0]?.imageUrl) {
+              <img
+                [src]="detailProperty()!.images[0].imageUrl"
+                [alt]="detailProperty()!.title"
+                class="w-full h-full object-cover"
+              />
+            } @else {
+              <div class="w-full h-full flex items-center justify-center text-slate-300">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-12 h-12"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z"
+                  />
+                </svg>
+              </div>
+            }
+          </div>
+
+          <!-- Key details -->
+          <div class="px-5 py-4 border-b border-slate-100 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-500"
+                >{{ detailProperty()!.city }}, {{ detailProperty()!.country }}</span
+              >
+              <span
+                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                [ngClass]="statusClass(detailProperty()!.status)"
+              >
+                {{ detailProperty()!.status }}
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-slate-50 rounded-xl p-3">
+                <p class="text-xs text-slate-400 mb-0.5">Price / night</p>
+                <p class="text-sm font-bold text-slate-900">
+                  {{ price(detailProperty()!.price, detailProperty()!.currency) }}
+                </p>
+              </div>
+              <div class="bg-slate-50 rounded-xl p-3">
+                <p class="text-xs text-slate-400 mb-0.5">Type</p>
+                <p class="text-sm font-semibold text-slate-900">
+                  {{ titleCase(detailProperty()!.propertyType) }}
+                </p>
+              </div>
+              @if (detailProperty()!.bedrooms != null) {
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <p class="text-xs text-slate-400 mb-0.5">Bedrooms</p>
+                  <p class="text-sm font-semibold text-slate-900">
+                    {{ detailProperty()!.bedrooms }}
+                  </p>
+                </div>
+              }
+              @if (detailProperty()!.bathrooms != null) {
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <p class="text-xs text-slate-400 mb-0.5">Bathrooms</p>
+                  <p class="text-sm font-semibold text-slate-900">
+                    {{ detailProperty()!.bathrooms }}
+                  </p>
+                </div>
+              }
+              @if (detailProperty()!.areaSqm != null) {
+                <div class="bg-slate-50 rounded-xl p-3 col-span-2">
+                  <p class="text-xs text-slate-400 mb-0.5">Area</p>
+                  <p class="text-sm font-semibold text-slate-900">
+                    {{ detailProperty()!.areaSqm }} m²
+                  </p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Availability -->
+          <div class="px-5 py-4 border-b border-slate-100">
+            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest mb-3">
+              Availability (next 60 days)
+            </h3>
+            @if (detailLoadingAvail()) {
+              <div class="space-y-1.5">
+                @for (i of [1, 2]; track i) {
+                  <div class="h-8 rounded-xl bg-slate-100 animate-pulse"></div>
+                }
+              </div>
+            } @else if (detailAvailability().length === 0) {
+              <div
+                class="flex items-center gap-2 text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2.5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  class="w-4 h-4 shrink-0"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <span class="text-xs font-semibold">All dates available</span>
+              </div>
+            } @else {
+              <div class="space-y-1.5">
+                @for (slot of detailAvailability(); track slot.id) {
+                  <div
+                    class="flex items-center justify-between px-3 py-2 rounded-xl bg-rose-50 border border-rose-100"
+                  >
+                    <span class="text-xs font-medium text-rose-700"
+                      >{{ date(slot.startDate) }} → {{ date(slot.endDate) }}</span
+                    >
+                    <span class="text-[10px] font-bold uppercase text-rose-500">{{
+                      slot.status ?? 'Blocked'
+                    }}</span>
+                  </div>
+                }
+              </div>
+            }
+            <button
+              (click)="selectPropertyForAvailability(detailProperty()!)"
+              class="mt-3 w-full text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-xl px-3 py-2 transition-colors text-center"
+            >
+              Manage availability →
+            </button>
+          </div>
+
+          <!-- Recent bookings -->
+          @if (detailPropertyBookings().length > 0) {
+            <div class="px-5 py-4">
+              <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest mb-3">
+                Recent Bookings
+              </h3>
+              <div class="space-y-2">
+                @for (b of detailPropertyBookings(); track b.id) {
+                  <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50">
+                    <div
+                      class="h-7 w-7 rounded-full bg-brand-100 flex items-center justify-center shrink-0"
+                    >
+                      <span class="text-[10px] font-bold text-brand-700">{{
+                        initials(b.tenant.firstName, b.tenant.lastName)
+                      }}</span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <p class="text-xs font-semibold text-slate-900 truncate">
                         {{ b.tenant.firstName }} {{ b.tenant.lastName }}
                       </p>
-                      <p class="text-xs text-slate-400">
-                        {{ date(b.startDate) }} — {{ date(b.endDate) }}
+                      <p class="text-[10px] text-slate-400">
+                        {{ date(b.startDate) }} – {{ date(b.endDate) }}
                       </p>
                     </div>
                     <span
-                      class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0"
+                      class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold shrink-0"
                       [ngClass]="statusClass(b.status)"
                       >{{ b.status }}</span
                     >
                   </div>
-                  @if (b.message) {
-                    <p class="text-xs text-slate-500 italic mb-3">{{ b.message }}</p>
-                  }
-                  <div class="flex items-center gap-2">
-                    @if (b.status === 'PENDING') {
-                      <button
-                        (click)="approveBooking(b.id)"
-                        class="button button--primary text-xs px-3 py-1.5"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        (click)="rejectBooking(b.id)"
-                        class="text-xs font-semibold text-rose-600 hover:text-rose-800 transition-colors px-2"
-                      >
-                        Reject
-                      </button>
-                    }
-                    @if (b.status === 'CONFIRMED' || b.status === 'APPROVED') {
-                      <button
-                        (click)="generateLease(b.id)"
-                        class="button button--ghost text-xs px-3 py-1.5"
-                      >
-                        Generate Lease
-                      </button>
-                    }
-                  </div>
-                </div>
+                }
               </div>
             </div>
           }
         </div>
-      }
+
+        <!-- Panel footer actions -->
+        <div class="shrink-0 border-t border-slate-100 px-5 py-3 flex items-center gap-2">
+          <a
+            [routerLink]="['/workspace/hosting/edit-property', detailProperty()!.id]"
+            class="flex-1 text-center py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+            >Edit</a
+          >
+          <a
+            [routerLink]="['/properties', detailProperty()!.id]"
+            target="_blank"
+            class="flex-1 text-center py-2 text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-xl transition-colors"
+            >View listing ↗</a
+          >
+          <button
+            (click)="deleteProperty(detailProperty()!.id)"
+            class="h-9 w-9 flex items-center justify-center rounded-xl text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-colors shrink-0"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="w-4 h-4"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      </aside>
     }
-    <!-- ── Payments ── -->
-    @if (activeSection() === 'payments') {
-      <div class="max-w-2xl space-y-6">
-        <!-- Stripe Connect status card -->
-        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div class="px-6 py-5 border-b border-slate-100">
-            <h3 class="text-sm font-bold text-slate-900">Stripe Connect Account</h3>
-            <p class="text-xs text-slate-500 mt-0.5">
-              Required to receive payouts from approved bookings.
-            </p>
-          </div>
-          <div class="px-6 py-5">
-            @if (payoutSummary()?.stripeAccountConnected) {
-              <!-- Connected state -->
-              <div class="flex items-center gap-4">
-                <div
-                  class="h-10 w-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    class="w-5 h-5 text-emerald-600"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div class="min-w-0">
-                  <p class="text-sm font-semibold text-slate-900">Stripe account connected</p>
-                  <p class="text-xs text-slate-500 mt-0.5">
-                    Payouts will be sent to your Stripe account after each completed stay.
-                  </p>
-                </div>
-                <button
-                  (click)="reconnectStripe()"
-                  [disabled]="stripeOnboardingLoading()"
-                  class="ml-auto shrink-0 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-50 transition-colors disabled:opacity-50"
-                >
-                  {{ stripeOnboardingLoading() ? 'Loading…' : 'Update account' }}
-                </button>
-              </div>
+
+    <!-- ══════════════════ VEHICLE DETAIL PANEL ══════════════════ -->
+    @if (detailVehicle()) {
+      <div class="fixed inset-0 z-30 bg-slate-900/20" (click)="closeDetail()"></div>
+      <aside
+        class="relative z-40 w-96 shrink-0 border-l border-slate-200 bg-white flex flex-col overflow-hidden"
+      >
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+          <h2 class="text-sm font-bold text-slate-900 truncate pr-4">
+            {{ detailVehicle()!.brand }} {{ detailVehicle()!.model }} ({{ detailVehicle()!.year }})
+          </h2>
+          <button
+            (click)="closeDetail()"
+            class="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors shrink-0"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="w-4 h-4"
+            >
+              <path
+                d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+          <!-- Image -->
+          <div class="aspect-video bg-slate-100 shrink-0">
+            @if (detailVehicle()!.images[0]?.imageUrl) {
+              <img
+                [src]="detailVehicle()!.images[0].imageUrl"
+                [alt]="detailVehicle()!.brand + ' ' + detailVehicle()!.model"
+                class="w-full h-full object-cover"
+              />
             } @else {
-              <!-- Not connected state -->
-              <div class="flex items-start gap-4">
-                <div
-                  class="h-10 w-10 rounded-xl bg-amber-50 flex items-center justify-center shrink-0"
+              <div class="w-full h-full flex items-center justify-center text-slate-300">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="1.5"
+                  stroke="currentColor"
+                  class="w-12 h-12"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    class="w-5 h-5 text-amber-600"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div class="min-w-0 flex-1">
-                  <p class="text-sm font-semibold text-slate-900">
-                    Connect Stripe to receive payouts
-                  </p>
-                  <p class="text-xs text-slate-500 mt-0.5 mb-3">
-                    You won't receive payment for approved bookings until your Stripe account is set
-                    up. It only takes a few minutes.
-                  </p>
-                  <button
-                    (click)="connectStripe()"
-                    [disabled]="stripeOnboardingLoading()"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-xl transition-colors disabled:opacity-50"
-                  >
-                    @if (stripeOnboardingLoading()) {
-                      <svg
-                        class="animate-spin h-4 w-4"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          class="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          stroke-width="4"
-                        ></circle>
-                        <path
-                          class="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        ></path>
-                      </svg>
-                      Connecting…
-                    } @else {
-                      Connect with Stripe
-                    }
-                  </button>
-                </div>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"
+                  />
+                </svg>
               </div>
             }
-            @if (stripeOnboardingError()) {
-              <p class="mt-3 text-sm text-rose-600">{{ stripeOnboardingError() }}</p>
+          </div>
+
+          <!-- Key details -->
+          <div class="px-5 py-4 border-b border-slate-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-500">{{
+                detailVehicle()!.pickupCity ?? 'Pickup not set'
+              }}</span>
+              <span
+                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                [ngClass]="statusClass(detailVehicle()!.status)"
+              >
+                {{ detailVehicle()!.status }}
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="bg-slate-50 rounded-xl p-3">
+                <p class="text-xs text-slate-400 mb-0.5">Daily price</p>
+                <p class="text-sm font-bold text-slate-900">
+                  {{ price(detailVehicle()!.dailyPrice, detailVehicle()!.currency) }}
+                </p>
+              </div>
+              <div class="bg-slate-50 rounded-xl p-3">
+                <p class="text-xs text-slate-400 mb-0.5">Transmission</p>
+                <p class="text-sm font-semibold text-slate-900">
+                  {{ titleCase(detailVehicle()!.transmission) }}
+                </p>
+              </div>
+              <div class="bg-slate-50 rounded-xl p-3">
+                <p class="text-xs text-slate-400 mb-0.5">Fuel type</p>
+                <p class="text-sm font-semibold text-slate-900">
+                  {{ titleCase(detailVehicle()!.fuelType) }}
+                </p>
+              </div>
+              @if (detailVehicle()!.seats != null) {
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <p class="text-xs text-slate-400 mb-0.5">Seats</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ detailVehicle()!.seats }}</p>
+                </div>
+              }
+              @if (detailVehicle()!.color) {
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <p class="text-xs text-slate-400 mb-0.5">Color</p>
+                  <p class="text-sm font-semibold text-slate-900">{{ detailVehicle()!.color }}</p>
+                </div>
+              }
+              @if (detailVehicle()!.mileage != null) {
+                <div class="bg-slate-50 rounded-xl p-3">
+                  <p class="text-xs text-slate-400 mb-0.5">Mileage</p>
+                  <p class="text-sm font-semibold text-slate-900">
+                    {{ detailVehicle()!.mileage }} km
+                  </p>
+                </div>
+              }
+              @if (detailVehicle()!.licensePlate) {
+                <div class="bg-slate-50 rounded-xl p-3 col-span-2">
+                  <p class="text-xs text-slate-400 mb-0.5">License plate</p>
+                  <p class="text-sm font-semibold text-slate-900 font-mono">
+                    {{ detailVehicle()!.licensePlate }}
+                  </p>
+                </div>
+              }
+            </div>
+            @if (detailVehicle()!.description) {
+              <p class="text-xs text-slate-500 leading-relaxed">
+                {{ detailVehicle()!.description }}
+              </p>
             }
           </div>
         </div>
 
-        <!-- Payout summary -->
-        @if (payoutSummary()) {
-          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-100">
-              <h3 class="text-sm font-bold text-slate-900">Payout Summary</h3>
-            </div>
-            <div class="grid grid-cols-2 divide-x divide-y divide-slate-100">
-              <div class="px-6 py-5">
-                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
-                  Available
-                </p>
-                <p class="text-xl font-bold text-emerald-600">
-                  {{ formatAmount(payoutSummary()!.availableBalance) }}
-                </p>
-              </div>
-              <div class="px-6 py-5">
-                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
-                  Pending
-                </p>
-                <p class="text-xl font-bold text-slate-900">
-                  {{ formatAmount(payoutSummary()!.pendingBalance) }}
-                </p>
-              </div>
-              <div class="px-6 py-5">
-                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
-                  In escrow
-                </p>
-                <p class="text-xl font-bold text-amber-600">
-                  {{ formatAmount(payoutSummary()!.escrowHeld) }}
-                </p>
-              </div>
-              <div class="px-6 py-5">
-                <p class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1">
-                  Lifetime earnings
-                </p>
-                <p class="text-xl font-bold text-slate-900">
-                  {{ formatAmount(payoutSummary()!.totalEarnings) }}
-                </p>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
+        <!-- Footer -->
+        <div class="shrink-0 border-t border-slate-100 px-5 py-3 flex items-center gap-2">
+          <a
+            [routerLink]="['/workspace/hosting/edit-vehicle', detailVehicle()!.id]"
+            class="flex-1 text-center py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+            >Edit</a
+          >
+          <a
+            [routerLink]="['/vehicles', detailVehicle()!.id]"
+            target="_blank"
+            class="flex-1 text-center py-2 text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-xl transition-colors"
+            >View listing ↗</a
+          >
+        </div>
+      </aside>
     }
   </div>
+  <!-- end main content + panel row -->
 </section>
