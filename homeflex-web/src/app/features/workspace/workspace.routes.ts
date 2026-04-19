@@ -11,6 +11,9 @@ import { HostingTabComponent } from './tabs/hosting/hosting-tab.component';
 import { PropertyFormComponent } from './tabs/hosting/property-form/property-form.component';
 import { VehicleFormComponent } from './tabs/hosting/vehicle-form/vehicle-form.component';
 import { MaintenanceTabComponent } from './tabs/maintenance/maintenance-tab.component';
+import { FinanceTabComponent } from './tabs/finance/finance-tab.component';
+import { DisputesTabComponent } from './tabs/disputes/disputes-tab.component';
+import { InsuranceTabComponent } from './tabs/insurance/insurance-tab.component';
 
 export const workspaceRoutes: Routes = [
   {
@@ -60,6 +63,9 @@ export const workspaceRoutes: Routes = [
         component: MaintenanceTabComponent,
         title: 'Work Orders | Workspace',
       },
+      { path: 'finance', component: FinanceTabComponent, title: 'Receipts | Workspace' },
+      { path: 'disputes', component: DisputesTabComponent, title: 'Disputes | Workspace' },
+      { path: 'insurance', component: InsuranceTabComponent, title: 'Insurance | Workspace' },
     ],
   },
 ];
