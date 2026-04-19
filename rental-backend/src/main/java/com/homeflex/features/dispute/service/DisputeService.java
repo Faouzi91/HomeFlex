@@ -70,6 +70,11 @@ public class DisputeService {
         return disputeRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
+    public List<Dispute> getMyDisputes(UUID userId) {
+        return disputeRepository.findByInitiatorIdOrderByCreatedAtDesc(userId);
+    }
+
     @Transactional
     public DisputeEvidence uploadEvidence(UUID disputeId, UUID userId, MultipartFile file, String description) {
         Dispute dispute = disputeRepository.findById(disputeId)

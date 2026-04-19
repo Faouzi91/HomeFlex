@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface DisputeRepository extends JpaRepository<Dispute, UUID> {
     List<Dispute> findByBookingId(UUID bookingId);
+    List<Dispute> findByInitiatorIdOrderByCreatedAtDesc(UUID initiatorId);
 }

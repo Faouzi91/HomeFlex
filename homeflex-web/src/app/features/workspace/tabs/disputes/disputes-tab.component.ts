@@ -18,7 +18,7 @@ export class DisputesTabComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   ngOnInit(): void {
-    this.api.getAllDisputes().subscribe({
+    this.api.getMyDisputes().subscribe({
       next: (data) => {
         this.disputes.set(Array.isArray(data) ? data : (data as any)?.data ?? []);
         this.loading.set(false);

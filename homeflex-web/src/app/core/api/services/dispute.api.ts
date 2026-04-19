@@ -11,6 +11,10 @@ export class DisputeApi extends BaseApi {
     });
   }
 
+  getMine(): Observable<Dispute[]> {
+    return this.http.get<Dispute[]>(`${this.baseUrl}/disputes/mine`);
+  }
+
   getAll(): Observable<Dispute[]> {
     return this.http.get<Dispute[]>(`${this.baseUrl}/disputes`);
   }

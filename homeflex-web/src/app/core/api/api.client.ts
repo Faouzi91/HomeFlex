@@ -415,6 +415,9 @@ export class ApiClient {
   openDispute(bookingId: string, reason: string, description: string): Observable<Dispute> {
     return this.disputes.open(bookingId, reason, description);
   }
+  getMyDisputes(): Observable<Dispute[]> {
+    return this.disputes.getMine();
+  }
   getAllDisputes(): Observable<Dispute[]> {
     return this.disputes.getAll();
   }

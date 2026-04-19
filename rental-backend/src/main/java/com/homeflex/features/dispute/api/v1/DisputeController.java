@@ -30,6 +30,12 @@ public class DisputeController {
         return ResponseEntity.ok(disputeService.openDispute(bookingId, initiatorId, reason, description));
     }
 
+    @GetMapping("/mine")
+    public ResponseEntity<List<Dispute>> getMyDisputes(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(disputeService.getMyDisputes(userId));
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Dispute>> getAllDisputes() {
