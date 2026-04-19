@@ -3,10 +3,10 @@ import { isPlatformBrowser, SlicePipe } from '@angular/common';
 import { ConvertCurrencyPipe } from '../../../../core/pipes/convert-currency/convert-currency.pipe';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin, of, switchMap } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import * as L from 'leaflet';
-import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
 import { PropertyApi } from '../../../../core/api/services/property.api';
 import { BookingApi } from '../../../../core/api/services/booking.api';
 import { FavoriteApi } from '../../../../core/api/services/favorite.api';
@@ -52,7 +52,11 @@ export class PropertyDetailPageComponent {
   protected readonly bookingMessage = signal('');
   protected readonly pendingPaymentSecret = signal<string | null>(null);
   protected readonly paymentProcessing = signal(false);
+  protected readonly stripeElementsMounted = signal(false);
+  protected readonly blockedDates = signal<Set<string>>(new Set());
+
   private stripe: Stripe | null = null;
+  private stripeElementsInstance: StripeElements | null = null;
 
   protected readonly bookingForm = this.fb.group({
     bookingType: ['VIEWING', Validators.required],
@@ -68,18 +72,67 @@ export class PropertyDetailPageComponent {
     comment: ['', Validators.maxLength(1000)],
   });
 
+  // Reactive form values as a signal for computed derivations
+  private readonly formValue = toSignal(this.bookingForm.valueChanges, {
+    initialValue: this.bookingForm.value,
+  });
+
   protected readonly propertyId = computed(() => this.property()?.id ?? '');
 
+  protected readonly nightsEstimate = computed(() => {
+    const fv = this.formValue();
+    if (!fv.startDate || !fv.endDate) return 0;
+    const diff = new Date(fv.endDate).getTime() - new Date(fv.startDate).getTime();
+    return Math.max(0, Math.ceil(diff / 86400000) + 1);
+  });
+
+  protected readonly priceEstimate = computed(() => {
+    const prop = this.property();
+    const nights = this.nightsEstimate();
+    if (!prop || !nights) return null;
+    return prop.price * nights;
+  });
+
+  protected readonly dateRangeConflict = computed(() => {
+    const fv = this.formValue();
+    const blocked = this.blockedDates();
+    if (!fv.startDate || !fv.endDate || blocked.size === 0) return false;
+    const start = new Date(fv.startDate);
+    const end = new Date(fv.endDate);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      if (blocked.has(d.toISOString().split('T')[0])) return true;
+    }
+    return false;
+  });
+
+  protected readonly today = new Date().toISOString().split('T')[0];
+
   constructor() {
+    // Pre-load Stripe so it's ready when the user submits a booking
+    if (isPlatformBrowser(this.platformId)) {
+      this.initStripe();
+    }
+
     this.route.paramMap
       .pipe(
         switchMap((params) => {
           const id = params.get('id');
-          if (!id) {
-            return of(null);
-          }
+          if (!id) return of(null);
 
           this.propertyApi.trackView(id).subscribe({ error: () => void 0 });
+
+          // Load property data + availability in parallel
+          const start = this.today;
+          const end = new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0];
+          this.propertyApi
+            .getAvailability(id, start, end)
+            .pipe(
+              catchError(() => of({ data: [] })),
+              takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => {
+              this.blockedDates.set(new Set((res.data ?? []).map((d: any) => d.date)));
+            });
 
           return forkJoin({
             property: this.propertyApi.getById(id),
@@ -94,9 +147,7 @@ export class PropertyDetailPageComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((response) => {
-        if (!response) {
-          return;
-        }
+        if (!response) return;
 
         this.property.set(response.property);
         this.reviews.set(response.reviews.data);
@@ -127,20 +178,39 @@ export class PropertyDetailPageComponent {
       shadowSize: [41, 41],
     });
 
-    const map = L.map('map', {
-      center: [prop.latitude, prop.longitude],
-      zoom: 15,
-    });
-
+    const map = L.map('map', { center: [prop.latitude, prop.longitude], zoom: 15 });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors',
     }).addTo(map);
-
     L.marker([prop.latitude, prop.longitude], { icon: iconDefault })
       .addTo(map)
       .bindPopup(`<b>${prop.title}</b><br>${prop.address}`)
       .openPopup();
+  }
+
+  private initStripe(): void {
+    this.http
+      .get<{ stripePublishableKey: string }>('/api/v1/config')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(async (config) => {
+        if (config.stripePublishableKey) {
+          this.stripe = await loadStripe(config.stripePublishableKey);
+        }
+      });
+  }
+
+  private async mountPaymentElement(clientSecret: string): Promise<void> {
+    if (!this.stripe) return;
+
+    this.stripeElementsInstance = this.stripe.elements({
+      clientSecret,
+      appearance: { theme: 'stripe' },
+    });
+
+    const paymentElement = this.stripeElementsInstance.create('payment');
+    paymentElement.mount('#stripe-payment-element');
+    this.stripeElementsMounted.set(true);
   }
 
   protected coverImage(): string {
@@ -155,11 +225,16 @@ export class PropertyDetailPageComponent {
     return this.convertCurrencyPipe.transform(property.price, property.currency, pref) || '--';
   }
 
+  protected estimateFormatted(): string {
+    const est = this.priceEstimate();
+    const prop = this.property();
+    if (!est || !prop) return '';
+    return formatCurrency(est, prop.currency);
+  }
+
   protected toggleFavorite(): void {
     const property = this.property();
-    if (!property) {
-      return;
-    }
+    if (!property) return;
 
     const request = this.favorite()
       ? this.favoriteApi.remove(property.id)
@@ -172,9 +247,7 @@ export class PropertyDetailPageComponent {
 
   protected submitBooking(): void {
     const property = this.property();
-    if (!property || this.bookingForm.invalid) {
-      return;
-    }
+    if (!property || this.bookingForm.invalid || this.dateRangeConflict()) return;
 
     const form = this.bookingForm.getRawValue();
     this.bookingApi
@@ -193,9 +266,10 @@ export class PropertyDetailPageComponent {
           if (booking.stripeClientSecret) {
             this.pendingPaymentSecret.set(booking.stripeClientSecret);
             this.bookingMessage.set('Booking created! Complete payment below to confirm.');
-            this.initStripe();
+            // Mount Stripe Elements after DOM renders the payment container
+            setTimeout(() => this.mountPaymentElement(booking.stripeClientSecret!), 50);
           } else {
-            this.bookingMessage.set(`Booking request sent — waiting for landlord approval.`);
+            this.bookingMessage.set('Booking request sent — waiting for landlord approval.');
           }
           this.bookingForm.patchValue({ message: '' });
         },
@@ -206,45 +280,39 @@ export class PropertyDetailPageComponent {
       });
   }
 
-  private initStripe(): void {
-    this.http
-      .get<{ stripePublishableKey: string }>('/api/v1/config')
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(async (config) => {
-        if (config.stripePublishableKey) {
-          this.stripe = await loadStripe(config.stripePublishableKey);
-        }
-      });
-  }
-
   protected async confirmPayment(): Promise<void> {
-    const clientSecret = this.pendingPaymentSecret();
-    if (!this.stripe || !clientSecret) return;
+    if (!this.stripe || !this.stripeElementsInstance) return;
 
     this.paymentProcessing.set(true);
-    const result = await this.stripe.confirmCardPayment(clientSecret, {
-      payment_method: 'pm_card_visa',
+    const { error } = await this.stripe.confirmPayment({
+      elements: this.stripeElementsInstance,
+      confirmParams: {
+        return_url: `${window.location.origin}/workspace/bookings`,
+      },
+      redirect: 'if_required',
     });
 
     this.paymentProcessing.set(false);
-    if (result.error) {
-      this.bookingMessage.set(`Payment failed: ${result.error.message}`);
+    if (error) {
+      this.bookingMessage.set(`Payment failed: ${error.message}`);
     } else {
       this.pendingPaymentSecret.set(null);
-      this.bookingMessage.set('Payment successful! Your booking is confirmed.');
+      this.stripeElementsInstance = null;
+      this.stripeElementsMounted.set(false);
+      this.bookingMessage.set('Payment confirmed! Your booking is now active.');
     }
   }
 
   protected dismissPayment(): void {
     this.pendingPaymentSecret.set(null);
-    this.bookingMessage.set('Booking pending payment. Complete later from your bookings tab.');
+    this.stripeElementsInstance = null;
+    this.stripeElementsMounted.set(false);
+    this.bookingMessage.set('Booking pending payment. Complete from your bookings tab.');
   }
 
   protected submitReview(): void {
     const propertyId = this.propertyId();
-    if (!propertyId || this.reviewForm.invalid) {
-      return;
-    }
+    if (!propertyId || this.reviewForm.invalid) return;
 
     const form = this.reviewForm.getRawValue();
     this.reviewApi
@@ -272,16 +340,10 @@ export class PropertyDetailPageComponent {
   protected startChat(): void {
     const property = this.property();
     const user = this.session.user();
-    if (!property || !user) {
-      return;
-    }
+    if (!property || !user) return;
 
     this.chatApi
-      .createRoom({
-        propertyId: property.id,
-        tenantId: user.id,
-        landlordId: property.landlord.id,
-      })
+      .createRoom({ propertyId: property.id, tenantId: user.id, landlordId: property.landlord.id })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((room) => {
         this.router.navigate(['/workspace'], { queryParams: { tab: 'messages', chat: room.id } });

@@ -33,6 +33,21 @@ export interface User {
   smsNotificationsEnabled?: boolean;
   profileCompleteness?: number;
   createdAt: string;
+  stripeConnected?: boolean;
+  stripeAccountId?: string | null;
+}
+
+export interface PayoutSummary {
+  availableBalance: number;
+  pendingBalance: number;
+  escrowHeld: number;
+  totalEarnings: number;
+  stripeAccountConnected: boolean;
+}
+
+export interface ConnectOnboardingResponse {
+  stripeAccountId: string;
+  onboardingUrl: string;
 }
 
 export interface AuthResponse {
@@ -161,6 +176,8 @@ export interface Booking {
   numberOfOccupants: number | null;
   totalPrice: number | null;
   platformFee: number | null;
+  cleaningFee: number | null;
+  taxAmount: number | null;
   stripePaymentIntentId: string | null;
   stripeClientSecret: string | null;
   paymentConfirmedAt: string | null;
@@ -172,6 +189,8 @@ export interface Booking {
   respondedAt: string | null;
   createdAt: string;
 }
+
+export type RentalPhase = 'UPCOMING' | 'ACTIVE' | 'PAST';
 
 export interface BookingModificationRequest {
   startDate: string;

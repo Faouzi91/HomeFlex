@@ -9,6 +9,7 @@ import {
   ApiValueResponse,
   AuthResponse,
   Booking,
+  ConnectOnboardingResponse,
   BookingModificationRequest,
   ChatRoom,
   ConditionReport,
@@ -486,7 +487,10 @@ export class ApiClient {
   getPayoutSummary(): Observable<any> {
     return this.payouts.getSummary();
   }
-  onboardConnectAccount(refreshUrl: string, returnUrl: string): Observable<{ url: string }> {
+  onboardConnectAccount(
+    refreshUrl: string,
+    returnUrl: string,
+  ): Observable<ConnectOnboardingResponse> {
     return this.payouts.onboardConnectAccount(refreshUrl, returnUrl);
   }
 

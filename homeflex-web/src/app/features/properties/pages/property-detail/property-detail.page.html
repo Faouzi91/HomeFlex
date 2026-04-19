@@ -260,91 +260,183 @@
 
             @if (bookingMessage()) {
               <div
-                class="rounded-lg bg-emerald-50 p-4 text-sm font-bold text-emerald-700 border border-emerald-100"
+                class="rounded-lg p-4 text-sm font-bold border"
+                [class.bg-emerald-50]="
+                  !bookingMessage().startsWith('Payment failed') &&
+                  !bookingMessage().startsWith('Failed')
+                "
+                [class.text-emerald-700]="
+                  !bookingMessage().startsWith('Payment failed') &&
+                  !bookingMessage().startsWith('Failed')
+                "
+                [class.border-emerald-100]="
+                  !bookingMessage().startsWith('Payment failed') &&
+                  !bookingMessage().startsWith('Failed')
+                "
+                [class.bg-rose-50]="
+                  bookingMessage().startsWith('Payment failed') ||
+                  bookingMessage().startsWith('Failed')
+                "
+                [class.text-rose-700]="
+                  bookingMessage().startsWith('Payment failed') ||
+                  bookingMessage().startsWith('Failed')
+                "
+                [class.border-rose-100]="
+                  bookingMessage().startsWith('Payment failed') ||
+                  bookingMessage().startsWith('Failed')
+                "
               >
                 {{ bookingMessage() }}
               </div>
             }
 
-            <form class="space-y-4" [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
-              <div>
-                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
-                  >Request Type</label
-                >
-                <select
-                  formControlName="bookingType"
-                  class="select-styled bg-slate-50 font-bold text-slate-700"
-                >
-                  <option value="VIEWING">Request Viewing</option>
-                  <option value="RENTAL">Direct Booking</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
-                  >Preferred Date</label
-                >
-                <input
-                  type="datetime-local"
-                  formControlName="requestedDate"
-                  class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
+            <!-- Booking form (hidden while payment is pending) -->
+            @if (!pendingPaymentSecret()) {
+              <form class="space-y-4" [formGroup]="bookingForm" (ngSubmit)="submitBooking()">
                 <div>
                   <label
                     class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
-                    >Move In</label
+                    >Request Type</label
                   >
-                  <input
-                    type="date"
-                    formControlName="startDate"
-                    class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
-                  />
+                  <select
+                    formControlName="bookingType"
+                    class="select-styled bg-slate-50 font-bold text-slate-700"
+                  >
+                    <option value="VIEWING">Request Viewing</option>
+                    <option value="RENTAL">Book a Stay</option>
+                  </select>
                 </div>
+
+                @if (bookingForm.value.bookingType === 'VIEWING') {
+                  <div>
+                    <label
+                      class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                      >Preferred Date &amp; Time</label
+                    >
+                    <input
+                      type="datetime-local"
+                      formControlName="requestedDate"
+                      [min]="today"
+                      class="w-full rounded-md border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                    />
+                  </div>
+                }
+
+                @if (bookingForm.value.bookingType === 'RENTAL') {
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label
+                        class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                        >Check-in</label
+                      >
+                      <input
+                        type="date"
+                        formControlName="startDate"
+                        [min]="today"
+                        class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                        >Check-out</label
+                      >
+                      <input
+                        type="date"
+                        formControlName="endDate"
+                        [min]="bookingForm.value.startDate || today"
+                        class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                      />
+                    </div>
+                  </div>
+
+                  @if (dateRangeConflict()) {
+                    <div
+                      class="rounded-lg bg-rose-50 border border-rose-100 px-4 py-3 text-xs font-semibold text-rose-700"
+                    >
+                      These dates are unavailable. Please choose different dates.
+                    </div>
+                  }
+
+                  @if (nightsEstimate() > 0 && !dateRangeConflict()) {
+                    <div
+                      class="rounded-lg bg-slate-50 border border-slate-100 px-4 py-3 flex items-center justify-between"
+                    >
+                      <span class="text-xs text-slate-500"
+                        >{{ nightsEstimate() }} night{{
+                          nightsEstimate() !== 1 ? 's' : ''
+                        }}
+                        estimate</span
+                      >
+                      <span class="text-sm font-extrabold text-slate-900">{{
+                        estimateFormatted()
+                      }}</span>
+                    </div>
+                  }
+
+                  <div>
+                    <label
+                      class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
+                      >Guests</label
+                    >
+                    <input
+                      type="number"
+                      min="1"
+                      formControlName="numberOfOccupants"
+                      class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
+                    />
+                  </div>
+                }
+
                 <div>
                   <label
                     class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
-                    >Move Out</label
+                    >Message (optional)</label
                   >
-                  <input
-                    type="date"
-                    formControlName="endDate"
-                    class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
-                  />
+                  <textarea
+                    formControlName="message"
+                    rows="2"
+                    placeholder="Introduce yourself to the host…"
+                    class="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 bg-slate-50 outline-none focus:border-brand-500 resize-none"
+                  ></textarea>
                 </div>
-              </div>
 
-              <button
-                class="w-full rounded-md bg-brand-500 py-4 text-base font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors cursor-pointer disabled:opacity-50"
-                type="submit"
-                [disabled]="bookingForm.invalid"
-              >
-                Submit Request
-              </button>
-            </form>
+                <button
+                  class="w-full rounded-md bg-brand-500 py-4 text-base font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors cursor-pointer disabled:opacity-50"
+                  type="submit"
+                  [disabled]="bookingForm.invalid || dateRangeConflict()"
+                >
+                  {{ bookingForm.value.bookingType === 'VIEWING' ? 'Request Viewing' : 'Book Now' }}
+                </button>
+              </form>
+            }
 
+            <!-- Stripe Payment Element (shown after booking with payment intent) -->
             @if (pendingPaymentSecret()) {
-              <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 space-y-3">
-                <p class="text-sm font-bold text-amber-800">Payment Required</p>
-                <p class="text-xs text-amber-700">
-                  Confirm your booking by completing payment. A test Visa card will be used in test
-                  mode.
-                </p>
+              <div class="space-y-4">
+                <p class="text-sm font-bold text-slate-800">Complete Payment</p>
+                <!-- Stripe mounts here -->
+                <div id="stripe-payment-element" class="min-h-[100px]">
+                  @if (!stripeElementsMounted()) {
+                    <div class="space-y-2">
+                      <div class="h-10 bg-slate-100 rounded-lg animate-pulse"></div>
+                      <div class="h-10 bg-slate-100 rounded-lg animate-pulse"></div>
+                    </div>
+                  }
+                </div>
                 <div class="flex gap-2">
                   <button
-                    class="flex-1 rounded-md bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 cursor-pointer"
                     type="button"
-                    [disabled]="paymentProcessing()"
                     (click)="confirmPayment()"
+                    [disabled]="paymentProcessing() || !stripeElementsMounted()"
+                    class="flex-1 rounded-md bg-emerald-600 py-3 text-sm font-bold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 cursor-pointer"
                   >
-                    {{ paymentProcessing() ? 'Processing…' : 'Pay Now (Test)' }}
+                    {{ paymentProcessing() ? 'Processing…' : 'Pay Now' }}
                   </button>
                   <button
-                    class="rounded-md border border-slate-200 px-4 py-3 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer"
                     type="button"
                     (click)="dismissPayment()"
+                    class="rounded-md border border-slate-200 px-4 py-3 text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     Later
                   </button>

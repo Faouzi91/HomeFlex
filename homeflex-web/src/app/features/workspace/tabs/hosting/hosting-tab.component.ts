@@ -7,7 +7,8 @@ import { catchError, of } from 'rxjs';
 import { BookingApi } from '../../../../core/api/services/booking.api';
 import { LeaseApi } from '../../../../core/api/services/lease.api';
 import { PropertyApi } from '../../../../core/api/services/property.api';
-import { Booking, Property } from '../../../../core/models/api.types';
+import { PayoutApi } from '../../../../core/api/services/payout.api';
+import { Booking, PayoutSummary, Property } from '../../../../core/models/api.types';
 import { WorkspaceStore } from '../../workspace.store';
 import { formatCurrency, formatDate } from '../../../../core/utils/formatters';
 
@@ -21,6 +22,7 @@ export class HostingTabComponent {
   private readonly bookingApi = inject(BookingApi);
   private readonly leaseApi = inject(LeaseApi);
   private readonly propertyApi = inject(PropertyApi);
+  private readonly payoutApi = inject(PayoutApi);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
@@ -32,8 +34,14 @@ export class HostingTabComponent {
   protected readonly loadingBookings = signal(false);
 
   protected readonly activeSection = signal<
-    'properties' | 'vehicles' | 'availability' | 'bookings'
+    'properties' | 'vehicles' | 'availability' | 'bookings' | 'payments'
   >('properties');
+
+  // ── Payments / Stripe Connect ───────────────────────────────────────────────
+
+  protected readonly payoutSummary = signal<PayoutSummary | null>(null);
+  protected readonly stripeOnboardingLoading = signal(false);
+  protected readonly stripeOnboardingError = signal<string | null>(null);
 
   protected readonly pendingBookings = computed(() =>
     this.hostBookings().filter((b) => b.status === 'PENDING'),
@@ -126,6 +134,48 @@ export class HostingTabComponent {
         if (this.selectedPropertyId() === id) this.selectedPropertyId.set('');
         this.store.refreshProperties();
       });
+  }
+
+  protected loadPayoutSummary(): void {
+    this.payoutApi
+      .getSummary()
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((s) => this.payoutSummary.set(s));
+  }
+
+  protected connectStripe(): void {
+    this.stripeOnboardingLoading.set(true);
+    this.stripeOnboardingError.set(null);
+    const base = window.location.origin + '/workspace';
+    this.payoutApi
+      .onboardConnectAccount(
+        base + '?tab=hosting&section=payments',
+        base + '?tab=hosting&section=payments',
+      )
+      .pipe(
+        catchError(() => {
+          this.stripeOnboardingError.set('Failed to start onboarding. Please try again.');
+          this.stripeOnboardingLoading.set(false);
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => {
+        if (res?.onboardingUrl) {
+          window.location.href = res.onboardingUrl;
+        }
+      });
+  }
+
+  protected reconnectStripe(): void {
+    this.connectStripe();
+  }
+
+  protected formatAmount(value: number): string {
+    return formatCurrency(value, 'XAF');
   }
 
   protected date(v: string | null): string {

@@ -1,4 +1,4 @@
-import { Property, Vehicle } from '../models/api.types';
+import { Booking, Property, RentalPhase, Vehicle } from '../models/api.types';
 
 const money = new Intl.NumberFormat('fr-CM', {
   maximumFractionDigits: 0,
@@ -60,6 +60,37 @@ export function propertyImage(property: Property): string {
     property.images.find((image) => image.isPrimary)?.imageUrl ??
     property.images[0]?.imageUrl ??
     'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80'
+  );
+}
+
+export function rentalPhase(booking: Booking): RentalPhase | null {
+  if (!booking.startDate || !booking.endDate) return null;
+  if (booking.status === 'CANCELLED' || booking.status === 'REJECTED') return null;
+  const today = Date.now();
+  const start = new Date(booking.startDate).getTime();
+  const end = new Date(booking.endDate).getTime();
+  if (today < start) return 'UPCOMING';
+  if (today > end) return 'PAST';
+  return 'ACTIVE';
+}
+
+export function daysUntilCheckIn(booking: Booking): number {
+  if (!booking.startDate) return 0;
+  return Math.max(0, Math.ceil((new Date(booking.startDate).getTime() - Date.now()) / 86400000));
+}
+
+export function daysRemaining(booking: Booking): number {
+  if (!booking.endDate) return 0;
+  return Math.max(0, Math.ceil((new Date(booking.endDate).getTime() - Date.now()) / 86400000));
+}
+
+export function nightsBooked(booking: Booking): number {
+  if (!booking.startDate || !booking.endDate) return 0;
+  return Math.max(
+    1,
+    Math.ceil(
+      (new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime()) / 86400000,
+    ) + 1,
   );
 }
 

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -210,7 +211,12 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         if (booking.getStripePaymentIntentId() != null) {
-            paymentService.confirmPaymentIntent(booking.getStripePaymentIntentId());
+            try {
+                paymentService.capturePaymentIntent(booking.getStripePaymentIntentId());
+                booking.setPaymentConfirmedAt(LocalDateTime.now());
+            } catch (Exception e) {
+                log.warn("Could not capture payment on approve (will retry on webhook): {}", e.getMessage());
+            }
         }
 
         booking.setStatus(BookingStatus.APPROVED);
@@ -303,7 +309,59 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
         if (booking.getStripePaymentIntentId() != null) {
-            paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+            if (booking.getPaymentConfirmedAt() != null) {
+                // Payment was already captured — issue full refund
+                try {
+                    paymentService.refundPayment(booking.getStripePaymentIntentId(), null,
+                            booking.getProperty().getCurrency());
+                } catch (Exception e) {
+                    log.warn("Refund failed on cancel for booking {}: {}", bookingId, e.getMessage());
+                }
+            } else {
+                paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+            }
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking = bookingRepository.save(booking);
+        availabilityService.releaseForBooking(booking.getId());
+
+        return bookingMapper.toDto(booking);
+    }
+
+    /**
+     * Early checkout: cancels an active booking and issues a prorated refund
+     * for unused nights (today → original end date).
+     */
+    public BookingDto earlyCheckout(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        if (booking.getStatus() != BookingStatus.APPROVED) {
+            throw new DomainException("Only active approved bookings can be checked out early");
+        }
+
+        if (booking.getStripePaymentIntentId() != null && booking.getPaymentConfirmedAt() != null
+                && booking.getEndDate() != null) {
+            LocalDate today = LocalDate.now();
+            LocalDate end = booking.getEndDate();
+            if (today.isBefore(end)) {
+                long unusedNights = ChronoUnit.DAYS.between(today, end);
+                long totalNights = ChronoUnit.DAYS.between(booking.getStartDate(), end);
+                if (totalNights > 0 && booking.getTotalPrice() != null) {
+                    BigDecimal pricePerNight = booking.getTotalPrice()
+                            .divide(BigDecimal.valueOf(totalNights), 2, java.math.RoundingMode.HALF_UP);
+                    BigDecimal refundAmount = pricePerNight.multiply(BigDecimal.valueOf(unusedNights));
+                    try {
+                        paymentService.refundPayment(booking.getStripePaymentIntentId(), refundAmount,
+                                booking.getProperty().getCurrency());
+                        log.info("Early checkout refund: booking={}, nights={}, amount={}",
+                                bookingId, unusedNights, refundAmount);
+                    } catch (Exception e) {
+                        log.warn("Early checkout refund failed for booking {}: {}", bookingId, e.getMessage());
+                    }
+                }
+            }
         }
 
         booking.setStatus(BookingStatus.CANCELLED);

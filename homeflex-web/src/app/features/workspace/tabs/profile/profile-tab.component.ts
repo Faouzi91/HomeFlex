@@ -149,7 +149,7 @@ export class ProfileTabComponent {
     this.payoutApi
       .onboardConnectAccount(currentUrl, currentUrl)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((res) => (window.location.href = res.url));
+      .subscribe((res) => (window.location.href = res.onboardingUrl));
   }
 
   protected exportMyData(): void {

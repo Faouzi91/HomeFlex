@@ -9,8 +9,16 @@
 
   <div class="flex-1 px-6 lg:px-8 py-6 space-y-6">
     @if (purchaseSuccess()) {
-      <div class="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-3 text-sm text-emerald-700 flex items-center gap-2">
-        <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <div
+        class="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-3 text-sm text-emerald-700 flex items-center gap-2"
+      >
+        <svg
+          class="w-4 h-4 shrink-0"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+        >
           <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
         </svg>
         {{ purchaseSuccess() }}
@@ -39,8 +47,18 @@
     } @else if (allPlans().length === 0) {
       <div class="flex flex-col items-center justify-center py-20 text-center">
         <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-          <svg class="w-7 h-7 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+          <svg
+            class="w-7 h-7 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"
+            />
           </svg>
         </div>
         <p class="font-semibold text-slate-700 text-sm">No insurance plans available</p>
@@ -48,7 +66,9 @@
     } @else {
       @if (tenantPlans().length > 0) {
         <div>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tenant Protection</h2>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+            Tenant Protection
+          </h2>
           <div class="grid gap-3 sm:grid-cols-2">
             @for (plan of tenantPlans(); track plan.id) {
               <div class="bg-white rounded-2xl border border-slate-100 p-5 flex flex-col gap-3">
@@ -62,11 +82,15 @@
                 <div class="grid grid-cols-2 gap-2 text-xs">
                   <div class="bg-slate-50 rounded-xl p-2.5">
                     <p class="text-slate-400 mb-0.5">Daily premium</p>
-                    <p class="font-semibold text-slate-800">{{ plan.dailyPremium | number:'1.0-2' }} XAF</p>
+                    <p class="font-semibold text-slate-800">
+                      {{ plan.dailyPremium | number: '1.0-2' }} XAF
+                    </p>
                   </div>
                   <div class="bg-slate-50 rounded-xl p-2.5">
                     <p class="text-slate-400 mb-0.5">Max coverage</p>
-                    <p class="font-semibold text-slate-800">{{ plan.maxCoverageAmount | number:'1.0-0' }} XAF</p>
+                    <p class="font-semibold text-slate-800">
+                      {{ plan.maxCoverageAmount | number: '1.0-0' }} XAF
+                    </p>
                   </div>
                 </div>
                 @if (plan.coverageDetails) {
@@ -77,7 +101,11 @@
                   [disabled]="purchasing() === plan.id"
                   class="mt-auto w-full py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-700 transition-colors disabled:opacity-60"
                 >
-                  @if (purchasing() === plan.id) { Selecting… } @else { Select Plan }
+                  @if (purchasing() === plan.id) {
+                    Selecting…
+                  } @else {
+                    Select Plan
+                  }
                 </button>
               </div>
             }
@@ -87,7 +115,9 @@
 
       @if (landlordPlans().length > 0) {
         <div>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Landlord Protection</h2>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+            Landlord Protection
+          </h2>
           <div class="grid gap-3 sm:grid-cols-2">
             @for (plan of landlordPlans(); track plan.id) {
               <div class="bg-white rounded-2xl border border-slate-100 p-5 flex flex-col gap-3">
@@ -101,11 +131,15 @@
                 <div class="grid grid-cols-2 gap-2 text-xs">
                   <div class="bg-slate-50 rounded-xl p-2.5">
                     <p class="text-slate-400 mb-0.5">Daily premium</p>
-                    <p class="font-semibold text-slate-800">{{ plan.dailyPremium | number:'1.0-2' }} XAF</p>
+                    <p class="font-semibold text-slate-800">
+                      {{ plan.dailyPremium | number: '1.0-2' }} XAF
+                    </p>
                   </div>
                   <div class="bg-slate-50 rounded-xl p-2.5">
                     <p class="text-slate-400 mb-0.5">Max coverage</p>
-                    <p class="font-semibold text-slate-800">{{ plan.maxCoverageAmount | number:'1.0-0' }} XAF</p>
+                    <p class="font-semibold text-slate-800">
+                      {{ plan.maxCoverageAmount | number: '1.0-0' }} XAF
+                    </p>
                   </div>
                 </div>
                 @if (plan.coverageDetails) {
@@ -116,7 +150,11 @@
                   [disabled]="purchasing() === plan.id"
                   class="mt-auto w-full py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-700 transition-colors disabled:opacity-60"
                 >
-                  @if (purchasing() === plan.id) { Selecting… } @else { Select Plan }
+                  @if (purchasing() === plan.id) {
+                    Selecting…
+                  } @else {
+                    Select Plan
+                  }
                 </button>
               </div>
             }

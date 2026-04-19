@@ -1,7 +1,7 @@
 <section class="flex flex-col min-h-full">
   <!-- Header -->
   <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-5 shrink-0">
-    <div class="flex items-center justify-between gap-4">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
       <div>
         <h1 class="text-lg font-bold text-slate-900">Bookings</h1>
         <p class="text-sm text-slate-500">Your rental history across properties and vehicles.</p>
@@ -11,19 +11,18 @@
         @if (session.isLandlord() || session.isAdmin()) {
           <button
             (click)="activeSubTab.set('received')"
-            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative"
+            class="relative px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
             [class.bg-white]="activeSubTab() === 'received'"
             [class.text-slate-900]="activeSubTab() === 'received'"
             [class.shadow-sm]="activeSubTab() === 'received'"
             [class.text-slate-500]="activeSubTab() !== 'received'"
           >
             Received
-            @if (pendingReceived().length > 0) {
+            @if (pendingCount() > 0) {
               <span
-                class="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-amber-500 text-white text-[8px] font-bold flex items-center justify-center"
+                class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center"
+                >{{ pendingCount() }}</span
               >
-                {{ pendingReceived().length }}
-              </span>
             }
           </button>
         }
@@ -66,7 +65,7 @@
         }
       </div>
     } @else {
-      <!-- Property bookings -->
+      <!-- ── My Stays (tenant property bookings) ─────────────────────────────── -->
       @if (activeSubTab() === 'properties') {
         @if (propertyBookings().length === 0) {
           <div class="flex flex-col items-center justify-center py-20 text-center">
@@ -93,11 +92,11 @@
           <div class="space-y-3">
             @for (b of propertyBookings(); track b.id) {
               <div
-                (click)="openPropertyBooking(b)"
-                class="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer"
+                (click)="openPanel(b)"
+                class="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer group"
               >
-                <!-- Timeline accent -->
                 <div class="flex">
+                  <!-- Status accent bar -->
                   <div
                     class="w-1 shrink-0"
                     [class.bg-emerald-400]="b.status === 'CONFIRMED' || b.status === 'APPROVED'"
@@ -107,45 +106,129 @@
                   ></div>
                   <div class="flex-1 p-5">
                     <div class="flex items-start justify-between gap-3 mb-2">
-                      <div>
-                        <h4 class="text-sm font-semibold text-slate-900">{{ b.property.title }}</h4>
+                      <div class="min-w-0">
+                        <h4 class="text-sm font-semibold text-slate-900 truncate">
+                          {{ b.property.title }}
+                        </h4>
                         <p class="text-xs text-slate-400 mt-0.5">
                           {{ b.property.city }}, {{ b.property.country }}
                         </p>
                       </div>
-                      <span
-                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0"
-                        [ngClass]="statusClass(b.status)"
-                      >
-                        {{ b.status }}
-                      </span>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <!-- Rental phase pill -->
+                        @if (phase(b) === 'ACTIVE') {
+                          <span
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold"
+                          >
+                            <span
+                              class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
+                            ></span>
+                            Active · {{ remainingDays(b) }}d left
+                          </span>
+                        } @else if (phase(b) === 'UPCOMING') {
+                          <span
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 text-xs font-semibold"
+                          >
+                            Check-in in {{ checkInDays(b) }}d
+                          </span>
+                        }
+                        <span
+                          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                          [ngClass]="statusClass(b.status)"
+                          >{{ b.status }}</span
+                        >
+                      </div>
                     </div>
-                    <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
+                    <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
                       @if (b.startDate) {
                         <span>{{ date(b.startDate) }} — {{ date(b.endDate) }}</span>
                       }
                       @if (b.totalPrice) {
                         <span class="font-semibold text-slate-700">{{ price(b.totalPrice) }}</span>
                       }
-                      <span>{{ b.bookingType }}</span>
+                      <span class="text-slate-400">{{ b.bookingType }}</span>
                     </div>
-                    @if (b.status === 'CONFIRMED') {
-                      <button
-                        (click)="openDispute(b.id); $event.stopPropagation()"
-                        class="mt-3 text-xs font-semibold text-slate-400 hover:text-rose-600 transition-colors"
-                      >
-                        Open dispute
-                      </button>
-                    }
+                    <p
+                      class="mt-2 text-xs text-slate-400 group-hover:text-brand-600 transition-colors"
+                    >
+                      View details →
+                    </p>
                   </div>
                 </div>
               </div>
             }
           </div>
+
+          <!-- Digital Leases (shown under My Stays when leases exist) -->
+          @if (leases().length > 0) {
+            <div>
+              <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+                Digital Leases
+              </h2>
+              <div class="space-y-2">
+                @for (lease of leases(); track lease.id) {
+                  <div
+                    class="flex items-center justify-between gap-3 bg-white rounded-2xl border border-slate-100 px-5 py-4"
+                  >
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center shrink-0"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="2"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-slate-500"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-sm font-semibold text-slate-900">Lease Agreement</p>
+                        <p class="text-xs text-slate-400">
+                          Booking #{{ lease.bookingId.slice(0, 8) }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span
+                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                        [ngClass]="leaseStatusClass(lease.status)"
+                      >
+                        {{ lease.status }}
+                      </span>
+                      @if (lease.status === 'PENDING') {
+                        <button
+                          (click)="signLease(lease.id)"
+                          class="button button--primary text-xs px-4 py-2"
+                        >
+                          Sign
+                        </button>
+                      }
+                      @if (lease.leaseUrl) {
+                        <a
+                          [href]="lease.leaseUrl"
+                          target="_blank"
+                          class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
+                          >View PDF</a
+                        >
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         }
       }
 
-      <!-- Vehicle bookings -->
+      <!-- ── Vehicle bookings ─────────────────────────────────────────────────── -->
       @if (activeSubTab() === 'vehicles') {
         @if (vehicleBookings().length === 0) {
           <div class="flex flex-col items-center justify-center py-20 text-center">
@@ -171,10 +254,7 @@
         } @else {
           <div class="space-y-3">
             @for (b of vehicleBookings(); track b.id) {
-              <div
-                (click)="openVehicleBooking(b)"
-                class="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer"
-              >
+              <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
                 <div class="flex">
                   <div
                     class="w-1 shrink-0"
@@ -193,7 +273,7 @@
                         {{ b.status }}
                       </span>
                     </div>
-                    <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
+                    <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
                       <span>{{ date(b.startDate) }} — {{ date(b.endDate) }}</span>
                       <span class="font-semibold text-slate-700">{{
                         price(b.totalPrice, b.currency)
@@ -207,73 +287,7 @@
         }
       }
 
-      <!-- Digital Leases -->
-      @if (leases().length > 0) {
-        <div>
-          <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
-            Digital Leases
-          </h2>
-          <div class="space-y-2">
-            @for (lease of leases(); track lease.id) {
-              <div
-                class="flex items-center justify-between gap-3 bg-white rounded-2xl border border-slate-100 px-5 py-4"
-              >
-                <div class="flex items-center gap-3">
-                  <div
-                    class="h-9 w-9 rounded-xl bg-slate-50 flex items-center justify-center shrink-0"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="currentColor"
-                      class="w-4 h-4 text-slate-500"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-semibold text-slate-900">Lease Agreement</p>
-                    <p class="text-xs text-slate-400">Booking #{{ lease.bookingId.slice(0, 8) }}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-3">
-                  <span
-                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                    [ngClass]="leaseStatusClass(lease.status)"
-                  >
-                    {{ lease.status }}
-                  </span>
-                  @if (lease.status === 'PENDING') {
-                    <button
-                      (click)="signLease(lease.id)"
-                      class="button button--primary text-xs px-4 py-2"
-                    >
-                      Sign
-                    </button>
-                  }
-                  @if (lease.leaseUrl) {
-                    <a
-                      [href]="lease.leaseUrl"
-                      target="_blank"
-                      class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
-                    >
-                      View PDF
-                    </a>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Received bookings (landlord) -->
+      <!-- ── Received bookings (landlord grouped view) ───────────────────────── -->
       @if (activeSubTab() === 'received') {
         @if (receivedBookings().length === 0) {
           <div class="flex flex-col items-center justify-center py-20 text-center">
@@ -299,70 +313,98 @@
             </p>
           </div>
         } @else {
-          <div class="space-y-3">
-            @for (b of receivedBookings(); track b.id) {
-              <div
-                (click)="openPropertyBooking(b)"
-                class="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer"
-              >
-                <div class="flex">
-                  <div
-                    class="w-1 shrink-0"
-                    [ngClass]="{
-                      'bg-amber-400': b.status === 'PENDING',
-                      'bg-emerald-400': b.status === 'APPROVED' || b.status === 'CONFIRMED',
-                      'bg-rose-400': b.status === 'REJECTED' || b.status === 'CANCELLED',
-                      'bg-slate-200': b.status === 'COMPLETED',
-                    }"
-                  ></div>
-                  <div class="flex-1 p-5">
-                    <div class="flex items-start justify-between gap-3 mb-2">
-                      <div>
-                        <p class="text-sm font-semibold text-slate-900">
-                          {{ b.property?.title ?? '—' }}
-                        </p>
-                        <p class="text-xs text-slate-500 mt-0.5">
-                          From <strong>{{ b.tenant?.firstName }} {{ b.tenant?.lastName }}</strong>
-                        </p>
-                      </div>
-                      <span
-                        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0"
-                        [ngClass]="statusClass(b.status)"
-                      >
-                        {{ b.status }}
-                      </span>
-                    </div>
-                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400 mb-3">
-                      @if (b.startDate) {
-                        <span>{{ date(b.startDate) }} → {{ date(b.endDate) }}</span>
-                      }
-                      @if (b.totalPrice) {
-                        <span class="font-semibold text-slate-700">{{
-                          price(b.totalPrice, 'XAF')
-                        }}</span>
-                      }
-                    </div>
-                    @if (b.message) {
-                      <p class="text-xs text-slate-500 italic mb-3">"{{ b.message }}"</p>
-                    }
-                    @if (b.status === 'PENDING') {
-                      <div class="flex items-center gap-2">
-                        <button
-                          (click)="approveBooking(b.id); $event.stopPropagation()"
-                          [disabled]="approvingId() === b.id"
-                          class="button button--primary text-xs px-4 py-2"
-                        >
-                          {{ approvingId() === b.id ? 'Approving…' : 'Approve' }}
-                        </button>
-                        <button
-                          (click)="rejectBooking(b.id); $event.stopPropagation()"
-                          class="text-xs font-semibold text-rose-500 hover:text-rose-700 px-3 py-1.5 rounded-lg hover:bg-rose-50 transition-colors"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    }
-                  </div>
+          <div class="space-y-8">
+            <!-- Currently Occupied -->
+            @if (activeOccupants().length > 0) {
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Currently Occupied
+                  </h2>
+                  <span
+                    class="ml-auto text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full"
+                    >{{ activeOccupants().length }} active</span
+                  >
+                </div>
+                <div class="space-y-3">
+                  @for (b of activeOccupants(); track b.id) {
+                    <ng-container
+                      *ngTemplateOutlet="
+                        receivedCard;
+                        context: { b: b, accentClass: 'bg-emerald-400' }
+                      "
+                    ></ng-container>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Pending Approval -->
+            @if (pendingApproval().length > 0) {
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Pending Approval
+                  </h2>
+                  <span
+                    class="ml-auto text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full"
+                    >{{ pendingApproval().length }} waiting</span
+                  >
+                </div>
+                <div class="space-y-3">
+                  @for (b of pendingApproval(); track b.id) {
+                    <ng-container
+                      *ngTemplateOutlet="
+                        receivedCard;
+                        context: { b: b, accentClass: 'bg-amber-400' }
+                      "
+                    ></ng-container>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Upcoming (approved, not yet started) -->
+            @if (upcomingApproved().length > 0) {
+              <div>
+                <div class="flex items-center gap-2 mb-3">
+                  <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">
+                    Upcoming
+                  </h2>
+                  <span
+                    class="ml-auto text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full"
+                    >{{ upcomingApproved().length }}</span
+                  >
+                </div>
+                <div class="space-y-3">
+                  @for (b of upcomingApproved(); track b.id) {
+                    <ng-container
+                      *ngTemplateOutlet="
+                        receivedCard;
+                        context: { b: b, accentClass: 'bg-brand-400' }
+                      "
+                    ></ng-container>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Past -->
+            @if (pastReceived().length > 0) {
+              <div>
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+                  Past
+                </h2>
+                <div class="space-y-3">
+                  @for (b of pastReceived(); track b.id) {
+                    <ng-container
+                      *ngTemplateOutlet="
+                        receivedCard;
+                        context: { b: b, accentClass: 'bg-slate-200' }
+                      "
+                    ></ng-container>
+                  }
                 </div>
               </div>
             }
@@ -372,3 +414,72 @@
     }
   </div>
 </section>
+
+<!-- ── Received booking card template ─────────────────────────────────────── -->
+<ng-template #receivedCard let-b="b" let-accentClass="accentClass">
+  <div
+    (click)="openPanel(b)"
+    class="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-slate-200 hover:shadow-sm transition-all cursor-pointer group"
+  >
+    <div class="flex">
+      <div class="w-1 shrink-0" [ngClass]="accentClass"></div>
+      <div class="flex-1 p-5">
+        <div class="flex items-start justify-between gap-3 mb-2">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-900 truncate">
+              {{ b.property?.title ?? '—' }}
+            </p>
+            <p class="text-xs text-slate-500 mt-0.5">
+              From <strong>{{ b.tenant?.firstName }} {{ b.tenant?.lastName }}</strong>
+            </p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            @if (phase(b) === 'ACTIVE') {
+              <span
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                {{ remainingDays(b) }}d remaining
+              </span>
+            } @else if (phase(b) === 'UPCOMING') {
+              <span
+                class="px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 text-xs font-semibold"
+              >
+                In {{ checkInDays(b) }}d
+              </span>
+            }
+            <span
+              class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              [ngClass]="statusClass(b.status)"
+            >
+              {{ b.status }}
+            </span>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+          @if (b.startDate) {
+            <span>{{ date(b.startDate) }} → {{ date(b.endDate) }}</span>
+          }
+          @if (b.totalPrice) {
+            <span class="font-semibold text-slate-700">{{ price(b.totalPrice, 'XAF') }}</span>
+          }
+        </div>
+        @if (b.message) {
+          <p class="text-xs text-slate-500 italic mt-2">"{{ b.message }}"</p>
+        }
+        <p class="mt-2 text-xs text-slate-400 group-hover:text-brand-600 transition-colors">
+          View details →
+        </p>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<!-- ── Booking detail slide-over panel ────────────────────────────────────── -->
+@if (selectedBooking()) {
+  <app-booking-detail-panel
+    [booking]="selectedBooking()!"
+    (closed)="closePanel()"
+    (bookingChanged)="onBookingChanged($event)"
+  />
+}

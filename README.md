@@ -36,7 +36,9 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Real-time chat** between tenants and landlords (WebSocket + STOMP)
 - **SMS & WhatsApp notifications** via Twilio for booking alerts (SRS-3.4.2)
 - **Push notifications** via Firebase (FCM)
-- **Stripe Connect payments** with platform escrow, PaymentIntent client-secret returned to frontend, and `confirmCardPayment` confirmation step on the property detail page
+- **Stripe Connect payments** — full escrow lifecycle: MANUAL-capture `PaymentIntent` created at booking, captured on landlord approval, prorated refund on early checkout, full refund on cancellation post-capture; tenant pays via Stripe Elements on property detail page
+- **Landlord Stripe Connect onboarding** — Hosting → Payments tab with connected / not-connected states, "Connect with Stripe" redirect to Stripe Express onboarding, and a live payout summary (available balance, pending, in escrow, lifetime earnings)
+- **Dispute Modal** — Structured dispute form (6 reason categories, 20–1000 char description) replaces browser `prompt()` calls; wired into the booking detail panel
 - **Landlord KYC** via Stripe Identity verification
 - **Admin console** with separate login, user management (suspend/activate), property approvals (approve/reject), report resolution, and operational analytics
 - **Prometheus + Grafana monitoring** with custom business metrics
@@ -230,6 +232,7 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | PATCH  | `/bookings/{id}/approve`              | Landlord | Approve booking                     |
 | PATCH  | `/bookings/{id}/reject`               | Landlord | Reject booking                      |
 | PATCH  | `/bookings/{id}/cancel`               | Tenant   | Cancel booking                      |
+| PATCH  | `/bookings/{id}/early-checkout`       | Tenant   | Early checkout with prorated refund |
 | GET    | `/chat/rooms`                         | Auth     | List chat rooms                     |
 | POST   | `/chat/rooms`                         | Auth     | Create chat room                    |
 | GET    | `/favorites`                          | Auth     | List favorites                      |
@@ -301,6 +304,7 @@ All technical requirements specified in the SRS have been implemented, including
 - **Phase 4:** Compliance, Security, and Global Strategy
 - **Phase 5:** Enterprise RBAC, Permission-Based Authorization & Workspace Tabs
 - **Phase 5.1:** Centralized Ownership via `ResourcePermissionService` — pure-logic service layer, security gap fix, N+1 prevention
+- **Phase 5.2:** Stripe escrow workflow completed — MANUAL capture, capture-on-approve, prorated early checkout, full-refund on cancel; landlord Stripe Connect onboarding UI; DisputeModal component; type fixes and Prettier lint at 100%
 
 The platform is now ready for production-scale deployment.
 

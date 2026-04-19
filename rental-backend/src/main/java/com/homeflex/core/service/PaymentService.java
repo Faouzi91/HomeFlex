@@ -11,10 +11,12 @@ import com.stripe.model.Account;
 import com.stripe.model.AccountLink;
 import com.stripe.model.Balance;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Refund;
 import com.stripe.model.Transfer;
 import com.stripe.param.AccountCreateParams;
 import com.stripe.param.AccountLinkCreateParams;
 import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.param.RefundCreateParams;
 import com.stripe.param.TransferCreateParams;
 import io.github.resilience4j.retry.Retry;
 import jakarta.annotation.PostConstruct;
@@ -132,6 +134,7 @@ public class PaymentService {
                             .setCurrency(currency)
                             .setDescription(description)
                             .setTransferGroup(transferGroup)
+                            .setCaptureMethod(PaymentIntentCreateParams.CaptureMethod.MANUAL)
                             .setAutomaticPaymentMethods(
                                     PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
                                             .setEnabled(true)
@@ -191,19 +194,17 @@ public class PaymentService {
     // ── Payment Confirmation ───────────────────────────────────────────
 
     /**
-     * Confirms (captures) a PaymentIntent that was previously created.
-     * Called when a landlord approves a booking, triggering the actual charge.
-     *
-     * @param paymentIntentId The Stripe PaymentIntent ID stored on the booking
-     * @return The confirmed PaymentIntent
+     * Captures an authorized PaymentIntent (requires_capture state).
+     * Called when a landlord approves a booking — funds are collected from the tenant
+     * and held on the platform account until {@link #releaseEscrow} is called.
      */
-    public PaymentIntent confirmPaymentIntent(String paymentIntentId) {
+    public PaymentIntent capturePaymentIntent(String paymentIntentId) {
         try {
             return Retry.decorateSupplier(stripeRetry, () -> {
                 try {
                     PaymentIntent pi = PaymentIntent.retrieve(paymentIntentId);
-                    if ("requires_confirmation".equals(pi.getStatus())) {
-                        return pi.confirm();
+                    if ("requires_capture".equals(pi.getStatus())) {
+                        return pi.capture();
                     }
                     return pi;
                 } catch (StripeException e) {
@@ -211,8 +212,39 @@ public class PaymentService {
                 }
             }).get();
         } catch (Exception e) {
-            log.error("Failed to confirm PaymentIntent {}", paymentIntentId, e);
-            throw new DomainException("Failed to confirm payment. Please try again later.");
+            log.error("Failed to capture PaymentIntent {}", paymentIntentId, e);
+            throw new DomainException("Failed to capture payment. Please try again later.");
+        }
+    }
+
+    /**
+     * Issues a full or partial refund on a captured PaymentIntent.
+     *
+     * @param paymentIntentId The Stripe PaymentIntent ID
+     * @param amount          Refund amount, or null for a full refund
+     * @param currency        Currency code (used for logging only)
+     */
+    public Refund refundPayment(String paymentIntentId, BigDecimal amount, String currency) {
+        try {
+            return Retry.decorateSupplier(stripeRetry, () -> {
+                try {
+                    PaymentIntent pi = PaymentIntent.retrieve(paymentIntentId);
+                    String chargeId = pi.getLatestCharge();
+                    RefundCreateParams.Builder params = RefundCreateParams.builder()
+                            .setCharge(chargeId);
+                    if (amount != null) {
+                        params.setAmount(toStripeAmount(amount));
+                    }
+                    Refund refund = Refund.create(params.build());
+                    log.info("Refund issued: paymentIntent={}, amount={} {}", paymentIntentId, amount, currency);
+                    return refund;
+                } catch (StripeException e) {
+                    throw new RuntimeException(e);
+                }
+            }).get();
+        } catch (Exception e) {
+            log.error("Failed to refund PaymentIntent {}", paymentIntentId, e);
+            throw new DomainException("Failed to process refund. Please try again later.");
         }
     }
 

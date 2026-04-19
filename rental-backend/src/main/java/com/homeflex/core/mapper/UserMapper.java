@@ -15,5 +15,6 @@ public interface UserMapper {
     @Mapping(target = "permissions", expression = "java(user.getRoles().stream().flatMap(r -> r.getPermissions().stream()).map(com.homeflex.core.domain.entity.Permission::getName).distinct().collect(java.util.stream.Collectors.toList()))")
     @Mapping(target = "agencyId", source = "agency.id")
     @Mapping(target = "profileCompleteness", ignore = true)
+    @Mapping(target = "stripeConnected", expression = "java(user.getStripeAccountId() != null)")
     UserDto toDto(User user);
 }

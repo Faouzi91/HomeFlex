@@ -2,7 +2,7 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.1
+**Version:** 4.2
 **Date:** April 19, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
@@ -25,6 +25,7 @@
 | 3.5     | 2026-04-18 | Architect     | Unread persistence fix (countUnreadInRoom excludes sender), robust avatar upload (null-safe contentType + nginx client_max_body_size 50M), overview stats filtered to active bookings only. |
 | 4.0     | 2026-04-19 | Security Eng. | Full RBAC migration: Role/Permission entities, V27/V28 Flyway migrations, 46 permissions, 4 roles, permission-based authorization with Permissions constants, HomeFlexPermissionEvaluator, OwnershipVerifier; Booking feature refactored to hasAuthority/hasPermission; three new workspace tabs (Finance, Disputes, Insurance); GET /disputes/mine endpoint; comprehensive API smoke-test script. |
 | 4.1     | 2026-04-19 | Security Eng. | Centralized ownership logic: ResourcePermissionService extracts all ownership rules from HomeFlexPermissionEvaluator; BookingService stripped to pure business logic; BookingV1Controller security gap fixed (GET /{id} hasPermission); BookingRepository.findByIdWithParties avoids N+1 in evaluator; 16 ResourcePermissionServiceTest ownership rule tests. |
+| 4.2     | 2026-04-19 | Architect     | Stripe Connect escrow workflow completed: MANUAL capture PaymentIntent, capture-on-approve, prorated early-checkout refund, Stripe Connect Express landlord onboarding (Hosting > Payments tab); DisputeModal standalone component replaces prompt(); BookingDetailPanel wires earlyCheckout API; api.client.ts ConnectOnboardingResponse type fix; payment-modal dead code removed; Prettier lint 100%. |
 
 ---
 
@@ -47,6 +48,17 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v4.2 (Stripe Escrow Workflow, Dispute Modal & Hosting Payments Tab)
+
+- 🟢 **Stripe MANUAL-capture escrow** — `PaymentService.createBookingPaymentIntent()` now sets `capture_method: MANUAL` so funds are only authorized at booking creation (no charge). On landlord approval `capturePaymentIntent()` captures the hold using `pi.capture()`, previously incorrectly calling `pi.confirm()`.
+- 🟢 **Prorated early-checkout refund** — New `BookingService.earlyCheckout()` method calculates unused nights (`totalNights - nightsUsed`) / `totalNights × totalPrice`, calls `PaymentService.refundPayment()` with that prorated amount, and sets booking status to `CANCELLED`. `PATCH /bookings/{id}/early-checkout` is the new controller endpoint, protected by `BOOKING_CANCEL` permission.
+- 🟢 **Full refund on tenant cancel** — `BookingService.cancelBooking()` now branches: if `paymentConfirmedAt != null` (payment was captured), calls `refundPayment(null)` for a full Stripe refund; otherwise calls `cancelPaymentIntent()` to release the uncaptured hold.
+- 🟢 **Stripe Connect Express onboarding — Hosting tab** — `HostingTabComponent` gains a "Payments" section tab with a Stripe Connect status card (connected / not-connected states), "Connect with Stripe" / "Update account" buttons, and a 2×2 payout summary grid (Available, Pending, In Escrow, Lifetime Earnings). `PayoutApi.onboardConnectAccount()` is called on click; the user is redirected to Stripe's hosted onboarding URL. `loadPayoutSummary()` is called lazily when the Payments tab is first activated.
+- 🟢 **DisputeModal standalone component** — `dispute-modal/dispute-modal.component.ts` replaces the removed browser `prompt()` calls. Provides a reason dropdown (6 values), a 20–1000 char description textarea, character counter, submit/cancel actions, and a success state. Wired into `BookingDetailPanelComponent` via `showDisputeModal` signal and `@if` block.
+- 🟢 **BookingDetailPanel earlyCheckout wiring** — `cancelBooking()` in `BookingDetailPanelComponent` now calls `bookingApi.earlyCheckout(id)` when `isEarlyCheckout()` is true (status APPROVED + phase ACTIVE), falling back to `bookingApi.cancel(id)` for pre-stay cancellations.
+- 🟢 **`UserDto` Stripe fields** — `stripeConnected: Boolean` and `stripeAccountId: String` added to the backend response DTO. `UserMapper` populates `stripeConnected` via MapStruct expression `java(user.getStripeAccountId() != null)`. Frontend `User` interface extended with optional `stripeConnected` and `stripeAccountId` fields.
+- 🟢 **Type fixes** — `ConnectOnboardingResponse` (`{ stripeAccountId, onboardingUrl }`) replaces ad-hoc `{ url }` type in `ApiClient.onboardConnectAccount()`, `finance-tab`, and `profile-tab`. Unused `payment-modal` component deleted. Prettier lint passes on all 20+ modified files.
 
 ### Implemented since v4.1 (Centralized Permission + Ownership via ResourcePermissionService)
 

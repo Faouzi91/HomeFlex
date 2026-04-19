@@ -1,0 +1,235 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { NgClass } from '@angular/common';
+import { Router } from '@angular/router';
+import { DisputeModalComponent } from '../dispute-modal/dispute-modal.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
+import { BookingApi } from '../../../../../core/api/services/booking.api';
+import { LeaseApi } from '../../../../../core/api/services/lease.api';
+import { DisputeApi } from '../../../../../core/api/services/dispute.api';
+import { SessionStore } from '../../../../../core/state/session.store';
+import { Booking } from '../../../../../core/models/api.types';
+import {
+  daysRemaining,
+  daysUntilCheckIn,
+  formatCurrency,
+  formatDate,
+  nightsBooked,
+  rentalPhase,
+  initials,
+} from '../../../../../core/utils/formatters';
+
+@Component({
+  selector: 'app-booking-detail-panel',
+  standalone: true,
+  imports: [NgClass, DisputeModalComponent],
+  templateUrl: './booking-detail-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class BookingDetailPanelComponent {
+  private readonly bookingApi = inject(BookingApi);
+  private readonly leaseApi = inject(LeaseApi);
+  private readonly disputeApi = inject(DisputeApi);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly session = inject(SessionStore);
+
+  readonly booking = input.required<Booking>();
+  readonly closed = output<void>();
+  readonly bookingChanged = output<Booking>();
+
+  protected readonly activeImageIndex = signal(0);
+  protected readonly actionLoading = signal<string | null>(null);
+  protected readonly rejectReason = signal('');
+  protected readonly showRejectInput = signal(false);
+  protected readonly showCancelConfirm = signal(false);
+  protected readonly showDisputeModal = signal(false);
+
+  // ── Derived: images ─────────────────────────────────────────────────────────
+
+  protected readonly images = computed(() => {
+    const imgs = this.booking().property?.images ?? [];
+    return [...imgs].sort((a, b) => a.displayOrder - b.displayOrder);
+  });
+
+  protected readonly mainImage = computed(
+    () =>
+      this.images()[this.activeImageIndex()]?.imageUrl ??
+      'https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=800&q=80',
+  );
+
+  // ── Derived: rental timing ──────────────────────────────────────────────────
+
+  protected readonly phase = computed(() => rentalPhase(this.booking()));
+  protected readonly checkInDays = computed(() => daysUntilCheckIn(this.booking()));
+  protected readonly remainingDays = computed(() => daysRemaining(this.booking()));
+  protected readonly nights = computed(() => nightsBooked(this.booking()));
+
+  protected readonly phaseLabel = computed(() => {
+    switch (this.phase()) {
+      case 'ACTIVE':
+        return `Active — ${this.remainingDays()} day${this.remainingDays() !== 1 ? 's' : ''} remaining`;
+      case 'UPCOMING':
+        return `Check-in in ${this.checkInDays()} day${this.checkInDays() !== 1 ? 's' : ''}`;
+      case 'PAST':
+        return `Completed stay · ${this.nights()} nights`;
+      default:
+        return null;
+    }
+  });
+
+  // ── Derived: capabilities ───────────────────────────────────────────────────
+
+  protected readonly isLandlord = computed(
+    () => this.session.isLandlord() || this.session.isAdmin(),
+  );
+
+  protected readonly canApprove = computed(
+    () => this.isLandlord() && this.booking().status === 'PENDING',
+  );
+
+  protected readonly canCancel = computed(() => {
+    const s = this.booking().status;
+    if (this.isLandlord()) return false;
+    return s === 'PENDING' || s === 'APPROVED';
+  });
+
+  protected readonly isEarlyCheckout = computed(
+    () => this.canCancel() && this.phase() === 'ACTIVE',
+  );
+
+  protected readonly canOpenDispute = computed(() => {
+    const s = this.booking().status;
+    return s === 'APPROVED' || s === 'CONFIRMED' || s === 'COMPLETED';
+  });
+
+  // ── Tenant info display (for landlord view) ─────────────────────────────────
+
+  protected readonly tenantInitials = computed(() =>
+    initials(this.booking().tenant?.firstName, this.booking().tenant?.lastName),
+  );
+
+  // ── Actions ─────────────────────────────────────────────────────────────────
+
+  protected approve(): void {
+    this.actionLoading.set('approve');
+    this.bookingApi
+      .approve(this.booking().id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.actionLoading.set(null);
+          this.bookingChanged.emit(updated);
+        },
+        error: () => this.actionLoading.set(null),
+      });
+  }
+
+  protected submitReject(): void {
+    const reason = this.rejectReason().trim();
+    if (!reason) return;
+    this.actionLoading.set('reject');
+    this.bookingApi
+      .reject(this.booking().id, reason)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.actionLoading.set(null);
+          this.showRejectInput.set(false);
+          this.bookingChanged.emit(updated);
+        },
+        error: () => this.actionLoading.set(null),
+      });
+  }
+
+  protected cancelBooking(): void {
+    this.actionLoading.set('cancel');
+    const call = this.isEarlyCheckout()
+      ? this.bookingApi.earlyCheckout(this.booking().id)
+      : this.bookingApi.cancel(this.booking().id);
+    call.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (updated) => {
+        this.actionLoading.set(null);
+        this.showCancelConfirm.set(false);
+        this.bookingChanged.emit(updated);
+      },
+      error: () => this.actionLoading.set(null),
+    });
+  }
+
+  protected signLease(): void {
+    const b = this.booking();
+    if (!b.id) return;
+    this.leaseApi
+      .getByBooking(b.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (lease) => {
+          if (lease?.id) {
+            this.leaseApi.sign(lease.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+          }
+        },
+      });
+  }
+
+  protected openDispute(): void {
+    this.showDisputeModal.set(true);
+  }
+
+  protected messageParty(): void {
+    this.router.navigate(['/workspace/messages']);
+    this.closed.emit();
+  }
+
+  protected nextImage(): void {
+    const len = this.images().length;
+    if (len) this.activeImageIndex.update((i) => (i + 1) % len);
+  }
+
+  protected prevImage(): void {
+    const len = this.images().length;
+    if (len) this.activeImageIndex.update((i) => (i - 1 + len) % len);
+  }
+
+  // ── Formatters ──────────────────────────────────────────────────────────────
+
+  protected date(v: string | null) {
+    return formatDate(v);
+  }
+
+  protected price(v: number | null, cur = 'XAF') {
+    return formatCurrency(v, cur);
+  }
+
+  protected statusClass(s: string): string {
+    const m: Record<string, string> = {
+      PENDING: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+      APPROVED: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+      CONFIRMED: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+      CANCELLED: 'bg-rose-50 text-rose-600 ring-1 ring-rose-200',
+      REJECTED: 'bg-rose-50 text-rose-600 ring-1 ring-rose-200',
+      COMPLETED: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
+      PENDING_MODIFICATION: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
+    };
+    return m[s] ?? 'bg-slate-100 text-slate-600';
+  }
+
+  protected phaseClass(): string {
+    switch (this.phase()) {
+      case 'ACTIVE':
+        return 'bg-emerald-500';
+      case 'UPCOMING':
+        return 'bg-brand-500';
+      default:
+        return 'bg-slate-400';
+    }
+  }
+}

@@ -1,0 +1,433 @@
+<!-- Overlay -->
+<div class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm" (click)="closed.emit()"></div>
+
+<!-- Panel -->
+<aside
+  class="fixed inset-y-0 right-0 z-50 flex w-full flex-col bg-white shadow-2xl sm:max-w-lg overflow-y-auto"
+>
+  <!-- ── Header ── -->
+  <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100 shrink-0">
+    <div class="min-w-0">
+      <h2 class="text-base font-bold text-slate-900 truncate">
+        {{ booking().property?.title ?? 'Booking Detail' }}
+      </h2>
+      <p class="text-xs text-slate-400 mt-0.5 truncate">
+        {{ booking().property?.city }}, {{ booking().property?.country }}
+      </p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <span
+        class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+        [ngClass]="statusClass(booking().status)"
+      >
+        {{ booking().status.replace('_', ' ') }}
+      </span>
+      <button
+        (click)="closed.emit()"
+        class="h-8 w-8 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          class="w-4 h-4"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 divide-y divide-slate-100">
+    <!-- ── Image gallery ── -->
+    @if (images().length > 0) {
+      <div class="relative bg-slate-900 aspect-[16/9] overflow-hidden">
+        <img
+          [src]="mainImage()"
+          [alt]="booking().property?.title"
+          class="w-full h-full object-cover"
+        />
+        @if (images().length > 1) {
+          <button
+            (click)="prevImage()"
+            class="absolute left-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              class="w-4 h-4"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.75 19.5 8.25 12l7.5-7.5"
+              />
+            </svg>
+          </button>
+          <button
+            (click)="nextImage()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              class="w-4 h-4"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <!-- Dot indicators -->
+          <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            @for (img of images(); track img.id; let i = $index) {
+              <button
+                (click)="activeImageIndex.set(i)"
+                class="h-1.5 rounded-full transition-all"
+                [class.w-4]="activeImageIndex() === i"
+                [class.bg-white]="activeImageIndex() === i"
+                [class.w-1.5]="activeImageIndex() !== i"
+                [class.bg-white/50]="activeImageIndex() !== i"
+              ></button>
+            }
+          </div>
+          <!-- Counter -->
+          <span
+            class="absolute top-3 right-3 text-xs font-semibold text-white bg-black/40 rounded-full px-2 py-0.5"
+          >
+            {{ activeImageIndex() + 1 }} / {{ images().length }}
+          </span>
+        }
+      </div>
+    }
+
+    <!-- ── Rental phase bar ── -->
+    @if (phaseLabel()) {
+      <div class="px-6 py-3 flex items-center gap-3">
+        <span class="h-2 w-2 rounded-full shrink-0" [ngClass]="phaseClass()"></span>
+        <p class="text-sm font-semibold text-slate-800">{{ phaseLabel() }}</p>
+        @if (phase() === 'ACTIVE') {
+          <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden ml-auto max-w-24">
+            <div
+              class="h-full bg-emerald-400 rounded-full"
+              [style.width.%]="100 - (remainingDays() / nights()) * 100"
+            ></div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Dates & type ── -->
+    <div class="px-6 py-5 space-y-3">
+      <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Stay Details</h3>
+      <div class="grid grid-cols-2 gap-3">
+        @if (booking().startDate) {
+          <div class="bg-slate-50 rounded-xl p-3">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              Check-in
+            </p>
+            <p class="text-sm font-bold text-slate-900">{{ date(booking().startDate) }}</p>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-3">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              Check-out
+            </p>
+            <p class="text-sm font-bold text-slate-900">{{ date(booking().endDate) }}</p>
+          </div>
+        } @else if (booking().requestedDate) {
+          <div class="bg-slate-50 rounded-xl p-3 col-span-2">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              Viewing Date
+            </p>
+            <p class="text-sm font-bold text-slate-900">{{ date(booking().requestedDate) }}</p>
+          </div>
+        }
+      </div>
+      <div class="flex flex-wrap gap-2 text-xs text-slate-500">
+        <span class="bg-slate-100 rounded-lg px-2.5 py-1 font-medium">
+          {{ booking().bookingType }}
+        </span>
+        @if (booking().numberOfOccupants) {
+          <span class="bg-slate-100 rounded-lg px-2.5 py-1 font-medium">
+            {{ booking().numberOfOccupants }} guest{{
+              booking().numberOfOccupants !== 1 ? 's' : ''
+            }}
+          </span>
+        }
+        @if (booking().startDate) {
+          <span class="bg-slate-100 rounded-lg px-2.5 py-1 font-medium">
+            {{ nights() }} night{{ nights() !== 1 ? 's' : '' }}
+          </span>
+        }
+      </div>
+      @if (booking().message) {
+        <p class="text-sm text-slate-600 italic bg-slate-50 rounded-xl p-3">
+          "{{ booking().message }}"
+        </p>
+      }
+    </div>
+
+    <!-- ── Price breakdown ── -->
+    @if (booking().totalPrice) {
+      <div class="px-6 py-5 space-y-2">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+          Price Breakdown
+        </h3>
+        @if (booking().cleaningFee) {
+          <div class="flex justify-between text-sm text-slate-600">
+            <span>Cleaning fee</span>
+            <span>{{ price(booking().cleaningFee, booking().property?.currency) }}</span>
+          </div>
+        }
+        @if (booking().taxAmount) {
+          <div class="flex justify-between text-sm text-slate-600">
+            <span>Tax (5%)</span>
+            <span>{{ price(booking().taxAmount, booking().property?.currency) }}</span>
+          </div>
+        }
+        @if (booking().platformFee) {
+          <div class="flex justify-between text-sm text-slate-500">
+            <span>Platform fee (15%)</span>
+            <span>{{ price(booking().platformFee, booking().property?.currency) }}</span>
+          </div>
+        }
+        <div
+          class="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-100"
+        >
+          <span>Total</span>
+          <span>{{ price(booking().totalPrice, booking().property?.currency) }}</span>
+        </div>
+        @if (booking().paymentConfirmedAt) {
+          <p class="text-xs text-emerald-600 flex items-center gap-1 pt-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              class="w-3.5 h-3.5"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            Payment confirmed
+          </p>
+        }
+      </div>
+    }
+
+    <!-- ── Party info card ── -->
+    <div class="px-6 py-5">
+      @if (isLandlord()) {
+        <!-- Landlord sees tenant info -->
+        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Guest</h3>
+        <div class="flex items-center gap-3">
+          @if (booking().tenant?.profilePictureUrl) {
+            <img
+              [src]="booking().tenant.profilePictureUrl"
+              [alt]="booking().tenant.firstName"
+              class="h-10 w-10 rounded-full object-cover shrink-0"
+            />
+          } @else {
+            <div
+              class="h-10 w-10 rounded-full bg-brand-100 text-brand-700 font-bold text-sm flex items-center justify-center shrink-0"
+            >
+              {{ tenantInitials() }}
+            </div>
+          }
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-900">
+              {{ booking().tenant?.firstName }} {{ booking().tenant?.lastName }}
+            </p>
+            @if (booking().tenant?.phoneNumber) {
+              <p class="text-xs text-slate-500 mt-0.5">{{ booking().tenant?.phoneNumber }}</p>
+            }
+            @if (booking().tenant?.trustScore) {
+              <p class="text-xs text-amber-600 mt-0.5 font-medium">
+                ★ {{ booking().tenant?.trustScore }}/100 trust score
+              </p>
+            }
+          </div>
+          <button
+            (click)="messageParty()"
+            class="ml-auto shrink-0 text-xs font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 rounded-xl px-3 py-2 transition-colors"
+          >
+            Message
+          </button>
+        </div>
+      } @else {
+        <!-- Tenant sees landlord info -->
+        <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Hosted by</h3>
+        <div class="flex items-center gap-3">
+          @if (booking().property?.landlord?.profilePictureUrl) {
+            <img
+              [src]="booking().property.landlord.profilePictureUrl"
+              [alt]="booking().property.landlord.firstName"
+              class="h-10 w-10 rounded-full object-cover shrink-0"
+            />
+          } @else {
+            <div
+              class="h-10 w-10 rounded-full bg-slate-100 text-slate-600 font-bold text-sm flex items-center justify-center shrink-0"
+            >
+              {{ booking().property?.landlord?.firstName?.[0]
+              }}{{ booking().property?.landlord?.lastName?.[0] }}
+            </div>
+          }
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-900">
+              {{ booking().property?.landlord?.firstName }}
+              {{ booking().property?.landlord?.lastName }}
+            </p>
+          </div>
+          <button
+            (click)="messageParty()"
+            class="ml-auto shrink-0 text-xs font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 rounded-xl px-3 py-2 transition-colors"
+          >
+            Message
+          </button>
+        </div>
+      }
+    </div>
+
+    <!-- ── Landlord response ── -->
+    @if (booking().landlordResponse) {
+      <div class="px-6 py-4">
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
+          Landlord response
+        </p>
+        <p class="text-sm text-slate-600 italic">"{{ booking().landlordResponse }}"</p>
+      </div>
+    }
+  </div>
+
+  <!-- ── Actions footer ── -->
+  <div class="border-t border-slate-100 px-6 py-5 shrink-0 space-y-3 bg-white">
+    <!-- Landlord: approve / reject -->
+    @if (canApprove()) {
+      @if (!showRejectInput()) {
+        <div class="flex gap-2">
+          <button
+            (click)="approve()"
+            [disabled]="actionLoading() === 'approve'"
+            class="flex-1 button button--primary py-2.5 text-sm"
+          >
+            {{ actionLoading() === 'approve' ? 'Approving…' : 'Approve Booking' }}
+          </button>
+          <button
+            (click)="showRejectInput.set(true)"
+            class="flex-1 py-2.5 text-sm font-semibold text-rose-600 border border-rose-200 rounded-xl hover:bg-rose-50 transition-colors"
+          >
+            Reject
+          </button>
+        </div>
+      } @else {
+        <div class="space-y-2">
+          <textarea
+            [value]="rejectReason()"
+            (input)="rejectReason.set($any($event.target).value)"
+            placeholder="Reason for rejection…"
+            rows="2"
+            class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-300 resize-none"
+          ></textarea>
+          <div class="flex gap-2">
+            <button
+              (click)="submitReject()"
+              [disabled]="!rejectReason().trim() || actionLoading() === 'reject'"
+              class="flex-1 py-2.5 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-xl transition-colors disabled:opacity-50"
+            >
+              {{ actionLoading() === 'reject' ? 'Rejecting…' : 'Confirm Reject' }}
+            </button>
+            <button
+              (click)="showRejectInput.set(false)"
+              class="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Tenant: cancel / early checkout -->
+    @if (canCancel()) {
+      @if (!showCancelConfirm()) {
+        <button
+          (click)="showCancelConfirm.set(true)"
+          class="w-full py-2.5 text-sm font-semibold rounded-xl border transition-colors"
+          [class.text-rose-600]="!isEarlyCheckout()"
+          [class.border-rose-200]="!isEarlyCheckout()"
+          [class.hover:bg-rose-50]="!isEarlyCheckout()"
+          [class.text-amber-700]="isEarlyCheckout()"
+          [class.border-amber-200]="isEarlyCheckout()"
+          [class.hover:bg-amber-50]="isEarlyCheckout()"
+        >
+          {{ isEarlyCheckout() ? 'Early Checkout' : 'Cancel Booking' }}
+        </button>
+      } @else {
+        <div class="bg-rose-50 rounded-xl p-4 space-y-3">
+          <p class="text-sm font-semibold text-rose-800">
+            {{ isEarlyCheckout() ? 'Confirm early checkout?' : 'Cancel this booking?' }}
+          </p>
+          <p class="text-xs text-rose-600">
+            @if (isEarlyCheckout()) {
+              You are checking out early. Refund eligibility depends on the cancellation policy.
+            } @else if (booking().status === 'APPROVED') {
+              This booking has been approved. Please review the cancellation policy before
+              proceeding.
+            } @else {
+              This will cancel your pending booking request.
+            }
+          </p>
+          <div class="flex gap-2">
+            <button
+              (click)="cancelBooking()"
+              [disabled]="actionLoading() === 'cancel'"
+              class="flex-1 py-2 text-sm font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {{ actionLoading() === 'cancel' ? 'Processing…' : 'Yes, proceed' }}
+            </button>
+            <button
+              (click)="showCancelConfirm.set(false)"
+              class="flex-1 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors"
+            >
+              Keep booking
+            </button>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Dispute -->
+    @if (canOpenDispute() && !isLandlord()) {
+      <button
+        (click)="openDispute()"
+        class="w-full py-2 text-xs font-semibold text-slate-500 hover:text-rose-600 transition-colors"
+      >
+        Open a dispute
+      </button>
+    }
+
+    <!-- Status-only message -->
+    @if (!canApprove() && !canCancel() && booking().status !== 'PENDING') {
+      <p class="text-center text-xs text-slate-400">
+        This booking is {{ booking().status.toLowerCase() }}.
+      </p>
+    }
+  </div>
+</aside>
+
+<!-- Dispute modal (outside panel so it overlays everything) -->
+@if (showDisputeModal()) {
+  <app-dispute-modal
+    [bookingId]="booking().id"
+    (submitted$)="showDisputeModal.set(false)"
+    (cancelled)="showDisputeModal.set(false)"
+  />
+}

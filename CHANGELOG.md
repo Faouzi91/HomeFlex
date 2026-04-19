@@ -2,6 +2,40 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-19 (Stripe Escrow Workflow, Dispute Modal & Hosting Payments Tab)
+
+### Added
+
+- **`PATCH /bookings/{id}/early-checkout`** (`BookingV1Controller`) — New endpoint for prorated tenant early-checkout. Protected by `hasPermission(#id, 'Booking', 'BOOKING_CANCEL')`. Delegates to the new `BookingService.earlyCheckout()`.
+- **`BookingService.earlyCheckout()`** — Validates booking is APPROVED and currently ACTIVE (today between startDate and endDate), calculates prorated refund amount (`unusedNights / totalNights × totalPrice`), calls `PaymentService.refundPayment()`, then sets status to CANCELLED.
+- **`PaymentService.refundPayment()`** — New method using `RefundCreateParams` + `Refund.create()`. Accepts an optional partial amount; null means full refund.
+- **Stripe Connect Express onboarding — Hosting > Payments tab** — `HostingTabComponent` gains a 5th nav section ("Payments") with: Stripe Connect status card (connected ✓ / not-connected ⚠ states), "Connect with Stripe" / "Update account" buttons, spinner during redirect, error display, and a 2×2 payout summary grid (Available, Pending, In Escrow, Lifetime Earnings). Summary is fetched lazily on tab activation via `loadPayoutSummary()`.
+- **`DisputeModalComponent`** (`dispute-modal/dispute-modal.component.ts`) — New Angular standalone `OnPush` component replacing browser `prompt()` calls. Reason dropdown (DAMAGE, DEPOSIT_RETURN, SERVICE_QUALITY, MISREPRESENTATION, UNAUTHORIZED_CHARGE, OTHER), 20–1000 char description textarea with live character counter, loading/error/success states. Calls `DisputeApi.open()`.
+- **`UserDto` Stripe fields** — `stripeConnected: Boolean` and `stripeAccountId: String` added to the backend response record. `UserMapper` populates `stripeConnected` via MapStruct expression.
+- **`BookingApi.earlyCheckout()`** (Angular) — `PATCH /bookings/{id}/early-checkout` method added to `BookingApi`.
+
+### Changed
+
+- **`PaymentService.createBookingPaymentIntent()`** — Added `.setCaptureMethod(PaymentIntentCreateParams.CaptureMethod.MANUAL)` so the tenant's card is only authorized (not charged) at booking creation. Funds are held in escrow until capture on approval.
+- **`PaymentService.capturePaymentIntent()`** — Replaces the old `confirmPaymentIntent()`. Uses `pi.capture()` (not `pi.confirm()`), which charges the previously authorized hold when the landlord approves.
+- **`BookingService.approveBooking()`** — Now calls `capturePaymentIntent()` (with try/catch warning on failure) and sets `paymentConfirmedAt` to record the capture timestamp.
+- **`BookingService.cancelBooking()`** — Branches on `paymentConfirmedAt`: if the payment was already captured, issues a full Stripe refund via `refundPayment(null)`; otherwise cancels the uncaptured PaymentIntent.
+- **`BookingDetailPanelComponent`** — `cancelBooking()` now routes to `bookingApi.earlyCheckout(id)` when `isEarlyCheckout()` is true (APPROVED + ACTIVE phase), falling back to `bookingApi.cancel(id)`. Imports and wires `DisputeModalComponent` via `showDisputeModal` signal.
+- **`HostingTabComponent`** — `activeSection` type extended to include `'payments'`. `PayoutApi` injected. Signals added: `payoutSummary`, `stripeOnboardingLoading`, `stripeOnboardingError`. Methods added: `loadPayoutSummary()`, `connectStripe()`, `reconnectStripe()`, `formatAmount()`.
+- **`ApiClient.onboardConnectAccount()`** — Return type corrected from `{ url: string }` to `ConnectOnboardingResponse` (`{ stripeAccountId, onboardingUrl }`).
+- **`finance-tab` and `profile-tab`** — Updated to use `res.onboardingUrl` instead of `res.url` following the type fix.
+- **`User` interface** (Angular `api.types.ts`) — Added optional `stripeConnected?: boolean` and `stripeAccountId?: string | null`.
+
+### Removed
+
+- **`payment-modal/payment-modal.component.ts`** — Unused standalone Stripe Elements modal deleted. Property-detail page handles Stripe payment inline; this file was never imported or used anywhere.
+
+### Fixed
+
+- **Prettier lint** — All 20+ modified files formatted; `npm run lint` now reports zero warnings.
+
+---
+
 ## [Unreleased] — 2026-04-19 (Centralized Permission + Ownership via ResourcePermissionService)
 
 ### Added

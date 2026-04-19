@@ -118,6 +118,12 @@ public class BookingV1Controller {
         return ResponseEntity.ok(bookingService.cancelBooking(id));
     }
 
+    @PatchMapping("/{id}/early-checkout")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
+    public ResponseEntity<BookingDto> earlyCheckout(@PathVariable UUID id) {
+        return ResponseEntity.ok(bookingService.earlyCheckout(id));
+    }
+
     @PostMapping("/{id}/modify")
     @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
     public ResponseEntity<BookingDto> requestModification(

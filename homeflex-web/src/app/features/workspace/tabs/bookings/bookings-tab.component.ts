@@ -1,46 +1,90 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
-import { Router } from '@angular/router';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of } from 'rxjs';
 import { BookingApi } from '../../../../core/api/services/booking.api';
-import { DisputeApi } from '../../../../core/api/services/dispute.api';
 import { LeaseApi } from '../../../../core/api/services/lease.api';
 import { VehicleApi } from '../../../../core/api/services/vehicle.api';
 import { SessionStore } from '../../../../core/state/session.store';
 import { WorkspaceStore } from '../../workspace.store';
 import { Booking, PropertyLease, VehicleBooking } from '../../../../core/models/api.types';
-import { formatCurrency, formatDate } from '../../../../core/utils/formatters';
+import {
+  formatCurrency,
+  formatDate,
+  rentalPhase,
+  daysUntilCheckIn,
+  daysRemaining,
+} from '../../../../core/utils/formatters';
+import { BookingDetailPanelComponent } from './booking-detail-panel/booking-detail-panel.component';
 
 type SubTab = 'properties' | 'vehicles' | 'received';
 
 @Component({
   selector: 'app-bookings-tab',
   standalone: true,
-  imports: [NgClass],
+  imports: [NgClass, NgTemplateOutlet, BookingDetailPanelComponent],
   templateUrl: './bookings-tab.component.html',
 })
 export class BookingsTabComponent {
   private readonly bookingApi = inject(BookingApi);
   private readonly vehicleApi = inject(VehicleApi);
   private readonly leaseApi = inject(LeaseApi);
-  private readonly disputeApi = inject(DisputeApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly session = inject(SessionStore);
   protected readonly workspaceStore = inject(WorkspaceStore);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly router = inject(Router);
 
   protected readonly propertyBookings = signal<Booking[]>([]);
   protected readonly vehicleBookings = signal<VehicleBooking[]>([]);
   protected readonly leases = signal<PropertyLease[]>([]);
   protected readonly receivedBookings = signal<Booking[]>([]);
   protected readonly loading = signal(true);
-  protected readonly approvingId = signal('');
   protected readonly activeSubTab = signal<SubTab>('properties');
 
-  protected readonly pendingReceived = computed(() =>
+  // Detail panel
+  protected readonly selectedBooking = signal<Booking | null>(null);
+
+  // ── Landlord groupings ───────────────────────────────────────────────────────
+
+  protected readonly activeOccupants = computed(() => {
+    const today = new Date();
+    return this.receivedBookings().filter((b) => {
+      if (!b.startDate || !b.endDate) return false;
+      const start = new Date(b.startDate);
+      const end = new Date(b.endDate);
+      return (
+        (b.status === 'APPROVED' || b.status === 'CONFIRMED') && today >= start && today <= end
+      );
+    });
+  });
+
+  protected readonly upcomingApproved = computed(() => {
+    const today = new Date();
+    return this.receivedBookings().filter((b) => {
+      if (!b.startDate) return false;
+      const start = new Date(b.startDate);
+      return (b.status === 'APPROVED' || b.status === 'CONFIRMED') && today < start;
+    });
+  });
+
+  protected readonly pendingApproval = computed(() =>
     this.receivedBookings().filter((b) => b.status === 'PENDING'),
   );
+
+  protected readonly pastReceived = computed(() =>
+    this.receivedBookings().filter(
+      (b) =>
+        b.status === 'COMPLETED' ||
+        b.status === 'CANCELLED' ||
+        b.status === 'REJECTED' ||
+        (b.endDate && new Date(b.endDate) < new Date() && b.status === 'APPROVED'),
+    ),
+  );
+
+  // Pending badge count (used in the pill)
+  protected readonly pendingCount = computed(() => this.pendingApproval().length);
 
   constructor() {
     forkJoin({
@@ -56,6 +100,30 @@ export class BookingsTabComponent {
         this.vehicleBookings.set(res.vehicles.data);
         this.leases.set(res.leases);
         this.loading.set(false);
+
+        // After bookings loaded, honour any deep-linked ?booking= param
+        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+          const id = params['booking'];
+          if (!id) return;
+          const allBookings = [...this.propertyBookings(), ...this.receivedBookings()];
+          const found = allBookings.find((b) => b.id === id);
+          if (found) {
+            this.openPanel(found);
+          } else {
+            // Not in cached list (e.g. landlord clicked notification before tab loaded) — fetch directly
+            this.bookingApi
+              .getById(id)
+              .pipe(
+                catchError(() => of(null)),
+                takeUntilDestroyed(this.destroyRef),
+              )
+              .subscribe((b) => {
+                if (b) this.openPanel(b);
+              });
+          }
+          // Clear the query param so back-navigation doesn't re-open
+          this.router.navigate([], { queryParams: {}, replaceUrl: true });
+        });
       });
 
     if (this.session.isLandlord() || this.session.isAdmin()) {
@@ -67,7 +135,6 @@ export class BookingsTabComponent {
   private loadReceivedBookings(): void {
     const properties = this.workspaceStore.myProperties();
     if (!properties.length) {
-      // Properties may not be loaded yet — wait briefly then retry once
       setTimeout(() => {
         const props = this.workspaceStore.myProperties();
         if (props.length) this.fetchReceivedForProperties(props.map((p) => p.id));
@@ -88,30 +155,27 @@ export class BookingsTabComponent {
       .subscribe((results) => this.receivedBookings.set(results.flatMap((r) => r.data)));
   }
 
-  protected approveBooking(id: string): void {
-    this.approvingId.set(id);
-    this.bookingApi
-      .approve(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (updated) => {
-          this.receivedBookings.update((bs) => bs.map((b) => (b.id === id ? updated : b)));
-          this.approvingId.set('');
-        },
-        error: () => this.approvingId.set(''),
-      });
+  // ── Panel ────────────────────────────────────────────────────────────────────
+
+  protected openPanel(booking: Booking): void {
+    this.selectedBooking.set(booking);
   }
 
-  protected rejectBooking(id: string): void {
-    const reason = prompt('Rejection reason:');
-    if (!reason) return;
-    this.bookingApi
-      .reject(id, reason)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((updated) =>
-        this.receivedBookings.update((bs) => bs.map((b) => (b.id === id ? updated : b))),
-      );
+  protected closePanel(): void {
+    this.selectedBooking.set(null);
   }
+
+  protected onBookingChanged(updated: Booking): void {
+    // Refresh the booking in all lists
+    const patch = (list: Booking[]) => list.map((b) => (b.id === updated.id ? updated : b));
+    this.propertyBookings.update(patch);
+    this.receivedBookings.update(patch);
+    this.selectedBooking.set(updated);
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  // Dispute is now handled via DisputeModalComponent inside BookingDetailPanelComponent
 
   protected signLease(leaseId: string): void {
     this.leaseApi
@@ -124,30 +188,20 @@ export class BookingsTabComponent {
       });
   }
 
-  protected openPropertyBooking(b: Booking): void {
-    if (b.property?.id) {
-      this.router.navigate(['/properties', b.property.id], { queryParams: { booking: b.id } });
-    }
+  protected phase(b: Booking) {
+    return rentalPhase(b);
   }
 
-  protected openVehicleBooking(b: VehicleBooking): void {
-    if (b.vehicleId) {
-      this.router.navigate(['/vehicles', b.vehicleId], { queryParams: { booking: b.id } });
-    }
+  protected checkInDays(b: Booking) {
+    return daysUntilCheckIn(b);
   }
 
-  protected openDispute(bookingId: string): void {
-    const reason = prompt('Dispute reason (e.g. DAMAGE, DEPOSIT_RETURN):');
-    const description = prompt('Describe the issue:');
-    if (!reason || !description) return;
-    this.disputeApi
-      .open(bookingId, reason, description)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => alert('Dispute submitted. An admin will review it shortly.'));
+  protected remainingDays(b: Booking) {
+    return daysRemaining(b);
   }
 
   protected date(v: string | null): string {
-    return v ? formatDate(v) : '—';
+    return formatDate(v);
   }
 
   protected price(v: number | null, cur = 'XAF'): string {
@@ -162,6 +216,7 @@ export class BookingsTabComponent {
       CANCELLED: 'bg-rose-50 text-rose-700',
       REJECTED: 'bg-rose-50 text-rose-700',
       COMPLETED: 'bg-slate-100 text-slate-600',
+      PENDING_MODIFICATION: 'bg-violet-50 text-violet-700',
     };
     return map[status] ?? 'bg-slate-100 text-slate-600';
   }

@@ -20,7 +20,7 @@ export class DisputesTabComponent implements OnInit {
   ngOnInit(): void {
     this.api.getMyDisputes().subscribe({
       next: (data) => {
-        this.disputes.set(Array.isArray(data) ? data : (data as any)?.data ?? []);
+        this.disputes.set(Array.isArray(data) ? data : ((data as any)?.data ?? []));
         this.loading.set(false);
       },
       error: () => {
@@ -32,11 +32,16 @@ export class DisputesTabComponent implements OnInit {
 
   protected statusClass(status: string): string {
     switch (status) {
-      case 'OPEN': return 'bg-red-50 text-red-700';
-      case 'UNDER_REVIEW': return 'bg-amber-50 text-amber-700';
-      case 'RESOLVED': return 'bg-emerald-50 text-emerald-700';
-      case 'CLOSED': return 'bg-slate-100 text-slate-600';
-      default: return 'bg-slate-100 text-slate-600';
+      case 'OPEN':
+        return 'bg-red-50 text-red-700';
+      case 'UNDER_REVIEW':
+        return 'bg-amber-50 text-amber-700';
+      case 'RESOLVED':
+        return 'bg-emerald-50 text-emerald-700';
+      case 'CLOSED':
+        return 'bg-slate-100 text-slate-600';
+      default:
+        return 'bg-slate-100 text-slate-600';
     }
   }
 

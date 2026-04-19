@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { ApiClient } from '../../../../core/api/api.client';
+import { SessionStore } from '../../../../core/state/session.store';
 import { Receipt } from '../../../../core/models/api.types';
 
 @Component({
@@ -12,10 +13,12 @@ import { Receipt } from '../../../../core/models/api.types';
 })
 export class FinanceTabComponent implements OnInit {
   private readonly api = inject(ApiClient);
+  protected readonly session = inject(SessionStore);
 
   protected readonly receipts = signal<Receipt[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly onboarding = signal(false);
 
   ngOnInit(): void {
     this.api.getMyReceipts().subscribe({
@@ -30,12 +33,27 @@ export class FinanceTabComponent implements OnInit {
     });
   }
 
+  protected onboardStripe(): void {
+    this.onboarding.set(true);
+    const base = window.location.origin + '/workspace/finance';
+    this.api.onboardConnectAccount(base, base).subscribe({
+      next: (res) => {
+        window.location.href = res.onboardingUrl;
+      },
+      error: () => this.onboarding.set(false),
+    });
+  }
+
   protected statusClass(status: string): string {
     switch (status?.toUpperCase()) {
-      case 'PAID': return 'bg-emerald-50 text-emerald-700';
-      case 'PENDING': return 'bg-amber-50 text-amber-700';
-      case 'REFUNDED': return 'bg-blue-50 text-blue-700';
-      default: return 'bg-slate-100 text-slate-600';
+      case 'PAID':
+        return 'bg-emerald-50 text-emerald-700';
+      case 'PENDING':
+        return 'bg-amber-50 text-amber-700';
+      case 'REFUNDED':
+        return 'bg-blue-50 text-blue-700';
+      default:
+        return 'bg-slate-100 text-slate-600';
     }
   }
 }

@@ -63,9 +63,7 @@ export class OverviewTabComponent {
     ),
   );
 
-  protected readonly upcomingBookings = computed(() =>
-    this.activePropertyBookings().slice(0, 3),
-  );
+  protected readonly upcomingBookings = computed(() => this.activePropertyBookings().slice(0, 3));
 
   constructor() {
     forkJoin({

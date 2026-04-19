@@ -24,5 +24,7 @@ public record UserDto(
         Boolean pushNotificationsEnabled,
         Boolean smsNotificationsEnabled,
         Integer profileCompleteness,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Boolean stripeConnected,
+        String stripeAccountId
 ) {}

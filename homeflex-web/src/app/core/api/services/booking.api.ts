@@ -42,6 +42,10 @@ export class BookingApi extends BaseApi {
     return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/cancel`, {});
   }
 
+  earlyCheckout(id: string): Observable<Booking> {
+    return this.http.patch<Booking>(`${this.baseUrl}/bookings/${id}/early-checkout`, {});
+  }
+
   getById(id: string): Observable<Booking> {
     return this.http.get<Booking>(`${this.baseUrl}/bookings/${id}`);
   }
