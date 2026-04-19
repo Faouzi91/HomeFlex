@@ -5,6 +5,7 @@ import com.homeflex.features.property.service.BookingService;
 import com.homeflex.features.property.dto.response.BookingDto;
 import com.homeflex.core.dto.common.ApiListResponse;
 import com.homeflex.features.property.dto.request.BookingCreateRequest;
+import com.homeflex.features.property.dto.request.BookingModificationRequest;
 import com.homeflex.features.property.dto.request.BookingResponseRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +18,20 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 /**
- * Booking endpoints — refactored to permission-based authorization.
+ * Booking REST endpoints.
  *
- * Pattern:
- *   hasAuthority(T(...).PERMISSION) — "do you have this capability?" (no ownership)
- *   hasPermission(#id, 'Type', 'PERM') — "do you have this capability AND own this resource?"
+ * Authorization strategy:
+ *   hasAuthority(Permissions.X)       — "you hold this permission" (no ownership)
+ *                                        used for collection/create endpoints where we
+ *                                        don't have a resource ID yet.
  *
- * The service layer still enforces ownership as a second line of defense.
+ *   hasPermission(#id, 'Type', 'X')   — "you hold this permission AND own this resource"
+ *                                        evaluated by HomeFlexPermissionEvaluator →
+ *                                        ResourcePermissionService. Used for all
+ *                                        single-resource mutations and reads.
+ *
+ * The service layer contains no ownership checks; security is enforced here.
+ * See ResourcePermissionService for the ownership rules.
  */
 @RestController
 @RequestMapping("/api/v1/bookings")
@@ -31,6 +39,8 @@ import java.util.UUID;
 public class BookingV1Controller {
 
     private final BookingService bookingService;
+
+    // ── Create ────────────────────────────────────────────────────────────────
 
     @PostMapping
     @PreAuthorize("hasAuthority(T(com.homeflex.core.security.Permissions).BOOKING_CREATE)")
@@ -42,6 +52,8 @@ public class BookingV1Controller {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // ── Read ──────────────────────────────────────────────────────────────────
+
     @GetMapping("/my-bookings")
     @PreAuthorize("hasAuthority(T(com.homeflex.core.security.Permissions).BOOKING_READ)")
     public ResponseEntity<ApiListResponse<BookingDto>> getMyBookings(Authentication authentication) {
@@ -52,81 +64,66 @@ public class BookingV1Controller {
     @GetMapping("/property/{propertyId}")
     @PreAuthorize("hasPermission(#propertyId, 'Property', 'BOOKING_READ')")
     public ResponseEntity<ApiListResponse<BookingDto>> getPropertyBookings(
-            @PathVariable UUID propertyId,
-            Authentication authentication) {
-        UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(new ApiListResponse<>(
-                bookingService.getBookingsByProperty(propertyId, landlordId)));
+            @PathVariable UUID propertyId) {
+        return ResponseEntity.ok(new ApiListResponse<>(bookingService.getBookingsByProperty(propertyId)));
     }
 
-    // No ownership check here — the service enforces it after loading the booking
-    // (the caller may be tenant OR landlord, and we don't know without loading)
+    // Ownership enforced by hasPermission — closes the gap where any BOOKING_READ holder
+    // could previously read any booking via hasAuthority alone.
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority(T(com.homeflex.core.security.Permissions).BOOKING_READ)")
-    public ResponseEntity<BookingDto> getBookingById(@PathVariable UUID id, Authentication authentication) {
-        UUID userId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.getBookingById(id, userId));
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_READ')")
+    public ResponseEntity<BookingDto> getBookingById(@PathVariable UUID id) {
+        return ResponseEntity.ok(bookingService.getBookingById(id));
     }
+
+    // ── Landlord actions ──────────────────────────────────────────────────────
 
     @PatchMapping("/{id}/approve")
     @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
     public ResponseEntity<BookingDto> approveBooking(
             @PathVariable UUID id,
-            @RequestBody(required = false) BookingResponseRequest request,
-            Authentication authentication) {
-        UUID landlordId = UUID.fromString(authentication.getName());
+            @RequestBody(required = false) BookingResponseRequest request) {
         String response = request != null ? request.message() : null;
-        return ResponseEntity.ok(bookingService.approveBooking(id, landlordId, response));
+        return ResponseEntity.ok(bookingService.approveBooking(id, response));
     }
 
     @PatchMapping("/{id}/reject")
     @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
     public ResponseEntity<BookingDto> rejectBooking(
             @PathVariable UUID id,
-            @RequestBody BookingResponseRequest request,
-            Authentication authentication) {
-        UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.rejectBooking(id, landlordId, request.message()));
-    }
-
-    @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
-    public ResponseEntity<BookingDto> cancelBooking(
-            @PathVariable UUID id,
-            Authentication authentication) {
-        UUID tenantId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.cancelBooking(id, tenantId));
-    }
-
-    @PostMapping("/{id}/modify")
-    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
-    public ResponseEntity<BookingDto> requestModification(
-            @PathVariable UUID id,
-            @Valid @RequestBody com.homeflex.features.property.dto.request.BookingModificationRequest request,
-            Authentication authentication) {
-        UUID tenantId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.requestModification(
-                id, request.startDate(), request.endDate(), request.reason(), tenantId
-        ));
+            @RequestBody BookingResponseRequest request) {
+        return ResponseEntity.ok(bookingService.rejectBooking(id, request.message()));
     }
 
     @PatchMapping("/{id}/modify/approve")
     @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
-    public ResponseEntity<BookingDto> approveModification(
-            @PathVariable UUID id,
-            Authentication authentication) {
-        UUID landlordId = UUID.fromString(authentication.getName());
-        return ResponseEntity.ok(bookingService.approveModification(id, landlordId));
+    public ResponseEntity<BookingDto> approveModification(@PathVariable UUID id) {
+        return ResponseEntity.ok(bookingService.approveModification(id));
     }
 
     @PatchMapping("/{id}/modify/reject")
     @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
     public ResponseEntity<BookingDto> rejectModification(
             @PathVariable UUID id,
-            @RequestBody(required = false) BookingResponseRequest request,
-            Authentication authentication) {
-        UUID landlordId = UUID.fromString(authentication.getName());
+            @RequestBody(required = false) BookingResponseRequest request) {
         String reason = request != null ? request.message() : null;
-        return ResponseEntity.ok(bookingService.rejectModification(id, reason, landlordId));
+        return ResponseEntity.ok(bookingService.rejectModification(id, reason));
+    }
+
+    // ── Tenant actions ────────────────────────────────────────────────────────
+
+    @PatchMapping("/{id}/cancel")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
+    public ResponseEntity<BookingDto> cancelBooking(@PathVariable UUID id) {
+        return ResponseEntity.ok(bookingService.cancelBooking(id));
+    }
+
+    @PostMapping("/{id}/modify")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
+    public ResponseEntity<BookingDto> requestModification(
+            @PathVariable UUID id,
+            @Valid @RequestBody BookingModificationRequest request) {
+        return ResponseEntity.ok(bookingService.requestModification(
+                id, request.startDate(), request.endDate(), request.reason()));
     }
 }

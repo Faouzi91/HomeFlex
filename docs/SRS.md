@@ -2,7 +2,7 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.0
+**Version:** 4.1
 **Date:** April 19, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
@@ -24,6 +24,7 @@
 | 3.4     | 2026-04-17 | Architect     | Stripe payment confirmation (client secret → confirmCardPayment), reactive header unread-count badge, landlord received-bookings view, home page resilience fix, public /api/v1/config endpoint. |
 | 3.5     | 2026-04-18 | Architect     | Unread persistence fix (countUnreadInRoom excludes sender), robust avatar upload (null-safe contentType + nginx client_max_body_size 50M), overview stats filtered to active bookings only. |
 | 4.0     | 2026-04-19 | Security Eng. | Full RBAC migration: Role/Permission entities, V27/V28 Flyway migrations, 46 permissions, 4 roles, permission-based authorization with Permissions constants, HomeFlexPermissionEvaluator, OwnershipVerifier; Booking feature refactored to hasAuthority/hasPermission; three new workspace tabs (Finance, Disputes, Insurance); GET /disputes/mine endpoint; comprehensive API smoke-test script. |
+| 4.1     | 2026-04-19 | Security Eng. | Centralized ownership logic: ResourcePermissionService extracts all ownership rules from HomeFlexPermissionEvaluator; BookingService stripped to pure business logic; BookingV1Controller security gap fixed (GET /{id} hasPermission); BookingRepository.findByIdWithParties avoids N+1 in evaluator; 16 ResourcePermissionServiceTest ownership rule tests. |
 
 ---
 
@@ -46,6 +47,15 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v4.1 (Centralized Permission + Ownership via ResourcePermissionService)
+
+- 🟢 **`ResourcePermissionService`** — New service in `core/security/` that is the single source of truth for all ownership rules. Provides id-based lookup (via `BookingRepository.findByIdWithParties` JOIN FETCH) and object-based lookup (for already-loaded entities). Extensible to new domain types without modifying the evaluator.
+- 🟢 **`HomeFlexPermissionEvaluator` refactored** — Now a thin authentication-contract handler: null-guard, authority check, admin bypass, userId extraction, then delegation to `ResourcePermissionService`. No domain-specific ownership logic remains in the evaluator.
+- 🟢 **`BookingRepository.findByIdWithParties`** — Optimized JPQL query that eagerly fetches `tenant` and `property.landlord` in a single JOIN FETCH, preventing lazy-load N+1 queries when ownership is checked inside `@PreAuthorize` expressions.
+- 🟢 **`BookingService` pure business logic** — All ownership guards removed. Method signatures simplified (no `landlordId`/`tenantId` params where they were only used for access control). Methods grouped into Create / Read / Landlord actions / Tenant actions / Webhook handlers / Scheduled.
+- 🟢 **Security gap fixed** — `GET /api/v1/bookings/{id}` previously used `hasAuthority(BOOKING_READ)` (no ownership enforcement). Changed to `hasPermission(#id, 'Booking', 'BOOKING_READ')` so any user with the permission cannot read any arbitrary booking.
+- 🟢 **`ResourcePermissionServiceTest`** — 16 unit tests covering all ownership rules: BOOKING_APPROVE (landlord-only), BOOKING_CANCEL (tenant-only), BOOKING_READ (either party), BOOKING_UPDATE (landlord-only), property ownership, id-based with entity fetch (found, not-found), unknown type, unknown object.
 
 ### Implemented since v4.0 (RBAC, Permission-Based Authorization & Frontend Workspace Tabs)
 

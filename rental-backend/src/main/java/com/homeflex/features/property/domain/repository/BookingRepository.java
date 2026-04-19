@@ -14,9 +14,23 @@ import java.util.Optional;
 import java.time.LocalDate;
 import java.util.UUID;
 
-// BookingRepository.java
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
+
+    /**
+     * Used by ResourcePermissionService for ownership checks.
+     * Eagerly fetches tenant and property.landlord to avoid lazy-load round-trips
+     * inside the PermissionEvaluator, which runs outside the service transaction.
+     */
+    @Query("""
+            SELECT b FROM Booking b
+            JOIN FETCH b.tenant
+            JOIN FETCH b.property p
+            JOIN FETCH p.landlord
+            WHERE b.id = :id
+            """)
+    Optional<Booking> findByIdWithParties(@Param("id") UUID id);
+
     List<Booking> findByTenantIdOrderByCreatedAtDesc(UUID tenantId);
 
     List<Booking> findByPropertyIdOrderByCreatedAtDesc(UUID propertyId);

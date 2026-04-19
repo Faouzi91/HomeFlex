@@ -28,8 +28,9 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Property availability** with sparse date model, calendar UI, and double-booking prevention (V11)
 - **Digital leases** with e-signature support and automated document management (V12)
 - **Vehicle rentals** with image uploads, condition reports, and availability checking
-- **Enterprise RBAC** — `Role`/`Permission` JPA entities, 46 compile-time permission constants (`Permissions.*`), custom `PermissionEvaluator` for combined permission + ownership checks, and an `OwnershipVerifier` service layer for defense-in-depth authorization
-- **Permission-based authorization** — controllers use `hasAuthority()` / `hasPermission()` SpEL expressions; backward-compatible with existing `hasRole()` checks via Flyway-backfilled `user_roles` table
+- **Enterprise RBAC** — `Role`/`Permission` JPA entities, 46 compile-time permission constants (`Permissions.*`), V27/V28 Flyway migrations, backward-compatible `user_roles` backfill from legacy `users.role` column
+- **Centralized permission + ownership** — `ResourcePermissionService` is the single source of truth for all ownership rules; `HomeFlexPermissionEvaluator` is a thin auth-contract handler that delegates to it; `BookingRepository.findByIdWithParties` uses JOIN FETCH to prevent N+1 in the evaluator path
+- **Permission-based authorization** — controllers use `hasAuthority()` / `hasPermission()` SpEL expressions; `BookingService` is pure business logic with no security concerns; `GET /bookings/{id}` now enforces ownership (was a security gap)
 - **Separated Admin Console** with dedicated login, dashboard, user management, property approvals, and report resolution
 - **Booking system** with approve / reject / cancel workflow
 - **Real-time chat** between tenants and landlords (WebSocket + STOMP)
@@ -299,6 +300,7 @@ All technical requirements specified in the SRS have been implemented, including
 - **Phase 3:** Production Hardening & Resiliency
 - **Phase 4:** Compliance, Security, and Global Strategy
 - **Phase 5:** Enterprise RBAC, Permission-Based Authorization & Workspace Tabs
+- **Phase 5.1:** Centralized Ownership via `ResourcePermissionService` — pure-logic service layer, security gap fix, N+1 prevention
 
 The platform is now ready for production-scale deployment.
 

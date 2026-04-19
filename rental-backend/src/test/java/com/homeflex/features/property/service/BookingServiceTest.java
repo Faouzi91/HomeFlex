@@ -6,8 +6,6 @@ import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.core.exception.ConflictException;
 import com.homeflex.core.exception.DomainException;
 import com.homeflex.core.exception.ResourceNotFoundException;
-import com.homeflex.core.security.OwnershipVerifier;
-import org.springframework.security.access.AccessDeniedException;
 import com.homeflex.core.service.NotificationService;
 import com.homeflex.core.service.PaymentService;
 import com.homeflex.features.property.domain.entity.Booking;
@@ -41,6 +39,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for BookingService business logic.
+ *
+ * Ownership checks are NOT tested here — they live in ResourcePermissionServiceTest.
+ * BookingService is intentionally free of ownership logic; security is enforced
+ * at the controller annotation layer by HomeFlexPermissionEvaluator.
+ */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class BookingServiceTest {
@@ -70,7 +75,6 @@ class BookingServiceTest {
                 bookingRepository, propertyRepository, userRepository,
                 notificationService, paymentService, bookingMapper,
                 propertyAvailabilityService, financeService, redissonClient,
-                new OwnershipVerifier(),
                 new SimpleMeterRegistry()
         );
 
@@ -101,6 +105,8 @@ class BookingServiceTest {
         bookingDto = mock(BookingDto.class);
     }
 
+    // ── Create ────────────────────────────────────────────────────────────────
+
     @Test
     void createBooking_success() {
         BookingCreateRequest request = new BookingCreateRequest(
@@ -113,7 +119,7 @@ class BookingServiceTest {
         when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
         when(bookingRepository.existsDateOverlapForProperty(any(), any(), any(), any())).thenReturn(false);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
-        
+
         PaymentIntent pi = mock(PaymentIntent.class);
         when(pi.getId()).thenReturn("pi_new");
         when(paymentService.createBookingPaymentIntent(any(), any(), any(), any())).thenReturn(pi);
@@ -127,30 +133,12 @@ class BookingServiceTest {
 
     @Test
     void createBooking_propertyNotFound_throws() {
-        BookingCreateRequest request = new BookingCreateRequest(UUID.randomUUID(), "RENTAL", null, null, null, null, null);
+        BookingCreateRequest request = new BookingCreateRequest(
+                UUID.randomUUID(), "RENTAL", null, null, null, null, null);
         when(propertyRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.createBooking(request, tenant.getId()))
                 .isInstanceOf(ResourceNotFoundException.class);
-    }
-
-    @Test
-    void cancelBooking_wrongTenant_throwsAccessDenied() {
-        // Ownership is now enforced by OwnershipVerifier, not by UserRole check
-        UUID wrongUserId = UUID.randomUUID();
-        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
-
-        assertThatThrownBy(() -> bookingService.cancelBooking(booking.getId(), wrongUserId))
-                .isInstanceOf(AccessDeniedException.class);
-    }
-
-    @Test
-    void approveBooking_wrongLandlord_throwsAccessDenied() {
-        UUID wrongLandlordId = UUID.randomUUID();
-        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
-
-        assertThatThrownBy(() -> bookingService.approveBooking(booking.getId(), wrongLandlordId, null))
-                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -180,13 +168,15 @@ class BookingServiceTest {
                 .isInstanceOf(DomainException.class);
     }
 
+    // ── Landlord actions ──────────────────────────────────────────────────────
+
     @Test
     void approveBooking_success() {
         when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
         when(bookingRepository.save(any())).thenReturn(booking);
         when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
 
-        bookingService.approveBooking(booking.getId(), landlord.getId(), "OK");
+        bookingService.approveBooking(booking.getId(), "OK");
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.APPROVED);
         verify(paymentService).confirmPaymentIntent("pi_test");
@@ -198,11 +188,13 @@ class BookingServiceTest {
         when(bookingRepository.save(any())).thenReturn(booking);
         when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
 
-        bookingService.rejectBooking(booking.getId(), landlord.getId(), "No");
+        bookingService.rejectBooking(booking.getId(), "No");
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.REJECTED);
         verify(paymentService).cancelPaymentIntent("pi_test");
     }
+
+    // ── Tenant actions ────────────────────────────────────────────────────────
 
     @Test
     void cancelBooking_success() {
@@ -210,9 +202,17 @@ class BookingServiceTest {
         when(bookingRepository.save(any())).thenReturn(booking);
         when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
 
-        bookingService.cancelBooking(booking.getId(), tenant.getId());
+        bookingService.cancelBooking(booking.getId());
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
         verify(paymentService).cancelPaymentIntent("pi_test");
+    }
+
+    @Test
+    void getBookingById_notFound_throws() {
+        when(bookingRepository.findById(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.getBookingById(UUID.randomUUID()))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

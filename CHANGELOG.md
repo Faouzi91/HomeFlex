@@ -2,6 +2,34 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-19 (Centralized Permission + Ownership via ResourcePermissionService)
+
+### Added
+
+- **`ResourcePermissionService`** (`core/security/`) — New dedicated service that owns all domain-level ownership rules. Provides two entry points: `isAllowed(userId, targetType, targetId, permission)` (id-based, loads entity via `findByIdWithParties`) and `isAllowed(userId, domainObject, permission)` (object-based, for already-loaded entities). Covers `Booking` and `Property` ownership; extensible to `Vehicle` and other types without touching the evaluator. Annotated `@Transactional(readOnly = true)`.
+- **`BookingRepository.findByIdWithParties(UUID id)`** — New JPQL query with `JOIN FETCH b.tenant JOIN FETCH b.property p JOIN FETCH p.landlord`. Used by `ResourcePermissionService` to avoid lazy-load round-trips when evaluating ownership inside `@PreAuthorize` expressions (which run outside the service transaction boundary).
+- **`ResourcePermissionServiceTest`** — 16 unit tests covering: `BOOKING_APPROVE` landlord-only, `BOOKING_CANCEL` tenant-only, `BOOKING_READ` either-party, `BOOKING_UPDATE` landlord-only, property ownership, id-based overload (success + not-found + property), unknown target type, and unknown domain object type.
+
+### Changed
+
+- **`HomeFlexPermissionEvaluator`** — Refactored from a class that contained ownership rules to a **thin authentication contract handler** (null-guard → authority check → admin bypass → userId extraction → delegate). All ownership logic removed; both SpEL overloads now delegate to `ResourcePermissionService.isAllowed()`. Class is ~40% smaller with no domain-specific code.
+- **`BookingService`** — Ownership checks fully removed; the service now contains **only business logic**. `OwnershipVerifier` dependency removed from constructor and fields. Method signatures simplified by removing `userId`/`landlordId`/`tenantId` parameters that were only used for ownership assertions: `getBookingsByProperty(UUID)`, `getBookingById(UUID)`, `approveBooking(UUID, String)`, `rejectBooking(UUID, String)`, `cancelBooking(UUID)`, `requestModification(UUID, LocalDate, LocalDate, String)`, `approveModification(UUID)`, `rejectModification(UUID, String)`. Internal methods grouped into logical sections (Create / Read / Landlord actions / Tenant actions / Webhook/system handlers / Scheduled).
+- **`BookingV1Controller`** — Security gap fixed: `GET /bookings/{id}` changed from `hasAuthority(BOOKING_READ)` (permission-only, no ownership) to `hasPermission(#id, 'Booking', 'BOOKING_READ')` (permission + ownership). Landlord endpoints that passed `authentication.getName()` to the service now omit that arg since the service no longer requires it. Controller is the sole ownership-enforcement point.
+- **`BookingServiceTest`** — Updated constructor call (removed `OwnershipVerifier`; removed unused `landlordId`/`tenantId` arguments from all service method calls. Ownership tests (`cancelBooking_wrongTenant_throwsAccessDenied`, `approveBooking_wrongLandlord_throwsAccessDenied`) removed — those rules now live in `ResourcePermissionServiceTest`. Added `getBookingById_notFound_throws` replacing the coverage gap.
+
+### Architecture Decision: Defense-in-Depth Guidance
+
+With ownership logic removed from `BookingService`, all enforcement is at the annotation layer. This is correct when:
+- Every entry point is a `@PreAuthorize`-annotated controller method.
+- Internal callers (scheduled tasks, webhook handlers) are intentionally admin-level and should not be restricted.
+
+Re-add `ResourcePermissionService.isAllowed()` in the service layer when:
+- A method becomes callable from a non-annotated path (Feign client, event-driven consumer, batch job).
+- An `@Async` method runs in a separate thread where `SecurityContextHolder` is not propagated.
+- The method is package-internal and called from a sibling service without going through the controller.
+
+---
+
 ## [Unreleased] — 2026-04-19 (RBAC, Permission-Based Authorization & Workspace Tabs)
 
 ### Added
