@@ -1,6 +1,8 @@
 package com.homeflex.core.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -22,7 +24,14 @@ public class CacheConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        // Build a Redis-specific ObjectMapper that embeds @class type metadata so cached
+        // values deserialize back to the correct Java type (not LinkedHashMap).
+        ObjectMapper redisMapper = objectMapper.copy()
+                .activateDefaultTyping(
+                        BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
+                        ObjectMapper.DefaultTyping.NON_FINAL
+                );
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisMapper);
 
         RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))

@@ -153,14 +153,18 @@ public class BookingService {
 
         String stripeClientSecret = null;
         if (totalPrice != null && totalPrice.compareTo(BigDecimal.ZERO) > 0) {
-            String transferGroup = "property_booking_" + booking.getId();
-            String description = "HomeFlex booking: " + property.getTitle();
-            PaymentIntent pi = paymentService.createBookingPaymentIntent(
-                    totalPrice, property.getCurrency(), description, transferGroup);
-            booking.setStripePaymentIntentId(pi.getId());
-            stripeClientSecret = pi.getClientSecret();
-            booking = bookingRepository.save(booking);
-            paymentsSucceededCounter.increment();
+            try {
+                String transferGroup = "property_booking_" + booking.getId();
+                String description = "HomeFlex booking: " + property.getTitle();
+                PaymentIntent pi = paymentService.createBookingPaymentIntent(
+                        totalPrice, property.getCurrency(), description, transferGroup);
+                booking.setStripePaymentIntentId(pi.getId());
+                stripeClientSecret = pi.getClientSecret();
+                booking = bookingRepository.save(booking);
+                paymentsSucceededCounter.increment();
+            } catch (Exception e) {
+                log.warn("Stripe payment intent creation failed (booking still created): {}", e.getMessage());
+            }
         }
 
         notificationService.sendBookingRequestNotification(property.getLandlord().getId(), tenant, property);
