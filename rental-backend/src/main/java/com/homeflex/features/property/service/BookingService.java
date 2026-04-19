@@ -12,12 +12,12 @@ import com.homeflex.core.exception.ResourceNotFoundException;
 import com.homeflex.core.exception.UnauthorizedException;
 import com.homeflex.core.exception.DomainException;
 import com.homeflex.core.exception.ConflictException;
+import com.homeflex.core.security.OwnershipVerifier;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.entity.Booking;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
 import com.homeflex.core.domain.entity.User;
-import com.homeflex.core.domain.enums.UserRole;
 import com.stripe.model.PaymentIntent;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -50,6 +50,7 @@ public class BookingService {
     private final PropertyAvailabilityService availabilityService;
     private final com.homeflex.features.finance.service.FinanceService financeService;
     private final RedissonClient redissonClient;
+    private final OwnershipVerifier ownershipVerifier;
 
     private final Counter bookingsCreatedCounter;
     private final Counter paymentsSucceededCounter;
@@ -63,6 +64,7 @@ public class BookingService {
                           PropertyAvailabilityService availabilityService,
                           com.homeflex.features.finance.service.FinanceService financeService,
                           RedissonClient redissonClient,
+                          OwnershipVerifier ownershipVerifier,
                           MeterRegistry meterRegistry) {
         this.bookingRepository = bookingRepository;
         this.propertyRepository = propertyRepository;
@@ -73,6 +75,7 @@ public class BookingService {
         this.availabilityService = availabilityService;
         this.financeService = financeService;
         this.redissonClient = redissonClient;
+        this.ownershipVerifier = ownershipVerifier;
 
         this.bookingsCreatedCounter = Counter.builder("homeflex.bookings.created")
                 .description("Total bookings created")
@@ -110,10 +113,6 @@ public class BookingService {
 
         User tenant = userRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
-
-        if (tenant.getRole() != UserRole.TENANT) {
-            throw new UnauthorizedException("Only tenants can create bookings");
-        }
 
         validateBookingDates(request);
         validateNoDateOverlap(request);
@@ -197,9 +196,7 @@ public class BookingService {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
-        if (!property.getLandlord().getId().equals(landlordId)) {
-            throw new UnauthorizedException("Not authorized to view these bookings");
-        }
+        ownershipVerifier.requireLandlordOf(property, landlordId);
 
         return bookingMapper.toDto(bookingRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId));
     }
@@ -208,10 +205,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getTenant().getId().equals(userId) &&
-                !booking.getProperty().getLandlord().getId().equals(userId)) {
-            throw new UnauthorizedException("Not authorized to view this booking");
-        }
+        ownershipVerifier.requireTenantOrLandlordOf(booking, userId);
 
         return bookingMapper.toDto(booking);
     }
@@ -220,9 +214,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getProperty().getLandlord().getId().equals(landlordId)) {
-            throw new UnauthorizedException("Not authorized to approve this booking");
-        }
+        ownershipVerifier.requireLandlordOfBooking(booking, landlordId);
 
         if (booking.getStripePaymentIntentId() != null) {
             paymentService.confirmPaymentIntent(booking.getStripePaymentIntentId());
@@ -246,9 +238,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getProperty().getLandlord().getId().equals(landlordId)) {
-            throw new UnauthorizedException("Not authorized to reject this booking");
-        }
+        ownershipVerifier.requireLandlordOfBooking(booking, landlordId);
 
         if (booking.getStripePaymentIntentId() != null) {
             paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
@@ -292,9 +282,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getTenant().getId().equals(tenantId)) {
-            throw new UnauthorizedException("Not authorized to cancel this booking");
-        }
+        ownershipVerifier.requireTenantOf(booking, tenantId);
 
         if (booking.getStripePaymentIntentId() != null) {
             paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
@@ -311,7 +299,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getTenant().getId().equals(tenantId)) throw new UnauthorizedException("Not authorized");
+        ownershipVerifier.requireTenantOf(booking, tenantId);
         if (booking.getStatus() != BookingStatus.APPROVED) throw new DomainException("Only approved bookings can be modified");
         if (newEnd.isBefore(newStart)) throw new DomainException("Invalid dates");
 
@@ -333,7 +321,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getProperty().getLandlord().getId().equals(landlordId)) throw new UnauthorizedException("Not authorized");
+        ownershipVerifier.requireLandlordOfBooking(booking, landlordId);
         if (booking.getStatus() != BookingStatus.PENDING_MODIFICATION) throw new DomainException("No pending modification");
 
         availabilityService.releaseForBooking(booking.getId());
@@ -360,7 +348,7 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        if (!booking.getProperty().getLandlord().getId().equals(landlordId)) throw new UnauthorizedException("Not authorized");
+        ownershipVerifier.requireLandlordOfBooking(booking, landlordId);
         if (booking.getStatus() != BookingStatus.PENDING_MODIFICATION) throw new DomainException("No pending modification");
 
         booking.setStatus(BookingStatus.APPROVED);

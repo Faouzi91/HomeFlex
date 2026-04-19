@@ -1,5 +1,7 @@
 package com.homeflex.core.security;
 
+import com.homeflex.core.domain.entity.Permission;
+import com.homeflex.core.domain.entity.Role;
 import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.core.domain.entity.User;
 import jakarta.servlet.FilterChain;
@@ -10,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -17,7 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -47,15 +51,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     throw new RuntimeException("User is not active");
                 }
 
-                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+                List<GrantedAuthority> authorities = buildAuthorities(user);
 
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userId,
-                                null,
-                                Collections.singletonList(authority)
-                        );
-
+                        new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -64,6 +63,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private List<GrantedAuthority> buildAuthorities(User user) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+
+        for (Role role : user.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority(role.getName()));
+            for (Permission permission : role.getPermissions()) {
+                authorities.add(new SimpleGrantedAuthority(permission.getName()));
+            }
+        }
+
+        // Fallback: during phased rollout, a user may not yet have RBAC rows.
+        // The legacy enum is still authoritative in that case.
+        if (authorities.isEmpty() && user.getRole() != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        }
+
+        return authorities;
     }
 
     private String getJwtFromCookie(HttpServletRequest request) {
@@ -76,5 +94,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return null;
-}
+    }
 }

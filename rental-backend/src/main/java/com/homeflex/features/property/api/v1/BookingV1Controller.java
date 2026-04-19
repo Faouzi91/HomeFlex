@@ -1,5 +1,6 @@
 package com.homeflex.features.property.api.v1;
 
+import com.homeflex.core.security.Permissions;
 import com.homeflex.features.property.service.BookingService;
 import com.homeflex.features.property.dto.response.BookingDto;
 import com.homeflex.core.dto.common.ApiListResponse;
@@ -15,6 +16,15 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+/**
+ * Booking endpoints — refactored to permission-based authorization.
+ *
+ * Pattern:
+ *   hasAuthority(T(...).PERMISSION) — "do you have this capability?" (no ownership)
+ *   hasPermission(#id, 'Type', 'PERM') — "do you have this capability AND own this resource?"
+ *
+ * The service layer still enforces ownership as a second line of defense.
+ */
 @RestController
 @RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
@@ -23,7 +33,7 @@ public class BookingV1Controller {
     private final BookingService bookingService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.homeflex.core.security.Permissions).BOOKING_CREATE)")
     public ResponseEntity<BookingDto> createBooking(
             @Valid @RequestBody BookingCreateRequest request,
             Authentication authentication) {
@@ -33,14 +43,14 @@ public class BookingV1Controller {
     }
 
     @GetMapping("/my-bookings")
-    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
+    @PreAuthorize("hasAuthority(T(com.homeflex.core.security.Permissions).BOOKING_READ)")
     public ResponseEntity<ApiListResponse<BookingDto>> getMyBookings(Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(new ApiListResponse<>(bookingService.getBookingsByTenant(tenantId)));
     }
 
     @GetMapping("/property/{propertyId}")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasPermission(#propertyId, 'Property', 'BOOKING_READ')")
     public ResponseEntity<ApiListResponse<BookingDto>> getPropertyBookings(
             @PathVariable UUID propertyId,
             Authentication authentication) {
@@ -49,14 +59,17 @@ public class BookingV1Controller {
                 bookingService.getBookingsByProperty(propertyId, landlordId)));
     }
 
+    // No ownership check here — the service enforces it after loading the booking
+    // (the caller may be tenant OR landlord, and we don't know without loading)
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority(T(com.homeflex.core.security.Permissions).BOOKING_READ)")
     public ResponseEntity<BookingDto> getBookingById(@PathVariable UUID id, Authentication authentication) {
         UUID userId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(bookingService.getBookingById(id, userId));
     }
 
     @PatchMapping("/{id}/approve")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
     public ResponseEntity<BookingDto> approveBooking(
             @PathVariable UUID id,
             @RequestBody(required = false) BookingResponseRequest request,
@@ -67,7 +80,7 @@ public class BookingV1Controller {
     }
 
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
     public ResponseEntity<BookingDto> rejectBooking(
             @PathVariable UUID id,
             @RequestBody BookingResponseRequest request,
@@ -77,7 +90,7 @@ public class BookingV1Controller {
     }
 
     @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
     public ResponseEntity<BookingDto> cancelBooking(
             @PathVariable UUID id,
             Authentication authentication) {
@@ -86,7 +99,7 @@ public class BookingV1Controller {
     }
 
     @PostMapping("/{id}/modify")
-    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_CANCEL')")
     public ResponseEntity<BookingDto> requestModification(
             @PathVariable UUID id,
             @Valid @RequestBody com.homeflex.features.property.dto.request.BookingModificationRequest request,
@@ -98,7 +111,7 @@ public class BookingV1Controller {
     }
 
     @PatchMapping("/{id}/modify/approve")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
     public ResponseEntity<BookingDto> approveModification(
             @PathVariable UUID id,
             Authentication authentication) {
@@ -107,7 +120,7 @@ public class BookingV1Controller {
     }
 
     @PatchMapping("/{id}/modify/reject")
-    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_APPROVE')")
     public ResponseEntity<BookingDto> rejectModification(
             @PathVariable UUID id,
             @RequestBody(required = false) BookingResponseRequest request,

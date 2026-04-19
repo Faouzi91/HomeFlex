@@ -43,6 +43,7 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     @Mock private UserRepository userRepository;
+    @Mock private com.homeflex.core.domain.repository.RoleRepository roleRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
     @Mock private EmailVerificationTokenRepository emailVerificationTokenRepository;
@@ -75,6 +76,8 @@ class AuthServiceTest {
         testUserDto = new UserDto(
                 testUser.getId(), testUser.getEmail(), testUser.getFirstName(),
                 testUser.getLastName(), null, null, "TENANT",
+                java.util.List.of("ROLE_TENANT"),
+                java.util.List.of("BOOKING_CREATE", "PROPERTY_READ"),
                 true, false, "en", null, null, 5.0,
                 true, true, true, 100, LocalDateTime.now()
         );
@@ -118,6 +121,7 @@ class AuthServiceTest {
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
         when(passwordEncoder.encode(request.password())).thenReturn("encoded");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
+        when(roleRepository.findByName(anyString())).thenReturn(java.util.Optional.empty());
         when(tokenProvider.generateToken(any())).thenReturn("token");
         when(userMapper.toDto(any())).thenReturn(testUserDto);
 

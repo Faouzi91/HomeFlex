@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 3.4
-**Date:** April 17, 2026
+**Version:** 4.0
+**Date:** April 19, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
 
@@ -23,6 +23,7 @@
 | 3.3     | 2026-04-17 | Security Eng. | CI hardening: --watch=false, ADMIN_PASSWORD/PII_ENCRYPTION_KEY in CI env; dead code removal; new tests (password-reset enumeration, OAuth stubs, admin guard); skills: security + folder-structure |
 | 3.4     | 2026-04-17 | Architect     | Stripe payment confirmation (client secret → confirmCardPayment), reactive header unread-count badge, landlord received-bookings view, home page resilience fix, public /api/v1/config endpoint. |
 | 3.5     | 2026-04-18 | Architect     | Unread persistence fix (countUnreadInRoom excludes sender), robust avatar upload (null-safe contentType + nginx client_max_body_size 50M), overview stats filtered to active bookings only. |
+| 4.0     | 2026-04-19 | Security Eng. | Full RBAC migration: Role/Permission entities, V27/V28 Flyway migrations, 46 permissions, 4 roles, permission-based authorization with Permissions constants, HomeFlexPermissionEvaluator, OwnershipVerifier; Booking feature refactored to hasAuthority/hasPermission; three new workspace tabs (Finance, Disputes, Insurance); GET /disputes/mine endpoint; comprehensive API smoke-test script. |
 
 ---
 
@@ -45,6 +46,21 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v4.0 (RBAC, Permission-Based Authorization & Frontend Workspace Tabs)
+
+- 🟢 **Full RBAC System** — `Role` and `Permission` JPA entities with a `role_permissions` join table. 46 granular permissions across 11 domains (USER, PROPERTY, VEHICLE, BOOKING, LEASE, DISPUTE, REVIEW, PAYMENT, INSURANCE, KYC, ADMIN) assigned to 4 roles: `ROLE_TENANT`, `ROLE_LANDLORD`, `ROLE_ADMIN`, `ROLE_MONITORING`. Schema via V27/V28 Flyway migrations; V28 backfills `user_roles` from the legacy `users.role` column.
+- 🟢 **Permission Constants Class** (`Permissions.java`) — Compile-time `public static final String` constants for every permission, eliminating magic strings from `@PreAuthorize` annotations.
+- 🟢 **Custom `PermissionEvaluator`** (`HomeFlexPermissionEvaluator`) — Enables `hasPermission(#id, 'Booking', 'BOOKING_APPROVE')` SpEL expressions that check both permission authority and resource ownership in a single annotation. Admin role bypasses ownership checks.
+- 🟢 **`OwnershipVerifier`** — Stateless Spring component injected into services. Enforces ownership with `AccessDeniedException` (→ 403) as a second line of defense below the controller-layer `@PreAuthorize`.
+- 🟢 **Booking Feature Refactored** — `BookingV1Controller` migrated from `hasAnyRole(...)` to `hasAuthority(T(...).BOOKING_CREATE)` and `hasPermission(#id, 'Booking', 'BOOKING_APPROVE')`. `BookingService` no longer checks `UserRole` enum manually; all 7 ownership-guard blocks replaced with `OwnershipVerifier` calls.
+- 🟢 **Backward-Compatible Role Migration** — `User.role` (enum) retained and `@Deprecated`. `User.roles` (`Set<Role>`) added. `JwtAuthenticationFilter.buildAuthorities()` emits role authorities + permission authorities, falling back to enum if no RBAC rows exist. `AuthService`, `DataInitializer`, and Google OAuth path all assign RBAC roles on new user creation.
+- 🟢 **JWT Carries Roles List** — `JwtTokenProvider.generateToken()` now embeds a `roles` list claim alongside the backward-compat single `role` string claim. `UserDto` exposes `roles: List<String>` and `permissions: List<String>` for frontend role-aware rendering.
+- 🟢 **`GET /disputes/mine` Endpoint** — New controller method returning the authenticated user's own disputes (no `ADMIN` role required). `SecurityConfig` updated with specific `authenticated()` matchers for `/disputes/mine` and `/disputes/*/evidence` before the admin catch-all.
+- 🟢 **Finance / Receipts Workspace Tab** — Angular standalone component calling `api.getMyReceipts()`. Shows receipt number, amount+currency, PAID/PENDING status badge, issue date, and download link.
+- 🟢 **Disputes Workspace Tab** — Angular standalone component calling `api.getMyDisputes()`. Shows reason, description, status badge (OPEN/UNDER_REVIEW/RESOLVED/CLOSED), and timestamps.
+- 🟢 **Insurance Workspace Tab** — Angular standalone component calling `api.getInsurancePlans('TENANT')`. Shows plan cards grouped by type (TENANT/LANDLORD) with daily premium, max coverage, and "Select Plan" action.
+- 🟢 **Comprehensive API Smoke-Test Script** (`scripts/test-all-apis.sh`) — Bash script covering 94 assertions across all 26 backend controllers and all frontend SPA routes. Starts Docker Compose, waits for health, seeds multi-role sessions, hits every endpoint, and reports colored PASS/FAIL summary.
 
 ### Implemented since v3.5 (Unread Persistence, Avatar Upload & Overview Stats)
 
@@ -101,7 +117,7 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 ### Implemented (v2.1)
 
 - 🟢 Real estate rental listings with filters (city, price, type, bedrooms, bathrooms, amenities) and pagination
-- 🟢 Role-based access: TENANT, LANDLORD, ADMIN
+- 🟢 Role-Based Access Control (RBAC): TENANT, LANDLORD, ADMIN, MONITORING — with 46 granular permissions, custom `PermissionEvaluator`, and `OwnershipVerifier` for resource-level authorization
 - 🟢 Booking management with approve / reject / cancel workflow
 - 🟢 Real-time chat (WebSocket + STOMP, in-memory broker)
 - 🟢 Favorites and reviews for properties

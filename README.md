@@ -28,7 +28,8 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Property availability** with sparse date model, calendar UI, and double-booking prevention (V11)
 - **Digital leases** with e-signature support and automated document management (V12)
 - **Vehicle rentals** with image uploads, condition reports, and availability checking
-- **Role-based access**: Tenant, Landlord, Admin with role-specific profile views and notification preferences
+- **Enterprise RBAC** — `Role`/`Permission` JPA entities, 46 compile-time permission constants (`Permissions.*`), custom `PermissionEvaluator` for combined permission + ownership checks, and an `OwnershipVerifier` service layer for defense-in-depth authorization
+- **Permission-based authorization** — controllers use `hasAuthority()` / `hasPermission()` SpEL expressions; backward-compatible with existing `hasRole()` checks via Flyway-backfilled `user_roles` table
 - **Separated Admin Console** with dedicated login, dashboard, user management, property approvals, and report resolution
 - **Booking system** with approve / reject / cancel workflow
 - **Real-time chat** between tenants and landlords (WebSocket + STOMP)
@@ -43,6 +44,7 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Enterprise Observability** — Centralized **ELK Stack** (Elasticsearch, Logstash, Kibana) + Prometheus/Grafana
 - **Innovative Tech** — **Blockchain-backed lease contracts** and **AI-driven pricing recommendations**
 - **B2B Foundation** — Multi-tenant **Agency white-labeling** architecture
+- **Workspace Dashboard** — Finance/Receipts tab (PDF download links, status badges), Disputes tab (OPEN/UNDER_REVIEW/RESOLVED/CLOSED workflow), and Insurance tab (plan cards with tenant/landlord grouping and purchase flow)
 - **Trust & Safety** — Two-way reviews, **Trust Scores**, and **Dispute Resolution** with evidence upload
 - **Compliance** — **AES-256-GCM PII encryption** and full **GDPR tooling** (Export/Erase)
 - **Security Hardening** — Mandatory environment-based secrets, zero-trust infrastructure isolation, X-Pack Elasticsearch, constant-time token comparison, CSP headers, and production-only DataInitializer guard.
@@ -239,6 +241,7 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | PATCH  | `/admin/properties/{id}/reject`       | Admin    | Reject a property (with reason)     |
 | GET    | `/admin/reports`                      | Admin    | List flagged content reports        |
 | PATCH  | `/admin/reports/{id}/resolve`         | Admin    | Resolve a report                    |
+| GET    | `/disputes/mine`                      | Auth     | List disputes filed by current user |
 | GET    | `/config`                             | Public   | Stripe publishable key + public cfg |
 | GET    | `/admin/analytics`                    | Admin    | Platform analytics dashboard        |
 | GET    | `/admin/configs`                      | Admin    | List system configurations          |
@@ -280,6 +283,12 @@ ng test -- --include='**/some.spec.ts'                  # single file
 
 The backend includes **ArchUnit** tests that enforce architectural rules (e.g., controllers must not directly access repositories).
 
+A shell-based smoke test covering all major API flows is available at `scripts/test-all-apis.sh` (94 assertions). Run it against a live stack:
+
+```bash
+bash scripts/test-all-apis.sh
+```
+
 ## 🟢 Implementation Status: 100% Complete
 
 All technical requirements specified in the SRS have been implemented, including:
@@ -289,6 +298,7 @@ All technical requirements specified in the SRS have been implemented, including
 - **Phase 2:** Insurance, Finance, and Disputes
 - **Phase 3:** Production Hardening & Resiliency
 - **Phase 4:** Compliance, Security, and Global Strategy
+- **Phase 5:** Enterprise RBAC, Permission-Based Authorization & Workspace Tabs
 
 The platform is now ready for production-scale deployment.
 

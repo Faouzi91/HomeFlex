@@ -6,7 +6,8 @@ import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.core.exception.ConflictException;
 import com.homeflex.core.exception.DomainException;
 import com.homeflex.core.exception.ResourceNotFoundException;
-import com.homeflex.core.exception.UnauthorizedException;
+import com.homeflex.core.security.OwnershipVerifier;
+import org.springframework.security.access.AccessDeniedException;
 import com.homeflex.core.service.NotificationService;
 import com.homeflex.core.service.PaymentService;
 import com.homeflex.features.property.domain.entity.Booking;
@@ -69,6 +70,7 @@ class BookingServiceTest {
                 bookingRepository, propertyRepository, userRepository,
                 notificationService, paymentService, bookingMapper,
                 propertyAvailabilityService, financeService, redissonClient,
+                new OwnershipVerifier(),
                 new SimpleMeterRegistry()
         );
 
@@ -133,17 +135,22 @@ class BookingServiceTest {
     }
 
     @Test
-    void createBooking_notTenant_throwsUnauthorized() {
-        BookingCreateRequest request = new BookingCreateRequest(property.getId(), "RENTAL", null, null, null, null, null);
-        User notTenant = new User();
-        notTenant.setId(UUID.randomUUID());
-        notTenant.setRole(UserRole.LANDLORD);
+    void cancelBooking_wrongTenant_throwsAccessDenied() {
+        // Ownership is now enforced by OwnershipVerifier, not by UserRole check
+        UUID wrongUserId = UUID.randomUUID();
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
 
-        when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
-        when(userRepository.findById(notTenant.getId())).thenReturn(Optional.of(notTenant));
+        assertThatThrownBy(() -> bookingService.cancelBooking(booking.getId(), wrongUserId))
+                .isInstanceOf(AccessDeniedException.class);
+    }
 
-        assertThatThrownBy(() -> bookingService.createBooking(request, notTenant.getId()))
-                .isInstanceOf(UnauthorizedException.class);
+    @Test
+    void approveBooking_wrongLandlord_throwsAccessDenied() {
+        UUID wrongLandlordId = UUID.randomUUID();
+        when(bookingRepository.findById(booking.getId())).thenReturn(Optional.of(booking));
+
+        assertThatThrownBy(() -> bookingService.approveBooking(booking.getId(), wrongLandlordId, null))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test

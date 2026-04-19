@@ -2,6 +2,48 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-19 (RBAC, Permission-Based Authorization & Workspace Tabs)
+
+### Added
+
+- **Full RBAC system** (`Role.java`, `Permission.java`, `RoleRepository`, `PermissionRepository`) — `Role` and `Permission` JPA entities linked by a `role_permissions` join table. `User` gains a `Set<Role> roles` field mapped via a `user_roles` join table. The legacy `UserRole role` enum field is retained and `@Deprecated` for backward compatibility during phased rollout.
+- **Flyway V27 — RBAC schema** — Creates `roles`, `permissions`, `role_permissions`, and `user_roles` tables with proper FK constraints and an index on `user_roles.user_id`.
+- **Flyway V28 — RBAC seed and migrate** — Seeds 46 permissions across 11 domains and 4 roles (`ROLE_TENANT`, `ROLE_LANDLORD`, `ROLE_ADMIN`, `ROLE_MONITORING`). Assigns permissions to each role, then backfills `user_roles` from the legacy `users.role` column for all existing users.
+- **`Permissions.java`** — Compile-time constants class (`public static final String`) for all 46 permissions. Eliminates magic strings in `@PreAuthorize` annotations; fully refactorable.
+- **`HomeFlexPermissionEvaluator`** — Custom Spring Security `PermissionEvaluator` enabling `hasPermission(#id, 'Booking', 'BOOKING_APPROVE')` SpEL expressions that check both permission authority and resource ownership in a single annotation. Supports `Booking` and `Property` target types; `ROLE_ADMIN` bypasses ownership checks.
+- **`OwnershipVerifier`** — Stateless Spring `@Component` injected into services. Provides typed methods (`requireTenantOf`, `requireLandlordOf`, `requireLandlordOfBooking`, `requireTenantOrLandlordOf`) that throw `AccessDeniedException` (→ HTTP 403) when ownership is violated.
+- **`MethodSecurityConfig`** — Dedicated `@Configuration` class that registers `HomeFlexPermissionEvaluator` as the `MethodSecurityExpressionHandler`, isolated from `SecurityConfig` to prevent circular bean dependencies.
+- **`GET /disputes/mine`** (`DisputeController`) — New endpoint returning the authenticated user's own disputes. No `ADMIN` role required. `DisputeService.getMyDisputes(UUID)` uses a new `findByInitiatorIdOrderByCreatedAtDesc` derived query.
+- **Finance / Receipts workspace tab** (`finance-tab.component.ts/html`) — Angular OnPush standalone component calling `api.getMyReceipts()`. Shows receipt number, amount + currency, PAID/PENDING status badge, issue date, and download link when `receiptUrl` is present. Loading skeleton and empty state included.
+- **Disputes workspace tab** (`disputes-tab.component.ts/html`) — Angular OnPush standalone component calling `api.getMyDisputes()` (new `/disputes/mine` endpoint). Shows reason, description, OPEN/UNDER_REVIEW/RESOLVED/CLOSED status badges with color-coded styles, created/resolved timestamps.
+- **Insurance workspace tab** (`insurance-tab.component.ts/html`) — Angular OnPush standalone component calling `api.getInsurancePlans('TENANT')`. Shows plan cards grouped by type (TENANT/LANDLORD) with daily premium, max coverage amount, and "Select Plan" action.
+- **Workspace navigation** — Finance (Receipts), Disputes, and Insurance nav items added to `workspace-layout.component.ts` with appropriate icons, visible to all authenticated users.
+- **`scripts/test-all-apis.sh`** — Comprehensive bash smoke-test script covering 94 assertions across all 26 backend controllers and all Angular SPA routes. Boots Docker Compose (skippable with `SKIP_BOOT=1`), waits for health checks, seeds admin/landlord/tenant sessions with automatic CSRF refresh before every mutating request, and reports a colored PASS/FAIL summary.
+
+### Changed
+
+- **`JwtAuthenticationFilter.buildAuthorities()`** — Now emits `ROLE_*` authorities (from `user.getRoles()`) plus all individual permission authorities (e.g., `BOOKING_CREATE`). Falls back to `ROLE_<enum>` when the RBAC `user_roles` table is empty (phased rollout safety net).
+- **`SecurityConfig.userDetailsService()`** — Updated to use the same multi-authority pattern as the JWT filter, replacing `.roles(user.getRole().name())` with `.authorities(authorities)`.
+- **`JwtTokenProvider.generateToken()`** — JWT now carries a `roles` list claim (e.g., `["ROLE_TENANT"]`) alongside the backward-compat single `role` string claim.
+- **`UserDto`** — Added `List<String> roles` and `List<String> permissions` fields. `UserMapper` populates them via MapStruct expressions from `user.getRoles()`.
+- **`UserService.toDtoWithCompleteness()`** — Updated to pass through the new `roles` and `permissions` fields.
+- **`BookingV1Controller`** — All 9 endpoints migrated from `hasAnyRole(...)` to permission-based annotations: `hasAuthority(T(...).BOOKING_CREATE)` for creation, `hasPermission(#id, 'Booking', 'BOOKING_APPROVE')` for landlord actions, `hasPermission(#id, 'Booking', 'BOOKING_CANCEL')` for tenant cancellation.
+- **`BookingService`** — Removed stale `if (tenant.getRole() != UserRole.TENANT)` check (now enforced by `BOOKING_CREATE` permission at controller layer). All 7 manual ownership `throw new UnauthorizedException(...)` blocks replaced with `ownershipVerifier.require*()` calls, throwing `AccessDeniedException` consistently.
+- **`AuthService.register()` and `googleLogin()`** — Call `assignRbacRole()` to insert into `user_roles` on new user creation, ensuring RBAC rows exist from day one without waiting for a backfill.
+- **`DataInitializer`** — Admin, landlord, and tenant seed users also receive their corresponding `ROLE_*` row via `RoleRepository.findByName(...).ifPresent(r -> user.getRoles().add(r))`.
+- **`SecurityConfig` dispute routes** — Added specific `authenticated()` matchers for `GET /api/v1/disputes/mine` and `/api/v1/disputes/*/evidence` before the admin-only `/api/v1/disputes/**` catch-all, fixing a 401 for non-admin users calling these endpoints.
+
+### Fixed
+
+- **`GET /api/v1/disputes` returning 401 for tenants** — The `/disputes/**` security rule was matching `/disputes/mine` before the specific `authenticated()` rule could fire. Fixed by inserting explicit matchers for `/disputes/mine` and `/disputes/*/evidence` above the catch-all.
+
+### Tests
+
+- **`AuthServiceTest`** — Added `RoleRepository` mock; updated `UserDto` construction with new `roles`/`permissions` fields; added `roleRepository.findByName(...)` stub returning `Optional.empty()` for `register_success` test.
+- **`BookingServiceTest`** — Injected `new OwnershipVerifier()` into the service constructor. Replaced stale `createBooking_notTenant_throwsUnauthorized` test (role check removed from service layer) with two new ownership tests: `cancelBooking_wrongTenant_throwsAccessDenied` and `approveBooking_wrongLandlord_throwsAccessDenied`, both asserting `AccessDeniedException`.
+
+---
+
 ## [Unreleased] — 2026-04-18 (MinIO Seed Rehost, Bookings Deep-Link & Unread Diagnostics)
 
 ### Added

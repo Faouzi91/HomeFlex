@@ -1,6 +1,7 @@
 package com.homeflex.core.config;
 
 import com.homeflex.core.domain.repository.UserRepository;
+import com.homeflex.core.domain.repository.RoleRepository;
 import com.homeflex.core.domain.entity.User;
 import com.homeflex.core.domain.enums.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.admin.email:admin@homeflex.com}")
@@ -53,6 +55,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setFirstName(adminFirstName);
             admin.setLastName(adminLastName);
             admin.setRole(UserRole.ADMIN);
+            roleRepository.findByName("ROLE_ADMIN").ifPresent(r -> admin.getRoles().add(r));
             admin.setIsActive(true);
             admin.setIsVerified(true);
             admin.setLanguagePreference("en");
@@ -82,6 +85,7 @@ public class DataInitializer implements CommandLineRunner {
                 landlord.setLastName("Landlord");
                 landlord.setPhoneNumber("+237123456789");
                 landlord.setRole(UserRole.LANDLORD);
+                roleRepository.findByName("ROLE_LANDLORD").ifPresent(r -> landlord.getRoles().add(r));
                 landlord.setIsActive(true);
                 landlord.setIsVerified(true);
                 landlord.setLanguagePreference("en");
@@ -103,6 +107,7 @@ public class DataInitializer implements CommandLineRunner {
                 tenant.setLastName("Tenant");
                 tenant.setPhoneNumber("+237987654321");
                 tenant.setRole(UserRole.TENANT);
+                roleRepository.findByName("ROLE_TENANT").ifPresent(r -> tenant.getRoles().add(r));
                 tenant.setIsActive(true);
                 tenant.setIsVerified(true);
                 tenant.setLanguagePreference("en");

@@ -123,7 +123,8 @@ public class UserService {
         UserDto dto = userMapper.toDto(user);
         return new UserDto(
                 dto.id(), dto.email(), dto.firstName(), dto.lastName(), dto.phoneNumber(),
-                dto.profilePictureUrl(), dto.role(), dto.isActive(), dto.isVerified(),
+                dto.profilePictureUrl(), dto.role(), dto.roles(), dto.permissions(),
+                dto.isActive(), dto.isVerified(),
                 dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
                 dto.emailNotificationsEnabled(), dto.pushNotificationsEnabled(),
                 dto.smsNotificationsEnabled(),

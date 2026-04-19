@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -29,10 +30,21 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
+        List<String> roleNames = user.getRoles().stream()
+                .map(r -> r.getName())
+                .toList();
+
+        // Backward-compat: embed the legacy enum name when no RBAC roles exist yet
+        if (roleNames.isEmpty() && user.getRole() != null) {
+            roleNames = List.of("ROLE_" + user.getRole().name());
+        }
+
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
-                .claim("role", user.getRole().name())
+                .claim("roles", roleNames)
+                // Keep single "role" claim so existing frontend code that reads it keeps working
+                .claim("role", roleNames.isEmpty() ? null : roleNames.get(0).replace("ROLE_", ""))
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
@@ -70,9 +82,6 @@ public class JwtTokenProvider {
         return false;
     }
 
-    /**
-     * Returns access-token lifetime in seconds (for cookie Max-Age).
-     */
     public int getAccessTokenMaxAgeSeconds() {
         return (int) (jwtExpiration / 1000);
     }

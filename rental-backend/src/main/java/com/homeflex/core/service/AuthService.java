@@ -9,6 +9,7 @@ import com.homeflex.core.dto.response.AuthTokens;
 import com.homeflex.core.dto.request.LoginRequest;
 import com.homeflex.core.dto.request.RegisterRequest;
 import com.homeflex.core.domain.repository.UserRepository;
+import com.homeflex.core.domain.repository.RoleRepository;
 import com.homeflex.core.domain.repository.EmailVerificationTokenRepository;
 import com.homeflex.core.domain.repository.PasswordResetTokenRepository;
 import com.homeflex.core.domain.repository.RefreshTokenRepository;
@@ -43,6 +44,7 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
@@ -72,6 +74,7 @@ public class AuthService {
         user.setLastName(request.lastName());
         user.setPhoneNumber(request.phoneNumber());
         user.setRole(request.role());
+        assignRbacRole(user, "ROLE_" + request.role().name());
         user.setIsActive(true);
         user.setIsVerified(false);
         user.setLanguagePreference("en");
@@ -155,6 +158,7 @@ public class AuthService {
                         newUser.setLastName(lastName);
                         newUser.setProfilePictureUrl(pictureUrl);
                         newUser.setRole(UserRole.TENANT);
+                        assignRbacRole(newUser, "ROLE_TENANT");
                         newUser.setIsActive(true);
                         newUser.setIsVerified(true);
                         return userRepository.save(newUser);
@@ -276,6 +280,10 @@ public class AuthService {
         refreshTokenRepository.deleteByUserId(user.getId());
 
         log.info("Password reset completed for user {}", user.getId());
+    }
+
+    private void assignRbacRole(User user, String roleName) {
+        roleRepository.findByName(roleName).ifPresent(r -> user.getRoles().add(r));
     }
 
     private String createRefreshToken(User user) {

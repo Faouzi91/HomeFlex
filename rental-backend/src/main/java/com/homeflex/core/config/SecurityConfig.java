@@ -137,8 +137,10 @@ public class SecurityConfig {
                         // Insurance endpoints
                         .requestMatchers("/api/v1/insurance/**").authenticated()
 
-                        // Dispute endpoints
+                        // Dispute endpoints — specific paths before the admin catch-all
                         .requestMatchers(HttpMethod.POST, "/api/v1/disputes").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/disputes/mine").authenticated()
+                        .requestMatchers("/api/v1/disputes/*/evidence").authenticated()
                         .requestMatchers("/api/v1/disputes/**").hasRole("ADMIN")
 
                         // GDPR endpoints
@@ -226,10 +228,22 @@ public class SecurityConfig {
             var user = userRepository.findByEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+            var authorities = new java.util.ArrayList<org.springframework.security.core.GrantedAuthority>();
+            for (var role : user.getRoles()) {
+                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(role.getName()));
+                for (var perm : role.getPermissions()) {
+                    authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(perm.getName()));
+                }
+            }
+            // Fallback for users without RBAC rows yet (phased rollout)
+            if (authorities.isEmpty() && user.getRole() != null) {
+                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+            }
+
             return org.springframework.security.core.userdetails.User.builder()
                     .username(user.getEmail())
                     .password(user.getPasswordHash() != null ? user.getPasswordHash() : "")
-                    .roles(user.getRole().name())
+                    .authorities(authorities)
                     .accountLocked(!user.getIsActive())
                     .build();
         };
