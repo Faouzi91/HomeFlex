@@ -15,6 +15,7 @@ import { catchError, of } from 'rxjs';
 import { NotificationApi } from '../../../core/api/services/notification.api';
 import { NotificationItem } from '../../../core/models/api.types';
 import { SessionStore } from '../../../core/state/session.store';
+import { getNotificationNavigationTarget } from '../../../core/utils/notification-routing';
 import { WorkspaceStore } from '../../../features/workspace/workspace.store';
 
 type NavItem = {
@@ -130,7 +131,7 @@ export class AppHeaderComponent {
         )
         .subscribe(() => this.workspaceStore.decrementUnreadNotifications());
     }
-    const target = this.routeFor(n);
+    const target = getNotificationNavigationTarget(n);
     if (target) {
       this.router.navigate(target.path, target.extras ?? {});
     } else {
@@ -142,31 +143,6 @@ export class AppHeaderComponent {
     this.notifMenuOpen.set(false);
     this.router.navigate(['/workspace/notifications']);
   }
-
-  private routeFor(n: NotificationItem): { path: any[]; extras?: any } | null {
-    const type = (n.type ?? '').toUpperCase();
-    const relType = (n.relatedEntityType ?? '').toUpperCase();
-    const relId = n.relatedEntityId;
-    if (type === 'MESSAGE' || relType === 'CHAT_ROOM' || relType === 'MESSAGE') {
-      return {
-        path: ['/workspace/messages'],
-        extras: { queryParams: relId ? { room: relId } : {} },
-      };
-    }
-    if (type === 'BOOKING' || relType === 'BOOKING' || relType === 'VEHICLE_BOOKING') {
-      return {
-        path: ['/workspace/bookings'],
-        extras: { queryParams: relId ? { booking: relId } : {} },
-      };
-    }
-    if (type === 'PAYMENT' || relType === 'PAYMENT') {
-      return { path: ['/workspace/bookings'] };
-    }
-    if (relType === 'PROPERTY' && relId) return { path: ['/properties', relId] };
-    if (relType === 'VEHICLE' && relId) return { path: ['/vehicles', relId] };
-    return null;
-  }
-
   private initLanguage(): string {
     try {
       const saved = localStorage.getItem('homeflex_lang');

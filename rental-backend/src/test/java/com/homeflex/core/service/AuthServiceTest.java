@@ -79,7 +79,7 @@ class AuthServiceTest {
                 java.util.List.of("ROLE_TENANT"),
                 java.util.List.of("BOOKING_CREATE", "PROPERTY_READ"),
                 true, false, "en", null, null, 5.0,
-                true, true, true, 100, LocalDateTime.now()
+                true, true, true, 100, LocalDateTime.now(), false, null
         );
     }
 

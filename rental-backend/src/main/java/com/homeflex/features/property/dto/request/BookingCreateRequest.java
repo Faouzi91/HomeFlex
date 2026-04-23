@@ -14,5 +14,6 @@ public record BookingCreateRequest(
         LocalDate startDate,
         LocalDate endDate,
         String message,
-        Integer numberOfOccupants
+        Integer numberOfOccupants,
+        String idempotencyKey
 ) {}

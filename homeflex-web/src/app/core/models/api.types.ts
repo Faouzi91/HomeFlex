@@ -180,6 +180,8 @@ export interface Booking {
   taxAmount: number | null;
   stripePaymentIntentId: string | null;
   stripeClientSecret: string | null;
+  paymentStatus: string | null;
+  paymentFailureReason: string | null;
   paymentConfirmedAt: string | null;
   escrowReleasedAt: string | null;
   landlordResponse: string | null;

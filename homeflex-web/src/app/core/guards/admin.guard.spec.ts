@@ -12,8 +12,10 @@ function mockSession(role: string | null) {
       ? ({ role, email: 'test@test.com', isActive: true } as Partial<User> as User)
       : null;
   return {
+    init: jasmine.createSpy('init'),
     user: signal<User | null>(user),
     isAuthenticated: signal(role !== null),
+    isAdmin: signal(role === 'ADMIN'),
     loading: signal(false),
     pending: signal(false),
     initialized: signal(true),

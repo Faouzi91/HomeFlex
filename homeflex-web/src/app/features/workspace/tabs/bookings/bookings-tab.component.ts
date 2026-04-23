@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -45,6 +45,7 @@ export class BookingsTabComponent {
 
   // Detail panel
   protected readonly selectedBooking = signal<Booking | null>(null);
+  private readonly receivedBookingsLoaded = signal(false);
 
   // ── Landlord groupings ───────────────────────────────────────────────────────
 
@@ -126,26 +127,33 @@ export class BookingsTabComponent {
         });
       });
 
-    if (this.session.isLandlord() || this.session.isAdmin()) {
-      this.activeSubTab.set('received');
-      this.loadReceivedBookings();
-    }
-  }
+    effect(() => {
+      const isHost = this.session.isLandlord() || this.session.isAdmin();
 
-  private loadReceivedBookings(): void {
-    const properties = this.workspaceStore.myProperties();
-    if (!properties.length) {
-      setTimeout(() => {
-        const props = this.workspaceStore.myProperties();
-        if (props.length) this.fetchReceivedForProperties(props.map((p) => p.id));
-      }, 1500);
-      return;
-    }
-    this.fetchReceivedForProperties(properties.map((p) => p.id));
+      if (!isHost) {
+        this.receivedBookingsLoaded.set(false);
+        this.receivedBookings.set([]);
+        return;
+      }
+
+      this.activeSubTab.set('received');
+
+      const properties = this.workspaceStore.myProperties();
+      if (!properties.length || this.receivedBookingsLoaded()) {
+        return;
+      }
+
+      this.receivedBookingsLoaded.set(true);
+      this.fetchReceivedForProperties(properties.map((p) => p.id));
+    });
   }
 
   private fetchReceivedForProperties(propertyIds: string[]): void {
-    if (!propertyIds.length) return;
+    if (!propertyIds.length) {
+      this.receivedBookingsLoaded.set(false);
+      return;
+    }
+
     forkJoin(
       propertyIds.map((id) =>
         this.bookingApi.getByProperty(id).pipe(catchError(() => of({ data: [] as Booking[] }))),

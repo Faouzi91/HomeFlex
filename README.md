@@ -305,6 +305,7 @@ All technical requirements specified in the SRS have been implemented, including
 - **Phase 5:** Enterprise RBAC, Permission-Based Authorization & Workspace Tabs
 - **Phase 5.1:** Centralized Ownership via `ResourcePermissionService` — pure-logic service layer, security gap fix, N+1 prevention
 - **Phase 5.2:** Stripe escrow workflow completed — MANUAL capture, capture-on-approve, prorated early checkout, full-refund on cancel; landlord Stripe Connect onboarding UI; DisputeModal component; type fixes and Prettier lint at 100%
+- **Phase 5.3:** Production-grade state machine booking workflow — `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `/draft` and `/pay` endpoints with idempotency; `BookingAuditLog` added; Vehicle ownership rules supported.
 
 The platform is now ready for production-scale deployment.
 

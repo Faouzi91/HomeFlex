@@ -133,7 +133,7 @@ public class AdminService {
         long approvedProperties = propertyRepository.countByStatus(PropertyStatus.APPROVED);
 
         long totalBookings = bookingRepository.count();
-        long pendingBookings = bookingRepository.countByStatus(BookingStatus.PENDING);
+        long pendingBookings = bookingRepository.countByStatus(BookingStatus.PENDING_APPROVAL);
         long approvedBookings = bookingRepository.countByStatus(BookingStatus.APPROVED);
 
         long totalMessages = messageRepository.count();

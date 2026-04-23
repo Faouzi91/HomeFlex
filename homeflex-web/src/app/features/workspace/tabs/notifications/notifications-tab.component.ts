@@ -7,6 +7,7 @@ import { NotificationApi } from '../../../../core/api/services/notification.api'
 import { NotificationItem } from '../../../../core/models/api.types';
 import { WorkspaceStore } from '../../workspace.store';
 import { formatDateTime } from '../../../../core/utils/formatters';
+import { getNotificationNavigationTarget } from '../../../../core/utils/notification-routing';
 
 @Component({
   selector: 'app-notifications-tab',
@@ -50,50 +51,8 @@ export class NotificationsTabComponent {
 
   protected openNotification(n: NotificationItem): void {
     if (!n.isRead) this.markRead(n.id);
-    const target = this.routeFor(n);
+    const target = getNotificationNavigationTarget(n);
     if (target) this.router.navigate(target.path, target.extras ?? {});
-  }
-
-  private routeFor(n: NotificationItem): { path: any[]; extras?: any } | null {
-    const type = (n.type ?? '').toUpperCase();
-    const relType = (n.relatedEntityType ?? '').toUpperCase();
-    const relId = n.relatedEntityId;
-
-    // Messages → Messages tab (room id if provided)
-    if (type === 'MESSAGE' || relType === 'CHAT_ROOM' || relType === 'MESSAGE') {
-      return {
-        path: ['/workspace/messages'],
-        extras: { queryParams: relId ? { room: relId } : {} },
-      };
-    }
-    // Bookings → Bookings tab
-    if (type === 'BOOKING' || relType === 'BOOKING' || relType === 'VEHICLE_BOOKING') {
-      return {
-        path: ['/workspace/bookings'],
-        extras: { queryParams: relId ? { booking: relId } : {} },
-      };
-    }
-    // Payments → Bookings (payment is tied to a booking)
-    if (type === 'PAYMENT' || relType === 'PAYMENT') {
-      return { path: ['/workspace/bookings'] };
-    }
-    // Disputes → Disputes tab
-    if (type === 'DISPUTE' || relType === 'DISPUTE') {
-      return { path: ['/workspace/disputes'] };
-    }
-    // Maintenance → Maintenance tab
-    if (relType === 'MAINTENANCE_REQUEST' || relType === 'MAINTENANCE') {
-      return { path: ['/workspace/maintenance'] };
-    }
-    // Lease → Bookings tab (leases are shown there)
-    if (relType === 'LEASE' || relType === 'PROPERTY_LEASE') {
-      return { path: ['/workspace/bookings'] };
-    }
-    // Property/Vehicle listings → detail page
-    if (relType === 'PROPERTY' && relId) return { path: ['/properties', relId] };
-    if (relType === 'VEHICLE' && relId) return { path: ['/vehicles', relId] };
-    // Reviews, system — no navigation
-    return null;
   }
 
   protected markRead(id: string): void {

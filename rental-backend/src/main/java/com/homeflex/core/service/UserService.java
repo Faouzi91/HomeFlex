@@ -128,7 +128,8 @@ public class UserService {
                 dto.languagePreference(), dto.agencyId(), dto.agencyRole(), dto.trustScore(),
                 dto.emailNotificationsEnabled(), dto.pushNotificationsEnabled(),
                 dto.smsNotificationsEnabled(),
-                calculateProfileCompleteness(user), dto.createdAt()
+                calculateProfileCompleteness(user), dto.createdAt(),
+                dto.stripeConnected(), dto.stripeAccountId()
         );
     }
 

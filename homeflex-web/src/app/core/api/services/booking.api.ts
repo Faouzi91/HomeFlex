@@ -14,7 +14,14 @@ export class BookingApi extends BaseApi {
     message?: string | null;
     numberOfOccupants?: number | null;
   }): Observable<Booking> {
-    return this.http.post<Booking>(`${this.baseUrl}/bookings`, payload);
+    return this.http.post<Booking>(`${this.baseUrl}/bookings/draft`, payload);
+  }
+
+  initiatePayment(id: string): Observable<{ clientSecret: string; paymentIntentId: string }> {
+    return this.http.post<{ clientSecret: string; paymentIntentId: string }>(
+      `${this.baseUrl}/bookings/${id}/pay`,
+      {}
+    );
   }
 
   getMine(): Observable<ApiListResponse<Booking>> {

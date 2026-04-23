@@ -40,7 +40,18 @@ public class PaymentService {
 
     @PostConstruct
     public void init() {
-        Stripe.apiKey = appProperties.getStripe().getSecretKey();
+        String key = appProperties.getStripe().getSecretKey();
+        if (key == null || key.isBlank() || key.startsWith("sk_test_REPLACE")) {
+            log.warn("Stripe secret key is not configured — payment features will be unavailable");
+            return;
+        }
+        Stripe.apiKey = key;
+    }
+
+    private void requireStripeConfigured() {
+        if (Stripe.apiKey == null || Stripe.apiKey.isBlank()) {
+            throw new DomainException("Stripe is not configured on this server. Set STRIPE_SECRET_KEY in the backend environment.");
+        }
     }
 
     // ── Stripe Connect: Account Onboarding ─────────────────────────────
@@ -51,6 +62,7 @@ public class PaymentService {
      */
     @Transactional
     public ConnectOnboardingResponse createConnectedAccount(UUID userId, String refreshUrl, String returnUrl) {
+        requireStripeConfigured();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
@@ -69,6 +81,9 @@ public class PaymentService {
                     .setCountry("US")
                     .putMetadata("user_id", userId.toString())
                     .setCapabilities(AccountCreateParams.Capabilities.builder()
+                            .setCardPayments(AccountCreateParams.Capabilities.CardPayments.builder()
+                                    .setRequested(true)
+                                    .build())
                             .setTransfers(AccountCreateParams.Capabilities.Transfers.builder()
                                     .setRequested(true)
                                     .build())
@@ -125,7 +140,8 @@ public class PaymentService {
      * @return The created PaymentIntent (caller stores its ID on the booking)
      */
     public PaymentIntent createBookingPaymentIntent(BigDecimal amount, String currency,
-                                                     String description, String transferGroup) {
+                                                    String description, String transferGroup) {
+        requireStripeConfigured();
         try {
             return Retry.decorateSupplier(stripeRetry, () -> {
                 try {

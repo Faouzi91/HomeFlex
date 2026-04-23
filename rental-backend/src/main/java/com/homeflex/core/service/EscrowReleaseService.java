@@ -70,7 +70,7 @@ public class EscrowReleaseService {
                 );
 
                 booking.setEscrowReleasedAt(LocalDateTime.now());
-                booking.setStatus(BookingStatus.COMPLETED);
+                booking.setStatus(BookingStatus.ACTIVE);
                 bookingRepository.save(booking);
 
                 log.info("Escrow released for property booking {}: landlord={}",

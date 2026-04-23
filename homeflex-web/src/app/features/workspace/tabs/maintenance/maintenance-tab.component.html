@@ -300,3 +300,79 @@
     }
   </div>
 </section>
+
+@if (resolveDialogOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+    <div class="w-full max-w-lg rounded-3xl bg-white shadow-2xl border border-slate-200">
+      <div class="border-b border-slate-100 px-6 py-5">
+        <h2 class="text-base font-bold text-slate-900">Resolve request</h2>
+        <p class="mt-1 text-sm text-slate-500">
+          Add optional notes for <span class="font-semibold text-slate-900">{{
+            selectedRequest()?.title
+          }}</span>.
+        </p>
+      </div>
+
+      <div class="px-6 py-5 space-y-4">
+        <textarea
+          [value]="resolutionNotes()"
+          (input)="resolutionNotes.set($any($event.target).value)"
+          rows="4"
+          placeholder="Resolution notes for the tenant or team"
+          class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-300 resize-none"
+        ></textarea>
+
+        <div class="flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="closeDialogs()"
+            class="button button--ghost text-sm px-4 py-2.5"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            (click)="confirmResolve()"
+            class="button button--primary text-sm px-4 py-2.5"
+          >
+            Mark resolved
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (cancelDialogOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4">
+    <div class="w-full max-w-md rounded-3xl bg-white shadow-2xl border border-slate-200">
+      <div class="border-b border-slate-100 px-6 py-5">
+        <h2 class="text-base font-bold text-slate-900">Cancel request</h2>
+        <p class="mt-1 text-sm text-slate-500">
+          This will cancel <span class="font-semibold text-slate-900">{{
+            selectedRequest()?.title
+          }}</span>.
+        </p>
+      </div>
+
+      <div class="px-6 py-5">
+        <div class="flex justify-end gap-3">
+          <button
+            type="button"
+            (click)="closeDialogs()"
+            class="button button--ghost text-sm px-4 py-2.5"
+          >
+            Keep request
+          </button>
+          <button
+            type="button"
+            (click)="confirmCancel()"
+            class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors"
+          >
+            Cancel request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

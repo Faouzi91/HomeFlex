@@ -2,6 +2,19 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-23 (Booking State Machine & Split Payment Flow)
+
+### Added
+
+- **Production-grade state machine booking workflow** — `BookingStatus` expanded from 5 to 10 distinct states (`DRAFT`, `PAYMENT_PENDING`, `PAYMENT_FAILED`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `ACTIVE`, `COMPLETED`, `PENDING_MODIFICATION`). `BookingStateMachine` orchestrates transitions safely.
+- **Booking Audit Logs** — Every booking state transition is recorded in the new `booking_audit_log` table with the triggering user, action, and optional reason, providing a complete history of the booking lifecycle.
+- **Split Booking/Payment Flow** — The monolithic `/bookings` creation endpoint was split into `/draft` (creates the booking with an idempotency lock) and `/pay` (initiates Stripe `PaymentIntent`). This enables reliable retry mechanisms on the frontend.
+- **Vehicle Ownership Security** — `ResourcePermissionService` extended to evaluate ownership logic for `Vehicle` and `VehicleBooking` domain objects, preparing the system for full vehicle booking support.
+- **Frontend Split Flow** — `property-detail.page.ts` updated to call `bookingApi.create(payload)` (now pointing to `/draft`), then gracefully switch-map to `bookingApi.initiatePayment(booking.id)` for `RENTAL` types.
+- **New Booking API DTOs** — `DraftBookingRequest`, `PaymentInitiationResponse`, `PaymentRetryRequest`, and `PaymentConfirmationRequest` added to handle the new state machine steps securely.
+
+---
+
 ## [Unreleased] — 2026-04-19 (Stripe Escrow Workflow, Dispute Modal & Hosting Payments Tab)
 
 ### Added

@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SessionStore } from '../../../../core/state/session.store';
 
 @Component({
@@ -12,6 +13,7 @@ import { SessionStore } from '../../../../core/state/session.store';
 export class RegisterPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly session = inject(SessionStore);
 
   protected readonly showPassword = signal(false);
@@ -25,8 +27,12 @@ export class RegisterPageComponent {
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
+  private readonly passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+
   protected readonly passwordStrength = computed(() => {
-    const pw = this.form.get('password')?.value ?? '';
+    const pw = this.passwordValue() ?? '';
     if (!pw) return { score: 0, label: '', color: '' };
 
     let score = 0;
@@ -67,14 +73,17 @@ export class RegisterPageComponent {
         phoneNumber: value.phoneNumber || null,
       })
       .subscribe(() => {
-        this.router.navigateByUrl('/workspace');
+        this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('redirectUrl') || '/workspace');
       });
   }
 
   protected socialLogin(provider: string): void {
     const dummyToken = 'dummy-token-' + Date.now();
     this.session.socialLogin(provider, dummyToken).subscribe(() => {
-      this.router.navigateByUrl(this.session.isAdmin() ? '/admin' : '/workspace');
+      this.router.navigateByUrl(
+        this.route.snapshot.queryParamMap.get('redirectUrl') ||
+          (this.session.isAdmin() ? '/admin' : '/workspace'),
+      );
     });
   }
 }

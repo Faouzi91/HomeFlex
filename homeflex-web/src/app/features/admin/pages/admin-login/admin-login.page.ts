@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SessionStore } from '../../../../core/state/session.store';
 
 @Component({
@@ -12,6 +12,7 @@ import { SessionStore } from '../../../../core/state/session.store';
 export class AdminLoginPageComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly session = inject(SessionStore);
 
   protected readonly form = this.fb.group({
@@ -28,7 +29,7 @@ export class AdminLoginPageComponent {
     const value = this.form.getRawValue();
     this.session.login(value.email ?? '', value.password ?? '').subscribe(() => {
       if (this.session.isAdmin()) {
-        this.router.navigateByUrl('/admin');
+        this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('redirectUrl') || '/admin');
       } else {
         // Not an admin — log them out and show error
         this.session.logout().subscribe();

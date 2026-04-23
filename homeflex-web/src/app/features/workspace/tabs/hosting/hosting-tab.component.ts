@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { catchError, forkJoin, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { BookingApi } from '../../../../core/api/services/booking.api';
 import { LeaseApi } from '../../../../core/api/services/lease.api';
 import { PropertyApi } from '../../../../core/api/services/property.api';
@@ -23,9 +24,12 @@ export class HostingTabComponent {
   private readonly leaseApi = inject(LeaseApi);
   private readonly propertyApi = inject(PropertyApi);
   private readonly payoutApi = inject(PayoutApi);
+  private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly store = inject(WorkspaceStore);
+
+  protected readonly stripeConfigured = signal<boolean | null>(null);
 
   // ── Section state ─────────────────────────────────────────────────────────
 
@@ -354,6 +358,10 @@ export class HostingTabComponent {
   protected readonly stripeOnboardingError = signal<string | null>(null);
 
   protected loadPayoutSummary(): void {
+    this.http
+      .get<{ stripeConfigured: boolean }>('/api/v1/config')
+      .pipe(catchError(() => of({ stripeConfigured: false })), takeUntilDestroyed(this.destroyRef))
+      .subscribe((c) => this.stripeConfigured.set(c.stripeConfigured));
     this.payoutLoading.set(true);
     this.payoutApi
       .getSummary()

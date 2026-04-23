@@ -28,6 +28,7 @@ npm install
 npm start                      # Dev server on port 4200
 npm run build                  # Production build
 npm test                       # Unit tests (Vitest)
+./scripts/smoke-live.sh        # Smoke-check the live Docker-served frontend
 ```
 
 The application uses an Nginx-ready Docker configuration for production deployment.

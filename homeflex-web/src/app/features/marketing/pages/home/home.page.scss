@@ -1,10 +1,20 @@
-@import 'tailwindcss';
-@source "../../../../**/*.{html,ts}";
-
 :host {
   display: block;
 }
 
 .listing-grid {
-  @apply grid gap-6 sm:grid-cols-2 lg:grid-cols-4;
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .listing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .listing-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }

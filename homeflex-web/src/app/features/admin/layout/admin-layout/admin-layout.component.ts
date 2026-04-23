@@ -5,7 +5,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-admin-layout',
-  standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslateModule],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss',

@@ -29,7 +29,6 @@ import {
 
 @Component({
   selector: 'app-booking-detail-panel',
-  standalone: true,
   imports: [NgClass, DisputeModalComponent],
   templateUrl: './booking-detail-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

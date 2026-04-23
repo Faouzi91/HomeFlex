@@ -491,7 +491,7 @@ public class SampleDataInitializer implements CommandLineRunner {
             booking.setEndDate(LocalDate.now().plusDays(i + 37));
             booking.setMessage("I'm interested in this property. Can we schedule a viewing?");
             booking.setNumberOfOccupants(2);
-            booking.setStatus(i % 3 == 0 ? BookingStatus.APPROVED : (i % 3 == 1 ? BookingStatus.PENDING : BookingStatus.REJECTED));
+            booking.setStatus(i % 3 == 0 ? BookingStatus.APPROVED : (i % 3 == 1 ? BookingStatus.PENDING_APPROVAL : BookingStatus.REJECTED));
             bookingRepository.save(booking);
         }
 

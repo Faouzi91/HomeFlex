@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { AuthApi } from '../api/services/auth.api';
 import { UserApi } from '../api/services/user.api';
+import { NotificationService } from '../service/notification.service';
 import { SessionStore } from './session.store';
 
 describe('SessionStore', () => {
@@ -32,6 +33,15 @@ describe('SessionStore', () => {
         SessionStore,
         { provide: AuthApi, useValue: authApi },
         { provide: UserApi, useValue: userApi },
+        {
+          provide: NotificationService,
+          useValue: {
+            setLoading: () => void 0,
+            success: () => void 0,
+            error: () => void 0,
+            info: () => void 0,
+          },
+        },
       ],
     });
 

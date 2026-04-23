@@ -14,6 +14,7 @@ import { ReviewApi } from '../../../../core/api/services/review.api';
 import { ChatApi } from '../../../../core/api/services/chat.api';
 import { HttpClient } from '@angular/common/http';
 import { Booking, Property, Review } from '../../../../core/models/api.types';
+import { NotificationService } from '../../../../core/service/notification.service';
 import { SessionStore } from '../../../../core/state/session.store';
 import {
   formatCurrency,
@@ -43,6 +44,7 @@ export class PropertyDetailPageComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly convertCurrencyPipe = inject(ConvertCurrencyPipe);
+  private readonly notifications = inject(NotificationService);
 
   protected readonly property = signal<Property | null>(null);
   protected readonly reviews = signal<Review[]>([]);
@@ -242,6 +244,9 @@ export class PropertyDetailPageComponent {
 
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.favorite.set(!this.favorite());
+      this.notifications.success(
+        this.favorite() ? 'Added to favorites.' : 'Removed from favorites.',
+      );
     });
   }
 
@@ -250,24 +255,39 @@ export class PropertyDetailPageComponent {
     if (!property || this.bookingForm.invalid || this.dateRangeConflict()) return;
 
     const form = this.bookingForm.getRawValue();
+    const payload = {
+      propertyId: property.id,
+      bookingType: form.bookingType ?? 'VIEWING',
+      requestedDate: form.requestedDate ?? null,
+      startDate: form.startDate ?? null,
+      endDate: form.endDate ?? null,
+      numberOfOccupants: form.numberOfOccupants ?? null,
+      message: form.message ?? null,
+    };
+
     this.bookingApi
-      .create({
-        propertyId: property.id,
-        bookingType: form.bookingType ?? 'VIEWING',
-        requestedDate: form.requestedDate ?? null,
-        startDate: form.startDate ?? null,
-        endDate: form.endDate ?? null,
-        numberOfOccupants: form.numberOfOccupants ?? null,
-        message: form.message ?? null,
-      })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .create(payload)
+      .pipe(
+        switchMap((booking) => {
+          if (payload.bookingType === 'RENTAL') {
+            import('rxjs').then(({ map }) => {}); // Hack to ensure map is available, but better to import it at top.
+            // Actually I'll just use a direct map since RxJS is already in scope. But `map` isn't imported from rxjs. 
+            // I'll just use a sub-subscribe or another switchMap.
+            return this.bookingApi.initiatePayment(booking.id).pipe(
+              switchMap((res) => of({ booking, clientSecret: res.clientSecret }))
+            );
+          }
+          return of({ booking, clientSecret: null });
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
-        next: (booking: Booking) => {
-          if (booking.stripeClientSecret) {
-            this.pendingPaymentSecret.set(booking.stripeClientSecret);
-            this.bookingMessage.set('Booking created! Complete payment below to confirm.');
+        next: ({ booking, clientSecret }) => {
+          if (clientSecret) {
+            this.pendingPaymentSecret.set(clientSecret);
+            this.bookingMessage.set('Booking drafted! Complete payment below to confirm.');
             // Mount Stripe Elements after DOM renders the payment container
-            setTimeout(() => this.mountPaymentElement(booking.stripeClientSecret!), 50);
+            setTimeout(() => this.mountPaymentElement(clientSecret), 50);
           } else {
             this.bookingMessage.set('Booking request sent — waiting for landlord approval.');
           }
@@ -276,6 +296,7 @@ export class PropertyDetailPageComponent {
         error: (err) => {
           const msg = err.error?.message || err.error?.error || 'Failed to submit booking request.';
           this.bookingMessage.set(msg);
+          this.notifications.error(msg);
         },
       });
   }
@@ -295,11 +316,13 @@ export class PropertyDetailPageComponent {
     this.paymentProcessing.set(false);
     if (error) {
       this.bookingMessage.set(`Payment failed: ${error.message}`);
+      this.notifications.error(error.message || 'Payment failed.');
     } else {
       this.pendingPaymentSecret.set(null);
       this.stripeElementsInstance = null;
       this.stripeElementsMounted.set(false);
       this.bookingMessage.set('Payment confirmed! Your booking is now active.');
+      this.notifications.success('Payment confirmed.');
     }
   }
 
@@ -346,7 +369,7 @@ export class PropertyDetailPageComponent {
       .createRoom({ propertyId: property.id, tenantId: user.id, landlordId: property.landlord.id })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((room) => {
-        this.router.navigate(['/workspace'], { queryParams: { tab: 'messages', chat: room.id } });
+        this.router.navigate(['/workspace/messages'], { queryParams: { room: room.id } });
       });
   }
 

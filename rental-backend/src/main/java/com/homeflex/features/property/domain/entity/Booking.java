@@ -55,8 +55,8 @@ public class Booking {
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private BookingStatus status = BookingStatus.PENDING;
+    @Column(length = 30)
+    private BookingStatus status = BookingStatus.DRAFT;
 
     @Column(columnDefinition = "TEXT")
     private String message;
@@ -84,6 +84,15 @@ public class Booking {
 
     @Column(name = "payment_confirmed_at")
     private LocalDateTime paymentConfirmedAt;
+
+    @Column(name = "payment_status", length = 50)
+    private String paymentStatus;
+
+    @Column(name = "payment_failure_reason", columnDefinition = "TEXT")
+    private String paymentFailureReason;
+
+    @Column(name = "idempotency_key", unique = true)
+    private String idempotencyKey;
 
     @Column(name = "escrow_released_at")
     private LocalDateTime escrowReleasedAt;

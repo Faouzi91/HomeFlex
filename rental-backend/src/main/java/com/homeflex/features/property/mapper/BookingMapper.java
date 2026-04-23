@@ -15,6 +15,8 @@ public interface BookingMapper {
     @Mapping(target = "bookingType", expression = "java(booking.getBookingType() != null ? booking.getBookingType().name() : null)")
     @Mapping(target = "status", expression = "java(booking.getStatus() != null ? booking.getStatus().name() : null)")
     @Mapping(target = "stripeClientSecret", source = "stripeClientSecret")
+    @Mapping(target = "paymentStatus", source = "paymentStatus")
+    @Mapping(target = "paymentFailureReason", source = "paymentFailureReason")
     BookingDto toDto(Booking booking);
 
     List<BookingDto> toDto(List<Booking> bookings);

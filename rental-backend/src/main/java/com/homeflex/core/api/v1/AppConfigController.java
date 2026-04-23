@@ -17,11 +17,12 @@ public class AppConfigController {
     private final AppProperties appProperties;
 
     @GetMapping
-    public ResponseEntity<Map<String, String>> getPublicConfig() {
+    public ResponseEntity<Map<String, Object>> getPublicConfig() {
+        String pk = appProperties.getStripe().getPublishableKey();
+        boolean stripeReady = pk != null && !pk.isBlank() && !pk.startsWith("pk_test_REPLACE");
         return ResponseEntity.ok(Map.of(
-                "stripePublishableKey", appProperties.getStripe().getPublishableKey() != null
-                        ? appProperties.getStripe().getPublishableKey()
-                        : ""
+                "stripePublishableKey", stripeReady ? pk : "",
+                "stripeConfigured", stripeReady
         ));
     }
 }

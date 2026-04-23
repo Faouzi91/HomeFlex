@@ -4,8 +4,10 @@ import com.homeflex.core.service.NotificationService;
 import com.homeflex.core.service.PaymentService;
 import com.homeflex.features.property.mapper.BookingMapper;
 import com.homeflex.features.property.dto.response.BookingDto;
+import com.homeflex.features.property.dto.response.PaymentInitiationResponse;
 import com.homeflex.features.property.dto.request.BookingCreateRequest;
 import com.homeflex.features.property.domain.repository.BookingRepository;
+import com.homeflex.features.property.domain.repository.BookingAuditLogRepository;
 import com.homeflex.features.property.domain.repository.PropertyRepository;
 import com.homeflex.core.domain.repository.UserRepository;
 import com.homeflex.core.exception.ResourceNotFoundException;
@@ -13,8 +15,10 @@ import com.homeflex.core.exception.DomainException;
 import com.homeflex.core.exception.ConflictException;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.entity.Booking;
+import com.homeflex.features.property.domain.entity.BookingAuditLog;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
+import com.homeflex.features.property.domain.BookingStateMachine;
 import com.homeflex.core.domain.entity.User;
 import com.stripe.model.PaymentIntent;
 import io.micrometer.core.instrument.Counter;
@@ -27,7 +31,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -37,18 +40,12 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Booking business logic — pure domain operations, no ownership checks.
+ * Booking business logic — production-grade state-machine-driven workflow.
  *
- * Ownership is enforced at two layers:
- *   1. Controller @PreAuthorize annotations (HomeFlexPermissionEvaluator + ResourcePermissionService).
- *   2. Service layer is intentionally free of ownership guards so that internal callers
- *      (scheduled tasks, webhook handlers, admin operations) can act on any booking
- *      without impersonating a user.
+ * Every status mutation goes through {@link BookingStateMachine#transition}
+ * and is recorded in the {@code booking_audit_log} table.
  *
- * Defense-in-depth when to add it back:
- *   If a method becomes callable from a non-annotated path (e.g. a public API, a Feign
- *   client, or a batch job that should NOT bypass ownership), inject ResourcePermissionService
- *   and call isAllowed() explicitly before mutating state.
+ * Ownership is enforced at the controller layer via @PreAuthorize.
  */
 @Slf4j
 @Service
@@ -56,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 public class BookingService {
 
     private final BookingRepository bookingRepository;
+    private final BookingAuditLogRepository auditLogRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
@@ -68,7 +66,16 @@ public class BookingService {
     private final Counter bookingsCreatedCounter;
     private final Counter paymentsSucceededCounter;
 
+    /** Statuses that count as "occupying" dates for overlap checks. */
+    private static final List<BookingStatus> ACTIVE_STATUSES = List.of(
+            BookingStatus.DRAFT, BookingStatus.PAYMENT_PENDING,
+            BookingStatus.PENDING_APPROVAL, BookingStatus.APPROVED,
+            BookingStatus.ACTIVE, BookingStatus.COMPLETED,
+            BookingStatus.PENDING_MODIFICATION
+    );
+
     public BookingService(BookingRepository bookingRepository,
+                          BookingAuditLogRepository auditLogRepository,
                           PropertyRepository propertyRepository,
                           UserRepository userRepository,
                           NotificationService notificationService,
@@ -79,6 +86,7 @@ public class BookingService {
                           RedissonClient redissonClient,
                           MeterRegistry meterRegistry) {
         this.bookingRepository = bookingRepository;
+        this.auditLogRepository = auditLogRepository;
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
@@ -98,16 +106,24 @@ public class BookingService {
                 .register(meterRegistry);
     }
 
-    // ── Create ────────────────────────────────────────────────────────────────
+    // ── Create Draft ──────────────────────────────────────────────────────────
 
-    public BookingDto createBooking(BookingCreateRequest request, UUID tenantId) {
+    public BookingDto createDraftBooking(BookingCreateRequest request, UUID tenantId) {
+        // Idempotency check
+        if (request.idempotencyKey() != null) {
+            var existing = bookingRepository.findByIdempotencyKey(request.idempotencyKey());
+            if (existing.isPresent()) {
+                log.info("Idempotent draft return: key={}", request.idempotencyKey());
+                return bookingMapper.toDto(existing.get());
+            }
+        }
+
         String lockKey = "lock:booking:property:" + request.propertyId();
         RLock lock = redissonClient.getLock(lockKey);
-
         try {
             if (lock.tryLock(10, 30, TimeUnit.SECONDS)) {
                 try {
-                    return executeCreateBooking(request, tenantId);
+                    return executeCreateDraft(request, tenantId);
                 } finally {
                     lock.unlock();
                 }
@@ -120,10 +136,9 @@ public class BookingService {
         }
     }
 
-    private BookingDto executeCreateBooking(BookingCreateRequest request, UUID tenantId) {
+    private BookingDto executeCreateDraft(BookingCreateRequest request, UUID tenantId) {
         Property property = propertyRepository.findById(request.propertyId())
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
-
         User tenant = userRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
 
@@ -138,59 +153,139 @@ public class BookingService {
         if (request.startDate() != null && request.endDate() != null && property.getPrice() != null) {
             long days = ChronoUnit.DAYS.between(request.startDate(), request.endDate()) + 1;
             BigDecimal basePrice = property.getPrice().multiply(BigDecimal.valueOf(days));
-
             platformFee = basePrice.multiply(new BigDecimal("0.15")).setScale(2, java.math.RoundingMode.HALF_UP);
             taxAmount   = basePrice.multiply(new BigDecimal("0.05")).setScale(2, java.math.RoundingMode.HALF_UP);
-
             totalPrice = basePrice.add(cleaningFee).add(taxAmount);
         }
+
+        BookingType type = BookingType.valueOf(request.bookingType());
 
         Booking booking = new Booking();
         booking.setProperty(property);
         booking.setTenant(tenant);
-        booking.setBookingType(BookingType.valueOf(request.bookingType()));
+        booking.setBookingType(type);
         booking.setRequestedDate(request.requestedDate());
         booking.setStartDate(request.startDate());
         booking.setEndDate(request.endDate());
         booking.setMessage(request.message());
         booking.setNumberOfOccupants(request.numberOfOccupants());
-        booking.setStatus(BookingStatus.PENDING);
+        booking.setStatus(BookingStatus.DRAFT);
         booking.setTotalPrice(totalPrice);
         booking.setPlatformFee(platformFee);
         booking.setCleaningFee(cleaningFee);
         booking.setTaxAmount(taxAmount);
+        booking.setIdempotencyKey(request.idempotencyKey());
 
         booking = bookingRepository.save(booking);
         bookingsCreatedCounter.increment();
 
-        String stripeClientSecret = null;
-        if (totalPrice != null && totalPrice.compareTo(BigDecimal.ZERO) > 0) {
-            try {
-                String transferGroup = "property_booking_" + booking.getId();
-                String description   = "HomeFlex booking: " + property.getTitle();
-                PaymentIntent pi = paymentService.createBookingPaymentIntent(
-                        totalPrice, property.getCurrency(), description, transferGroup);
-                booking.setStripePaymentIntentId(pi.getId());
-                stripeClientSecret = pi.getClientSecret();
-                booking = bookingRepository.save(booking);
-                paymentsSucceededCounter.increment();
-            } catch (Exception e) {
-                log.warn("Stripe payment intent creation failed (booking still created): {}", e.getMessage());
-            }
+        audit(booking.getId(), null, BookingStatus.DRAFT, "CREATE_DRAFT", tenantId, null);
+
+        // VIEWING bookings skip payment — go straight to PENDING_APPROVAL
+        if (type == BookingType.VIEWING) {
+            transitionAndSave(booking, BookingStatus.PENDING_APPROVAL, "SKIP_PAYMENT_VIEWING", tenantId, null);
+            notificationService.sendBookingRequestNotification(property.getLandlord().getId(), tenant, property);
         }
 
-        notificationService.sendBookingRequestNotification(property.getLandlord().getId(), tenant, property);
-
-        booking.setStripeClientSecret(stripeClientSecret);
         return bookingMapper.toDto(booking);
+    }
+
+    // ── Initiate Payment ──────────────────────────────────────────────────────
+
+    public PaymentInitiationResponse initiatePayment(UUID bookingId, UUID tenantId) {
+        Booking booking = findBookingOrThrow(bookingId);
+
+        if (booking.getBookingType() == BookingType.VIEWING) {
+            throw new DomainException("VIEWING bookings do not require payment");
+        }
+
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.PAYMENT_PENDING);
+
+        // Re-validate availability before charging
+        if (booking.getStartDate() != null && booking.getEndDate() != null) {
+            validateNoDateOverlapForBooking(booking);
+        }
+
+        Property property = booking.getProperty();
+        String transferGroup = "property_booking_" + booking.getId();
+        String description  = "HomeFlex booking: " + property.getTitle();
+
+        PaymentIntent pi = paymentService.createBookingPaymentIntent(
+                booking.getTotalPrice(), property.getCurrency(), description, transferGroup);
+
+        booking.setStripePaymentIntentId(pi.getId());
+        booking.setPaymentStatus("requires_payment_method");
+        transitionAndSave(booking, BookingStatus.PAYMENT_PENDING, "INITIATE_PAYMENT", tenantId, null);
+
+        return new PaymentInitiationResponse(
+                booking.getId(), pi.getClientSecret(), pi.getId(),
+                booking.getTotalPrice(), property.getCurrency());
+    }
+
+    // ── Retry Payment ─────────────────────────────────────────────────────────
+
+    public PaymentInitiationResponse retryPayment(UUID bookingId, UUID tenantId) {
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.PAYMENT_PENDING);
+
+        // Cancel old PI if exists
+        if (booking.getStripePaymentIntentId() != null) {
+            try { paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId()); }
+            catch (Exception e) { log.warn("Could not cancel old PI on retry: {}", e.getMessage()); }
+        }
+
+        Property property = booking.getProperty();
+        String transferGroup = "property_booking_" + booking.getId();
+        String description  = "HomeFlex booking (retry): " + property.getTitle();
+
+        PaymentIntent pi = paymentService.createBookingPaymentIntent(
+                booking.getTotalPrice(), property.getCurrency(), description, transferGroup);
+
+        booking.setStripePaymentIntentId(pi.getId());
+        booking.setPaymentStatus("requires_payment_method");
+        booking.setPaymentFailureReason(null);
+        transitionAndSave(booking, BookingStatus.PAYMENT_PENDING, "RETRY_PAYMENT", tenantId, null);
+
+        return new PaymentInitiationResponse(
+                booking.getId(), pi.getClientSecret(), pi.getId(),
+                booking.getTotalPrice(), property.getCurrency());
+    }
+
+    // ── Confirm Payment (webhook) ─────────────────────────────────────────────
+
+    public void confirmPayment(UUID bookingId) {
+        Booking booking = findBookingOrThrow(bookingId);
+
+        // Idempotent: if already past PAYMENT_PENDING, skip
+        if (booking.getStatus() != BookingStatus.PAYMENT_PENDING) {
+            log.info("confirmPayment no-op: booking {} already in {}", bookingId, booking.getStatus());
+            return;
+        }
+
+        booking.setPaymentConfirmedAt(LocalDateTime.now());
+        booking.setPaymentStatus("succeeded");
+        transitionAndSave(booking, BookingStatus.PENDING_APPROVAL, "CONFIRM_PAYMENT", null, null);
+
+        paymentsSucceededCounter.increment();
+
+        notificationService.sendBookingRequestNotification(
+                booking.getProperty().getLandlord().getId(), booking.getTenant(), booking.getProperty());
+
+        try {
+            financeService.generateReceipt(booking);
+        } catch (Exception e) {
+            log.error("Failed to generate receipt for booking {}: {}", booking.getId(), e.getMessage());
+        }
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     public List<BookingDto> getBookingsByTenant(UUID tenantId) {
         return bookingMapper.toDto(bookingRepository.findByTenantIdOrderByCreatedAtDesc(tenantId));
     }
 
+    @Transactional(readOnly = true)
     public List<BookingDto> getBookingsByProperty(UUID propertyId) {
         if (!propertyRepository.existsById(propertyId)) {
             throw new ResourceNotFoundException("Property not found");
@@ -198,32 +293,47 @@ public class BookingService {
         return bookingMapper.toDto(bookingRepository.findByPropertyIdOrderByCreatedAtDesc(propertyId));
     }
 
+    @Transactional(readOnly = true)
     public BookingDto getBookingById(UUID bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        return bookingMapper.toDto(booking);
+        return bookingMapper.toDto(findBookingOrThrow(bookingId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingAuditLog> getAuditLog(UUID bookingId) {
+        if (!bookingRepository.existsById(bookingId)) {
+            throw new ResourceNotFoundException("Booking not found");
+        }
+        return auditLogRepository.findByBookingIdOrderByCreatedAtAsc(bookingId);
     }
 
     // ── Landlord actions ─────────────────────────────────────────────────────
 
     public BookingDto approveBooking(UUID bookingId, String response) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.APPROVED);
 
+        // For paid bookings, ensure payment was confirmed
+        if (requiresPayment(booking.getBookingType()) && booking.getPaymentConfirmedAt() == null) {
+            throw new DomainException("Cannot approve unpaid booking");
+        }
+
+        // Capture the payment if using manual capture
         if (booking.getStripePaymentIntentId() != null) {
             try {
                 paymentService.capturePaymentIntent(booking.getStripePaymentIntentId());
-                booking.setPaymentConfirmedAt(LocalDateTime.now());
+                if (booking.getPaymentConfirmedAt() == null) {
+                    booking.setPaymentConfirmedAt(LocalDateTime.now());
+                }
             } catch (Exception e) {
                 log.warn("Could not capture payment on approve (will retry on webhook): {}", e.getMessage());
             }
         }
 
-        booking.setStatus(BookingStatus.APPROVED);
         booking.setLandlordResponse(response);
         booking.setRespondedAt(LocalDateTime.now());
-        booking = bookingRepository.save(booking);
+        transitionAndSave(booking, BookingStatus.APPROVED, "APPROVE", null, response);
 
+        // Re-check availability and reserve
         if (booking.getStartDate() != null && booking.getEndDate() != null) {
             availabilityService.reserveForBooking(
                     booking.getProperty().getId(), booking.getId(),
@@ -237,17 +347,25 @@ public class BookingService {
     }
 
     public BookingDto rejectBooking(UUID bookingId, String reason) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.REJECTED);
 
         if (booking.getStripePaymentIntentId() != null) {
-            paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+            try {
+                if (booking.getPaymentConfirmedAt() != null) {
+                    paymentService.refundPayment(booking.getStripePaymentIntentId(), null,
+                            booking.getProperty().getCurrency());
+                } else {
+                    paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+                }
+            } catch (Exception e) {
+                log.warn("Payment cleanup failed on reject for booking {}: {}", bookingId, e.getMessage());
+            }
         }
 
-        booking.setStatus(BookingStatus.REJECTED);
         booking.setLandlordResponse(reason);
         booking.setRespondedAt(LocalDateTime.now());
-        booking = bookingRepository.save(booking);
+        transitionAndSave(booking, BookingStatus.REJECTED, "REJECT", null, reason);
 
         notificationService.sendBookingResponseNotification(
                 booking.getTenant().getId(), booking.getProperty(), false);
@@ -256,12 +374,8 @@ public class BookingService {
     }
 
     public BookingDto approveModification(UUID bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        if (booking.getStatus() != BookingStatus.PENDING_MODIFICATION) {
-            throw new DomainException("No pending modification");
-        }
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.APPROVED);
 
         availabilityService.releaseForBooking(booking.getId());
         booking.setStartDate(booking.getProposedStartDate());
@@ -275,9 +389,8 @@ public class BookingService {
         booking.setProposedStartDate(null);
         booking.setProposedEndDate(null);
         booking.setModificationReason(null);
-        booking.setStatus(BookingStatus.APPROVED);
+        transitionAndSave(booking, BookingStatus.APPROVED, "APPROVE_MODIFICATION", null, null);
 
-        booking = bookingRepository.save(booking);
         availabilityService.reserveForBooking(
                 booking.getProperty().getId(), booking.getId(),
                 booking.getStartDate(), booking.getEndDate());
@@ -286,60 +399,51 @@ public class BookingService {
     }
 
     public BookingDto rejectModification(UUID bookingId, String reason) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.APPROVED);
 
-        if (booking.getStatus() != BookingStatus.PENDING_MODIFICATION) {
-            throw new DomainException("No pending modification");
-        }
-
-        booking.setStatus(BookingStatus.APPROVED);
         booking.setLandlordResponse(reason);
         booking.setProposedStartDate(null);
         booking.setProposedEndDate(null);
         booking.setModificationReason(null);
+        transitionAndSave(booking, BookingStatus.APPROVED, "REJECT_MODIFICATION", null, reason);
 
-        return bookingMapper.toDto(bookingRepository.save(booking));
+        return bookingMapper.toDto(booking);
     }
 
     // ── Tenant actions ────────────────────────────────────────────────────────
 
     public BookingDto cancelBooking(UUID bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.CANCELLED);
 
+        // Handle payment cleanup based on current state
         if (booking.getStripePaymentIntentId() != null) {
-            if (booking.getPaymentConfirmedAt() != null) {
-                // Payment was already captured — issue full refund
-                try {
+            try {
+                if (booking.getPaymentConfirmedAt() != null) {
                     paymentService.refundPayment(booking.getStripePaymentIntentId(), null,
                             booking.getProperty().getCurrency());
-                } catch (Exception e) {
-                    log.warn("Refund failed on cancel for booking {}: {}", bookingId, e.getMessage());
+                } else {
+                    paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
                 }
-            } else {
-                paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+            } catch (Exception e) {
+                log.warn("Payment cleanup failed on cancel for booking {}: {}", bookingId, e.getMessage());
             }
         }
 
-        booking.setStatus(BookingStatus.CANCELLED);
-        booking = bookingRepository.save(booking);
+        transitionAndSave(booking, BookingStatus.CANCELLED, "CANCEL", null, null);
         availabilityService.releaseForBooking(booking.getId());
 
         return bookingMapper.toDto(booking);
     }
 
     /**
-     * Early checkout: cancels an active booking and issues a prorated refund
+     * Early checkout: completes an active booking and issues a prorated refund
      * for unused nights (today → original end date).
      */
     public BookingDto earlyCheckout(UUID bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-
-        if (booking.getStatus() != BookingStatus.APPROVED) {
-            throw new DomainException("Only active approved bookings can be checked out early");
-        }
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.COMPLETED);
 
         if (booking.getStripePaymentIntentId() != null && booking.getPaymentConfirmedAt() != null
                 && booking.getEndDate() != null) {
@@ -364,84 +468,125 @@ public class BookingService {
             }
         }
 
-        booking.setStatus(BookingStatus.CANCELLED);
-        booking = bookingRepository.save(booking);
+        transitionAndSave(booking, BookingStatus.COMPLETED, "EARLY_CHECKOUT", null, null);
         availabilityService.releaseForBooking(booking.getId());
 
         return bookingMapper.toDto(booking);
     }
 
     public BookingDto requestModification(UUID bookingId, LocalDate newStart, LocalDate newEnd, String reason) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = findBookingOrThrow(bookingId);
+        BookingStateMachine.transition(booking.getStatus(), BookingStatus.PENDING_MODIFICATION);
 
-        if (booking.getStatus() != BookingStatus.APPROVED) {
-            throw new DomainException("Only approved bookings can be modified");
-        }
         if (newEnd.isBefore(newStart)) throw new DomainException("Invalid dates");
 
         boolean overlap = bookingRepository.existsDateOverlapForPropertyExcludingBooking(
-                booking.getProperty().getId(), booking.getId(), newStart, newEnd,
-                Arrays.asList(BookingStatus.PENDING, BookingStatus.APPROVED,
-                              BookingStatus.COMPLETED, BookingStatus.PENDING_MODIFICATION));
-
+                booking.getProperty().getId(), booking.getId(), newStart, newEnd, ACTIVE_STATUSES);
         if (overlap) throw new ConflictException("Dates overlap");
 
-        booking.setStatus(BookingStatus.PENDING_MODIFICATION);
         booking.setProposedStartDate(newStart);
         booking.setProposedEndDate(newEnd);
         booking.setModificationReason(reason);
+        transitionAndSave(booking, BookingStatus.PENDING_MODIFICATION, "REQUEST_MODIFICATION", null, reason);
 
-        return bookingMapper.toDto(bookingRepository.save(booking));
+        return bookingMapper.toDto(booking);
     }
 
-    // ── Webhook / system handlers (no auth context — no ownership checks) ─────
+    // ── Webhook / system handlers ─────────────────────────────────────────────
 
     public void handlePaymentSucceeded(String paymentIntentId) {
         bookingRepository.findByStripePaymentIntentId(paymentIntentId)
-                .ifPresent(booking -> {
-                    if (booking.getStatus() == BookingStatus.PENDING
-                            || booking.getStatus() == BookingStatus.APPROVED) {
-                        booking.setPaymentConfirmedAt(LocalDateTime.now());
-                        bookingRepository.save(booking);
-                        try {
-                            financeService.generateReceipt(booking);
-                        } catch (Exception e) {
-                            log.error("Failed to generate receipt for booking {}: {}",
-                                    booking.getId(), e.getMessage());
-                        }
-                    }
-                });
+                .ifPresent(booking -> confirmPayment(booking.getId()));
     }
 
     public void handlePaymentFailed(String paymentIntentId) {
         bookingRepository.findByStripePaymentIntentId(paymentIntentId)
                 .ifPresent(booking -> {
-                    booking.setStatus(BookingStatus.CANCELLED);
-                    bookingRepository.save(booking);
-                    availabilityService.releaseForBooking(booking.getId());
+                    if (booking.getStatus() == BookingStatus.PAYMENT_PENDING) {
+                        booking.setPaymentStatus("failed");
+                        booking.setPaymentFailureReason("Payment declined by provider");
+                        transitionAndSave(booking, BookingStatus.PAYMENT_FAILED,
+                                "PAYMENT_FAILED", null, "Payment declined");
+                    }
                 });
     }
 
-    // ── Scheduled ─────────────────────────────────────────────────────────────
+    // ── Scheduled jobs ────────────────────────────────────────────────────────
 
     @Scheduled(cron = "0 0 * * * *")
     public void autoRejectExpiredPendingBookings() {
-        LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
+        LocalDateTime cutoff24h = LocalDateTime.now().minusHours(24);
         List<Booking> expired = bookingRepository.findByStatusAndCreatedAtBefore(
-                BookingStatus.PENDING, cutoff);
-
+                BookingStatus.PENDING_APPROVAL, cutoff24h);
         for (Booking booking : expired) {
-            booking.setStatus(BookingStatus.REJECTED);
             booking.setLandlordResponse("Auto-rejected (24h timeout)");
             booking.setRespondedAt(LocalDateTime.now());
-            bookingRepository.save(booking);
+            transitionAndSave(booking, BookingStatus.REJECTED, "AUTO_REJECT_TIMEOUT", null, "24h timeout");
             notificationService.sendBookingResponseNotification(
                     booking.getTenant().getId(), booking.getProperty(), false);
         }
+
+        // Also clean up stale drafts (>1h) and stale payment-pending (>30min)
+        LocalDateTime cutoff1h = LocalDateTime.now().minusHours(1);
+        for (Booking draft : bookingRepository.findByStatusAndCreatedAtBefore(BookingStatus.DRAFT, cutoff1h)) {
+            transitionAndSave(draft, BookingStatus.CANCELLED, "AUTO_CANCEL_STALE_DRAFT", null, "Stale draft");
+        }
+
+        LocalDateTime cutoff30m = LocalDateTime.now().minusMinutes(30);
+        for (Booking pp : bookingRepository.findByStatusAndCreatedAtBefore(BookingStatus.PAYMENT_PENDING, cutoff30m)) {
+            if (pp.getStripePaymentIntentId() != null) {
+                try { paymentService.cancelPaymentIntent(pp.getStripePaymentIntentId()); }
+                catch (Exception e) { log.warn("Failed to cancel stale PI: {}", e.getMessage()); }
+            }
+            transitionAndSave(pp, BookingStatus.CANCELLED, "AUTO_CANCEL_STALE_PAYMENT", null, "Payment timeout");
+        }
     }
 
-    // ── Validation helpers ────────────────────────────────────────────────────
+    @Scheduled(cron = "0 0 6 * * *")
+    public void activateApprovedBookings() {
+        List<Booking> ready = bookingRepository.findByStatusAndStartDateLessThanEqual(
+                BookingStatus.APPROVED, LocalDate.now());
+        for (Booking booking : ready) {
+            transitionAndSave(booking, BookingStatus.ACTIVE, "AUTO_ACTIVATE", null, null);
+            log.info("Booking {} activated (start date reached)", booking.getId());
+        }
+    }
+
+    @Scheduled(cron = "0 0 12 * * *")
+    public void completeActiveBookings() {
+        List<Booking> finished = bookingRepository.findByStatusAndEndDateLessThan(
+                BookingStatus.ACTIVE, LocalDate.now());
+        for (Booking booking : finished) {
+            transitionAndSave(booking, BookingStatus.COMPLETED, "AUTO_COMPLETE", null, null);
+            log.info("Booking {} completed (end date passed)", booking.getId());
+        }
+    }
+
+    // ── Internal helpers ──────────────────────────────────────────────────────
+
+    private Booking findBookingOrThrow(UUID bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+    }
+
+    private boolean requiresPayment(BookingType type) {
+        return type == BookingType.RENTAL || type == BookingType.PURCHASE;
+    }
+
+    private void transitionAndSave(Booking booking, BookingStatus target, String action,
+                                   UUID userId, String reason) {
+        BookingStatus from = booking.getStatus();
+        BookingStateMachine.transition(from, target);
+        booking.setStatus(target);
+        bookingRepository.save(booking);
+        audit(booking.getId(), from, target, action, userId, reason);
+        log.info("Booking {} transitioned: {} → {} (action={})", booking.getId(), from, target, action);
+    }
+
+    private void audit(UUID bookingId, BookingStatus from, BookingStatus to,
+                       String action, UUID userId, String reason) {
+        auditLogRepository.save(BookingAuditLog.of(bookingId, from, to, action, userId, reason));
+    }
 
     private void validateBookingDates(BookingCreateRequest request) {
         if (request.startDate() != null && request.endDate() != null
@@ -452,11 +597,15 @@ public class BookingService {
 
     private void validateNoDateOverlap(BookingCreateRequest request) {
         if (request.startDate() == null || request.endDate() == null) return;
-
         boolean overlaps = bookingRepository.existsDateOverlapForProperty(
-                request.propertyId(), request.startDate(), request.endDate(),
-                Arrays.asList(BookingStatus.PENDING, BookingStatus.APPROVED, BookingStatus.COMPLETED));
-
+                request.propertyId(), request.startDate(), request.endDate(), ACTIVE_STATUSES);
         if (overlaps) throw new ConflictException("Selected dates overlap with an existing booking");
+    }
+
+    private void validateNoDateOverlapForBooking(Booking booking) {
+        boolean overlaps = bookingRepository.existsDateOverlapForPropertyExcludingBooking(
+                booking.getProperty().getId(), booking.getId(),
+                booking.getStartDate(), booking.getEndDate(), ACTIVE_STATUSES);
+        if (overlaps) throw new ConflictException("Selected dates are no longer available");
     }
 }

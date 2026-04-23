@@ -53,6 +53,11 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage(), request, null);
     }
 
+    @ExceptionHandler(IllegalStateTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalTransition(IllegalStateTransitionException ex, WebRequest request) {
+        return buildError(HttpStatus.CONFLICT, "INVALID_STATE_TRANSITION", ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ErrorResponse> handleDomain(DomainException ex, WebRequest request) {
         return buildError(HttpStatus.BAD_REQUEST, "DOMAIN_ERROR", ex.getMessage(), request, null);

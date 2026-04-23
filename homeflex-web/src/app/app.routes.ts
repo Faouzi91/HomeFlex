@@ -16,6 +16,8 @@ import { AdminUsersPageComponent } from './features/admin/pages/users/admin-user
 import { AdminPropertiesPageComponent } from './features/admin/pages/properties/admin-properties.page';
 import { AdminReportsPageComponent } from './features/admin/pages/reports/admin-reports.page';
 import { adminGuard } from './core/guards/admin.guard';
+import { guestOnlyGuard } from './core/guards/guest-only.guard';
+import { workspaceGuard } from './core/guards/workspace.guard';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, title: 'HomeFlex | Premium rentals' },
@@ -31,23 +33,40 @@ export const routes: Routes = [
     component: VehicleDetailPageComponent,
     title: 'Vehicle detail | HomeFlex',
   },
-  { path: 'login', component: LoginPageComponent, title: 'Login | HomeFlex' },
-  { path: 'register', component: RegisterPageComponent, title: 'Register | HomeFlex' },
+  {
+    path: 'login',
+    component: LoginPageComponent,
+    title: 'Login | HomeFlex',
+    canActivate: [guestOnlyGuard],
+  },
+  {
+    path: 'register',
+    component: RegisterPageComponent,
+    title: 'Register | HomeFlex',
+    canActivate: [guestOnlyGuard],
+  },
   {
     path: 'password-reset',
     component: PasswordResetPageComponent,
     title: 'Reset password | HomeFlex',
+    canActivate: [guestOnlyGuard],
   },
   { path: 'auth', redirectTo: 'login', pathMatch: 'full' },
   {
     path: 'workspace',
+    canActivate: [workspaceGuard],
     loadChildren: () =>
       import('./features/workspace/workspace.routes').then((m) => m.workspaceRoutes),
   },
   { path: 'support', component: SupportPageComponent, title: 'Support | HomeFlex' },
 
   // Admin routes
-  { path: 'admin/login', component: AdminLoginPageComponent, title: 'Admin Login | HomeFlex' },
+  {
+    path: 'admin/login',
+    component: AdminLoginPageComponent,
+    title: 'Admin Login | HomeFlex',
+    canActivate: [guestOnlyGuard],
+  },
   {
     path: 'admin',
     component: AdminLayoutComponent,

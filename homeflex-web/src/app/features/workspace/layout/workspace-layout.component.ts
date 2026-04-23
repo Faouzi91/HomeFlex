@@ -17,7 +17,6 @@ interface NavItem {
 
 @Component({
   selector: 'app-workspace-layout',
-  standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, DecimalPipe, NgTemplateOutlet],
   templateUrl: './workspace-layout.component.html',
 })
@@ -115,7 +114,6 @@ export class WorkspaceLayoutComponent {
         this.store.load();
       } else {
         this.store.reset();
-        this.router.navigateByUrl('/login');
       }
     });
   }

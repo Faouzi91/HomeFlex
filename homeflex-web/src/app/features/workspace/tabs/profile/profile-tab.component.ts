@@ -2,10 +2,12 @@ import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { loadStripe } from '@stripe/stripe-js';
+import { catchError, of } from 'rxjs';
 import { GdprApi } from '../../../../core/api/services/gdpr.api';
 import { KycApi } from '../../../../core/api/services/kyc.api';
 import { PayoutApi } from '../../../../core/api/services/payout.api';
 import { UserApi } from '../../../../core/api/services/user.api';
+import { NotificationService } from '../../../../core/service/notification.service';
 import { SessionStore } from '../../../../core/state/session.store';
 import { initials } from '../../../../core/utils/formatters';
 import { Router } from '@angular/router';
@@ -25,12 +27,14 @@ export class ProfileTabComponent {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly notifications = inject(NotificationService);
 
-  protected readonly profileMessage = signal('');
-  protected readonly passwordMessage = signal('');
   protected readonly hostMessage = signal('');
   protected readonly kycStatus = signal<any>(null);
   protected readonly payoutSummary = signal<any>(null);
+  protected readonly eraseDialogOpen = signal(false);
+  protected readonly eraseConfirmation = signal('');
+  private readonly hostDataLoaded = signal(false);
 
   protected readonly profileForm = this.fb.group({
     firstName: [''],
@@ -62,10 +66,25 @@ export class ProfileTabComponent {
       });
     });
 
-    if (this.session.isLandlord() || this.session.isAdmin()) {
+    effect(() => {
+      const user = this.session.user();
+      const isHost = user?.role === 'LANDLORD' || user?.role === 'ADMIN';
+
+      if (!isHost) {
+        this.hostDataLoaded.set(false);
+        this.kycStatus.set(null);
+        this.payoutSummary.set(null);
+        return;
+      }
+
+      if (this.hostDataLoaded()) {
+        return;
+      }
+
+      this.hostDataLoaded.set(true);
       this.loadKycStatus();
       this.loadPayoutSummary();
-    }
+    });
   }
 
   protected onAvatarSelected(event: Event): void {
@@ -77,9 +96,9 @@ export class ProfileTabComponent {
       .subscribe({
         next: (user) => {
           this.session.user.set(user);
-          this.flash(this.profileMessage, 'Profile picture updated!');
+          this.notifications.success('Profile picture updated.');
         },
-        error: () => this.flash(this.profileMessage, 'Failed to upload avatar.'),
+        error: () => this.notifications.error('Failed to upload avatar.'),
       });
   }
 
@@ -90,9 +109,9 @@ export class ProfileTabComponent {
       .subscribe({
         next: (user) => {
           this.session.user.set(user);
-          this.flash(this.profileMessage, 'Profile updated successfully!');
+          this.notifications.success('Profile updated successfully.');
         },
-        error: () => this.flash(this.profileMessage, 'Failed to update profile.'),
+        error: () => this.notifications.error('Failed to update profile.'),
       });
   }
 
@@ -104,24 +123,36 @@ export class ProfileTabComponent {
       .subscribe({
         next: () => {
           this.passwordForm.reset();
-          this.flash(this.passwordMessage, 'Password changed successfully!');
+          this.notifications.success('Password changed successfully.');
         },
         error: (err) =>
-          this.flash(this.passwordMessage, err.error?.message ?? 'Failed to change password.'),
+          this.notifications.error(err.error?.message ?? 'Failed to change password.'),
       });
   }
 
   private loadKycStatus(): void {
     this.kycApi
       .getStatus()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => {
+          this.notifications.error('Unable to load identity verification status.');
+          return of({ data: null });
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((res) => this.kycStatus.set(res.data));
   }
 
   private loadPayoutSummary(): void {
     this.payoutApi
       .getSummary()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => {
+          this.notifications.error('Unable to load payout account details.');
+          return of(null);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((res) => this.payoutSummary.set(res));
   }
 
@@ -136,10 +167,15 @@ export class ProfileTabComponent {
           const { error } = await stripe.verifyIdentity(res.clientSecret);
           if (error) {
             this.hostMessage.set(`Verification failed: ${error.message}`);
+            this.notifications.error(error.message || 'Verification failed.');
           } else {
-            this.flash(this.hostMessage, 'Verification submitted!');
+            this.hostMessage.set('Verification submitted!');
+            this.notifications.success('Verification submitted.');
             this.loadKycStatus();
           }
+        } else {
+          this.hostMessage.set('Stripe Identity is unavailable right now.');
+          this.notifications.error('Stripe Identity is unavailable right now.');
         }
       });
   }
@@ -149,44 +185,64 @@ export class ProfileTabComponent {
     this.payoutApi
       .onboardConnectAccount(currentUrl, currentUrl)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((res) => (window.location.href = res.onboardingUrl));
+      .subscribe({
+        next: (res) => (window.location.href = res.onboardingUrl),
+        error: () => this.notifications.error('Unable to open Stripe onboarding right now.'),
+      });
   }
 
   protected exportMyData(): void {
     this.gdprApi
       .exportData()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `homeflex-data-${new Date().toISOString()}.json`;
-        a.click();
-        window.URL.revokeObjectURL(url);
+      .subscribe({
+        next: (data) => {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `homeflex-data-${new Date().toISOString()}.json`;
+          a.click();
+          window.URL.revokeObjectURL(url);
+          this.notifications.success('Your data export is downloading.');
+        },
+        error: () => this.notifications.error('Unable to export your data right now.'),
       });
   }
 
   protected eraseMyData(): void {
-    const confirmation = prompt('Type DELETE to permanently erase your account and all data:');
-    if (confirmation !== 'DELETE') return;
+    if (this.eraseConfirmation().trim().toUpperCase() !== 'DELETE') {
+      this.notifications.error('Type DELETE to confirm account removal.');
+      return;
+    }
+
     this.gdprApi
       .eraseData()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        alert('Your data has been erased. You will now be logged out.');
-        this.session.logout().subscribe(() => this.router.navigateByUrl('/'));
+      .subscribe({
+        next: () => {
+          this.eraseDialogOpen.set(false);
+          this.eraseConfirmation.set('');
+          this.notifications.success('Your account data has been erased.');
+          this.session.logout().subscribe(() => this.router.navigateByUrl('/'));
+        },
+        error: () => this.notifications.error('Unable to erase your account right now.'),
       });
+  }
+
+  protected openEraseDialog(): void {
+    this.eraseConfirmation.set('');
+    this.eraseDialogOpen.set(true);
+  }
+
+  protected closeEraseDialog(): void {
+    this.eraseConfirmation.set('');
+    this.eraseDialogOpen.set(false);
   }
 
   protected userInitials(): string {
     const u = this.session.user();
     if (!u) return '?';
     return initials(u.firstName, u.lastName);
-  }
-
-  private flash(sig: ReturnType<typeof signal<string>>, msg: string): void {
-    sig.set(msg);
-    setTimeout(() => sig.set(''), 3500);
   }
 }

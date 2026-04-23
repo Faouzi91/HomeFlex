@@ -11,6 +11,8 @@ import com.homeflex.core.service.PaymentService;
 import com.homeflex.features.property.domain.entity.Booking;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.enums.BookingStatus;
+import com.homeflex.features.property.domain.enums.BookingType;
+import com.homeflex.features.property.domain.repository.BookingAuditLogRepository;
 import com.homeflex.features.property.domain.repository.BookingRepository;
 import com.homeflex.features.property.domain.repository.PropertyRepository;
 import com.homeflex.features.property.dto.request.BookingCreateRequest;
@@ -30,6 +32,7 @@ import org.redisson.api.RedissonClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -41,16 +44,13 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for BookingService business logic.
- *
- * Ownership checks are NOT tested here — they live in ResourcePermissionServiceTest.
- * BookingService is intentionally free of ownership logic; security is enforced
- * at the controller annotation layer by HomeFlexPermissionEvaluator.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class BookingServiceTest {
 
     @Mock private BookingRepository bookingRepository;
+    @Mock private BookingAuditLogRepository auditLogRepository;
     @Mock private PropertyRepository propertyRepository;
     @Mock private UserRepository userRepository;
     @Mock private NotificationService notificationService;
@@ -72,7 +72,7 @@ class BookingServiceTest {
     @BeforeEach
     void setUp() throws InterruptedException {
         bookingService = new BookingService(
-                bookingRepository, propertyRepository, userRepository,
+                bookingRepository, auditLogRepository, propertyRepository, userRepository,
                 notificationService, paymentService, bookingMapper,
                 propertyAvailabilityService, financeService, redissonClient,
                 new SimpleMeterRegistry()
@@ -99,72 +99,91 @@ class BookingServiceTest {
         booking.setId(UUID.randomUUID());
         booking.setProperty(property);
         booking.setTenant(tenant);
-        booking.setStatus(BookingStatus.PENDING);
+        booking.setStatus(BookingStatus.PENDING_APPROVAL);
+        booking.setBookingType(BookingType.RENTAL);
         booking.setStripePaymentIntentId("pi_test");
+        booking.setPaymentConfirmedAt(LocalDateTime.now());
 
         bookingDto = mock(BookingDto.class);
     }
 
-    // ── Create ────────────────────────────────────────────────────────────────
+    // ── Create Draft ──────────────────────────────────────────────────────────
 
     @Test
-    void createBooking_success() {
+    void createDraftBooking_success_rental() {
         BookingCreateRequest request = new BookingCreateRequest(
                 property.getId(), "RENTAL", null,
                 LocalDate.now().plusDays(1), LocalDate.now().plusDays(2),
-                "Msg", 1
+                "Msg", 1, null
         );
 
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
         when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
         when(bookingRepository.existsDateOverlapForProperty(any(), any(), any(), any())).thenReturn(false);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
-
-        PaymentIntent pi = mock(PaymentIntent.class);
-        when(pi.getId()).thenReturn("pi_new");
-        when(paymentService.createBookingPaymentIntent(any(), any(), any(), any())).thenReturn(pi);
         when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
 
-        BookingDto result = bookingService.createBooking(request, tenant.getId());
+        BookingDto result = bookingService.createDraftBooking(request, tenant.getId());
 
         assertThat(result).isNotNull();
-        verify(bookingRepository, atLeastOnce()).save(any());
+        verify(bookingRepository, atLeastOnce()).save(argThat(b -> b.getStatus() == BookingStatus.DRAFT));
     }
 
     @Test
-    void createBooking_propertyNotFound_throws() {
+    void createDraftBooking_success_viewing() {
         BookingCreateRequest request = new BookingCreateRequest(
-                UUID.randomUUID(), "RENTAL", null, null, null, null, null);
+                property.getId(), "VIEWING", null,
+                LocalDate.now().plusDays(1), LocalDate.now().plusDays(2),
+                "Msg", 1, null
+        );
+
+        when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
+        when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
+        when(bookingRepository.existsDateOverlapForProperty(any(), any(), any(), any())).thenReturn(false);
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
+        when(bookingMapper.toDto(any(Booking.class))).thenReturn(bookingDto);
+
+        BookingDto result = bookingService.createDraftBooking(request, tenant.getId());
+
+        assertThat(result).isNotNull();
+        // VIEWING skips payment and goes to PENDING_APPROVAL
+        verify(bookingRepository, atLeastOnce()).save(argThat(b -> b.getStatus() == BookingStatus.PENDING_APPROVAL));
+    }
+
+    @Test
+    void createDraftBooking_propertyNotFound_throws() {
+        BookingCreateRequest request = new BookingCreateRequest(
+                UUID.randomUUID(), "RENTAL", null, null, null, null, null, null);
         when(propertyRepository.findById(any())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> bookingService.createBooking(request, tenant.getId()))
+        assertThatThrownBy(() -> bookingService.createDraftBooking(request, tenant.getId()))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
-    void createBooking_dateOverlap_throwsConflict() {
+    void createDraftBooking_dateOverlap_throwsConflict() {
         BookingCreateRequest request = new BookingCreateRequest(
                 property.getId(), "RENTAL", null,
-                LocalDate.now(), LocalDate.now(), null, null
+                LocalDate.now(), LocalDate.now(), null, null, null
         );
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
         when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
         when(bookingRepository.existsDateOverlapForProperty(any(), any(), any(), any())).thenReturn(true);
 
-        assertThatThrownBy(() -> bookingService.createBooking(request, tenant.getId()))
+        assertThatThrownBy(() -> bookingService.createDraftBooking(request, tenant.getId()))
                 .isInstanceOf(ConflictException.class);
     }
 
     @Test
-    void createBooking_invalidDates_throwsDomain() {
+    void createDraftBooking_invalidDates_throwsDomain() {
         BookingCreateRequest request = new BookingCreateRequest(
                 property.getId(), "RENTAL", null,
-                LocalDate.now().plusDays(5), LocalDate.now().plusDays(1), null, null
+                LocalDate.now().plusDays(5), LocalDate.now().plusDays(1), null, null, null
         );
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
         when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
 
-        assertThatThrownBy(() -> bookingService.createBooking(request, tenant.getId()))
+        assertThatThrownBy(() -> bookingService.createDraftBooking(request, tenant.getId()))
                 .isInstanceOf(DomainException.class);
     }
 
@@ -179,7 +198,7 @@ class BookingServiceTest {
         bookingService.approveBooking(booking.getId(), "OK");
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.APPROVED);
-        verify(paymentService).confirmPaymentIntent("pi_test");
+        verify(paymentService).capturePaymentIntent("pi_test");
     }
 
     @Test
@@ -191,7 +210,7 @@ class BookingServiceTest {
         bookingService.rejectBooking(booking.getId(), "No");
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.REJECTED);
-        verify(paymentService).cancelPaymentIntent("pi_test");
+        verify(paymentService).refundPayment("pi_test", null, "XAF");
     }
 
     // ── Tenant actions ────────────────────────────────────────────────────────
@@ -205,7 +224,7 @@ class BookingServiceTest {
         bookingService.cancelBooking(booking.getId());
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-        verify(paymentService).cancelPaymentIntent("pi_test");
+        verify(paymentService).refundPayment("pi_test", null, "XAF");
     }
 
     @Test

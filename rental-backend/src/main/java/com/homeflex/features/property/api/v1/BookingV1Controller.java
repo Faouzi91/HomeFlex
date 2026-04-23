@@ -3,6 +3,8 @@ package com.homeflex.features.property.api.v1;
 import com.homeflex.core.security.Permissions;
 import com.homeflex.features.property.service.BookingService;
 import com.homeflex.features.property.dto.response.BookingDto;
+import com.homeflex.features.property.dto.response.PaymentInitiationResponse;
+import com.homeflex.features.property.domain.entity.BookingAuditLog;
 import com.homeflex.core.dto.common.ApiListResponse;
 import com.homeflex.features.property.dto.request.BookingCreateRequest;
 import com.homeflex.features.property.dto.request.BookingModificationRequest;
@@ -15,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -40,16 +43,41 @@ public class BookingV1Controller {
 
     private final BookingService bookingService;
 
-    // ── Create ────────────────────────────────────────────────────────────────
+    // ── Create & Pay ──────────────────────────────────────────────────────────
 
-    @PostMapping
+    @PostMapping("/draft")
     @PreAuthorize("hasAuthority(T(com.homeflex.core.security.Permissions).BOOKING_CREATE)")
-    public ResponseEntity<BookingDto> createBooking(
+    public ResponseEntity<BookingDto> createDraftBooking(
             @Valid @RequestBody BookingCreateRequest request,
             Authentication authentication) {
         UUID tenantId = UUID.fromString(authentication.getName());
-        BookingDto created = bookingService.createBooking(request, tenantId);
+        BookingDto created = bookingService.createDraftBooking(request, tenantId);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping("/{id}/pay")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_UPDATE')")
+    public ResponseEntity<PaymentInitiationResponse> initiatePayment(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        UUID tenantId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(bookingService.initiatePayment(id, tenantId));
+    }
+
+    @PostMapping("/{id}/retry-payment")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_UPDATE')")
+    public ResponseEntity<PaymentInitiationResponse> retryPayment(
+            @PathVariable UUID id,
+            Authentication authentication) {
+        UUID tenantId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(bookingService.retryPayment(id, tenantId));
+    }
+
+    @PostMapping("/{id}/confirm-payment")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')") // Usually called via webhook, keeping here for admin/manual tests
+    public ResponseEntity<Void> confirmPaymentManual(@PathVariable UUID id) {
+        bookingService.confirmPayment(id);
+        return ResponseEntity.ok().build();
     }
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -68,12 +96,16 @@ public class BookingV1Controller {
         return ResponseEntity.ok(new ApiListResponse<>(bookingService.getBookingsByProperty(propertyId)));
     }
 
-    // Ownership enforced by hasPermission — closes the gap where any BOOKING_READ holder
-    // could previously read any booking via hasAuthority alone.
     @GetMapping("/{id}")
     @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_READ')")
     public ResponseEntity<BookingDto> getBookingById(@PathVariable UUID id) {
         return ResponseEntity.ok(bookingService.getBookingById(id));
+    }
+
+    @GetMapping("/{id}/audit-log")
+    @PreAuthorize("hasPermission(#id, 'Booking', 'BOOKING_READ')")
+    public ResponseEntity<ApiListResponse<BookingAuditLog>> getAuditLog(@PathVariable UUID id) {
+        return ResponseEntity.ok(new ApiListResponse<>(bookingService.getAuditLog(id)));
     }
 
     // ── Landlord actions ──────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import { NgClass, TitleCasePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { MaintenanceApi } from '../../../../core/api/services/maintenance.api';
+import { NotificationService } from '../../../../core/service/notification.service';
 import { SessionStore } from '../../../../core/state/session.store';
 import { WorkspaceStore } from '../../workspace.store';
 import {
@@ -25,6 +26,7 @@ export class MaintenanceTabComponent {
   private readonly store = inject(WorkspaceStore);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly notifications = inject(NotificationService);
 
   protected readonly requests = signal<MaintenanceRequest[]>([]);
   protected readonly loading = signal(false);
@@ -32,6 +34,9 @@ export class MaintenanceTabComponent {
   protected readonly showForm = signal(false);
   protected readonly selectedRequest = signal<MaintenanceRequest | null>(null);
   protected readonly errorMessage = signal('');
+  protected readonly resolveDialogOpen = signal(false);
+  protected readonly cancelDialogOpen = signal(false);
+  protected readonly resolutionNotes = signal('');
 
   protected readonly categories: MaintenanceCategory[] = [
     'PLUMBING',
@@ -97,6 +102,7 @@ export class MaintenanceTabComponent {
         if (result) {
           this.createForm.reset({ category: 'PLUMBING', priority: 'MEDIUM' });
           this.showForm.set(false);
+          this.notifications.success('Maintenance request submitted.');
           this.loadRequests();
         }
         this.submitting.set(false);
@@ -107,17 +113,48 @@ export class MaintenanceTabComponent {
     this.maintenanceApi
       .updateStatus(id, { status, resolutionNotes: notes })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadRequests());
+      .subscribe({
+        next: () => {
+          this.loadRequests();
+          this.notifications.success(
+            status === 'RESOLVED' ? 'Request marked as resolved.' : 'Request cancelled.',
+          );
+        },
+        error: () => this.notifications.error('Unable to update the request right now.'),
+      });
   }
 
   protected resolve(req: MaintenanceRequest): void {
-    const notes = prompt('Resolution notes (optional):') ?? undefined;
-    this.updateStatus(req.id, 'RESOLVED', notes);
+    this.selectedRequest.set(req);
+    this.resolutionNotes.set(req.resolutionNotes ?? '');
+    this.resolveDialogOpen.set(true);
   }
 
   protected cancel(req: MaintenanceRequest): void {
-    if (!confirm('Cancel this request?')) return;
-    this.updateStatus(req.id, 'CANCELLED');
+    this.selectedRequest.set(req);
+    this.cancelDialogOpen.set(true);
+  }
+
+  protected confirmResolve(): void {
+    const request = this.selectedRequest();
+    if (!request) return;
+    const notes = this.resolutionNotes().trim() || undefined;
+    this.updateStatus(request.id, 'RESOLVED', notes);
+    this.closeDialogs();
+  }
+
+  protected confirmCancel(): void {
+    const request = this.selectedRequest();
+    if (!request) return;
+    this.updateStatus(request.id, 'CANCELLED');
+    this.closeDialogs();
+  }
+
+  protected closeDialogs(): void {
+    this.resolveDialogOpen.set(false);
+    this.cancelDialogOpen.set(false);
+    this.selectedRequest.set(null);
+    this.resolutionNotes.set('');
   }
 
   protected priorityClass(priority: string): string {

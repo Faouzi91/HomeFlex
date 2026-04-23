@@ -37,9 +37,12 @@ class ResourcePermissionServiceTest {
     private Property property;
     private Booking booking;
 
+    @Mock private com.homeflex.features.vehicle.domain.repository.VehicleRepository vehicleRepository;
+    @Mock private com.homeflex.features.vehicle.domain.repository.VehicleBookingRepository vehicleBookingRepository;
+
     @BeforeEach
     void setUp() {
-        service = new ResourcePermissionService(bookingRepository, propertyRepository);
+        service = new ResourcePermissionService(bookingRepository, propertyRepository, vehicleRepository, vehicleBookingRepository);
 
         landlord = new User();
         landlord.setId(UUID.randomUUID());

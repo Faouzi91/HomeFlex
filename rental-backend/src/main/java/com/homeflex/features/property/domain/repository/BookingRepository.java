@@ -41,6 +41,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     Optional<Booking> findByStripePaymentIntentId(String stripePaymentIntentId);
 
+    Optional<Booking> findByIdempotencyKey(String idempotencyKey);
+
     boolean existsByPropertyIdAndTenantIdAndStatusIn(UUID propertyId, UUID tenantId, List<BookingStatus> statuses);
 
     boolean existsByTenantIdAndPropertyLandlordIdAndStatusIn(UUID tenantId, UUID landlordId, List<BookingStatus> statuses);
@@ -48,6 +50,10 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     List<Booking> findByStatus(BookingStatus status);
 
     List<Booking> findByStatusAndCreatedAtBefore(BookingStatus status, LocalDateTime createdAt);
+
+    List<Booking> findByStatusAndStartDateLessThanEqual(BookingStatus status, LocalDate date);
+
+    List<Booking> findByStatusAndEndDateLessThan(BookingStatus status, LocalDate date);
 
     // Analytics methods
     long countByStatus(BookingStatus status);

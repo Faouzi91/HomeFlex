@@ -17,7 +17,6 @@ import { Property } from '../../../core/models/api.types';
 
 @Component({
   selector: 'app-map',
-  standalone: true,
   imports: [],
   template: `<div
     #mapContainer

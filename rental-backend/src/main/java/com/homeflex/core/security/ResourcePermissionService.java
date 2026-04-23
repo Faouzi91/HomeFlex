@@ -4,6 +4,10 @@ import com.homeflex.features.property.domain.entity.Booking;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.repository.BookingRepository;
 import com.homeflex.features.property.domain.repository.PropertyRepository;
+import com.homeflex.features.vehicle.domain.entity.Vehicle;
+import com.homeflex.features.vehicle.domain.entity.VehicleBooking;
+import com.homeflex.features.vehicle.domain.repository.VehicleBookingRepository;
+import com.homeflex.features.vehicle.domain.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +42,8 @@ public class ResourcePermissionService {
 
     private final BookingRepository bookingRepository;
     private final PropertyRepository propertyRepository;
+    private final VehicleRepository vehicleRepository;
+    private final VehicleBookingRepository vehicleBookingRepository;
 
     // ── Entry point: id-based (used from PermissionEvaluator) ─────────────────
 
@@ -49,6 +55,12 @@ public class ResourcePermissionService {
             case "Property" -> propertyRepository.findById(targetId)
                     .map(p -> isAllowed(userId, p, permission))
                     .orElse(false);
+            case "VehicleBooking" -> vehicleBookingRepository.findById(targetId)
+                    .map(vb -> isAllowed(userId, vb, permission))
+                    .orElse(false);
+            case "Vehicle" -> vehicleRepository.findById(targetId)
+                    .map(v -> isAllowed(userId, v, permission))
+                    .orElse(false);
             default -> false;
         };
     }
@@ -58,6 +70,8 @@ public class ResourcePermissionService {
     public boolean isAllowed(UUID userId, Object domainObject, String permission) {
         if (domainObject instanceof Booking b)  return bookingOwnership(userId, b, permission);
         if (domainObject instanceof Property p) return propertyOwnership(userId, p, permission);
+        if (domainObject instanceof VehicleBooking vb) return vehicleBookingOwnership(userId, vb, permission);
+        if (domainObject instanceof Vehicle v)  return vehicleOwnership(userId, v, permission);
         return false;
     }
 
@@ -80,5 +94,26 @@ public class ResourcePermissionService {
         // All property-scoped checks currently require landlord ownership.
         // When read-only agency roles are introduced, extend this switch.
         return property.getLandlord().getId().equals(userId);
+    }
+
+    private boolean vehicleBookingOwnership(UUID userId, VehicleBooking booking, String permission) {
+        boolean isTenant = booking.getTenantId().equals(userId);
+        
+        // Load the vehicle to find the owner. In a highly optimized system,
+        // we would fetch this eagerly with the booking, but for now this is fine.
+        boolean isOwner = vehicleRepository.findById(booking.getVehicleId())
+                .map(v -> v.getOwnerId().equals(userId))
+                .orElse(false);
+
+        return switch (permission) {
+            case Permissions.BOOKING_APPROVE,
+                 Permissions.BOOKING_UPDATE  -> isOwner;
+            case Permissions.BOOKING_CANCEL  -> isTenant;
+            default                          -> isTenant || isOwner;
+        };
+    }
+
+    private boolean vehicleOwnership(UUID userId, Vehicle vehicle, String permission) {
+        return vehicle.getOwnerId().equals(userId);
     }
 }

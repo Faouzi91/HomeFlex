@@ -1019,10 +1019,15 @@
                         You won't receive payment for approved bookings until your Stripe account is
                         set up. It only takes a few minutes.
                       </p>
+                      @if (stripeConfigured() === false) {
+                        <div class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+                          Stripe is not configured on this server. Add <code class="font-mono font-semibold">STRIPE_SECRET_KEY</code> to the backend <code class="font-mono font-semibold">.env</code> file and restart.
+                        </div>
+                      }
                       <button
                         type="button"
                         (click)="connectStripe()"
-                        [disabled]="stripeOnboardingLoading()"
+                        [disabled]="stripeOnboardingLoading() || stripeConfigured() === false"
                         class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#635bff] hover:bg-[#4f46e5] rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         @if (stripeOnboardingLoading()) {

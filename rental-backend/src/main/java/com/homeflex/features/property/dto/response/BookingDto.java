@@ -24,6 +24,8 @@ public record BookingDto(
         BigDecimal taxAmount,
         String stripePaymentIntentId,
         String stripeClientSecret,
+        String paymentStatus,
+        String paymentFailureReason,
         String landlordResponse,
         LocalDateTime respondedAt,
         LocalDate proposedStartDate,

@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.2
-**Date:** April 19, 2026
+**Version:** 4.3
+**Date:** April 23, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
 
@@ -26,6 +26,7 @@
 | 4.0     | 2026-04-19 | Security Eng. | Full RBAC migration: Role/Permission entities, V27/V28 Flyway migrations, 46 permissions, 4 roles, permission-based authorization with Permissions constants, HomeFlexPermissionEvaluator, OwnershipVerifier; Booking feature refactored to hasAuthority/hasPermission; three new workspace tabs (Finance, Disputes, Insurance); GET /disputes/mine endpoint; comprehensive API smoke-test script. |
 | 4.1     | 2026-04-19 | Security Eng. | Centralized ownership logic: ResourcePermissionService extracts all ownership rules from HomeFlexPermissionEvaluator; BookingService stripped to pure business logic; BookingV1Controller security gap fixed (GET /{id} hasPermission); BookingRepository.findByIdWithParties avoids N+1 in evaluator; 16 ResourcePermissionServiceTest ownership rule tests. |
 | 4.2     | 2026-04-19 | Architect     | Stripe Connect escrow workflow completed: MANUAL capture PaymentIntent, capture-on-approve, prorated early-checkout refund, Stripe Connect Express landlord onboarding (Hosting > Payments tab); DisputeModal standalone component replaces prompt(); BookingDetailPanel wires earlyCheckout API; api.client.ts ConnectOnboardingResponse type fix; payment-modal dead code removed; Prettier lint 100%. |
+| 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
 
 ---
 
@@ -48,6 +49,13 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v4.3 (Booking State Machine & Split Payment Flow)
+
+- 🟢 **Booking Workflow State Machine** — Replaced implicit status updates with a pure-domain `BookingStateMachine` enforcing transitions across 10 distinct states (`DRAFT`, `PAYMENT_PENDING`, `PAYMENT_FAILED`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `ACTIVE`, `COMPLETED`, `PENDING_MODIFICATION`).
+- 🟢 **Split Booking/Payment Flow** — `createBooking` monolithic method split into `/draft` (creates the booking with idempotency lock) and `/pay` (initiates Stripe PaymentIntent). Frontend handles the two-step flow natively.
+- 🟢 **Booking Audit Logs** — Every state transition is recorded in `booking_audit_log` with the triggering user, action, and optional reason, providing a complete history of the booking lifecycle.
+- 🟢 **Vehicle Ownership Security** — `ResourcePermissionService` extended to evaluate ownership logic for `Vehicle` and `VehicleBooking` domain objects, preparing the system for full vehicle booking support.
 
 ### Implemented since v4.2 (Stripe Escrow Workflow, Dispute Modal & Hosting Payments Tab)
 

@@ -24,6 +24,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "allowedCommonJsDependencies": ["leaflet"],
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
@@ -77,7 +78,8 @@
               "buildTarget": "homeflex-web:build:production"
             },
             "development": {
-              "buildTarget": "homeflex-web:build:development"
+              "buildTarget": "homeflex-web:build:development",
+              "proxyConfig": "proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
