@@ -8,8 +8,6 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return waitForSession(session, () =>
-    session.isAuthenticated() && session.isAdmin()
-      ? true
-      : router.createUrlTree(['/admin/login']),
+    session.isAuthenticated() && session.isAdmin() ? true : router.createUrlTree(['/admin/login']),
   );
 };

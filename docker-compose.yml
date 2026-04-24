@@ -55,14 +55,6 @@ services:
       rabbitmq:
         condition: service_healthy
 
-      # 🔥 optional services (don’t block startup)
-      elasticsearch:
-        condition: service_healthy
-        required: false
-      logstash:
-        condition: service_started
-        required: false
-
     restart: unless-stopped
     networks:
       - rental-network

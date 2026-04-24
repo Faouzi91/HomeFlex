@@ -271,15 +271,15 @@ export class PropertyDetailPageComponent {
         switchMap((booking) => {
           if (payload.bookingType === 'RENTAL') {
             import('rxjs').then(({ map }) => {}); // Hack to ensure map is available, but better to import it at top.
-            // Actually I'll just use a direct map since RxJS is already in scope. But `map` isn't imported from rxjs. 
+            // Actually I'll just use a direct map since RxJS is already in scope. But `map` isn't imported from rxjs.
             // I'll just use a sub-subscribe or another switchMap.
-            return this.bookingApi.initiatePayment(booking.id).pipe(
-              switchMap((res) => of({ booking, clientSecret: res.clientSecret }))
-            );
+            return this.bookingApi
+              .initiatePayment(booking.id)
+              .pipe(switchMap((res) => of({ booking, clientSecret: res.clientSecret })));
           }
           return of({ booking, clientSecret: null });
         }),
-        takeUntilDestroyed(this.destroyRef)
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: ({ booking, clientSecret }) => {
@@ -323,7 +323,10 @@ export class PropertyDetailPageComponent {
       this.stripeElementsMounted.set(false);
       this.bookingMessage.set('Payment confirmed! Your booking is now active.');
       this.notifications.success('Payment confirmed.');
-      setTimeout(() => this.router.navigate(['/workspace'], { queryParams: { tab: 'bookings' } }), 2000);
+      setTimeout(
+        () => this.router.navigate(['/workspace'], { queryParams: { tab: 'bookings' } }),
+        2000,
+      );
     }
   }
 

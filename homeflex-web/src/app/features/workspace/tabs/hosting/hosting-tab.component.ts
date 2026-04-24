@@ -360,7 +360,10 @@ export class HostingTabComponent {
   protected loadPayoutSummary(): void {
     this.http
       .get<{ stripeConfigured: boolean }>('/api/v1/config')
-      .pipe(catchError(() => of({ stripeConfigured: false })), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of({ stripeConfigured: false })),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((c) => this.stripeConfigured.set(c.stripeConfigured));
     this.payoutLoading.set(true);
     this.payoutApi

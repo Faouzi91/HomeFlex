@@ -182,7 +182,8 @@ public class VehicleV1Controller {
             Authentication authentication) {
         // tenant check is implicit in the service layer's initiation (though we should strictly use ResourcePermissionService)
         var result = vehicleAvailabilityService.initiatePayment(bookingId);
-        return ResponseEntity.ok(new com.homeflex.features.property.dto.response.PaymentInitiationResponse(result.clientSecret(), result.paymentIntentId()));
+        return ResponseEntity.ok(new com.homeflex.features.property.dto.response.PaymentInitiationResponse(
+                bookingId, result.clientSecret(), result.paymentIntentId(), result.amount(), result.currency()));
     }
 
     @GetMapping("/my-bookings")

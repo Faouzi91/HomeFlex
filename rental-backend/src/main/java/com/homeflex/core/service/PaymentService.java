@@ -332,4 +332,5 @@ public class PaymentService {
     // ── Response Records ───────────────────────────────────────────────
 
     public record ConnectOnboardingResponse(String stripeAccountId, String onboardingUrl) {}
+    public record PaymentIntentResult(String clientSecret, String paymentIntentId, java.math.BigDecimal amount, String currency) {}
 }

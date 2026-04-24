@@ -42,7 +42,7 @@ public class VehicleBooking {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private VehicleBookingStatus status = VehicleBookingStatus.PENDING;
+    private VehicleBookingStatus status = VehicleBookingStatus.DRAFT;
 
     @Column(name = "platform_fee", precision = 12, scale = 2)
     private BigDecimal platformFee;

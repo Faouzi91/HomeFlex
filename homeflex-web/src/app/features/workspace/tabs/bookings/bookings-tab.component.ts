@@ -55,9 +55,7 @@ export class BookingsTabComponent {
       if (!b.startDate || !b.endDate) return false;
       const start = new Date(b.startDate);
       const end = new Date(b.endDate);
-      return (
-        (b.status === 'APPROVED' || b.status === 'ACTIVE') && today >= start && today <= end
-      );
+      return (b.status === 'APPROVED' || b.status === 'ACTIVE') && today >= start && today <= end;
     });
   });
 
@@ -71,7 +69,10 @@ export class BookingsTabComponent {
   });
 
   protected readonly pendingApproval = computed(() =>
-    this.receivedBookings().filter((b) => b.status === 'PENDING_APPROVAL' || b.status === 'PAYMENT_PENDING' || b.status === 'DRAFT'),
+    this.receivedBookings().filter(
+      (b) =>
+        b.status === 'PENDING_APPROVAL' || b.status === 'PAYMENT_PENDING' || b.status === 'DRAFT',
+    ),
   );
 
   protected readonly pastReceived = computed(() =>
@@ -86,7 +87,9 @@ export class BookingsTabComponent {
   );
 
   // Pending badge count (used in the pill)
-  protected readonly pendingCount = computed(() => this.receivedBookings().filter((b) => b.status === 'PENDING_APPROVAL').length);
+  protected readonly pendingCount = computed(
+    () => this.receivedBookings().filter((b) => b.status === 'PENDING_APPROVAL').length,
+  );
 
   constructor() {
     forkJoin({

@@ -506,7 +506,7 @@ public class SampleDataInitializer implements CommandLineRunner {
             booking.setEndDate(LocalDate.now().minusDays(7));
             booking.setTotalPrice(vehicle.getDailyPrice().multiply(new BigDecimal("3")));
             booking.setCurrency(vehicle.getCurrency());
-            booking.setStatus(VehicleBookingStatus.CONFIRMED);
+            booking.setStatus(VehicleBookingStatus.APPROVED);
             booking.setCreatedAt(LocalDateTime.now().minusDays(15));
             vehicleBookingRepository.save(booking);
         }

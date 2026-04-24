@@ -1020,8 +1020,13 @@
                         set up. It only takes a few minutes.
                       </p>
                       @if (stripeConfigured() === false) {
-                        <div class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-                          Stripe is not configured on this server. Add <code class="font-mono font-semibold">STRIPE_SECRET_KEY</code> to the backend <code class="font-mono font-semibold">.env</code> file and restart.
+                        <div
+                          class="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800"
+                        >
+                          Stripe is not configured on this server. Add
+                          <code class="font-mono font-semibold">STRIPE_SECRET_KEY</code> to the
+                          backend <code class="font-mono font-semibold">.env</code> file and
+                          restart.
                         </div>
                       }
                       <button

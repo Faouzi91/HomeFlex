@@ -52,14 +52,14 @@ export class OverviewTabComponent {
   });
 
   protected readonly activePropertyBookings = computed(() =>
-    this.propertyBookings().filter(
-      (b) => ['APPROVED', 'ACTIVE', 'PENDING_APPROVAL', 'PAYMENT_PENDING'].includes(b.status),
+    this.propertyBookings().filter((b) =>
+      ['APPROVED', 'ACTIVE', 'PENDING_APPROVAL', 'PAYMENT_PENDING'].includes(b.status),
     ),
   );
 
   protected readonly activeVehicleBookings = computed(() =>
-    this.vehicleBookings().filter(
-      (b) => ['APPROVED', 'ACTIVE', 'PENDING_APPROVAL', 'PAYMENT_PENDING'].includes(b.status),
+    this.vehicleBookings().filter((b) =>
+      ['APPROVED', 'ACTIVE', 'PENDING_APPROVAL', 'PAYMENT_PENDING'].includes(b.status),
     ),
   );
 

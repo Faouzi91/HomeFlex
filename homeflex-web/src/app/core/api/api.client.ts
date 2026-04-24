@@ -230,7 +230,7 @@ export class ApiClient {
     endDate: string;
     message?: string | null;
   }): Observable<VehicleBooking> {
-    return this.vehicles.createBooking(payload);
+    return this.vehicles.createDraft(payload);
   }
   getMyVehicleBookings(): Observable<ApiListResponse<VehicleBooking>> {
     return this.vehicles.getMyBookings();

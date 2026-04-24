@@ -73,7 +73,9 @@ export class RegisterPageComponent {
         phoneNumber: value.phoneNumber || null,
       })
       .subscribe(() => {
-        this.router.navigateByUrl(this.route.snapshot.queryParamMap.get('redirectUrl') || '/workspace');
+        this.router.navigateByUrl(
+          this.route.snapshot.queryParamMap.get('redirectUrl') || '/workspace',
+        );
       });
   }
 

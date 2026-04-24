@@ -89,7 +89,7 @@ public class EscrowService {
     @Transactional
     public void releaseVehicleEscrows() {
         List<VehicleBooking> matured = vehicleBookingRepository.findEscrowReady(
-                VehicleBookingStatus.CONFIRMED, LocalDate.now());
+                VehicleBookingStatus.APPROVED, LocalDate.now());
 
         for (VehicleBooking booking : matured) {
             try {
@@ -145,7 +145,7 @@ public class EscrowService {
                 .orElse(BigDecimal.ZERO);
 
         BigDecimal vehicleEscrowHeld = vehicleBookingRepository
-                .sumEscrowHeldByOwner(userId, VehicleBookingStatus.CONFIRMED)
+                .sumEscrowHeldByOwner(userId, VehicleBookingStatus.APPROVED)
                 .orElse(BigDecimal.ZERO);
 
         BigDecimal totalEscrowHeld = propertyEscrowHeld.add(vehicleEscrowHeld);

@@ -118,18 +118,19 @@ public class VehicleAvailabilityService {
             throw new DomainException("Payment can only be initiated for DRAFT or PAYMENT_FAILED bookings");
         }
 
-        // We assume the caller is authenticated and matches the tenantId
-        // The ResourcePermissionService should have enforced ownership at the controller level
+        String transferGroup = "vehicle_booking_" + booking.getId();
+        String description = "Vehicle booking: " + booking.getId();
 
-        com.homeflex.core.service.PaymentService.PaymentIntentResult result = 
-            paymentService.createBookingPaymentIntent(bookingId.toString(), booking.getTotalPrice(), booking.getCurrency(), booking.getTenantId().toString(), booking.getVehicleId().toString());
+        com.stripe.model.PaymentIntent pi = paymentService.createBookingPaymentIntent(
+                booking.getTotalPrice(), booking.getCurrency(), description, transferGroup);
 
-        booking.setStripePaymentIntentId(result.paymentIntentId());
+        booking.setStripePaymentIntentId(pi.getId());
         booking.setStatus(VehicleBookingStatus.PAYMENT_PENDING);
         bookingRepository.save(booking);
-        
-        log.info("Vehicle payment initiated for booking={}, pi={}", bookingId, result.paymentIntentId());
-        return result;
+
+        log.info("Vehicle payment initiated for booking={}, pi={}", bookingId, pi.getId());
+        return new com.homeflex.core.service.PaymentService.PaymentIntentResult(
+                pi.getClientSecret(), pi.getId(), booking.getTotalPrice(), booking.getCurrency());
     }
 
     /**

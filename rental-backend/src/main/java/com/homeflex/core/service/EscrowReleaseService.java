@@ -84,7 +84,7 @@ public class EscrowReleaseService {
     @Transactional
     protected void releaseVehicleEscrows() {
         List<VehicleBooking> eligible = vehicleBookingRepository.findEscrowReady(
-                VehicleBookingStatus.CONFIRMED, LocalDate.now());
+                VehicleBookingStatus.APPROVED, LocalDate.now());
 
         if (eligible.isEmpty()) return;
 
