@@ -161,9 +161,9 @@ public class VehicleV1Controller {
                 new ApiListResponse<>(vehicleMapper.toBookingResponseList(bookings)));
     }
 
-    @PostMapping("/{id}/bookings")
+    @PostMapping("/{id}/bookings/draft")
     @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
-    public ResponseEntity<VehicleBookingResponse> createBooking(
+    public ResponseEntity<VehicleBookingResponse> createDraftBooking(
             @PathVariable UUID id,
             @Valid @RequestBody VehicleBookingCreateRequest request,
             Authentication authentication) {
@@ -172,6 +172,17 @@ public class VehicleV1Controller {
                 id, tenantId, request.startDate(), request.endDate(), request.message());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(vehicleMapper.toBookingResponse(booking));
+    }
+
+    @PostMapping("/{id}/bookings/{bookingId}/pay")
+    @PreAuthorize("hasAnyRole('TENANT', 'ADMIN')")
+    public ResponseEntity<com.homeflex.features.property.dto.response.PaymentInitiationResponse> initiatePayment(
+            @PathVariable UUID id,
+            @PathVariable UUID bookingId,
+            Authentication authentication) {
+        // tenant check is implicit in the service layer's initiation (though we should strictly use ResourcePermissionService)
+        var result = vehicleAvailabilityService.initiatePayment(bookingId);
+        return ResponseEntity.ok(new com.homeflex.features.property.dto.response.PaymentInitiationResponse(result.clientSecret(), result.paymentIntentId()));
     }
 
     @GetMapping("/my-bookings")

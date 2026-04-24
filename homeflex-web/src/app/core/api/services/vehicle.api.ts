@@ -32,15 +32,25 @@ export class VehicleApi extends BaseApi {
     });
   }
 
-  createBooking(payload: {
+  createDraft(payload: {
     vehicleId: string;
     startDate: string;
     endDate: string;
     message?: string | null;
   }): Observable<VehicleBooking> {
     return this.http.post<VehicleBooking>(
-      `${this.baseUrl}/vehicles/${payload.vehicleId}/bookings`,
+      `${this.baseUrl}/vehicles/${payload.vehicleId}/bookings/draft`,
       payload,
+    );
+  }
+
+  initiatePayment(
+    vehicleId: string,
+    bookingId: string,
+  ): Observable<{ clientSecret: string; paymentIntentId: string }> {
+    return this.http.post<{ clientSecret: string; paymentIntentId: string }>(
+      `${this.baseUrl}/vehicles/${vehicleId}/bookings/${bookingId}/pay`,
+      {},
     );
   }
 

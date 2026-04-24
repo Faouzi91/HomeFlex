@@ -228,7 +228,8 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | POST   | `/properties`                         | Landlord | Create property (multipart)         |
 | PUT    | `/properties/{id}`                    | Landlord | Update property                     |
 | DELETE | `/properties/{id}`                    | Landlord | Delete property                     |
-| POST   | `/bookings`                           | Tenant   | Create booking                      |
+| POST   | `/properties/{id}/bookings/draft`     | Tenant   | Create property booking draft       |
+| POST   | `/properties/{id}/bookings/{bid}/pay` | Tenant   | Initiate property booking payment   |
 | PATCH  | `/bookings/{id}/approve`              | Landlord | Approve booking                     |
 | PATCH  | `/bookings/{id}/reject`               | Landlord | Reject booking                      |
 | PATCH  | `/bookings/{id}/cancel`               | Tenant   | Cancel booking                      |
@@ -255,6 +256,8 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | POST   | `/vehicles`                           | Landlord | Create vehicle listing              |
 | PUT    | `/vehicles/{id}`                      | Landlord | Update vehicle                      |
 | DELETE | `/vehicles/{id}`                      | Landlord | Soft-delete vehicle                 |
+| POST   | `/vehicles/{id}/bookings/draft`       | Tenant   | Create vehicle booking draft        |
+| POST   | `/vehicles/{id}/bookings/{bid}/pay`   | Tenant   | Initiate vehicle booking payment    |
 | POST   | `/vehicles/{id}/images`               | Landlord | Upload vehicle images               |
 | POST   | `/vehicles/{id}/condition`            | Landlord | Create condition report             |
 | GET    | `/vehicles/{id}/condition`            | Landlord | List condition reports              |

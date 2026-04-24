@@ -53,6 +53,12 @@ public class VehicleBooking {
     @Column(name = "escrow_released_at")
     private LocalDateTime escrowReleasedAt;
 
+    @Column(name = "payment_status", length = 50)
+    private String paymentStatus;
+
+    @Column(name = "payment_failure_reason", columnDefinition = "TEXT")
+    private String paymentFailureReason;
+
     @Column(columnDefinition = "TEXT")
     private String message;
 

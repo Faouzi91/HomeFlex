@@ -92,13 +92,14 @@ export class BookingDetailPanelComponent {
   );
 
   protected readonly canApprove = computed(
-    () => this.isLandlord() && this.booking().status === 'PENDING',
+    () => this.isLandlord() && this.booking().status === 'PENDING_APPROVAL',
   );
 
   protected readonly canCancel = computed(() => {
     const s = this.booking().status;
     if (this.isLandlord()) return false;
-    return s === 'PENDING' || s === 'APPROVED';
+    // Tenants can cancel before approval or once approved (before start)
+    return s === 'PENDING_APPROVAL' || s === 'PAYMENT_PENDING' || s === 'APPROVED' || s === 'DRAFT';
   });
 
   protected readonly isEarlyCheckout = computed(
@@ -107,7 +108,7 @@ export class BookingDetailPanelComponent {
 
   protected readonly canOpenDispute = computed(() => {
     const s = this.booking().status;
-    return s === 'APPROVED' || s === 'CONFIRMED' || s === 'COMPLETED';
+    return s === 'APPROVED' || s === 'ACTIVE' || s === 'COMPLETED';
   });
 
   // ── Tenant info display (for landlord view) ─────────────────────────────────
@@ -210,9 +211,12 @@ export class BookingDetailPanelComponent {
 
   protected statusClass(s: string): string {
     const m: Record<string, string> = {
-      PENDING: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+      DRAFT: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
+      PAYMENT_PENDING: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+      PAYMENT_FAILED: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+      PENDING_APPROVAL: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
       APPROVED: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-      CONFIRMED: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+      ACTIVE: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300',
       CANCELLED: 'bg-rose-50 text-rose-600 ring-1 ring-rose-200',
       REJECTED: 'bg-rose-50 text-rose-600 ring-1 ring-rose-200',
       COMPLETED: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',

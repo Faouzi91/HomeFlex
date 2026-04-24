@@ -2,6 +2,24 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-24 (Unified Booking Workflow & Vehicle Parity)
+
+### Added
+
+- **Vehicle Booking Workflow Parity** — `VehicleBookingStatus` aligned with the production-grade 10-state `BookingStatus` lifecycle (`DRAFT`, `PAYMENT_PENDING`, `PAYMENT_FAILED`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `ACTIVE`, `COMPLETED`, `PENDING_MODIFICATION`).
+- **Vehicle Split-Payment API** — Refactored vehicle booking creation into two stages: `POST /vehicles/{id}/bookings/draft` for reservation and `POST /vehicles/{id}/bookings/{bookingId}/pay` for payment initiation.
+- **Frontend Stripe Integration for Vehicles** — `vehicle-detail.page.ts` now supports the split-payment flow, mounting Stripe Elements directly in the sidebar for secure payment confirmation.
+- **Status Stabilization** — Updated all dashboard tabs (Hosting, Bookings) to support the new lifecycle states. Replaced legacy `PENDING` checks with specific `PENDING_APPROVAL`, `PAYMENT_PENDING`, and `DRAFT` logic.
+- **Database Migration V30** — Flyway migration to update `vehicle_bookings` status constraints and add payment tracking columns (`payment_status`, `payment_failure_reason`).
+
+### Changed
+
+- **`VehicleAvailabilityService`** — Implemented `initiatePayment()` and updated `reserve()` to handle the new `DRAFT` starting state.
+- **`BookingDetailPanelComponent`** — Visual status mappings (`statusClass`) and action guards (`canApprove`, `canCancel`) updated to support all 10 states.
+- **`property-detail.page.ts`** — Added post-payment redirection to the bookings tab for better UX.
+
+---
+
 ## [Unreleased] — 2026-04-23 (Booking State Machine & Split Payment Flow)
 
 ### Added

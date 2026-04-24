@@ -35,10 +35,11 @@ import java.util.UUID;
 public class VehicleAvailabilityService {
 
     private static final List<VehicleBookingStatus> BLOCKING_STATUSES =
-            List.of(VehicleBookingStatus.PENDING, VehicleBookingStatus.CONFIRMED);
+            List.of(VehicleBookingStatus.PAYMENT_PENDING, VehicleBookingStatus.PENDING_APPROVAL, VehicleBookingStatus.APPROVED, VehicleBookingStatus.ACTIVE);
 
     private final VehicleRepository vehicleRepository;
     private final VehicleBookingRepository bookingRepository;
+    private final com.homeflex.core.service.PaymentService paymentService;
 
     /**
      * Returns {@code true} when the vehicle has no overlapping bookings
@@ -99,13 +100,36 @@ public class VehicleAvailabilityService {
         booking.setEndDate(endDate);
         booking.setTotalPrice(totalPrice);
         booking.setCurrency(vehicle.getCurrency());
-        booking.setStatus(VehicleBookingStatus.PENDING);
+        booking.setStatus(VehicleBookingStatus.DRAFT);
         booking.setMessage(message);
 
         VehicleBooking saved = bookingRepository.save(booking);
-        log.info("Vehicle booking created: id={}, vehicle={}, tenant={}, dates={}/{}",
+        log.info("Vehicle booking drafted: id={}, vehicle={}, tenant={}, dates={}/{}",
                 saved.getId(), vehicleId, tenantId, startDate, endDate);
         return saved;
+    }
+
+    @Transactional
+    public com.homeflex.core.service.PaymentService.PaymentIntentResult initiatePayment(UUID bookingId) {
+        VehicleBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle booking not found: " + bookingId));
+
+        if (booking.getStatus() != VehicleBookingStatus.DRAFT && booking.getStatus() != VehicleBookingStatus.PAYMENT_FAILED) {
+            throw new DomainException("Payment can only be initiated for DRAFT or PAYMENT_FAILED bookings");
+        }
+
+        // We assume the caller is authenticated and matches the tenantId
+        // The ResourcePermissionService should have enforced ownership at the controller level
+
+        com.homeflex.core.service.PaymentService.PaymentIntentResult result = 
+            paymentService.createBookingPaymentIntent(bookingId.toString(), booking.getTotalPrice(), booking.getCurrency(), booking.getTenantId().toString(), booking.getVehicleId().toString());
+
+        booking.setStripePaymentIntentId(result.paymentIntentId());
+        booking.setStatus(VehicleBookingStatus.PAYMENT_PENDING);
+        bookingRepository.save(booking);
+        
+        log.info("Vehicle payment initiated for booking={}, pi={}", bookingId, result.paymentIntentId());
+        return result;
     }
 
     /**

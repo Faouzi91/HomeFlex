@@ -53,13 +53,13 @@ export class OverviewTabComponent {
 
   protected readonly activePropertyBookings = computed(() =>
     this.propertyBookings().filter(
-      (b) => b.status === 'CONFIRMED' || b.status === 'PENDING' || b.status === 'IN_PROGRESS',
+      (b) => ['APPROVED', 'ACTIVE', 'PENDING_APPROVAL', 'PAYMENT_PENDING'].includes(b.status),
     ),
   );
 
   protected readonly activeVehicleBookings = computed(() =>
     this.vehicleBookings().filter(
-      (b) => b.status === 'CONFIRMED' || b.status === 'PENDING' || b.status === 'IN_PROGRESS',
+      (b) => ['APPROVED', 'ACTIVE', 'PENDING_APPROVAL', 'PAYMENT_PENDING'].includes(b.status),
     ),
   );
 
@@ -88,10 +88,16 @@ export class OverviewTabComponent {
 
   protected statusClass(status: string): string {
     const map: Record<string, string> = {
-      CONFIRMED: 'bg-emerald-50 text-emerald-700',
-      PENDING: 'bg-amber-50 text-amber-700',
+      DRAFT: 'bg-slate-100 text-slate-600',
+      PAYMENT_PENDING: 'bg-amber-50 text-amber-700',
+      PAYMENT_FAILED: 'bg-rose-50 text-rose-700',
+      PENDING_APPROVAL: 'bg-blue-50 text-blue-700',
+      APPROVED: 'bg-emerald-50 text-emerald-700',
+      ACTIVE: 'bg-emerald-100 text-emerald-800',
       CANCELLED: 'bg-rose-50 text-rose-700',
       REJECTED: 'bg-rose-50 text-rose-700',
+      COMPLETED: 'bg-slate-100 text-slate-600',
+      PENDING_MODIFICATION: 'bg-violet-50 text-violet-700',
     };
     return map[status] ?? 'bg-slate-100 text-slate-600';
   }

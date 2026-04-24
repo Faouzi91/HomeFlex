@@ -99,8 +99,8 @@
                   <!-- Status accent bar -->
                   <div
                     class="w-1 shrink-0"
-                    [class.bg-emerald-400]="b.status === 'CONFIRMED' || b.status === 'APPROVED'"
-                    [class.bg-amber-400]="b.status === 'PENDING'"
+                    [class.bg-emerald-400]="b.status === 'ACTIVE' || b.status === 'APPROVED'"
+                    [class.bg-amber-400]="b.status === 'PENDING_APPROVAL' || b.status === 'PAYMENT_PENDING' || b.status === 'DRAFT'"
                     [class.bg-rose-400]="b.status === 'CANCELLED' || b.status === 'REJECTED'"
                     [class.bg-slate-200]="b.status === 'COMPLETED'"
                   ></div>
@@ -258,8 +258,8 @@
                 <div class="flex">
                   <div
                     class="w-1 shrink-0"
-                    [class.bg-emerald-400]="b.status === 'CONFIRMED' || b.status === 'APPROVED'"
-                    [class.bg-amber-400]="b.status === 'PENDING'"
+                    [class.bg-emerald-400]="b.status === 'ACTIVE' || b.status === 'APPROVED'"
+                    [class.bg-amber-400]="b.status === 'PENDING_APPROVAL' || b.status === 'PAYMENT_PENDING' || b.status === 'DRAFT'"
                     [class.bg-rose-400]="b.status === 'CANCELLED' || b.status === 'REJECTED'"
                     [class.bg-slate-200]="b.status === 'COMPLETED'"
                   ></div>

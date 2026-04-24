@@ -280,7 +280,7 @@ export class HostingTabComponent {
   protected readonly rejectReason = signal('');
 
   protected readonly pendingBookings = computed(() =>
-    this.hostBookings().filter((b) => b.status === 'PENDING'),
+    this.hostBookings().filter((b) => b.status === 'PENDING_APPROVAL'),
   );
 
   protected loadAllHostBookings(): void {
@@ -432,13 +432,16 @@ export class HostingTabComponent {
 
   protected statusClass(status: string): string {
     const map: Record<string, string> = {
+      DRAFT: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
+      PAYMENT_PENDING: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+      PAYMENT_FAILED: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+      PENDING_APPROVAL: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
       APPROVED: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-      CONFIRMED: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
-      PENDING: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+      ACTIVE: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300',
       CANCELLED: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
       REJECTED: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
       COMPLETED: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
-      DRAFT: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
+      PENDING_MODIFICATION: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
       AVAILABLE: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
       UNAVAILABLE: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
     };

@@ -1,8 +1,14 @@
 package com.homeflex.features.vehicle.domain.enums;
 
 public enum VehicleBookingStatus {
-    PENDING,
-    CONFIRMED,
+    DRAFT,
+    PAYMENT_PENDING,
+    PAYMENT_FAILED,
+    PENDING_APPROVAL,
+    APPROVED,
+    REJECTED,
     CANCELLED,
-    COMPLETED
+    ACTIVE,
+    COMPLETED,
+    PENDING_MODIFICATION
 }

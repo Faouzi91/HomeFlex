@@ -56,7 +56,7 @@ export class BookingsTabComponent {
       const start = new Date(b.startDate);
       const end = new Date(b.endDate);
       return (
-        (b.status === 'APPROVED' || b.status === 'CONFIRMED') && today >= start && today <= end
+        (b.status === 'APPROVED' || b.status === 'ACTIVE') && today >= start && today <= end
       );
     });
   });
@@ -66,12 +66,12 @@ export class BookingsTabComponent {
     return this.receivedBookings().filter((b) => {
       if (!b.startDate) return false;
       const start = new Date(b.startDate);
-      return (b.status === 'APPROVED' || b.status === 'CONFIRMED') && today < start;
+      return b.status === 'APPROVED' && today < start;
     });
   });
 
   protected readonly pendingApproval = computed(() =>
-    this.receivedBookings().filter((b) => b.status === 'PENDING'),
+    this.receivedBookings().filter((b) => b.status === 'PENDING_APPROVAL' || b.status === 'PAYMENT_PENDING' || b.status === 'DRAFT'),
   );
 
   protected readonly pastReceived = computed(() =>
@@ -80,12 +80,13 @@ export class BookingsTabComponent {
         b.status === 'COMPLETED' ||
         b.status === 'CANCELLED' ||
         b.status === 'REJECTED' ||
+        b.status === 'PAYMENT_FAILED' ||
         (b.endDate && new Date(b.endDate) < new Date() && b.status === 'APPROVED'),
     ),
   );
 
   // Pending badge count (used in the pill)
-  protected readonly pendingCount = computed(() => this.pendingApproval().length);
+  protected readonly pendingCount = computed(() => this.receivedBookings().filter((b) => b.status === 'PENDING_APPROVAL').length);
 
   constructor() {
     forkJoin({
@@ -218,9 +219,12 @@ export class BookingsTabComponent {
 
   protected statusClass(status: string): string {
     const map: Record<string, string> = {
-      CONFIRMED: 'bg-emerald-50 text-emerald-700',
-      PENDING: 'bg-amber-50 text-amber-700',
+      DRAFT: 'bg-slate-100 text-slate-600',
+      PAYMENT_PENDING: 'bg-amber-50 text-amber-700',
+      PAYMENT_FAILED: 'bg-rose-50 text-rose-700',
+      PENDING_APPROVAL: 'bg-blue-50 text-blue-700',
       APPROVED: 'bg-emerald-50 text-emerald-700',
+      ACTIVE: 'bg-emerald-100 text-emerald-800',
       CANCELLED: 'bg-rose-50 text-rose-700',
       REJECTED: 'bg-rose-50 text-rose-700',
       COMPLETED: 'bg-slate-100 text-slate-600',

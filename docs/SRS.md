@@ -27,6 +27,7 @@
 | 4.1     | 2026-04-19 | Security Eng. | Centralized ownership logic: ResourcePermissionService extracts all ownership rules from HomeFlexPermissionEvaluator; BookingService stripped to pure business logic; BookingV1Controller security gap fixed (GET /{id} hasPermission); BookingRepository.findByIdWithParties avoids N+1 in evaluator; 16 ResourcePermissionServiceTest ownership rule tests. |
 | 4.2     | 2026-04-19 | Architect     | Stripe Connect escrow workflow completed: MANUAL capture PaymentIntent, capture-on-approve, prorated early-checkout refund, Stripe Connect Express landlord onboarding (Hosting > Payments tab); DisputeModal standalone component replaces prompt(); BookingDetailPanel wires earlyCheckout API; api.client.ts ConnectOnboardingResponse type fix; payment-modal dead code removed; Prettier lint 100%. |
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
+| 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
 
 ---
 
@@ -50,12 +51,13 @@
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
 
-### Implemented since v4.3 (Booking State Machine & Split Payment Flow)
+### Implemented since v4.4 (Unified Booking State Machine & Vehicle Parity)
 
-- 🟢 **Booking Workflow State Machine** — Replaced implicit status updates with a pure-domain `BookingStateMachine` enforcing transitions across 10 distinct states (`DRAFT`, `PAYMENT_PENDING`, `PAYMENT_FAILED`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `ACTIVE`, `COMPLETED`, `PENDING_MODIFICATION`).
-- 🟢 **Split Booking/Payment Flow** — `createBooking` monolithic method split into `/draft` (creates the booking with idempotency lock) and `/pay` (initiates Stripe PaymentIntent). Frontend handles the two-step flow natively.
-- 🟢 **Booking Audit Logs** — Every state transition is recorded in `booking_audit_log` with the triggering user, action, and optional reason, providing a complete history of the booking lifecycle.
-- 🟢 **Vehicle Ownership Security** — `ResourcePermissionService` extended to evaluate ownership logic for `Vehicle` and `VehicleBooking` domain objects, preparing the system for full vehicle booking support.
+- 🟢 **Unified Booking Lifecycle** — Both property and vehicle bookings now follow the same 10-state lifecycle (`DRAFT`, `PAYMENT_PENDING`, `PAYMENT_FAILED`, `PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `CANCELLED`, `ACTIVE`, `COMPLETED`, `PENDING_MODIFICATION`), ensuring consistent reporting and UI behavior across the platform.
+- 🟢 **Vehicle Split-Payment Workflow** — Vehicle reservations migrated from a monolithic creation endpoint to a production-grade split flow: `POST /bookings/draft` followed by `POST /bookings/{id}/pay`.
+- 🟢 **Dashboard Status Stabilization** — All dashboard filters (Active, Pending, Upcoming) updated to use the new state machine statuses. UI visual mappings (colors, labels) expanded to support the full 10-state lifecycle.
+- 🟢 **Stripe Vehicle Integration** — `VehicleDetailPage` updated to mount Stripe Elements for secure payment confirmation, mirroring the property booking experience.
+- 🟢 **Vehicle Ownership Security** — `ResourcePermissionService` extended to evaluate ownership logic for `Vehicle` and `VehicleBooking` domain objects.
 
 ### Implemented since v4.2 (Stripe Escrow Workflow, Dispute Modal & Hosting Payments Tab)
 

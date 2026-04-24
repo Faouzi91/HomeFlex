@@ -323,6 +323,7 @@ export class PropertyDetailPageComponent {
       this.stripeElementsMounted.set(false);
       this.bookingMessage.set('Payment confirmed! Your booking is now active.');
       this.notifications.success('Payment confirmed.');
+      setTimeout(() => this.router.navigate(['/workspace'], { queryParams: { tab: 'bookings' } }), 2000);
     }
   }
 
