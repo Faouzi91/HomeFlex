@@ -2,7 +2,7 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.6
+**Version:** 4.7
 **Date:** April 25, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
@@ -29,6 +29,7 @@
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
 | 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
 | 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation. |
+| 4.7     | 2026-04-25 | Architect     | Comprehensive codebase audit: corrected 15+ misclassified SRS items (🔴→🟢: auto-reject, cancellation policies, ES geo-search, full-text search, Twilio SMS, escrow/refunds/receipts, FR-401 finance dashboard, FR-800 leases, FR-900 maintenance, AC-6 dispute resolution; 🔴→🟡: two-way reviews, notification preferences, trust score, blockchain lease stub; 🟡→🔴: account lockout); added new "Implemented features not in SRS" section (pricing rules, room types, booking audit log, state machine, agency, OTP). SRS now reflects actual codebase state at 4.7.
 | 4.6     | 2026-04-25 | Architect     | Full UI/UX premium redesign pass: dark `bg-slate-900` editorial hero headers on properties and vehicles listing pages; premium filter sidebars with `rounded-xl` inputs and `.select-styled` dropdowns; insurance tab restyled with emerald/gold sectioned plan cards; disputes tab restyled with amber color scheme and SVG meta rows; finance tab rebuilt with onboarding hero panel, 4-step progress indicator, earnings dashboard tiles, and improved receipts section; raw enum display fixed across all templates (`.replaceAll('_', ' ')` sweep covering `vehicle-detail`, `property-detail`, `favorites-tab`, `hosting-tab`, `admin-properties`); MinIO image proxy via Nginx `/uploads/` → `minio:9000/rental-app-media/`; `StorageService` generates relative `/uploads/<key>` URLs; V38 Flyway migration rewrites existing absolute `http://` image URLs to relative form. |
 
 ---
@@ -222,14 +223,24 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟢 **ELK logging stack** — Elasticsearch + Logstash + Kibana deployed as Docker services. Backend ships JSON logs to Logstash on port 50000.
 - 🟢 **Insurance marketplace** — `InsurancePlan` entity with TENANT and LANDLORD plan types. Full CRUD API and Insurance workspace tab showing both plan categories (implemented since v4.0).
 
+### Partially Implemented (v2.4+)
+
+- 🟡 **Email verification** — `EmailVerificationToken` entity and `EmailService.sendEmailVerificationToken()` exist (V7 migration). However, no `GET /auth/verify-email?token=...` endpoint to consume the token, and no `isEmailVerified` gate on landlord publishing or booking creation.
+- 🟡 **Two-way reviews** — `ReviewType` enum has both `PROPERTY` and `TENANT` values. Tenant-reviews-property is implemented. Landlord-reviews-tenant submission and `GET /reviews/received` endpoint are missing.
+- 🟡 **Notification preferences** — `User` entity has boolean flags `emailNotificationsEnabled`, `pushNotificationsEnabled`, `smsNotificationsEnabled`. No granular per-event-type per-channel `NotificationPreference` entity yet.
+- 🟡 **Blockchain lease contracts** — `BlockchainLeaseService` exists and is called from `LeaseService`, but the implementation body is a no-op stub (`log.info("Starting blockchain recording...")`). Not a real blockchain integration.
+- 🟡 **Trust Score** — `User.trustScore` field with default 5.0 exists (V19 migration), but no score calculation logic or update triggers are implemented.
+
 ### Planned (not yet built)
 
 - 🔴 Multi-region deployment (AWS ECS Fargate, Route53 latency routing)
 - 🔴 Arabic and Spanish i18n
-- 🔴 Apple / Facebook social login — backend OAuth not implemented; UI buttons show "Soon" badge
-- 🔴 AI-powered price recommendations (v3.0)
-- 🔴 Blockchain-based lease contracts (v3.0)
-- 🔴 White-label platform for agencies (v4.0)
+- 🔴 Apple / Facebook social login — backend stub methods throw exceptions; UI buttons show "Soon" badge
+- 🔴 Account lockout after 5 failed login attempts — no `failedLoginAttempts` counter on `User`
+- 🔴 AI-powered price recommendations
+- 🔴 Recurring monthly rent collection (Stripe Billing subscriptions)
+- 🔴 Image auto-resizing (multiple sizes on upload)
+- 🔴 Geocoding API integration — lat/lng fields exist on `Property` but are never populated
 
 ## 1.3 Decision Baseline (Approved)
 
@@ -1197,7 +1208,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Roles**               | TENANT, LANDLORD, ADMIN                                                           |
 | **Acceptance Criteria** | Status                                                                            |
 | AC-1                    | Email registration requires: email, password, first name, last name, phone number | 🟢         |
-| AC-2                    | Email verification link sent on registration                                      | 🔴 Planned |
+| AC-2                    | Email verification link sent on registration                                      | 🟡 Token entity + send method exist; verification endpoint missing |
 | AC-3                    | Google OAuth login creates account on first use, links on subsequent uses         | 🟢         |
 | AC-4                    | Duplicate email registration returns descriptive error                            | 🟢         |
 | AC-5                    | User selects role (TENANT or LANDLORD) at registration                            | 🟢         |
@@ -1257,17 +1268,17 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-6                    | Images auto-resized to multiple sizes                                                                     | 🔴 Planned                             |
 | AC-7                    | Amenities: multi-select from predefined list (categorized by AmenityCategory)                             | 🟢                                     |
 | AC-8                    | Geolocation: lat/lng stored on property                                                                   | 🟡 (stored but no geocoding API)       |
-| AC-9                    | Availability calendar                                                                                     | 🔴 Planned                             |
-| AC-10                   | Pricing rules: base price only                                                                            | 🟡 (no weekend/weekly/monthly pricing) |
+| AC-9                    | Availability calendar — landlord blocks dates                                                             | 🟢 (`property_availability` table V11; `POST /properties/{id}/availability/block`)  |
+| AC-10                   | Pricing rules: WEEKEND, SEASONAL, LONG_STAY multipliers                                                   | 🟢 (`PricingRule` entity V33; `PricingService` + `PricingController`)              |
 | AC-11                   | Listing status flow: PENDING → APPROVED / REJECTED (PropertyStatus enum)                                  | 🟢                                     |
 | AC-12                   | Admin reviews and approves/rejects listings                                                               | 🟢                                     |
 
-### FR-201: Vehicle Listings 🟡 Skeleton Implemented
+### FR-201: Vehicle Listings 🟢 Fully Implemented
 
-| ID              | FR-201                                                                                                                                                                                                                 |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Description** | Vehicle rental listings — skeleton implemented (CRUD: search, get by ID, create)                                                                                                                                       |
-| **Note**        | Vehicle entity, repository, service, controller, and Flyway migration (`vehicles` schema) are in place at `com.homeflex.features.vehicle`. Remaining: update, delete, images, availability calendar, condition reports |
+| ID              | FR-201                                                                                                                                                                                   |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description** | Vehicle rental listings — full CRUD with images, condition reports, availability, and split-payment bookings                                                                             |
+| **Note**        | Vehicle entity, repository, service, controller (`VehicleV1Controller`), image uploads, condition reports, soft-delete, 10-state booking lifecycle (`VehicleBookingStatus`), split `/draft`+`/pay` endpoints all implemented. Frontend: vehicle detail page with Stripe Elements, vehicles listing page with dark hero + filter sidebar. |
 
 ### FR-202: Property Search & Discovery 🟢
 
@@ -1276,12 +1287,12 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Description**         | Users search and discover properties with filters and pagination                             |
 | **Acceptance Criteria** | Status                                                                                       |
 | AC-1                    | Search across properties using JPA Specifications (LIKE queries on title, description, city) | 🟢 (not Elasticsearch)              |
-| AC-2                    | Geo-search with map view                                                                     | 🔴 Planned (requires Elasticsearch) |
+| AC-2                    | Geo-search with map view                                                                     | 🟢 (Elasticsearch geo-distance queries in `PropertySearchService`; Leaflet map in frontend) |
 | AC-3                    | Property filters: type, listing type, price range, bedrooms, bathrooms, amenities, city      | 🟢                                  |
 | AC-4                    | Sort options: price, newest                                                                  | 🟢                                  |
 | AC-5                    | Search results: paginated                                                                    | 🟢 (ApiPageResponse)                |
-| AC-6                    | Full-text search via Elasticsearch                                                           | 🔴 Planned                          |
-| AC-7                    | Autocomplete, saved searches, similar listings, map view, comparison                         | 🔴 Planned                          |
+| AC-6                    | Full-text search via Elasticsearch                                                           | 🟢 (fuzzy matching via `PropertySearchService` + `PropertyIndexConsumer` outbox relay) |
+| AC-7                    | Autocomplete, saved searches, similar listings, comparison                                   | 🔴 Planned                          |
 
 ---
 
@@ -1307,8 +1318,8 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Acceptance Criteria** | Status                                             |
 | AC-1                    | Landlord approves or rejects booking               | 🟢                      |
 | AC-2                    | Tenant cancels booking                             | 🟢                      |
-| AC-3                    | Auto-reject after timeout                          | 🔴 Planned              |
-| AC-4                    | Cancellation policies (Flexible, Moderate, Strict) | 🔴 Planned              |
+| AC-3                    | Auto-reject after timeout                          | 🟢 (`BookingService.autoRejectExpiredPendingBookings()` scheduled at 24h) |
+| AC-4                    | Cancellation policies (Flexible, Moderate, Strict) | 🟢 (`Property.cancellationPolicy` field; accepted in `PropertyCreateRequest`) |
 | AC-5                    | Booking history accessible with filters            | 🟢 (bookings list page) |
 | AC-6                    | Booking modification (date changes)                | 🔴 Planned              |
 
@@ -1321,7 +1332,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-1                    | Tenant can review property after booking completes | 🟢         |
 | AC-2                    | Review prompt sent automatically                   | 🔴 Planned |
 | AC-3                    | Damage claims, security deposits                   | 🔴 Planned |
-| AC-4                    | Maintenance requests during active booking         | 🔴 Planned |
+| AC-4                    | Maintenance requests during active booking         | 🟢 (`MaintenanceRequest` entity; workspace Maintenance tab) |
 
 ---
 
@@ -1336,18 +1347,18 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-1                    | Payments processed via Stripe; HomeFlex never stores card numbers | 🟢 (PaymentService)         |
 | AC-2                    | Stripe payment intent creation for bookings                       | 🟢                          |
 | AC-3                    | Client secret returned to frontend; `confirmCardPayment` called   | 🟢 (v3.4)                   |
-| AC-4                    | Escrow: funds held until service delivery                         | 🔴 Planned (Stripe Connect) |
-| AC-5                    | Payout to landlord with platform commission                       | 🔴 Planned (Stripe Connect) |
-| AC-6                    | Refund processing                                                 | 🔴 Planned                  |
+| AC-4                    | Escrow: funds held until service delivery                         | 🟢 (MANUAL-capture `PaymentIntent`; capture-on-approve via `EscrowService`) |
+| AC-5                    | Payout to landlord with platform commission                       | 🟢 (Stripe Connect Express; `POST /payouts/connect/onboard`; 15% platform commission) |
+| AC-6                    | Refund processing                                                 | 🟢 (`PaymentService.refundPayment()`; full refund on cancel, prorated on early checkout) |
 | AC-7                    | Multi-currency support                                            | 🔴 Planned                  |
-| AC-8                    | Invoice generation                                                | 🔴 Planned                  |
-| AC-9                    | Recurring monthly rent collection                                 | 🔴 Planned                  |
+| AC-8                    | Invoice / receipt generation                                      | 🟢 (`Receipt` entity; receipts API; Finance tab PDF download links) |
+| AC-9                    | Recurring monthly rent collection                                 | 🔴 Planned (Stripe Billing subscriptions)                  |
 
-### FR-401: Financial Dashboard (Landlords) 🔴 Planned
+### FR-401: Financial Dashboard (Landlords) 🟢 Implemented
 
-| ID              | FR-401                                            |
-| --------------- | ------------------------------------------------- |
-| **Description** | Landlord financial overview — not yet implemented |
+| ID              | FR-401                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Description** | Landlord financial overview — Finance workspace tab shows earnings tiles (Total Earned, Available, Pending, Escrow), receipts list with PDF download, and Stripe Connect onboarding panel |
 
 ---
 
@@ -1376,11 +1387,11 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Description**         | Notification system                                                         |
 | **Acceptance Criteria** | Status                                                                      |
 | AC-1                    | Channels: in-app (Notification entity), push (FCM), email (Gmail SMTP)      | 🟢         |
-| AC-2                    | SMS (Twilio), WhatsApp (Twilio)                                             | 🔴 Planned |
+| AC-2                    | SMS (Twilio), WhatsApp (Twilio)                                             | 🟢 (`TwilioSmsGateway` wired into `NotificationService` and `OtpService`; fires on booking lifecycle events) |
 | AC-3                    | Notification types: BOOKING, CHAT, PROPERTY, SYSTEM (NotificationType enum) | 🟢         |
 | AC-4                    | In-app notifications with unread count                                      | 🟢         |
 | AC-5                    | Header bell badge reactively combines notification + message unread counts  | 🟢 (v3.4)  |
-| AC-6                    | User configures notification preferences per channel                        | 🔴 Planned |
+| AC-6                    | User configures notification preferences per channel                        | 🟡 Boolean flags per channel (`emailNotificationsEnabled`, `smsNotificationsEnabled`, `pushNotificationsEnabled`) on `User`; no per-event-type granularity |
 | AC-7                    | Notification templates localized                                            | 🔴 Planned |
 
 ---
@@ -1397,8 +1408,8 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-2                    | Property moderation: approve/reject queue                         | 🟢 (AdminController)          |
 | AC-3                    | User management: view, manage users                               | 🟢 (AdminController)          |
 | AC-4                    | Report management: view reported listings, take action            | 🟢 (ReportedListing entity)   |
-| AC-5                    | KYC management                                                    | 🔴 Planned                    |
-| AC-6                    | Dispute resolution                                                | 🔴 Planned                    |
+| AC-5                    | KYC management                                                    | 🟢 (Admin can view KYC status via user records; webhook-driven updates) |
+| AC-6                    | Dispute resolution                                                | 🟢 (`DisputeController`; admin resolve endpoint; workspace Disputes tab) |
 | AC-7                    | Analytics: user growth, booking trends, revenue charts            | 🔴 Planned (basic stats only) |
 | AC-8                    | System config: manage amenities, commission rates                 | 🔴 Planned                    |
 | AC-9                    | Audit log                                                         | 🔴 Planned                    |
@@ -1423,36 +1434,50 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-2                    | Review fields: rating (1-5 stars), text comment | 🟢                                |
 | AC-3                    | Category ratings (cleanliness, accuracy, etc.)  | 🔴 Planned                        |
 | AC-4                    | Aggregate rating displayed on property          | 🟢                                |
-| AC-5                    | Two-way reviews (landlord reviews tenant)       | 🔴 Planned                        |
+| AC-5                    | Two-way reviews (landlord reviews tenant)       | 🟡 `ReviewType` enum has `PROPERTY` and `TENANT` values; missing dedicated submission endpoint and `GET /reviews/received` for landlords |
 | AC-6                    | Landlord can post a public response             | 🔴 Planned                        |
 
-### FR-701: Trust Score 🔴 Planned
+### FR-701: Trust Score 🟡 Partial
 
-| ID              | FR-701                              |
-| --------------- | ----------------------------------- |
-| **Description** | Trust scoring — not yet implemented |
-
----
-
-## 5.8 Document Management 🔴 Planned
-
-### FR-800: Documents
-
-| ID              | FR-800                                                            |
-| --------------- | ----------------------------------------------------------------- |
-| **Description** | Document storage and management — not yet implemented             |
-| **Note**        | No document management entities or services exist in the codebase |
+| ID              | FR-701                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Description** | `User.trustScore` field (default 5.0) exists via V19 migration. No calculation logic, update triggers, or frontend display implemented. |
 
 ---
 
-## 5.9 Maintenance Requests 🔴 Planned
+## 5.8 Document Management 🟢 Implemented
+
+### FR-800: Digital Leases
+
+| ID              | FR-800                                                                                                                                          |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description** | `PropertyLease` entity with full lifecycle: generation (`POST /leases/booking/{id}/generate`), e-signing (`POST /leases/{id}/sign`), and listing (`GET /leases/my`). Stores PDF URL and blockchain TX hash stub. `BlockchainLeaseService` is a no-op placeholder. |
+
+---
+
+## 5.9 Maintenance Requests 🟢 Implemented
 
 ### FR-900: Maintenance
 
-| ID              | FR-900                                                            |
-| --------------- | ----------------------------------------------------------------- |
-| **Description** | Maintenance request system — not yet implemented                  |
-| **Note**        | No maintenance request entities or services exist in the codebase |
+| ID              | FR-900                                                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description** | `MaintenanceRequest` entity with status flow `OPEN → IN_PROGRESS → RESOLVED`. Full REST API. Workspace Maintenance tab lets tenants file requests (with property selector) and landlords update status. Image attachments via `MaintenanceRequestImage`. |
+
+## 5.10 Implemented Features Not Previously in SRS 🟢
+
+The following features were discovered during the v4.6 audit — they exist in the codebase but were absent from earlier SRS versions.
+
+| Feature | Evidence | Notes |
+|---|---|---|
+| **Dynamic pricing rules** | `PricingRule` entity (V33 migration); `PricingService`; `PricingController` | WEEKEND, SEASONAL, LONG_STAY multiplier rules on top of base price |
+| **Room types & room inventory** | `RoomType`, `RoomInventory`, `RoomTypeImage` entities (V35–V37 migrations) | Hotel-style room-level granularity within a property; occupancy calendar |
+| **Booking audit log** | `BookingAuditLog` entity; populated on every state transition in `BookingService` | Full history: who triggered what action and when, with optional reason |
+| **Booking state machine** | `BookingStateMachine` class; 10-state `BookingStatus` enum | Enforces valid transitions; `DRAFT → PAYMENT_PENDING → PENDING_APPROVAL → APPROVED → ACTIVE → COMPLETED` |
+| **Instant Book path** | State machine supports `DRAFT → APPROVED` skip-approval transition | Not yet exposed in UI; groundwork in place |
+| **Agency multi-tenancy** | `Agency` entity; `agencyRole` on `User` | White-label foundation; no UI yet |
+| **Resilience4j on Stripe** | Circuit breaker + retry with exponential backoff on all Stripe API calls | 3 attempts, 500ms base; trips after 5 consecutive failures |
+| **OTP via Twilio** | `OtpService` + `TwilioSmsGateway` | Phone OTP flow exists in service layer; not yet exposed in registration flow |
+| **`BookingStateMachine` for vehicles** | `VehicleBookingStatus` 10-state enum; split `/draft`+`/pay` on `VehicleV1Controller` | Full parity with property booking workflow |
 
 ---
 
