@@ -254,7 +254,7 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🔴 Apple / Facebook social login — backend stub methods throw exceptions; UI buttons show "Soon" badge
 - 🔴 AI-powered price recommendations
 - 🔴 Recurring monthly rent collection (Stripe Billing subscriptions)
-- 🔴 Image auto-resizing (multiple sizes on upload)
+- 🟢 Image auto-resizing — `StorageService.uploadImageWithThumbnail()`: 1200px full-size + 400px thumbnail; `PropertyImage.thumbnailUrl` populated (implemented v4.9)
 - 🟢 Geocoding API integration — `GeocodingService` calls Nominatim (OpenStreetMap, no API key) on property creation when client omits lat/lng; coordinates stored and indexed in Elasticsearch for geo-distance sorting
 - 🟢 `isVerified` enforcement gate — now enforced in `BookingService.executeCreateDraft()`; landlord listing gate via `KycService.requireVerified()`
 
