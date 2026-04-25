@@ -113,7 +113,7 @@
                 <span
                   class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500"
                 >
-                  {{ property.propertyType }}
+                  {{ property.propertyType.replaceAll('_', ' ') }}
                 </span>
                 <span
                   class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -122,7 +122,7 @@
                   [class.bg-emerald-50]="property.listingType === 'SALE'"
                   [class.text-emerald-600]="property.listingType === 'SALE'"
                 >
-                  {{ property.listingType }}
+                  {{ property.listingType.replaceAll('_', ' ') }}
                 </span>
               </div>
             </div>

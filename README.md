@@ -42,6 +42,8 @@ A full-stack real estate rental platform where tenants can search and book prope
 - **Landlord KYC** via Stripe Identity verification
 - **Admin console** with separate login, user management (suspend/activate), property approvals (approve/reject), report resolution, and operational analytics
 - **Prometheus + Grafana monitoring** with custom business metrics
+- **Premium Editorial UI** — Dark `bg-slate-900` hero headers on listing pages, glassmorphism stat tiles, premium filter sidebars with sticky positioning and `.select-styled` dropdowns; workspace tabs (Insurance, Disputes, Finance) fully restyled with emerald/amber/gold color themes, SVG icon headers, and animated skeleton loaders
+- **Image Proxy via Nginx** — `/uploads/*` proxied through Nginx to MinIO so browser-side image URLs always resolve; `StorageService` generates relative `/uploads/<key>` paths; V38 migration rewrites historical absolute URLs
 - **Modern Web Dashboard** — Angular 21 + Tailwind 4 operational panel with **Map Search**
 - **Global Reach** — Full i18n support (English, French, Spanish, Arabic) with **RTL support**
 - **Enterprise Observability** — Centralized **ELK Stack** (Elasticsearch, Logstash, Kibana) + Prometheus/Grafana
@@ -309,6 +311,7 @@ All technical requirements specified in the SRS have been implemented, including
 - **Phase 5.1:** Centralized Ownership via `ResourcePermissionService` — pure-logic service layer, security gap fix, N+1 prevention
 - **Phase 5.2:** Stripe escrow workflow completed — MANUAL capture, capture-on-approve, prorated early checkout, full-refund on cancel; landlord Stripe Connect onboarding UI; DisputeModal component; type fixes and Prettier lint at 100%
 - **Phase 5.3:** Production-grade state machine booking workflow — `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `/draft` and `/pay` endpoints with idempotency; `BookingAuditLog` added; Vehicle ownership rules supported.
+- **Phase 5.4:** Premium UI/UX overhaul — editorial dark hero headers on all listing pages, premium filter sidebars, full workspace tab redesigns (insurance/disputes/finance), raw enum display sweep across all templates, MinIO image proxy via Nginx `/uploads/`.
 
 The platform is now ready for production-scale deployment.
 

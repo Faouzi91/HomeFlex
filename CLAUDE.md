@@ -27,7 +27,7 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 | Search     | Elasticsearch 9.1                             |
 | Logging    | Logstash 9.1 + Kibana 9.1 (ELK stack)         |
 | Monitoring | Micrometer, Prometheus 3.5, Grafana 11.6      |
-| Auth       | JWT (httpOnly cookies), Google/Apple/FB OAuth |
+| Auth       | JWT (httpOnly cookies), Google OAuth (Apple/FB planned) |
 | Payments   | Stripe Connect (escrow, destination charges)  |
 | KYC        | Stripe Identity Verification                  |
 | CI         | GitHub Actions                                |
@@ -36,8 +36,8 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 ## Module Structure
 
 - `homeflex-web/`: Angular 21 frontend. Features logic in `src/app/features/`.
-  - `src/app/core/api/api.client.ts`: Centralized HTTP client — ALL API calls go through this single service.
-  - `src/app/core/api/services/`: Domain-specific API services (`admin.api.ts`, `user.api.ts`, etc.) extending `BaseApi`.
+  - `src/app/core/api/services/`: Domain-specific API services (`booking.api.ts`, `dispute.api.ts`, `finance.api.ts`, `payout.api.ts`, `insurance.api.ts`, `maintenance.api.ts`, etc.) extending `BaseApi`. **Use these directly in components — not `ApiClient`.**
+  - `src/app/core/api/api.client.ts`: Legacy facade — kept for auth, chat, admin, and a few misc endpoints. Do NOT use for new workspace tab code.
   - `src/app/core/models/api.types.ts`: All TypeScript interfaces for request/response types.
   - `src/app/core/state/session.store.ts`: NgRx Signal Store for auth session state.
   - `src/app/core/guards/admin.guard.ts`: Route guard enforcing ADMIN role, redirects to `/admin/login`.
@@ -102,8 +102,10 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 
 - All endpoints prefixed with `/api/v1/`
 - 25 REST controllers, ~100+ endpoints
-- Angular `ApiClient` has full 1:1 coverage of all backend endpoints
-- Nginx reverse proxy: `/api/` -> backend:8080, `/ws/` -> WebSocket, `/` -> Angular SPA
+- Domain-specific services (`BookingApi`, `DisputeApi`, `FinanceApi`, etc.) are the primary HTTP layer for workspace components
+- `ApiClient` is a legacy facade; retained for auth, admin, chat, and a few shared endpoints
+- Nginx reverse proxy: `/api/` -> backend:8080, `/ws/` -> WebSocket, `/uploads/` -> `minio:9000/rental-app-media/`, `/` -> Angular SPA
+- `StorageService` generates `/uploads/<key>` relative URLs — never full `http://minio:...` URLs (unreachable from browser)
 - CSRF token sent via `X-XSRF-TOKEN` header on mutating requests
 - All requests use `withCredentials: true` for cookie-based auth
 
@@ -153,6 +155,27 @@ The `folder-structure` skill generates idiomatic directory trees for:
 - **Flutter / Dart**: Feature-First Clean Architecture
 
 Always state the chosen architecture pattern and the 3–5 key conventions that govern it.
+
+## Frontend Design Conventions (Mandatory)
+
+All new public-facing pages and workspace tabs must follow the editorial luxury design system:
+
+1. **Dark hero headers on listing/discovery pages** — Use `bg-slate-900 py-14` section with `.eyebrow--light` badge, `text-white font-extrabold` title, `text-slate-400` subtitle, and `bg-white/5 border border-white/10 rounded-2xl` stat tiles.
+2. **Premium filter sidebars** — Sticky (`top-24`), `rounded-xl border border-slate-200 bg-slate-50` inputs, `.select-wrap` + `.select-styled` dropdowns, `font-black` CTA button with `shadow-brand-100/50`.
+3. **Workspace tab headers** — `bg-white border-b border-slate-100 px-6 lg:px-8 py-6` with colored icon box (`h-10 w-10 rounded-xl bg-<color>-500`), bold title, and muted subtitle.
+4. **No raw enum display** — All enum values in templates must use `.replaceAll('_', ' ')`. Status badge colors must use a `statusClass(status)` method returning a Tailwind class string.
+5. **Color theme per domain** — Insurance: emerald. Disputes: amber. Finance: slate-900 (dark) + gold CTA. Hosting: brand. Maintenance: violet. Notifications: sky.
+6. **CSS utility classes available** — `.eyebrow`, `.eyebrow--gold`, `.eyebrow--light`, `.button`, `.button--primary`, `.button--gold`, `.button--ghost`, `.button--dark`, `.card-img-overlay`, `.select-styled`, `.select-wrap`. Use these instead of re-authoring base styles.
+
+## Angular Component Conventions (Mandatory)
+
+All workspace tab components and new Angular components must follow these patterns:
+
+1. **No `ApiClient` in workspace tabs** — inject the domain-specific service (e.g., `DisputeApi`, `FinanceApi`) directly.
+2. **`takeUntilDestroyed(destroyRef)`** — every RxJS subscription inside a component must be piped through this operator. Inject `DestroyRef` in the constructor. No manual `ngOnDestroy` unsubscription.
+3. **Constructor data loading** — call APIs in `constructor()` via `takeUntilDestroyed`, not `ngOnInit`. This is consistent with Angular 21's signal-based lifecycle.
+4. **`protected` signals for templates** — signals and computed values accessed in templates must be `protected readonly`, not `private`.
+5. **`catchError` on every HTTP call** — always handle errors; set an `error` signal and return `of([])` or `of(null)` to keep the stream alive.
 
 ## Important Conventions
 

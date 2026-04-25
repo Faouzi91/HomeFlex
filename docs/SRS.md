@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.3
-**Date:** April 23, 2026
+**Version:** 4.6
+**Date:** April 25, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
 
@@ -28,6 +28,8 @@
 | 4.2     | 2026-04-19 | Architect     | Stripe Connect escrow workflow completed: MANUAL capture PaymentIntent, capture-on-approve, prorated early-checkout refund, Stripe Connect Express landlord onboarding (Hosting > Payments tab); DisputeModal standalone component replaces prompt(); BookingDetailPanel wires earlyCheckout API; api.client.ts ConnectOnboardingResponse type fix; payment-modal dead code removed; Prettier lint 100%. |
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
 | 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
+| 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation. |
+| 4.6     | 2026-04-25 | Architect     | Full UI/UX premium redesign pass: dark `bg-slate-900` editorial hero headers on properties and vehicles listing pages; premium filter sidebars with `rounded-xl` inputs and `.select-styled` dropdowns; insurance tab restyled with emerald/gold sectioned plan cards; disputes tab restyled with amber color scheme and SVG meta rows; finance tab rebuilt with onboarding hero panel, 4-step progress indicator, earnings dashboard tiles, and improved receipts section; raw enum display fixed across all templates (`.replaceAll('_', ' ')` sweep covering `vehicle-detail`, `property-detail`, `favorites-tab`, `hosting-tab`, `admin-properties`); MinIO image proxy via Nginx `/uploads/` → `minio:9000/rental-app-media/`; `StorageService` generates relative `/uploads/<key>` URLs; V38 Flyway migration rewrites existing absolute `http://` image URLs to relative form. |
 
 ---
 
@@ -50,6 +52,26 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v4.6 (Premium UI/UX Overhaul & Image Proxy)
+
+- 🟢 **Dark Editorial Hero Headers** — Properties listing (`properties.page.html`) and Vehicles listing (`vehicles.page.html`) pages rebuilt with `bg-slate-900` full-width hero sections featuring eyebrow labels (`.eyebrow--light`), white `font-extrabold` titles, `text-slate-400` subtitles, and glassmorphism stat tiles (`bg-white/5 border border-white/10 rounded-2xl`).
+- 🟢 **Premium Filter Sidebars** — Both listing pages now have sticky filter sidebars with `rounded-xl bg-slate-50` inputs, `.select-wrap` / `.select-styled` dropdowns, `font-black` CTA buttons with `shadow-brand-100/50` glow, and improved results headers with animated view-toggle pills.
+- 🟢 **Insurance Tab Redesign** — `insurance-tab.component.html` rebuilt with `bg-slate-50/50` background, emerald icon header, sectioned tenant (emerald-themed) and landlord (gold-themed) plan cards with coverage tiles, provider badge pills, and spinner-state purchase buttons.
+- 🟢 **Disputes Tab Redesign** — `disputes-tab.component.html` rebuilt with amber icon header (`bg-amber-500`), amber icon boxes per dispute card, SVG-led meta row (calendar icon for opened date, checkmark icon for resolved date), and improved skeleton loading animation.
+- 🟢 **Finance Tab Redesign** — `finance-tab.component.html` rebuilt with a dark `bg-slate-900` onboarding hero panel featuring radial decorative blurs, a 3-tile benefits grid (Fast Payouts / Secure Escrow / KYC Verified), a 4-step visual progress bar, and a gold "Connect Bank Account" CTA. When connected: 4-tile earnings dashboard (Total Earned in dark tile, Available in emerald, Pending in amber, Escrow in brand); receipts section with icon header and hover-elevated cards.
+- 🟢 **Vehicle Detail Gallery Grid** — `vehicle-detail.page.html` rebuilt with a CSS grid gallery (`lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-2`, 480px height): main image spans 2 rows; 4 thumbnails auto-fill the remaining 2×2 cells.
+- 🟢 **Raw Enum Display Sweep** — All remaining raw enum values across the frontend now go through `.replaceAll('_', ' ')` before display. Files fixed: `vehicle-detail.page.html` (`transmission`, `fuelType`), `property-detail.page.html` (`listingType`, `propertyType`), `favorites-tab.component.html` (`propertyType`, `listingType`), `hosting-tab.component.html` (detail panel `status`), `admin-properties.page.html` (`propertyType`). Zero raw enums remain in any template.
+- 🟢 **MinIO Image Proxy** — Nginx configuration extended with `/uploads/` → `http://minio:9000/rental-app-media/` reverse proxy block. `StorageService.generateUrl()` now returns `/uploads/<key>` relative paths instead of full `http://minio:...` URLs (unreachable from browser). V38 Flyway migration rewrites all existing absolute MinIO URLs in `property_images` and `vehicle_images` to relative `/uploads/<key>` form, ensuring historical uploads are immediately accessible.
+
+### Implemented since v4.5 (Frontend Production-Readiness Pass)
+
+- 🟢 **Domain API Services Everywhere** — All workspace tabs (`disputes-tab`, `finance-tab`, `insurance-tab`) migrated from the deprecated `ApiClient` facade to their dedicated domain services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`). `ApiClient` is now only used for legacy/uncategorized calls.
+- 🟢 **Memory Leak Elimination** — `takeUntilDestroyed(destroyRef)` applied to every component subscription in all six workspace tabs. No component now requires manual `ngOnDestroy` unsubscription.
+- 🟢 **Insurance Tab — Both Plan Types** — `InsuranceTabComponent` now fetches TENANT and LANDLORD insurance plans in parallel via `forkJoin`. Previously only TENANT plans were loaded, leaving the Landlord Insurance section permanently empty.
+- 🟢 **Stripe Connect Banner Condition Fix** — The "Connect Stripe Account" banner in the Finance tab is now gated on `stripeNotConnected` (computed from `PayoutSummary.stripeAccountConnected`). Previously the banner was shown to all landlords/admins, even those who had already connected their account.
+- 🟢 **Maintenance Property Selector** — The raw UUID text input in the maintenance work-order form is replaced with a `<select>` dropdown populated from `WorkspaceStore.myProperties()`. Landlords with no properties see the fallback text input.
+- 🟢 **Social Login Disabled UI** — Apple and Facebook login buttons are disabled with a "Soon" badge. Previously the buttons called `socialLogin('apple-token')` / `socialLogin('facebook-token')` with dummy hardcoded tokens, which would silently fail against the real backend.
 
 ### Implemented since v4.4 (Unified Booking State Machine & Vehicle Parity)
 
@@ -91,14 +113,14 @@
 - 🟢 **`GET /disputes/mine` Endpoint** — New controller method returning the authenticated user's own disputes (no `ADMIN` role required). `SecurityConfig` updated with specific `authenticated()` matchers for `/disputes/mine` and `/disputes/*/evidence` before the admin catch-all.
 - 🟢 **Finance / Receipts Workspace Tab** — Angular standalone component calling `api.getMyReceipts()`. Shows receipt number, amount+currency, PAID/PENDING status badge, issue date, and download link.
 - 🟢 **Disputes Workspace Tab** — Angular standalone component calling `api.getMyDisputes()`. Shows reason, description, status badge (OPEN/UNDER_REVIEW/RESOLVED/CLOSED), and timestamps.
-- 🟢 **Insurance Workspace Tab** — Angular standalone component calling `api.getInsurancePlans('TENANT')`. Shows plan cards grouped by type (TENANT/LANDLORD) with daily premium, max coverage, and "Select Plan" action.
+- 🟢 **Insurance Workspace Tab** — Angular standalone component using `InsuranceApi`. Fetches both TENANT and LANDLORD plans in parallel via `forkJoin`. Shows plan cards grouped by type with daily premium, max coverage, and "Select Plan" action.
 - 🟢 **Comprehensive API Smoke-Test Script** (`scripts/test-all-apis.sh`) — Bash script covering 94 assertions across all 26 backend controllers and all frontend SPA routes. Starts Docker Compose, waits for health, seeds multi-role sessions, hits every endpoint, and reports colored PASS/FAIL summary.
 
 ### Implemented since v3.5 (Unread Persistence, Avatar Upload & Overview Stats)
 
 - 🟢 **Chat unread count persists after refresh** — `MessageRepository.countUnreadInRoom` now excludes the viewing user's own outgoing messages (`m.sender.id <> :userId`). `ChatService` callsites pass the current user's ID. After `markRoomAsRead`, a page refresh now correctly reports zero unread for that room.
 - 🟢 **Avatar upload robustness** — `UserService.updateAvatar` adds null/empty-file and null-safe `contentType` guards. `homeflex-web/nginx.conf` now sets `client_max_body_size 50M` so multipart uploads are not clipped by nginx's 1 MB default (which previously surfaced as an opaque 400 before Spring saw the request).
-- 🟢 **Workspace overview stats reflect active bookings only** — The Property Stays and Vehicle Rentals tiles now use `activePropertyBookings` / `activeVehicleBookings` computed signals filtered to `CONFIRMED | PENDING | IN_PROGRESS`, so cancelled/rejected entries no longer inflate the counts.
+- 🟢 **Workspace overview stats reflect active bookings only** — The Property Stays and Vehicle Rentals tiles now use `activePropertyBookings` / `activeVehicleBookings` computed signals filtered to `APPROVED | ACTIVE | PENDING_APPROVAL | PAYMENT_PENDING`, so cancelled/rejected entries no longer inflate the counts.
 
 ### Implemented since v3.4 (Stripe Payment Flow, Reactive UI & UX Fixes)
 
@@ -192,18 +214,21 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🟡 AWS S3 storage (StorageService exists with dev fallback, not fully wired in production)
 - 🟡 Redis caching and distributed locking (Redis connected for rate limiting; caching and Redlock not yet used)
 
+### Implemented since v2.4 (previously "Planned")
+
+- 🟢 **SMS & WhatsApp notifications (Twilio)** — `TwilioSmsGateway` integrated for booking lifecycle alerts and OTP.
+- 🟢 **Document management (leases)** — `PropertyLease` entity, full lease lifecycle (generation, signing, tracking), and PDF URLs.
+- 🟢 **Maintenance request system** — Work-order creation, status tracking (`OPEN → IN_PROGRESS → RESOLVED`), and landlord assignment. Exposed in the Workspace Maintenance tab with a property selector dropdown.
+- 🟢 **ELK logging stack** — Elasticsearch + Logstash + Kibana deployed as Docker services. Backend ships JSON logs to Logstash on port 50000.
+- 🟢 **Insurance marketplace** — `InsurancePlan` entity with TENANT and LANDLORD plan types. Full CRUD API and Insurance workspace tab showing both plan categories (implemented since v4.0).
+
 ### Planned (not yet built)
 
-- 🔴 SMS notifications (Twilio)
-- 🔴 Document management (leases, insurance)
-- 🔴 Maintenance request system
-- 🔴 Multi-region deployment
+- 🔴 Multi-region deployment (AWS ECS Fargate, Route53 latency routing)
 - 🔴 Arabic and Spanish i18n
-- 🔴 Apple / Facebook social login
-- 🔴 ELK logging stack (Elasticsearch + Logstash + Kibana)
+- 🔴 Apple / Facebook social login — backend OAuth not implemented; UI buttons show "Soon" badge
 - 🔴 AI-powered price recommendations (v3.0)
 - 🔴 Blockchain-based lease contracts (v3.0)
-- 🔴 Insurance marketplace integration (v3.0)
 - 🔴 White-label platform for agencies (v4.0)
 
 ## 1.3 Decision Baseline (Approved)
@@ -379,9 +404,9 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.1.4 Primary Database: PostgreSQL 16
+### 3.1.4 Primary Database: PostgreSQL 18
 
-**Choice:** PostgreSQL 16 as the primary relational database
+**Choice:** PostgreSQL 18 as the primary relational database
 
 **Why:**
 
@@ -402,9 +427,9 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.1.5 Cache Layer: Redis 7 (Cluster Mode)
+### 3.1.5 Cache Layer: Redis 8 (Cluster Mode)
 
-**Choice:** Redis 7 as the distributed cache, session store, and rate limiter
+**Choice:** Redis 8 as the distributed cache, session store, and rate limiter
 
 **Why:**
 
@@ -423,9 +448,9 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.1.6 Search Engine: Elasticsearch 8
+### 3.1.6 Search Engine: Elasticsearch 9.1
 
-**Choice:** Elasticsearch 8 for full-text search, geo-search, and analytics
+**Choice:** Elasticsearch 9.1 for full-text search, geo-search, and analytics
 
 **Why:**
 
@@ -449,9 +474,9 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.1.7 Message Broker: RabbitMQ 3.13
+### 3.1.7 Message Broker: RabbitMQ 4
 
-**Choice:** RabbitMQ for asynchronous messaging, event-driven architecture, and WebSocket message routing
+**Choice:** RabbitMQ 4 for asynchronous messaging, event-driven architecture, and WebSocket message routing
 
 **Why:**
 
@@ -497,7 +522,7 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.1.9 Resilience: Resilience4j 🔴 Planned
+### 3.1.9 Resilience: Resilience4j 🟢 Implemented
 
 **Choice:** Resilience4j for circuit breaking, rate limiting, retry, and bulkhead isolation
 
@@ -599,23 +624,16 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.2.3 State Management: BehaviorSubject Services 🟢 (NgRx SignalStore planned)
+### 3.2.3 State Management: NgRx Signal Store 🟢
 
-**Current implementation:** RxJS `BehaviorSubject`-based state services (`AuthState`, `PropertyState`) in `core/state/`. Each service manages its own slice of state.
+**Current implementation:** NgRx Signal Store (`@ngrx/signals`) for all entity and session state. `SessionStore` manages auth state; `WorkspaceStore` manages properties, bookings, unread counts, and notification state. All signals are exposed as `protected` for template access.
 
-**Planned migration:** NgRx SignalStore for centralized, reactive state management.
-
-**Why migrate (future):**
+**Why NgRx Signal Store:**
 
 - **Signal-based** — Built on Angular 21's signals, not RxJS Observables. Simpler mental model.
 - **Centralized state** — All application state in typed stores with DevTools for debugging.
 - **Entity management** — Normalized entity state, CRUD operations, and selection.
-
-**Current approach tradeoffs:**
-
-- BehaviorSubject services work well at current scale
-- No time-travel debugging or action history
-- Migration should happen when app complexity warrants it
+- **`takeUntilDestroyed` pattern** — All RxJS subscriptions inside components use `takeUntilDestroyed(destroyRef)`, eliminating manual `ngOnDestroy` unsubscription.
 
 ---
 
@@ -817,15 +835,17 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 ---
 
-### 3.4.2 SMS Notifications: Twilio 🔴 Planned
+### 3.4.2 SMS Notifications: Twilio 🟢 Implemented
 
-**Choice:** Twilio for SMS and WhatsApp notifications (not yet integrated)
+**Choice:** Twilio for SMS and WhatsApp notifications
 
 **Why:**
 
 - **Global SMS delivery** — Send SMS to 180+ countries with local number support.
 - **WhatsApp Business API** — In MENA and Europe, WhatsApp has 90%+ penetration.
 - **Verify API** — Phone number verification with OTP for KYC.
+
+**Implementation:** `TwilioSmsGateway` integrated for booking lifecycle notifications. SMS sent on booking creation, approval, rejection, and cancellation events.
 
 ---
 
@@ -869,50 +889,50 @@ Tenant or Landlord opens Chat Room → WebSocket STOMP connection
 
 This matrix is normative for architectural governance. Every major choice includes purpose, accepted tradeoff, and trigger to revisit.
 
-| Layer             | Selected Technology             | Primary Use                        | Status                              |
-| ----------------- | ------------------------------- | ---------------------------------- | ----------------------------------- |
-| Backend runtime   | Java 21                         | High-concurrency APIs, LTS         | 🟢                                  |
-| Backend framework | Spring Boot 4                   | Enterprise API delivery            | 🟢                                  |
-| Primary DB        | PostgreSQL 16                   | Transactions, relational integrity | 🟢                                  |
-| Distributed cache | Redis 7                         | Caching, rate-limits, sessions     | 🔴 Provisioned, not consumed        |
-| Search engine     | Elasticsearch 9                 | Full-text, geo, faceted search     | 🔴 Provisioned, not consumed        |
-| Event broker      | RabbitMQ 3                      | Async workflows, messaging         | 🔴 Provisioned, not consumed        |
-| Object storage    | S3                              | Media storage                      | 🟡 StorageService exists            |
-| Frontend          | Angular 21 + Ionic 8 + Tailwind | SPA + mobile-web                   | 🟢                                  |
-| State management  | BehaviorSubject services        | Reactive state                     | 🟢 (NgRx Signal Store planned)      |
-| Mobile            | Capacitor 8                     | Shared iOS/Android codebase        | 🟢                                  |
-| Payments          | Stripe                          | Payment intents                    | 🟢 (Connect/Billing planned)        |
-| Notifications     | FCM + Gmail SMTP                | Push + email                       | 🟢 (SES + Twilio planned)           |
-| Resilience        | None                            | Circuit breakers, rate-limits      | 🔴 Planned (Resilience4j)           |
-| Observability     | Spring Boot Actuator            | Basic health/metrics               | 🟡 (Prometheus/Grafana/ELK planned) |
-| CI/CD             | GitHub Actions + Docker         | Build pipeline                     | 🟢 (ECS deployment planned)         |
+| Layer             | Selected Technology             | Primary Use                        | Status                                    |
+| ----------------- | ------------------------------- | ---------------------------------- | ----------------------------------------- |
+| Backend runtime   | Java 21                         | High-concurrency APIs, LTS         | 🟢                                        |
+| Backend framework | Spring Boot 4                   | Enterprise API delivery            | 🟢                                        |
+| Primary DB        | PostgreSQL 18                   | Transactions, relational integrity | 🟢                                        |
+| Distributed cache | Redis 8                         | Rate-limits, sessions              | 🟡 Rate-limiting active; Redlock planned  |
+| Search engine     | Elasticsearch 9.1               | Full-text, geo, faceted search     | 🟢 Active via outbox relay                |
+| Event broker      | RabbitMQ 4                      | Async workflows, messaging         | 🟢 Outbox events consumed                 |
+| Object storage    | S3                              | Media storage                      | 🟡 StorageService exists, dev fallback    |
+| Frontend          | Angular 21 + Tailwind CSS 4     | SPA dashboard                      | 🟢                                        |
+| State management  | NgRx Signal Store               | Reactive state                     | 🟢                                        |
+| Mobile            | Flutter (separate repo)         | Native iOS/Android                 | 🟢 (separate repo, not in Docker Compose) |
+| Payments          | Stripe Connect (MANUAL capture) | Escrow, payouts, KYC               | 🟢                                        |
+| Notifications     | FCM + Gmail SMTP + Twilio       | Push + email + SMS/WhatsApp        | 🟢 (AWS SES planned for prod scale)       |
+| Resilience        | Resilience4j                    | Circuit breakers, retry            | 🟢 On EmailService, Firebase, Stripe      |
+| Observability     | Prometheus + Grafana + ELK      | Metrics, dashboards, logs          | 🟢 Deployed via docker-compose.monitoring |
+| CI/CD             | GitHub Actions + Docker         | Build pipeline                     | 🟢 (ECS deployment planned)               |
 
 # 4. System Architecture
 
 ## 4.0 Current State vs Target State
 
-This section separates what is implemented from what is planned. Updated 2026-03-28.
+This section separates what is implemented from what is planned. Updated 2026-04-23.
 
 | Area                  | Current State (implemented)                                                                                                                                 | Target State (planned)                                                    | Gap Priority |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------ |
 | Backend architecture  | Package-by-feature: `com.homeflex.core` + `com.homeflex.features.<feature>`. Layered within each module: `api/v1/` → `service/` → `domain/repository/` → DB | Evolve to DDD bounded contexts at scale                                   | Low          |
 | Backend build/runtime | Gradle + Java 21 + Spring Boot 4                                                                                                                            | Keep stack, harden runtime controls                                       | Low          |
-| Frontend composition  | Mixed NgModule (auth, bookings, chat, profile) + standalone components                                                                                      | Fully standalone architecture (migrate remaining NgModules)               | Medium       |
-| Frontend state        | BehaviorSubject-based services (`AuthState`, `PropertyState`)                                                                                               | Centralized NgRx Signal Store                                             | Medium       |
-| Auth token storage    | `localStorage` (access + refresh tokens)                                                                                                                    | httpOnly cookies + CSRF token flow                                        | High         |
+| Frontend composition  | Fully standalone components (Angular 21), NgRx Signal Store, `takeUntilDestroyed` subscriptions                                                             | Production deployment on ECS                                              | Medium       |
+| Frontend state        | NgRx Signal Store (`SessionStore`, `WorkspaceStore`)                                                                                                        | DevTools integration, time-travel debugging                               | Low          |
+| Auth token storage    | httpOnly cookies (ACCESS_TOKEN + REFRESH_TOKEN) + CSRF token flow                                                                                           | Secrets Manager for JWT secret                                            | Low          |
 | WebSocket             | STOMP over WebSocket with in-memory Simple Broker                                                                                                           | RabbitMQ-backed STOMP relay for multi-node support                        | Medium       |
-| Caching               | Not implemented                                                                                                                                             | Redis for property search, session data, rate limiting                    | Medium       |
-| Messaging             | Transactional outbox writes to DB (no consumer)                                                                                                             | RabbitMQ event workers consuming outbox events                            | High         |
-| Search                | JPA Specifications with `LIKE` queries                                                                                                                      | Elasticsearch/OpenSearch for full-text + geo search                       | Medium       |
+| Caching               | Redis rate-limiting active; Spring Cache not yet applied                                                                                                     | Redis for property search, session data, Redlock distributed locking      | Medium       |
+| Messaging             | Transactional outbox + RabbitMQ consumers (PropertyIndexConsumer)                                                                                           | Full event worker fleet for all domain events                             | Medium       |
+| Search                | Elasticsearch 9.1 via outbox-relay consumer, fuzzy + geo queries                                                                                            | Multi-field boosting, autocomplete, analytics aggregations                | Low          |
 | Email                 | Gmail SMTP via Spring Mail                                                                                                                                  | AWS SES for production-scale transactional email                          | Low          |
-| SMS/WhatsApp          | Not implemented                                                                                                                                             | Twilio for OTP and booking alerts                                         | Low          |
+| SMS/WhatsApp          | Twilio integrated (`TwilioSmsGateway`)                                                                                                                      | Phone OTP verification flow                                               | Low          |
 | Storage               | StorageService exists (S3 + dev fallback)                                                                                                                   | Fully configured S3 + CloudFront CDN                                      | Medium       |
-| Deployment            | Docker Compose (6 services on single host)                                                                                                                  | AWS ECS Fargate with auto-scaling, ALB, health checks                     | High         |
-| Monitoring            | Spring Boot Actuator (basic)                                                                                                                                | Prometheus + Grafana + ELK stack                                          | Medium       |
-| Security              | JWT filter + Spring Security, CORS configured                                                                                                               | Secrets Manager, WAF, stricter CORS, policy as code                       | High         |
-| OAuth providers       | Google only                                                                                                                                                 | Google + Apple + Facebook                                                 | Low          |
-| Vehicle vertical      | Skeleton implemented (`com.homeflex.features.vehicle` — entity, repository, service, controller, Flyway migration)                                          | Full vehicle rental feature set (images, availability, condition reports) | Low          |
-| KYC                   | Not implemented                                                                                                                                             | Stripe Identity for owner verification                                    | Medium       |
+| Deployment            | Docker Compose (8 services on single host)                                                                                                                  | AWS ECS Fargate with auto-scaling, ALB, health checks                     | High         |
+| Monitoring            | Prometheus + Grafana + ELK stack (docker-compose.monitoring.yml)                                                                                            | Production scraping, PagerDuty alerts, SLO dashboards                     | Medium       |
+| Security              | Full RBAC, httpOnly cookies, CSRF, rate-limiting, WAF headers, Resilience4j                                                                                 | Secrets Manager, stricter CORS, policy as code                            | Medium       |
+| OAuth providers       | Google only (Apple/Facebook UI shows "Soon" badge)                                                                                                          | Google + Apple + Facebook                                                 | Low          |
+| Vehicle vertical      | Full implementation (CRUD, images, availability, bookings, split-payment, 10-state lifecycle)                                                                | Condition reports, insurance integration                                  | Low          |
+| KYC                   | Stripe Identity implemented (KycVerification entity, webhook status updates, landlord publishing guard)                                                      | Mandatory KYC gate before first listing                                   | Low          |
 
 ## 4.1 High-Level Architecture Diagram
 
@@ -957,14 +977,20 @@ This section separates what is implemented from what is planned. Updated 2026-03
               │ Google OAuth │                  │  (Payments)  │
               └──────────────┘                  └──────────────┘
 
-   Provisioned but NOT consumed by application code:
+   Also connected (active):
    ┌──────┐    ┌─────────────┐    ┌────────────────┐
    │Redis │    │Elasticsearch│    │   RabbitMQ     │
-   │  7   │    │     8       │    │      3         │
+   │  8   │    │    9.1      │    │      4         │
    └──────┘    └─────────────┘    └────────────────┘
+
+   Monitoring stack (docker-compose.monitoring.yml):
+   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+   │Logstash  │    │ Kibana   │    │Prometheus│    │ Grafana  │
+   │  9.1     │    │  9.1     │    │  3.5     │    │  11.6    │
+   └──────────┘    └──────────┘    └──────────┘    └──────────┘
 ```
 
-All 6 Docker services run on a shared `rental-network` (bridge). The backend container waits for db, redis, rabbitmq, and elasticsearch to be healthy before starting.
+All 8 Docker services run on a shared `rental-network` (bridge). The backend container waits for db, redis, rabbitmq, and elasticsearch to be healthy before starting.
 
 ### 4.1.2 Target Architecture (Planned) 🔴
 
@@ -1095,39 +1121,65 @@ The target architecture adds RabbitMQ-backed workers that consume outbox events 
 
 ### Implemented States 🟢
 
-The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`, `COMPLETED`.
+The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. All transitions are audit-logged in `BookingAuditLog`.
 
 ```
-    ┌──────────┐
-───▶│ PENDING  │
-    └──┬──┬──┬─┘
-       │  │  │
-       │  │  └──────────────▶ ┌──────────┐
-       │  │                   │ CANCELLED │  (tenant cancels)
-       │  │                   └──────────┘
-       │  │
-       │  └─────────────────▶ ┌──────────┐
-       │                      │ REJECTED │  (landlord rejects)
-       │                      └──────────┘
-       │
-       └────────────────────▶ ┌──────────┐     ┌───────────┐
-                              │ APPROVED │────▶│ COMPLETED │
-                              └──────────┘     └───────────┘
+                              ┌─────────────────┐
+                         ───▶ │     DRAFT        │  (POST /bookings/draft)
+                              └────────┬─────────┘
+                                       │ POST /bookings/{id}/pay
+                                       ▼
+                              ┌─────────────────┐
+                              │ PAYMENT_PENDING  │
+                              └──────┬─────┬─────┘
+                                     │     │
+                          success    │     │  failure
+                                     │     ▼
+                                     │  ┌──────────────────┐
+                                     │  │  PAYMENT_FAILED  │
+                                     │  └──────────────────┘
+                                     ▼
+                              ┌─────────────────┐
+                              │ PENDING_APPROVAL │
+                              └──┬──────────┬───┘
+                                 │          │
+                         approve │          │ reject
+                                 ▼          ▼
+                          ┌──────────┐  ┌──────────┐
+                          │ APPROVED │  │ REJECTED │
+                          └────┬─────┘  └──────────┘
+                               │  │
+                    check-in   │  │ cancel (pre-stay)
+                               │  └────────────────▶ ┌───────────┐
+                               ▼                      │ CANCELLED │
+                          ┌──────────┐               └───────────┘
+                          │  ACTIVE  │
+                          └────┬──┬──┘
+                               │  │
+                     check-out │  │ cancel (early)
+                               │  └────────────────▶ ┌───────────┐
+                               ▼                      │ CANCELLED │
+                          ┌───────────┐              └───────────┘
+                          │ COMPLETED │
+                          └───────────┘
+
+                    PENDING_MODIFICATION — any party requests change
 ```
 
 **Implemented state transitions:**
 | From | To | Trigger | Side Effects |
-|------|----|---------|-------------|
-| PENDING | APPROVED | Landlord approves | Notify tenant |
-| PENDING | REJECTED | Landlord rejects | Notify tenant |
-| PENDING | CANCELLED | Tenant cancels | Release dates |
-| APPROVED | COMPLETED | Booking period ends | Request review |
-
-**Planned states (not yet implemented):** 🔴
-
-- `ACTIVE` — Check-in date reached, rent collection cycle starts
-- `DISPUTED` — Either party raises a dispute
-- `RESOLVED` — Admin resolves dispute
+|------|----|---------|----|
+| DRAFT | PAYMENT_PENDING | Tenant pays | Stripe PaymentIntent created (MANUAL capture) |
+| PAYMENT_PENDING | PENDING_APPROVAL | Stripe webhook: `payment_intent.succeeded` | Funds authorized in escrow |
+| PAYMENT_PENDING | PAYMENT_FAILED | Stripe webhook: `payment_intent.payment_failed` | Notify tenant |
+| PENDING_APPROVAL | APPROVED | Landlord approves | Capture PaymentIntent, notify tenant |
+| PENDING_APPROVAL | REJECTED | Landlord rejects | Cancel PaymentIntent (release hold), notify tenant |
+| PENDING_APPROVAL | CANCELLED | Tenant cancels | Cancel PaymentIntent, release dates |
+| APPROVED | ACTIVE | Check-in date reached (scheduled) | Begin rent collection cycle |
+| APPROVED | CANCELLED | Tenant early-cancel | Full Stripe refund if captured |
+| ACTIVE | COMPLETED | Check-out date reached (scheduled) | Request review |
+| ACTIVE | CANCELLED | Early checkout | Prorated refund for unused nights |
+| Any | PENDING_MODIFICATION | Either party requests change | Notification sent |
 
 ---
 
@@ -1158,7 +1210,7 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 | **Description**         | Users authenticate via credentials or Google OAuth                         |
 | **Acceptance Criteria** | Status                                                                     |
 | AC-1                    | JWT access token issued with 15-minute expiry                              | 🟢                                                 |
-| AC-2                    | Refresh token issued with 7-day expiry                                     | 🟢 (stored in localStorage, not httpOnly cookie)   |
+| AC-2                    | Refresh token issued with 7-day expiry                                     | 🟢 (stored in httpOnly Secure/SameSite=Strict cookie) |
 | AC-3                    | Failed login attempts: lock account after 5 failures                       | 🔴 Planned                                         |
 | AC-4                    | Multi-device support: user can be logged in on web + mobile simultaneously | 🟢                                                 |
 | AC-5                    | Logout invalidates refresh token server-side (DB)                          | 🟢 (DB-backed, not Redis)                          |
@@ -1173,15 +1225,19 @@ The `BookingStatus` enum defines: `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
 | AC-1                    | Editable fields: name, phone, bio, avatar     | 🟢                                  |
 | AC-2                    | Avatar upload                                 | 🟢                                  |
 | AC-3                    | Language preference persisted to localStorage | 🟢 (localStorage, not user profile) |
-| AC-4                    | Users can delete their account                | 🔴 Planned                          |
+| AC-4                    | Users can delete their account (GDPR erasure with typed confirmation guard) | 🟢   |
 | AC-5                    | Profile completeness score                    | 🔴 Planned                          |
 
-### FR-103: KYC Verification (Landlords) 🔴 Planned
+### FR-103: KYC Verification (Landlords) 🟢
 
-| ID              | FR-103                                                              |
-| --------------- | ------------------------------------------------------------------- |
-| **Description** | Landlord identity verification before listing — not yet implemented |
-| **Note**        | Currently any registered LANDLORD can create listings without KYC   |
+| ID                      | FR-103                                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------------------------- | ---- |
+| **Description**         | Landlord identity verification via Stripe Identity before publishing listings                   |
+| **Acceptance Criteria** | Status                                                                                          |
+| AC-1                    | `KycVerification` entity tracks verification status per landlord                               | 🟢   |
+| AC-2                    | Webhook-driven status updates from Stripe Identity events                                       | 🟢   |
+| AC-3                    | Publishing guard prevents listing creation until KYC is verified                               | 🟢   |
+| AC-4                    | KYC status and session launch available in the workspace Settings tab                          | 🟢   |
 
 ---
 
@@ -1796,12 +1852,18 @@ The application runs via Docker Compose with 6 services on a shared bridge netwo
 
 ```
 docker-compose.yml
-├── frontend    — Nginx serving Angular SPA, reverse proxies /api/* and /ws/* to backend
-├── backend     — Spring Boot 4 JAR (Java 21, non-root user, port 8080)
-├── db          — PostgreSQL 16 (database: homeflex)
-├── redis       — Redis 7 (provisioned, not consumed by app)
-├── rabbitmq    — RabbitMQ 3 (provisioned, not consumed by app; management UI on :15672)
-└── elasticsearch — Elasticsearch 9 (provisioned, not consumed by app)
+├── frontend       — Nginx serving Angular SPA, reverse proxies /api/* and /ws/* to backend
+├── backend        — Spring Boot 4 JAR (Java 21, non-root user, port 8080)
+├── db             — PostgreSQL 18 (database: homeflex)
+├── redis          — Redis 8 (rate-limiting active; Redlock/caching planned)
+├── rabbitmq       — RabbitMQ 4 (outbox relay consumer active; management UI on :15672)
+├── elasticsearch  — Elasticsearch 9.1 (full-text search via outbox relay consumer)
+├── logstash       — Logstash 9.1 (JSON log aggregation from backend, port 50000)
+└── kibana         — Kibana 9.1 (log visualization, port 5601)
+
+docker-compose.monitoring.yml
+├── prometheus     — Prometheus 3.5 (scrapes /actuator/prometheus)
+└── grafana        — Grafana 11.6 (JVM, HTTP, booking/payment dashboards)
 ```
 
 - All services have Docker health checks
@@ -1977,14 +2039,14 @@ Currently, properties have a single price field with no currency conversion. Pla
 | OAuth              | Google                   | Social login                                      | 🟢 Implemented (OAuthProvider entity)        |
 | CI/CD              | GitHub Actions           | Build and deploy                                  | 🟢 Implemented (.github/workflows/ci.yml)    |
 | File storage       | AWS S3                   | Media storage                                     | 🟡 StorageService exists (dev fallback)      |
-| KYC verification   | Stripe Identity          | Document + selfie verification                    | 🔴 Planned                                   |
-| SMS                | Twilio                   | OTP, booking alerts                               | 🔴 Planned                                   |
-| WhatsApp           | Twilio                   | Rich notifications (MENA)                         | 🔴 Planned                                   |
-| OAuth              | Apple, Facebook          | Social login                                      | 🔴 Planned                                   |
+| KYC verification   | Stripe Identity          | Document + selfie verification                    | 🟢 Implemented (KycVerification entity, webhooks) |
+| SMS                | Twilio                   | OTP, booking alerts                               | 🟢 Implemented (TwilioSmsGateway)            |
+| WhatsApp           | Twilio                   | Rich notifications (MENA)                         | 🟢 Implemented (TwilioSmsGateway)            |
+| OAuth              | Apple, Facebook          | Social login                                      | 🔴 Planned — UI shows "Soon" badge           |
 | Email (production) | AWS SES                  | High-volume transactional email                   | 🔴 Planned (replace Gmail SMTP)              |
 | CDN                | AWS CloudFront           | Global content delivery                           | 🔴 Planned                                   |
-| Monitoring         | Prometheus + Grafana     | Metrics and dashboards                            | 🔴 Planned                                   |
-| Logging            | ELK Stack                | Centralized logs                                  | 🔴 Planned                                   |
+| Monitoring         | Prometheus + Grafana     | Metrics and dashboards                            | 🟢 Implemented (docker-compose.monitoring.yml) |
+| Logging            | ELK Stack                | Centralized logs                                  | 🟢 Implemented (logstash + kibana services)  |
 | Geocoding          | OpenStreetMap Nominatim  | Address → lat/lng                                 | 🔴 Planned                                   |
 | Maps               | Leaflet + OSM tiles      | Interactive maps                                  | 🔴 Planned                                   |
 | WAF                | AWS WAF                  | API protection                                    | 🔴 Planned                                   |

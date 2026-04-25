@@ -1,300 +1,282 @@
 @if (vehicle(); as vehicle) {
-  <div class="bg-white min-h-screen pb-20">
-    <!-- Image Gallery -->
+  <div class="bg-white min-h-screen pb-24">
+
+    <!-- ── Gallery ──────────────────────────────────────────────────────── -->
     <section class="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="aspect-[16/10] overflow-hidden rounded-xl border border-slate-100 shadow-sm">
+      <div class="grid gap-2 lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-2" style="height: 480px;">
+        <!-- Main image — spans 2 rows -->
+        <div class="relative overflow-hidden rounded-2xl lg:row-span-2 bg-slate-100">
           <img
             [src]="coverImage()"
             [alt]="vehicle.brand + ' ' + vehicle.model"
             class="h-full w-full object-cover"
           />
+          <!-- Vehicle type badge -->
+          <div class="absolute top-4 left-4">
+            <span class="inline-flex items-center rounded-xl bg-slate-900/80 px-3 py-1 text-xs font-black uppercase tracking-wider text-white backdrop-blur-sm">
+              {{ vehicle.transmission.replaceAll('_', ' ') }} · {{ vehicle.fuelType.replaceAll('_', ' ') }}
+            </span>
+          </div>
         </div>
-        <div class="hidden md:grid grid-cols-2 gap-4">
-          @for (image of vehicle.images.slice(0, 4); track image.id) {
-            <div
-              class="aspect-[16/10] overflow-hidden rounded-xl border border-slate-100 shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
-            >
-              <img
-                [src]="image.imageUrl"
-                [alt]="vehicle.brand + ' ' + vehicle.model"
-                class="h-full w-full object-cover"
-              />
-            </div>
-          }
-        </div>
+        <!-- Thumb grid — 4 images in 2 rows × 2 cols -->
+        @for (image of vehicle.images.slice(0, 4); track image.id) {
+          <div class="overflow-hidden rounded-2xl bg-slate-100 cursor-pointer hover:opacity-90 transition-opacity">
+            <img
+              [src]="image.imageUrl"
+              [alt]="vehicle.brand + ' ' + vehicle.model"
+              class="h-full w-full object-cover"
+            />
+          </div>
+        }
       </div>
     </section>
 
-    <!-- Content Split -->
-    <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <!-- ── Content ───────────────────────────────────────────────────────── -->
+    <section class="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
       <div class="grid gap-12 lg:grid-cols-[1fr_400px]">
-        <!-- Left Column: Details -->
+
+        <!-- ── Left: Details ──────────────────────────────────────────── -->
         <div class="space-y-10">
-          <!-- Header Info -->
+
+          <!-- Header -->
           <div class="border-b border-slate-100 pb-8">
-            <div class="flex items-center gap-2 mb-4">
-              <span
-                class="inline-flex items-center rounded-md bg-brand-50 px-2 py-1 text-xs font-bold text-brand-600 uppercase tracking-wider"
-              >
-                {{ vehicle.status }}
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              <span class="inline-flex items-center rounded-lg bg-brand-50 border border-brand-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-brand-600">
+                {{ vehicle.status.replaceAll('_', ' ') }}
               </span>
-              <span class="text-slate-300">•</span>
-              <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">{{
-                vehicle.transmission
-              }}</span>
-              <span class="text-slate-300">•</span>
-              <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">{{
-                vehicle.fuelType
-              }}</span>
+              @if (vehicle.seats) {
+                <span class="inline-flex items-center rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  {{ vehicle.seats }} seats
+                </span>
+              }
             </div>
 
-            <h1 class="text-4xl font-extrabold text-slate-900 mb-2 leading-tight">
+            <h1 class="text-3xl font-extrabold text-slate-900 leading-tight sm:text-4xl">
               {{ vehicle.year }} {{ vehicle.brand }} {{ vehicle.model }}
             </h1>
-            <p class="text-lg font-medium text-slate-500 flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-5 h-5 text-slate-400"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
-                />
+            <p class="mt-2 text-base text-slate-500 flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-slate-400 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
               </svg>
               Pickup from {{ vehicle.pickupAddress }}, {{ vehicle.pickupCity }}
             </p>
 
-            <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-6">
-              <div class="text-center sm:text-left">
-                <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.seats ?? 0 }}</p>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Seats</p>
+            <!-- Stats tiles -->
+            <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4 text-center">
+                <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.seats ?? '—' }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Seats</p>
               </div>
-              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
-                <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.mileage ?? 0 }}</p>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Kilometers</p>
+              <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4 text-center">
+                <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.mileage ?? '—' }}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">km</p>
               </div>
-              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
+              <div class="rounded-2xl bg-slate-50 border border-slate-100 p-4 text-center">
                 <p class="text-2xl font-extrabold text-slate-900">{{ vehicle.year }}</p>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Model Year</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Year</p>
               </div>
-              <div class="text-center sm:text-left border-l border-slate-100 pl-6">
-                <p class="text-2xl font-extrabold text-brand-600">{{ price() }}</p>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Per Day</p>
+              <div class="rounded-2xl bg-brand-500 p-4 text-center">
+                <p class="text-2xl font-extrabold text-white">{{ price() }}</p>
+                <p class="text-[10px] font-bold text-brand-200 uppercase tracking-wider mt-0.5">Per Day</p>
               </div>
             </div>
           </div>
 
           <!-- Description -->
-          <div class="space-y-4">
-            <h2 class="text-2xl font-bold text-slate-900">Vehicle description</h2>
-            <p class="text-lg text-slate-600 leading-relaxed">{{ vehicle.description }}</p>
+          @if (vehicle.description) {
+            <div>
+              <h2 class="text-xl font-bold text-slate-900 mb-3">About this vehicle</h2>
+              <p class="text-slate-600 leading-relaxed">{{ vehicle.description }}</p>
+            </div>
+          }
+
+          <!-- Specifications -->
+          <div class="border-t border-slate-100 pt-10">
+            <h2 class="text-xl font-bold text-slate-900 mb-6">Specifications</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              @for (spec of [
+                { label: 'Transmission', value: vehicle.transmission },
+                { label: 'Fuel type', value: vehicle.fuelType },
+                { label: 'Color', value: vehicle.color || 'N/A' },
+                { label: 'License plate', value: vehicle.licensePlate || 'On request' },
+                { label: 'Model year', value: '' + vehicle.year },
+                { label: 'Last updated', value: date(vehicle.updatedAt) }
+              ]; track spec.label) {
+                <div class="rounded-xl bg-slate-50 border border-slate-100 p-4">
+                  <p class="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">{{ spec.label }}</p>
+                  <p class="text-sm font-bold text-slate-800">{{ spec.value }}</p>
+                </div>
+              }
+            </div>
           </div>
 
-          <!-- Owner Info -->
+          <!-- Owner -->
           @if (owner(); as vehicleOwner) {
-            <div class="space-y-6 pt-10 border-t border-slate-100">
+            <div class="border-t border-slate-100 pt-10">
+              <h2 class="text-xl font-bold text-slate-900 mb-6">Meet the owner</h2>
               <div class="flex items-center gap-4">
-                <div
-                  class="h-16 w-16 rounded-full bg-brand-100 flex flex-col items-center justify-center text-brand-700 font-extrabold text-xl overflow-hidden shrink-0"
-                >
+                <div class="h-16 w-16 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-xl font-extrabold overflow-hidden shrink-0">
                   @if (vehicleOwner.profilePictureUrl) {
-                    <img
-                      [src]="vehicleOwner.profilePictureUrl"
-                      [alt]="vehicleOwner.firstName"
-                      class="h-full w-full object-cover"
-                    />
+                    <img [src]="vehicleOwner.profilePictureUrl" [alt]="vehicleOwner.firstName" class="h-full w-full object-cover" />
                   } @else {
                     {{ vehicleOwner.firstName.slice(0, 1) }}{{ vehicleOwner.lastName.slice(0, 1) }}
                   }
                 </div>
                 <div>
-                  <h2 class="text-2xl font-bold text-slate-900">
-                    Owned by {{ vehicleOwner.firstName }} {{ vehicleOwner.lastName }}
-                  </h2>
-                  <p class="text-sm font-medium text-slate-500">
-                    Joined in {{ vehicleOwner.createdAt | slice: 0 : 4 }}
-                  </p>
+                  <p class="text-lg font-bold text-slate-900">{{ vehicleOwner.firstName }} {{ vehicleOwner.lastName }}</p>
+                  <p class="text-sm text-slate-500">Member since {{ vehicleOwner.createdAt | slice: 0 : 4 }}</p>
                 </div>
               </div>
             </div>
           }
-
-          <!-- Specifications -->
-          <div class="space-y-6 pt-10 border-t border-slate-100">
-            <h2 class="text-2xl font-bold text-slate-900">Specifications</h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
-              <div class="space-y-1">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Transmission
-                </p>
-                <p class="text-sm font-bold text-slate-700">{{ vehicle.transmission }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Fuel Type</p>
-                <p class="text-sm font-bold text-slate-700">{{ vehicle.fuelType }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Color</p>
-                <p class="text-sm font-bold text-slate-700">{{ vehicle.color || 'Premium' }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  License Plate
-                </p>
-                <p class="text-sm font-bold text-slate-700">
-                  {{ vehicle.licensePlate || 'Available on request' }}
-                </p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered</p>
-                <p class="text-sm font-bold text-slate-700">{{ vehicle.year }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Last Updated
-                </p>
-                <p class="text-sm font-bold text-slate-700">{{ date(vehicle.updatedAt) }}</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <!-- Right Column: Booking Sidebar -->
-        <aside class="space-y-6">
-          <div
-            class="sticky top-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-zillow space-y-6"
-          >
-            <div class="flex items-baseline justify-between border-b border-slate-50 pb-4">
-              <span class="text-2xl font-extrabold text-slate-900">{{ price() }}</span>
-              <span class="text-sm font-bold text-slate-400">/ day</span>
+        <!-- ── Right: Booking Sidebar ──────────────────────────────────── -->
+        <aside>
+          <div class="sticky top-24 rounded-3xl overflow-hidden shadow-elevated">
+
+            <!-- Dark header -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 px-6 py-5">
+              <div class="flex items-baseline justify-between">
+                <div>
+                  <span class="text-2xl font-extrabold text-white">{{ price() }}</span>
+                  <span class="text-sm font-semibold text-slate-400 ml-1">/ day</span>
+                </div>
+                <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 text-xs font-bold text-emerald-400">
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Available
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Daily rate · Basic insurance &amp; taxes included</p>
             </div>
 
-            @if (bookingMessage()) {
-              <div
-                class="rounded-xl p-4 text-sm font-semibold bg-brand-50 text-brand-700 border border-brand-100"
-              >
-                {{ bookingMessage() }}
-              </div>
-            }
+            <!-- Body -->
+            <div class="bg-white px-6 py-6 space-y-4">
 
-            @if (pendingPaymentSecret()) {
-              <div class="space-y-4 pt-4 border-t border-slate-100">
-                <h3 class="text-sm font-bold text-slate-900">Secure Payment</h3>
-                <div id="stripe-payment-element" class="min-h-[200px]">
-                  <!-- Stripe Element will be mounted here -->
+              @if (bookingMessage()) {
+                <div class="rounded-xl p-4 text-sm font-semibold bg-brand-50 text-brand-700 border border-brand-100">
+                  {{ bookingMessage() }}
+                </div>
+              }
+
+              @if (pendingPaymentSecret()) {
+                <!-- Step 2: Payment -->
+                <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3 mb-2">
+                  <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  <div>
+                    <p class="text-sm font-bold text-emerald-800">Booking reserved!</p>
+                    <p class="text-xs text-emerald-700">Complete payment to confirm your rental.</p>
+                  </div>
                 </div>
 
-                <div class="flex gap-3">
+                <div>
+                  <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Secure payment</p>
+                  <div id="stripe-payment-element" class="min-h-[200px] rounded-xl border border-slate-200 p-3 bg-slate-50">
+                    <!-- Skeleton while Stripe loads -->
+                    <div class="space-y-3 animate-pulse">
+                      <div class="h-10 bg-slate-200 rounded-lg"></div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div class="h-10 bg-slate-200 rounded-lg"></div>
+                        <div class="h-10 bg-slate-200 rounded-lg"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
                   <button
                     (click)="confirmPayment()"
                     [disabled]="paymentProcessing() || !stripeElementsMounted()"
-                    class="flex-1 rounded-xl bg-brand-600 py-3 text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                    class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all"
                   >
                     @if (paymentProcessing()) {
-                      <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle
-                          class="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          stroke-width="4"
-                          fill="none"
-                        ></circle>
-                        <path
-                          class="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                      <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                       </svg>
-                      Processing...
+                      Processing…
                     } @else {
-                      Confirm & Pay
+                      🔒 Pay &amp; Confirm Booking
                     }
                   </button>
                   <button
                     (click)="dismissPayment()"
                     [disabled]="paymentProcessing()"
-                    class="px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+                    class="px-4 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     Later
                   </button>
                 </div>
-              </div>
-            } @else {
-              <form class="space-y-4" [formGroup]="bookingForm" (ngSubmit)="reserveVehicle()">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
-                      >Pick up</label
-                    >
-                    <input
-                      type="date"
-                      formControlName="startDate"
-                      class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
-                      >Drop off</label
-                    >
-                    <input
-                      type="date"
-                      formControlName="endDate"
-                      class="w-full rounded-md border border-slate-200 px-3 py-3 text-xs font-bold text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
-                    />
-                  </div>
-                </div>
+                <p class="text-center text-[10px] text-slate-400 font-medium">Secured by Stripe · 256-bit SSL encryption</p>
 
-                <div>
-                  <label
-                    class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1"
-                    >Inquiry details</label
-                  >
-                  <textarea
-                    rows="3"
-                    formControlName="message"
-                    placeholder="Pickup details, delivery request..."
-                    class="w-full rounded-md border border-slate-200 p-3 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:border-brand-500"
-                  ></textarea>
-                </div>
+              } @else {
+                <!-- Step 1: Booking form -->
+                <form class="space-y-4" [formGroup]="bookingForm" (ngSubmit)="reserveVehicle()">
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Pick-up</label>
+                      <input
+                        type="date"
+                        formControlName="startDate"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-semibold text-slate-800 bg-slate-50 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Drop-off</label>
+                      <input
+                        type="date"
+                        formControlName="endDate"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-semibold text-slate-800 bg-slate-50 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                      />
+                    </div>
+                  </div>
 
-                <div class="grid gap-3">
+                  <div>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1.5">Inquiry details</label>
+                    <textarea
+                      rows="3"
+                      formControlName="message"
+                      placeholder="Pickup instructions, delivery request…"
+                      class="w-full rounded-xl border border-slate-200 p-3 text-sm font-medium text-slate-700 bg-slate-50 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all resize-none"
+                    ></textarea>
+                  </div>
+
                   <button
-                    class="w-full rounded-md border border-brand-500 py-3 text-sm font-bold text-brand-600 hover:bg-brand-50 transition-colors"
                     type="button"
                     (click)="checkAvailability()"
+                    class="w-full rounded-xl border-2 border-brand-400 py-3 text-sm font-black text-brand-600 hover:bg-brand-50 transition-colors"
                   >
                     Check availability
                   </button>
+
                   <button
-                    class="w-full rounded-md bg-brand-500 py-4 text-base font-bold text-white shadow-lg shadow-brand-100 hover:bg-brand-600 transition-colors"
                     type="submit"
+                    class="w-full rounded-xl bg-brand-500 py-4 text-base font-black text-white hover:bg-brand-600 transition-colors shadow-lg shadow-brand-200"
                   >
                     Reserve this vehicle
                   </button>
-                </div>
-              </form>
-            }
+                </form>
+              }
 
-            <p class="text-xs text-center text-slate-400 font-medium">
-              Daily rate includes basic insurance and taxes.
-            </p>
+              <!-- Trust badges -->
+              <div class="border-t border-slate-100 pt-4 grid grid-cols-3 gap-2 text-center">
+                <div>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Insured</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Verified</p>
+                </div>
+                <div>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Secure</p>
+                </div>
+              </div>
+            </div>
           </div>
         </aside>
+
       </div>
     </section>
   </div>

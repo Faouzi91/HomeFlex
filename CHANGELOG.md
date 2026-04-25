@@ -2,6 +2,48 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-04-25 (Premium UI/UX Overhaul & Image Proxy)
+
+### Added
+
+- **MinIO Image Proxy** — Nginx `/uploads/` location block added, proxying requests to `http://minio:9000/rental-app-media/`. `StorageService.generateUrl()` now returns `/uploads/<key>` relative paths instead of full `http://minio:...` absolute URLs that are unreachable from the browser.
+- **V38 Flyway Migration** — SQL migration rewrites all existing `http://` absolute MinIO image URLs in `property_images` and `vehicle_images` tables to relative `/uploads/<key>` form so historical uploads are immediately accessible without data re-upload.
+
+### Changed
+
+- **`properties.page.html`** — Full redesign: `bg-slate-900` dark hero with `.eyebrow--light` badge, glassmorphism stat tiles (`bg-white/5 border border-white/10 rounded-2xl`), sticky filter sidebar with `rounded-xl bg-slate-50` inputs, `.select-wrap`/`.select-styled` dropdowns, `font-black` CTA button, improved empty state with SVG icon box.
+- **`vehicles.page.html`** — Same dark hero + premium sidebar treatment as properties page. Empty state upgraded with vehicle SVG icon.
+- **`vehicle-detail.page.html`** — CSS grid gallery (`lg:grid-cols-[2fr_1fr_1fr] lg:grid-rows-2`, 480px): main image spans 2 rows, 4 thumbnails fill 2×2 cells. Booking sidebar rebuilt with dark gradient header, split-payment Stripe Elements flow, emerald confirmation banner.
+- **`insurance-tab.component.html`** — Full redesign: `bg-slate-50/50` background, emerald icon header, sectioned tenant (emerald) and landlord (gold) plan cards with coverage tiles, provider badge pills, spinner-state purchase buttons using `eyebrow` and `eyebrow--gold`.
+- **`disputes-tab.component.html`** — Full redesign: amber icon header (`bg-amber-500`), amber icon boxes per dispute card, SVG-led meta row with calendar/checkmark icons, improved skeleton loader.
+- **`finance-tab.component.html`** — Full redesign: dark `bg-slate-900` onboarding hero with radial decorative blurs, 3-tile benefits grid, 4-step visual progress bar, gold "Connect Bank Account" CTA with spinner. Connected state: 4-tile earnings dashboard (dark / emerald / amber / brand tiles) + improved receipts section.
+- **`CLAUDE.md`** — Added **Frontend Design Conventions** section documenting the dark hero pattern, filter sidebar spec, color-per-domain mapping, `.replaceAll('_', ' ')` enum rule, and available CSS utility classes. Updated Nginx proxy entry to include `/uploads/` → MinIO route.
+
+### Fixed
+
+- **`vehicle-detail.page.html`** — `vehicle.transmission` and `vehicle.fuelType` now use `.replaceAll('_', ' ')` instead of displaying raw enum values.
+- **`property-detail.page.html`** — `property.listingType` and `property.propertyType` now use `.replaceAll('_', ' ')`.
+- **`favorites-tab.component.html`** — `property.propertyType` and `property.listingType` now use `.replaceAll('_', ' ')`.
+- **`hosting-tab.component.html`** — Detail panel `detailProperty()!.status` and `detailVehicle()!.status` now use `.replaceAll('_', ' ')`.
+- **`admin-properties.page.html`** — `property.propertyType` now uses `.replaceAll('_', ' ')`.
+
+---
+
+## [Unreleased] — 2026-04-23 (Frontend Quality & Bug Fix Pass)
+
+### Fixed
+
+- **`disputes-tab.component.ts`** — Replaced deprecated `ApiClient` facade with direct `DisputeApi` injection. Converted `OnInit.ngOnInit()` subscription to constructor-based `takeUntilDestroyed()` pattern, eliminating memory leak.
+- **`finance-tab.component.ts`** — Replaced `ApiClient` with direct `FinanceApi` + `PayoutApi` injections. Added `takeUntilDestroyed()`. Stripe Connect status (`PayoutSummary`) now loaded in `forkJoin` alongside receipts; "Connect Stripe" banner only renders when `stripeAccountConnected === false`.
+- **`finance-tab.component.html`** — Stripe onboarding CTA now gated by `stripeNotConnected` so fully-onboarded landlords no longer see the "Connect Stripe" prompt.
+- **`insurance-tab.component.ts`** — Replaced `ApiClient` with direct `InsuranceApi`. Fetches both `TENANT` and `LANDLORD` plan types via `forkJoin`, so the landlord protection section is no longer permanently empty. Added `takeUntilDestroyed()`.
+- **`maintenance-tab.component.html`** — Property ID text input replaced with a `<select>` dropdown populated from `WorkspaceStore.myProperties()` for landlords/admins; plain text input retained as fallback for tenants without cached properties.
+- **`maintenance-tab.component.ts`** — `store` visibility changed from `private` to `protected` so the template can access `myProperties()`.
+- **`login.page.html`** — Social login buttons (Google, Apple, Facebook) are now disabled with a "Soon" badge instead of silently sending dummy tokens that would fail on the backend. The `socialLogin()` method in the TypeScript remains for future OAuth wiring.
+- **`docs/ARCHITECTURE.md`** — Updated stale version numbers: PostgreSQL 16 → 18, Redis 7 → 8, RabbitMQ 3 → 4, Elasticsearch 9 → 9.1, Prometheus → 3.5, Grafana → 11.6. Corrected Flutter description to reflect it is not part of Docker Compose.
+
+---
+
 ## [Unreleased] — 2026-04-24 (Unified Booking Workflow & Vehicle Parity)
 
 ### Added
