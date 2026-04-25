@@ -54,9 +54,21 @@
                 />
               </label>
             </div>
-            <div>
+            <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-slate-900">{{ session.displayName() }}</p>
-              <p class="text-xs text-slate-400">{{ session.user()?.email }}</p>
+              <p class="text-xs text-slate-400 mb-2">{{ session.user()?.email }}</p>
+              @if (session.user()?.profileCompleteness != null) {
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      class="h-full rounded-full transition-all duration-500"
+                      [class]="(session.user()!.profileCompleteness! >= 80) ? 'bg-emerald-500' : (session.user()!.profileCompleteness! >= 50 ? 'bg-amber-400' : 'bg-rose-400')"
+                      [style.width.%]="session.user()!.profileCompleteness!"
+                    ></div>
+                  </div>
+                  <span class="text-[11px] font-bold text-slate-500 shrink-0">{{ session.user()!.profileCompleteness! }}% complete</span>
+                </div>
+              }
             </div>
           </div>
 

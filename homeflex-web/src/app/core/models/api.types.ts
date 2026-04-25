@@ -93,6 +93,9 @@ export interface Property {
   floorNumber: number | null;
   totalFloors: number | null;
   instantBookEnabled?: boolean;
+  cleaningFee?: number | null;
+  securityDeposit?: number | null;
+  cancellationPolicy?: string | null;
   isAvailable: boolean;
   checkInTime?: string;
   checkOutTime?: string;
@@ -263,6 +266,12 @@ export interface Review {
   targetUser?: User;
   reviewer: User;
   rating: number;
+  cleanlinessRating?: number | null;
+  accuracyRating?: number | null;
+  communicationRating?: number | null;
+  locationRating?: number | null;
+  checkinRating?: number | null;
+  valueRating?: number | null;
   comment: string | null;
   reply?: string | null;
   repliedAt?: string | null;

@@ -96,6 +96,17 @@ export class PropertyDetailPageComponent {
     return prop.price * nights;
   });
 
+  protected readonly cleaningFeeEstimate = computed(() => this.property()?.cleaningFee ?? 0);
+  protected readonly platformFeeEstimate = computed(() => {
+    const base = this.priceEstimate();
+    return base ? Math.round(base * 0.15 * 100) / 100 : 0;
+  });
+  protected readonly totalEstimate = computed(() => {
+    const base = this.priceEstimate();
+    if (!base) return null;
+    return base + this.platformFeeEstimate() + this.cleaningFeeEstimate();
+  });
+
   protected readonly dateRangeConflict = computed(() => {
     const fv = this.formValue();
     const blocked = this.blockedDates();
@@ -252,6 +263,19 @@ export class PropertyDetailPageComponent {
     const prop = this.property();
     if (!est || !prop) return '';
     return formatCurrency(est, prop.currency);
+  }
+
+  protected fmtFee(amount: number): string {
+    const prop = this.property();
+    if (!prop) return '';
+    return formatCurrency(amount, prop.currency);
+  }
+
+  protected totalFormatted(): string {
+    const total = this.totalEstimate();
+    const prop = this.property();
+    if (!total || !prop) return '';
+    return formatCurrency(total, prop.currency);
   }
 
   protected toggleFavorite(): void {

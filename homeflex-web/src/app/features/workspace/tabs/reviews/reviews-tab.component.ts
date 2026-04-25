@@ -140,6 +140,31 @@ export class ReviewsTabComponent {
       });
   }
 
+  protected hasSubRatings(review: Review): boolean {
+    return !!(
+      review.cleanlinessRating ||
+      review.accuracyRating ||
+      review.communicationRating ||
+      review.locationRating ||
+      review.checkinRating ||
+      review.valueRating
+    );
+  }
+
+  protected subRatings(review: Review): { label: string; value: number }[] {
+    const pairs: [string, number | null | undefined][] = [
+      ['Cleanliness', review.cleanlinessRating],
+      ['Accuracy', review.accuracyRating],
+      ['Communication', review.communicationRating],
+      ['Location', review.locationRating],
+      ['Check-in', review.checkinRating],
+      ['Value', review.valueRating],
+    ];
+    return pairs
+      .filter(([, v]) => v != null)
+      .map(([label, value]) => ({ label, value: value as number }));
+  }
+
   protected deleteReview(reviewId: string): void {
     this.reviewApi
       .delete(reviewId)
