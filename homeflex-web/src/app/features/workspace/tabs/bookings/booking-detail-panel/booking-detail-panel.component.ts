@@ -55,7 +55,7 @@ export class BookingDetailPanelComponent {
   // ── Derived: images ─────────────────────────────────────────────────────────
 
   protected readonly images = computed(() => {
-    const imgs = this.booking().property?.images ?? [];
+    const imgs = this.booking().property.images ?? [];
     return [...imgs].sort((a, b) => a.displayOrder - b.displayOrder);
   });
 
@@ -98,9 +98,18 @@ export class BookingDetailPanelComponent {
   protected readonly canCancel = computed(() => {
     const s = this.booking().status;
     if (this.isLandlord()) return false;
-    // Tenants can cancel before approval or once approved (before start)
-    return s === 'PENDING_APPROVAL' || s === 'PAYMENT_PENDING' || s === 'APPROVED' || s === 'DRAFT';
+    return (
+      s === 'PENDING_APPROVAL' ||
+      s === 'PAYMENT_PENDING' ||
+      s === 'PAYMENT_FAILED' ||
+      s === 'APPROVED' ||
+      s === 'DRAFT'
+    );
   });
+
+  protected readonly canRetryPayment = computed(
+    () => !this.isLandlord() && this.booking().status === 'PAYMENT_FAILED',
+  );
 
   protected readonly isEarlyCheckout = computed(
     () => this.canCancel() && this.phase() === 'ACTIVE',
@@ -114,7 +123,7 @@ export class BookingDetailPanelComponent {
   // ── Tenant info display (for landlord view) ─────────────────────────────────
 
   protected readonly tenantInitials = computed(() =>
-    initials(this.booking().tenant?.firstName, this.booking().tenant?.lastName),
+    initials(this.booking().tenant.firstName, this.booking().tenant.lastName),
   );
 
   // ── Actions ─────────────────────────────────────────────────────────────────
@@ -163,6 +172,24 @@ export class BookingDetailPanelComponent {
       },
       error: () => this.actionLoading.set(null),
     });
+  }
+
+  protected retryPayment(): void {
+    const b = this.booking();
+    this.actionLoading.set('retry');
+    this.bookingApi
+      .retryPayment(b.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.actionLoading.set(null);
+          this.closed.emit();
+          this.router.navigate(['/properties', b.property.id], {
+            queryParams: { retryBookingId: b.id, clientSecret: res.clientSecret },
+          });
+        },
+        error: () => this.actionLoading.set(null),
+      });
   }
 
   protected signLease(): void {

@@ -9,10 +9,10 @@
   <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-slate-100 shrink-0">
     <div class="min-w-0">
       <h2 class="text-base font-bold text-slate-900 truncate">
-        {{ booking().property?.title ?? 'Booking Detail' }}
+        {{ booking().property.title }}
       </h2>
       <p class="text-xs text-slate-400 mt-0.5 truncate">
-        {{ booking().property?.city }}, {{ booking().property?.country }}
+        {{ booking().property.city }}, {{ booking().property.country }}
       </p>
     </div>
     <div class="flex items-center gap-2 shrink-0">
@@ -20,10 +20,11 @@
         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
         [ngClass]="statusClass(booking().status)"
       >
-        {{ booking().status.replace('_', ' ') }}
+        {{ booking().status.replaceAll('_', ' ') }}
       </span>
       <button
         (click)="closed.emit()"
+        aria-label="Close"
         class="h-8 w-8 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
       >
         <svg
@@ -32,6 +33,7 @@
           fill="none"
           stroke="currentColor"
           stroke-width="2"
+          aria-hidden="true"
           class="w-4 h-4"
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -46,12 +48,13 @@
       <div class="relative bg-slate-900 aspect-[16/9] overflow-hidden">
         <img
           [src]="mainImage()"
-          [alt]="booking().property?.title"
+          [alt]="booking().property.title"
           class="w-full h-full object-cover"
         />
         @if (images().length > 1) {
           <button
             (click)="prevImage()"
+            aria-label="Previous image"
             class="absolute left-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
           >
             <svg
@@ -71,6 +74,7 @@
           </button>
           <button
             (click)="nextImage()"
+            aria-label="Next image"
             class="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
           >
             <svg
@@ -89,6 +93,7 @@
             @for (img of images(); track img.id; let i = $index) {
               <button
                 (click)="activeImageIndex.set(i)"
+                [attr.aria-label]="'Go to image ' + (i + 1)"
                 class="h-1.5 rounded-full transition-all"
                 [class.w-4]="activeImageIndex() === i"
                 [class.bg-white]="activeImageIndex() === i"
@@ -182,26 +187,26 @@
         @if (booking().cleaningFee) {
           <div class="flex justify-between text-sm text-slate-600">
             <span>Cleaning fee</span>
-            <span>{{ price(booking().cleaningFee, booking().property?.currency) }}</span>
+            <span>{{ price(booking().cleaningFee, booking().property.currency) }}</span>
           </div>
         }
         @if (booking().taxAmount) {
           <div class="flex justify-between text-sm text-slate-600">
             <span>Tax (5%)</span>
-            <span>{{ price(booking().taxAmount, booking().property?.currency) }}</span>
+            <span>{{ price(booking().taxAmount, booking().property.currency) }}</span>
           </div>
         }
         @if (booking().platformFee) {
           <div class="flex justify-between text-sm text-slate-500">
             <span>Platform fee (15%)</span>
-            <span>{{ price(booking().platformFee, booking().property?.currency) }}</span>
+            <span>{{ price(booking().platformFee, booking().property.currency) }}</span>
           </div>
         }
         <div
           class="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-100"
         >
           <span>Total</span>
-          <span>{{ price(booking().totalPrice, booking().property?.currency) }}</span>
+          <span>{{ price(booking().totalPrice, booking().property.currency) }}</span>
         </div>
         @if (booking().paymentConfirmedAt) {
           <p class="text-xs text-emerald-600 flex items-center gap-1 pt-1">
@@ -229,7 +234,7 @@
         <!-- Landlord sees tenant info -->
         <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Guest</h3>
         <div class="flex items-center gap-3">
-          @if (booking().tenant?.profilePictureUrl) {
+          @if (booking().tenant.profilePictureUrl) {
             <img
               [src]="booking().tenant.profilePictureUrl"
               [alt]="booking().tenant.firstName"
@@ -266,7 +271,7 @@
         <!-- Tenant sees landlord info -->
         <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Hosted by</h3>
         <div class="flex items-center gap-3">
-          @if (booking().property.landlord?.profilePictureUrl) {
+          @if (booking().property.landlord.profilePictureUrl) {
             <img
               [src]="booking().property.landlord.profilePictureUrl"
               [alt]="booking().property.landlord.firstName"
@@ -276,14 +281,13 @@
             <div
               class="h-10 w-10 rounded-full bg-slate-100 text-slate-600 font-bold text-sm flex items-center justify-center shrink-0"
             >
-              {{ booking().property.landlord?.firstName?.[0]
-              }}{{ booking().property.landlord?.lastName?.[0] }}
+              {{ booking().property.landlord.firstName[0] }}{{ booking().property.landlord.lastName[0] }}
             </div>
           }
           <div class="min-w-0">
             <p class="text-sm font-semibold text-slate-900">
-              {{ booking().property.landlord?.firstName }}
-              {{ booking().property.landlord?.lastName }}
+              {{ booking().property.landlord.firstName }}
+              {{ booking().property.landlord.lastName }}
             </p>
           </div>
           <button
@@ -402,6 +406,25 @@
           </div>
         </div>
       }
+    }
+
+    <!-- Tenant: retry payment for failed payment -->
+    @if (canRetryPayment()) {
+      <button
+        (click)="retryPayment()"
+        [disabled]="actionLoading() === 'retry'"
+        class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        @if (actionLoading() === 'retry') {
+          <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Processing…
+        } @else {
+          Retry Payment
+        }
+      </button>
     }
 
     <!-- Dispute -->

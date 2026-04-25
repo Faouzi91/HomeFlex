@@ -1,13 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   inject,
-  OnInit,
   signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { ApiClient } from '../../../../core/api/api.client';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, forkJoin, of } from 'rxjs';
+import { InsuranceApi } from '../../../../core/api/services/insurance.api';
 import { InsurancePlan } from '../../../../core/models/api.types';
 
 @Component({
@@ -17,8 +19,9 @@ import { InsurancePlan } from '../../../../core/models/api.types';
   templateUrl: './insurance-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InsuranceTabComponent implements OnInit {
-  private readonly api = inject(ApiClient);
+export class InsuranceTabComponent {
+  private readonly insuranceApi = inject(InsuranceApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly allPlans = signal<InsurancePlan[]>([]);
   protected readonly loading = signal(true);
@@ -34,24 +37,31 @@ export class InsuranceTabComponent implements OnInit {
     this.allPlans().filter((p) => p.type === 'LANDLORD'),
   );
 
-  ngOnInit(): void {
-    this.api.getInsurancePlans('TENANT').subscribe({
-      next: (data) => {
-        this.allPlans.set(data ?? []);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Failed to load insurance plans.');
-        this.loading.set(false);
-      },
-    });
+  constructor() {
+    forkJoin({
+      tenant: this.insuranceApi.getPlans('TENANT').pipe(catchError(() => of([] as InsurancePlan[]))),
+      landlord: this.insuranceApi
+        .getPlans('LANDLORD')
+        .pipe(catchError(() => of([] as InsurancePlan[]))),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ tenant, landlord }) => {
+          this.allPlans.set([...(tenant ?? []), ...(landlord ?? [])]);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Failed to load insurance plans.');
+          this.loading.set(false);
+        },
+      });
   }
 
   protected selectPlan(plan: InsurancePlan): void {
     this.purchaseError.set(null);
     this.purchaseSuccess.set(null);
     this.purchasing.set(plan.id);
-    // purchaseInsurancePolicy requires a bookingId — surface a message instead
+    // purchaseInsurancePolicy requires a bookingId — guide the user to do it at checkout
     this.purchasing.set(null);
     this.purchaseSuccess.set(
       `Plan "${plan.name}" noted. Select it when completing a booking checkout.`,

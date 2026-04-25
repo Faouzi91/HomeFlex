@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
-import { ApiClient } from '../../../../core/api/api.client';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, forkJoin, of } from 'rxjs';
+import { FinanceApi } from '../../../../core/api/services/finance.api';
+import { PayoutApi } from '../../../../core/api/services/payout.api';
 import { SessionStore } from '../../../../core/state/session.store';
-import { Receipt } from '../../../../core/models/api.types';
+import { PayoutSummary, Receipt } from '../../../../core/models/api.types';
 
 @Component({
   selector: 'app-finance-tab',
@@ -11,37 +14,58 @@ import { Receipt } from '../../../../core/models/api.types';
   templateUrl: './finance-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FinanceTabComponent implements OnInit {
-  private readonly api = inject(ApiClient);
+export class FinanceTabComponent {
+  private readonly financeApi = inject(FinanceApi);
+  private readonly payoutApi = inject(PayoutApi);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly session = inject(SessionStore);
 
   protected readonly receipts = signal<Receipt[]>([]);
+  protected readonly payout = signal<PayoutSummary | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly onboarding = signal(false);
 
-  ngOnInit(): void {
-    this.api.getMyReceipts().subscribe({
-      next: (data) => {
-        this.receipts.set(data ?? []);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Failed to load receipts.');
-        this.loading.set(false);
-      },
-    });
+  constructor() {
+    const isHost = this.session.isLandlord() || this.session.isAdmin();
+
+    forkJoin({
+      receipts: this.financeApi.getMyReceipts().pipe(catchError(() => of([] as Receipt[]))),
+      payout: isHost
+        ? this.payoutApi.getSummary().pipe(catchError(() => of(null)))
+        : of(null),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ receipts, payout }) => {
+          this.receipts.set(receipts ?? []);
+          this.payout.set(payout);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Failed to load receipts.');
+          this.loading.set(false);
+        },
+      });
+  }
+
+  protected get stripeNotConnected(): boolean {
+    const p = this.payout();
+    return p !== null && !p.stripeAccountConnected;
   }
 
   protected onboardStripe(): void {
     this.onboarding.set(true);
     const base = window.location.origin + '/workspace/finance';
-    this.api.onboardConnectAccount(base, base).subscribe({
-      next: (res) => {
-        window.location.href = res.onboardingUrl;
-      },
-      error: () => this.onboarding.set(false),
-    });
+    this.payoutApi
+      .onboardConnectAccount(base, base)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          window.location.href = res.onboardingUrl;
+        },
+        error: () => this.onboarding.set(false),
+      });
   }
 
   protected statusClass(status: string): string {

@@ -34,6 +34,8 @@ export class ProfileTabComponent {
   protected readonly payoutSummary = signal<any>(null);
   protected readonly eraseDialogOpen = signal(false);
   protected readonly eraseConfirmation = signal('');
+  protected readonly savingProfile = signal(false);
+  protected readonly savingPassword = signal(false);
   private readonly hostDataLoaded = signal(false);
 
   protected readonly profileForm = this.fb.group({
@@ -46,10 +48,19 @@ export class ProfileTabComponent {
     smsNotificationsEnabled: [true],
   });
 
-  protected readonly passwordForm = this.fb.group({
-    currentPassword: ['', Validators.required],
-    newPassword: ['', [Validators.required, Validators.minLength(8)]],
-  });
+  protected readonly passwordForm = this.fb.group(
+    {
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(8)]],
+      confirmPassword: ['', Validators.required],
+    },
+    {
+      validators: (g) =>
+        g.get('newPassword')?.value === g.get('confirmPassword')?.value
+          ? null
+          : { passwordMismatch: true },
+    },
+  );
 
   constructor() {
     effect(() => {
@@ -103,6 +114,8 @@ export class ProfileTabComponent {
   }
 
   protected saveProfile(): void {
+    if (this.savingProfile()) return;
+    this.savingProfile.set(true);
     this.userApi
       .updateProfile(this.profileForm.value as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -110,13 +123,18 @@ export class ProfileTabComponent {
         next: (user) => {
           this.session.user.set(user);
           this.notifications.success('Profile updated successfully.');
+          this.savingProfile.set(false);
         },
-        error: () => this.notifications.error('Failed to update profile.'),
+        error: () => {
+          this.notifications.error('Failed to update profile.');
+          this.savingProfile.set(false);
+        },
       });
   }
 
   protected savePassword(): void {
-    if (this.passwordForm.invalid) return;
+    if (this.passwordForm.invalid || this.savingPassword()) return;
+    this.savingPassword.set(true);
     this.userApi
       .changePassword(this.passwordForm.value as any)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -124,9 +142,12 @@ export class ProfileTabComponent {
         next: () => {
           this.passwordForm.reset();
           this.notifications.success('Password changed successfully.');
+          this.savingPassword.set(false);
         },
-        error: (err) =>
-          this.notifications.error(err.error?.message ?? 'Failed to change password.'),
+        error: (err) => {
+          this.notifications.error(err.error?.message ?? 'Failed to change password.');
+          this.savingPassword.set(false);
+        },
       });
   }
 

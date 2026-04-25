@@ -69,10 +69,7 @@ export class BookingsTabComponent {
   });
 
   protected readonly pendingApproval = computed(() =>
-    this.receivedBookings().filter(
-      (b) =>
-        b.status === 'PENDING_APPROVAL' || b.status === 'PAYMENT_PENDING' || b.status === 'DRAFT',
-    ),
+    this.receivedBookings().filter((b) => b.status === 'PENDING_APPROVAL'),
   );
 
   protected readonly pastReceived = computed(() =>

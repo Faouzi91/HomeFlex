@@ -128,6 +128,7 @@
         <button
           (click)="markRead(n.id); $event.stopPropagation()"
           title="Mark as read"
+          aria-label="Mark as read"
           class="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-brand-50 hover:text-brand-600 transition-colors"
         >
           <svg
@@ -144,7 +145,8 @@
       }
       <button
         (click)="delete(n.id); $event.stopPropagation()"
-        title="Delete"
+        title="Delete notification"
+        aria-label="Delete notification"
         class="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
       >
         <svg

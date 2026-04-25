@@ -1,6 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ApiClient } from '../../../../core/api/api.client';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, of } from 'rxjs';
+import { DisputeApi } from '../../../../core/api/services/dispute.api';
 import { Dispute } from '../../../../core/models/api.types';
 
 @Component({
@@ -10,24 +12,29 @@ import { Dispute } from '../../../../core/models/api.types';
   templateUrl: './disputes-tab.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DisputesTabComponent implements OnInit {
-  private readonly api = inject(ApiClient);
+export class DisputesTabComponent {
+  private readonly disputeApi = inject(DisputeApi);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly disputes = signal<Dispute[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
-  ngOnInit(): void {
-    this.api.getMyDisputes().subscribe({
-      next: (data) => {
-        this.disputes.set(Array.isArray(data) ? data : ((data as any)?.data ?? []));
+  constructor() {
+    this.disputeApi
+      .getMine()
+      .pipe(
+        catchError(() => {
+          this.error.set('Failed to load disputes.');
+          this.loading.set(false);
+          return of([] as Dispute[]);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((data) => {
+        this.disputes.set(data ?? []);
         this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Failed to load disputes.');
-        this.loading.set(false);
-      },
-    });
+      });
   }
 
   protected statusClass(status: string): string {

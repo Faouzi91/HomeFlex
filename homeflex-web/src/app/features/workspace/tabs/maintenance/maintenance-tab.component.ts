@@ -23,7 +23,7 @@ import { formatDate } from '../../../../core/utils/formatters';
 export class MaintenanceTabComponent {
   protected readonly session = inject(SessionStore);
   private readonly maintenanceApi = inject(MaintenanceApi);
-  private readonly store = inject(WorkspaceStore);
+  protected readonly store = inject(WorkspaceStore);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly notifications = inject(NotificationService);

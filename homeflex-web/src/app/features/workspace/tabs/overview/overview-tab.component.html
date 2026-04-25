@@ -290,7 +290,7 @@
                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                 [ngClass]="statusClass(booking.status)"
               >
-                {{ booking.status }}
+                {{ booking.status.replaceAll('_', ' ') }}
               </span>
             </div>
           }

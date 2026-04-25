@@ -9,7 +9,20 @@ import { BookingApi } from '../../../../core/api/services/booking.api';
 import { LeaseApi } from '../../../../core/api/services/lease.api';
 import { PropertyApi } from '../../../../core/api/services/property.api';
 import { PayoutApi } from '../../../../core/api/services/payout.api';
-import { Booking, PayoutSummary, Property, Vehicle } from '../../../../core/models/api.types';
+import {
+  Booking,
+  HotelOccupancy,
+  OccupancyData,
+  OccupancySummary,
+  PayoutSummary,
+  PricingRule,
+  PricingRuleCreateRequest,
+  Property,
+  RoomType,
+  RoomTypeCreateRequest,
+  StandaloneOccupancy,
+  Vehicle,
+} from '../../../../core/models/api.types';
 import { WorkspaceStore } from '../../workspace.store';
 import { formatCurrency, formatDate, initials } from '../../../../core/utils/formatters';
 
@@ -181,7 +194,15 @@ export class HostingTabComponent {
     event.stopPropagation();
     this.detailVehicle.set(null);
     this.detailProperty.set(p);
+    this.pricingRules.set([]);
+    this.showAddRule.set(false);
+    this.roomTypes.set([]);
+    this.showAddRoomType.set(false);
+    this.occupancySummary.set(null);
     this.loadDetailAvailability(p.id);
+    this.loadPricingRules(p.id);
+    this.loadRoomTypes(p.id);
+    this.loadOccupancySummary(p.id);
     if (!this.bookingsLoaded()) this.loadAllHostBookings();
   }
 
@@ -195,6 +216,233 @@ export class HostingTabComponent {
     this.detailProperty.set(null);
     this.detailVehicle.set(null);
     this.detailAvailability.set([]);
+  }
+
+  // ── Room Types ────────────────────────────────────────────────────────────
+
+  protected readonly roomTypes = signal<RoomType[]>([]);
+  protected readonly showAddRoomType = signal(false);
+  protected readonly savingRoomType = signal(false);
+  protected readonly editingRoomTypeId = signal<string | null>(null);
+
+  protected readonly HOTEL_TYPES = ['HOTEL', 'GUESTHOUSE', 'HOSTEL', 'RESORT'];
+
+  protected readonly isHotelProperty = computed(() =>
+    this.HOTEL_TYPES.includes(this.detailProperty()?.propertyType ?? ''),
+  );
+
+  protected readonly roomTypeForm = this.fb.group({
+    name: ['', Validators.required],
+    description: [''],
+    bedType: ['DOUBLE'],
+    numBeds: [1, [Validators.required, Validators.min(1)]],
+    maxOccupancy: [2, [Validators.required, Validators.min(1)]],
+    pricePerNight: [0, [Validators.required, Validators.min(1)]],
+    totalRooms: [1, [Validators.required, Validators.min(1)]],
+    sizeSqm: [null as number | null],
+  });
+
+  protected loadRoomTypes(propertyId: string): void {
+    this.propertyApi
+      .getRoomTypes(propertyId)
+      .pipe(catchError(() => of({ data: [] as RoomType[] })), takeUntilDestroyed(this.destroyRef))
+      .subscribe((res) => this.roomTypes.set(res.data));
+  }
+
+  protected saveRoomType(): void {
+    const prop = this.detailProperty();
+    if (!prop || this.roomTypeForm.invalid) return;
+    this.savingRoomType.set(true);
+    const v = this.roomTypeForm.getRawValue();
+    const body: RoomTypeCreateRequest = {
+      name: v.name ?? '',
+      description: v.description ?? undefined,
+      bedType: (v.bedType as RoomType['bedType']) ?? 'DOUBLE',
+      numBeds: Number(v.numBeds),
+      maxOccupancy: Number(v.maxOccupancy),
+      pricePerNight: Number(v.pricePerNight),
+      totalRooms: Number(v.totalRooms),
+      sizeSqm: v.sizeSqm ?? undefined,
+    };
+    const editId = this.editingRoomTypeId();
+    const request$ = editId
+      ? this.propertyApi.updateRoomType(prop.id, editId, body)
+      : this.propertyApi.createRoomType(prop.id, body);
+
+    request$
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((rt) => {
+        if (rt) {
+          if (editId) {
+            this.roomTypes.update((r) => r.map((x) => (x.id === editId ? rt : x)));
+          } else {
+            this.roomTypes.update((r) => [...r, rt]);
+          }
+          this.showAddRoomType.set(false);
+          this.editingRoomTypeId.set(null);
+          this.roomTypeForm.reset({ bedType: 'DOUBLE', numBeds: 1, maxOccupancy: 2, totalRooms: 1, pricePerNight: 0 });
+        }
+        this.savingRoomType.set(false);
+      });
+  }
+
+  protected editRoomType(rt: RoomType): void {
+    this.editingRoomTypeId.set(rt.id);
+    this.roomTypeForm.patchValue({
+      name: rt.name,
+      description: rt.description ?? '',
+      bedType: rt.bedType,
+      numBeds: rt.numBeds,
+      maxOccupancy: rt.maxOccupancy,
+      pricePerNight: rt.pricePerNight,
+      totalRooms: rt.totalRooms,
+      sizeSqm: rt.sizeSqm ?? null,
+    });
+    this.showAddRoomType.set(true);
+  }
+
+  protected cancelEditRoomType(): void {
+    this.showAddRoomType.set(false);
+    this.editingRoomTypeId.set(null);
+    this.roomTypeForm.reset({ bedType: 'DOUBLE', numBeds: 1, maxOccupancy: 2, totalRooms: 1, pricePerNight: 0 });
+  }
+
+  protected deleteRoomType(rtId: string): void {
+    const prop = this.detailProperty();
+    if (!prop || !confirm('Delete this room type?')) return;
+    this.propertyApi
+      .deleteRoomType(prop.id, rtId)
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.roomTypes.update((r) => r.filter((x) => x.id !== rtId)));
+  }
+
+  protected bedTypeLabel(bt: string): string {
+    const map: Record<string, string> = {
+      SINGLE: 'Single', DOUBLE: 'Double', TWIN: 'Twin',
+      QUEEN: 'Queen', KING: 'King', BUNK: 'Bunk', SOFA: 'Sofa',
+    };
+    return map[bt] ?? bt;
+  }
+
+  // ── Occupancy ─────────────────────────────────────────────────────────────
+
+  protected readonly occupancySummary = signal<OccupancySummary | null>(null);
+  protected readonly occupancyData = signal<OccupancyData | null>(null);
+  protected readonly showOccupancyCalendar = signal(false);
+
+  protected loadOccupancySummary(propertyId: string): void {
+    const from = new Date().toISOString().split('T')[0];
+    const to = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    this.propertyApi
+      .getOccupancySummary(propertyId, from, to)
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((s) => this.occupancySummary.set(s));
+  }
+
+  protected loadOccupancyCalendar(): void {
+    const prop = this.detailProperty();
+    if (!prop) return;
+    this.showOccupancyCalendar.set(true);
+    const from = new Date().toISOString().split('T')[0];
+    const to = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    this.propertyApi
+      .getOccupancy(prop.id, from, to)
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((d) => this.occupancyData.set(d));
+  }
+
+  protected asStandalone(d: OccupancyData | null): StandaloneOccupancy | null {
+    return d?.type === 'STANDALONE' ? (d as StandaloneOccupancy) : null;
+  }
+
+  protected asHotel(d: OccupancyData | null): HotelOccupancy | null {
+    return d?.type === 'HOTEL' ? (d as HotelOccupancy) : null;
+  }
+
+  protected occupancyDayClass(status: string): string {
+    switch (status) {
+      case 'BOOKED':  return 'bg-rose-400 text-white';
+      case 'BLOCKED': return 'bg-slate-300 text-slate-600';
+      default:        return 'bg-emerald-100 text-emerald-700';
+    }
+  }
+
+  protected roomOccupancyClass(booked: number, total: number): string {
+    const pct = total > 0 ? booked / total : 0;
+    if (pct >= 0.9) return 'bg-rose-400 text-white';
+    if (pct >= 0.5) return 'bg-amber-300 text-amber-900';
+    return 'bg-emerald-100 text-emerald-700';
+  }
+
+  // ── Pricing Rules ─────────────────────────────────────────────────────────
+
+  protected readonly pricingRules = signal<PricingRule[]>([]);
+  protected readonly showAddRule = signal(false);
+  protected readonly savingRule = signal(false);
+
+  protected readonly ruleForm = this.fb.group({
+    ruleType: ['WEEKEND'],
+    label: [''],
+    multiplier: [1.2],
+    minStayDays: [null as number | null],
+    startDate: [null as string | null],
+    endDate: [null as string | null],
+  });
+
+  protected loadPricingRules(propertyId: string): void {
+    this.propertyApi
+      .getPricingRules(propertyId)
+      .pipe(catchError(() => of([])), takeUntilDestroyed(this.destroyRef))
+      .subscribe((rules) => this.pricingRules.set(rules));
+  }
+
+  protected saveRule(): void {
+    const prop = this.detailProperty();
+    if (!prop || this.ruleForm.invalid) return;
+    this.savingRule.set(true);
+    const v = this.ruleForm.getRawValue();
+    const body: PricingRuleCreateRequest = {
+      ruleType: v.ruleType ?? 'WEEKEND',
+      label: v.label || undefined,
+      multiplier: Number(v.multiplier),
+      minStayDays: v.minStayDays ?? undefined,
+      startDate: v.startDate ?? undefined,
+      endDate: v.endDate ?? undefined,
+    };
+    this.propertyApi
+      .createPricingRule(prop.id, body)
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((rule) => {
+        if (rule) {
+          this.pricingRules.update((r) => [...r, rule]);
+          this.showAddRule.set(false);
+          this.ruleForm.reset({ ruleType: 'WEEKEND', multiplier: 1.2 });
+        }
+        this.savingRule.set(false);
+      });
+  }
+
+  protected deleteRule(ruleId: string): void {
+    const prop = this.detailProperty();
+    if (!prop) return;
+    this.propertyApi
+      .deletePricingRule(prop.id, ruleId)
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.pricingRules.update((r) => r.filter((x) => x.id !== ruleId)));
+  }
+
+  protected ruleLabel(rule: PricingRule): string {
+    const pct = ((rule.multiplier - 1) * 100).toFixed(0);
+    const sign = rule.multiplier >= 1 ? '+' : '';
+    switch (rule.ruleType) {
+      case 'WEEKEND': return `Weekends ${sign}${pct}%`;
+      case 'SEASONAL': return `${rule.label ?? 'Season'} ${sign}${pct}%`;
+      case 'LONG_STAY': return `${rule.minStayDays}+ nights ${sign}${pct}%`;
+      default: return rule.label ?? rule.ruleType;
+    }
   }
 
   protected loadDetailAvailability(propertyId: string): void {
@@ -436,6 +684,7 @@ export class HostingTabComponent {
   protected statusClass(status: string): string {
     const map: Record<string, string> = {
       DRAFT: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
+      PENDING: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
       PAYMENT_PENDING: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
       PAYMENT_FAILED: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
       PENDING_APPROVAL: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200',
@@ -443,11 +692,25 @@ export class HostingTabComponent {
       ACTIVE: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-300',
       CANCELLED: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
       REJECTED: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+      SUSPENDED: 'bg-orange-50 text-orange-700 ring-1 ring-orange-200',
+      INACTIVE: 'bg-slate-100 text-slate-500 ring-1 ring-slate-200',
       COMPLETED: 'bg-slate-100 text-slate-600 ring-1 ring-slate-200',
       PENDING_MODIFICATION: 'bg-violet-50 text-violet-700 ring-1 ring-violet-200',
       AVAILABLE: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
       UNAVAILABLE: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
     };
     return map[status] ?? 'bg-slate-100 text-slate-600';
+  }
+
+  protected submitForReview(propertyId: string): void {
+    this.propertyApi
+      .submitForReview(propertyId)
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((updated) => {
+        if (updated) {
+          this.store.refreshProperties();
+          this.detailProperty.set(updated);
+        }
+      });
   }
 }

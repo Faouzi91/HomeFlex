@@ -41,6 +41,7 @@
           <h2 class="text-sm font-semibold text-slate-900">New maintenance request</h2>
           <button
             (click)="showForm.set(false)"
+            aria-label="Close form"
             class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
           >
             <svg
@@ -49,6 +50,7 @@
               viewBox="0 0 24 24"
               stroke-width="2"
               stroke="currentColor"
+              aria-hidden="true"
               class="w-4 h-4"
             >
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -58,13 +60,22 @@
         <div class="p-6">
           <form [formGroup]="createForm" (ngSubmit)="submitRequest()" class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Property ID *</label>
-              <input
-                formControlName="propertyId"
-                type="text"
-                placeholder="Enter the property ID"
-                class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
-              />
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Property *</label>
+              @if (store.myProperties().length > 0) {
+                <select formControlName="propertyId" class="select-styled w-full">
+                  <option value="">Select a property…</option>
+                  @for (p of store.myProperties(); track p.id) {
+                    <option [value]="p.id">{{ p.title }}</option>
+                  }
+                </select>
+              } @else {
+                <input
+                  formControlName="propertyId"
+                  type="text"
+                  placeholder="Enter the property ID"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                />
+              }
             </div>
 
             <div>
@@ -74,7 +85,11 @@
                 type="text"
                 placeholder="e.g. Leaking kitchen tap"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                [class.border-rose-300]="createForm.get('title')?.invalid && createForm.get('title')?.dirty"
               />
+              @if (createForm.get('title')?.dirty && createForm.get('title')?.hasError('minlength')) {
+                <p class="text-xs text-rose-600 mt-1">At least 5 characters required.</p>
+              }
             </div>
 
             <div>
@@ -84,7 +99,11 @@
                 rows="3"
                 placeholder="Describe the issue in detail…"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all resize-none"
+                [class.border-rose-300]="createForm.get('description')?.invalid && createForm.get('description')?.dirty"
               ></textarea>
+              @if (createForm.get('description')?.dirty && createForm.get('description')?.hasError('minlength')) {
+                <p class="text-xs text-rose-600 mt-1">At least 10 characters required.</p>
+              }
             </div>
 
             <div class="grid grid-cols-2 gap-4">

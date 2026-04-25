@@ -139,7 +139,7 @@
                         <span
                           class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                           [ngClass]="statusClass(b.status)"
-                          >{{ b.status }}</span
+                          >{{ b.status.replaceAll('_', ' ') }}</span
                         >
                       </div>
                     </div>
@@ -205,7 +205,7 @@
                         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
                         [ngClass]="leaseStatusClass(lease.status)"
                       >
-                        {{ lease.status }}
+                        {{ lease.status.replaceAll('_', ' ') }}
                       </span>
                       @if (lease.status === 'PENDING') {
                         <button
@@ -278,7 +278,7 @@
                         class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold shrink-0"
                         [ngClass]="statusClass(b.status)"
                       >
-                        {{ b.status }}
+                        {{ b.status.replaceAll('_', ' ') }}
                       </span>
                     </div>
                     <div class="flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
@@ -435,10 +435,10 @@
         <div class="flex items-start justify-between gap-3 mb-2">
           <div class="min-w-0">
             <p class="text-sm font-semibold text-slate-900 truncate">
-              {{ b.property?.title ?? '—' }}
+              {{ b.property.title ?? '—' }}
             </p>
             <p class="text-xs text-slate-500 mt-0.5">
-              From <strong>{{ b.tenant?.firstName }} {{ b.tenant?.lastName }}</strong>
+              From <strong>{{ b.tenant.firstName }} {{ b.tenant.lastName }}</strong>
             </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
@@ -460,7 +460,7 @@
               class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
               [ngClass]="statusClass(b.status)"
             >
-              {{ b.status }}
+              {{ b.status.replaceAll('_', ' ') }}
             </span>
           </div>
         </div>
