@@ -59,13 +59,13 @@
 | Layer              | Technology                                                           |
 | ------------------ | -------------------------------------------------------------------- |
 | **Backend**        | Java 21, Spring Boot 4, Spring Security, Hibernate Envers (Auditing) |
-| **Persistence**    | PostgreSQL 16 (Flyway migrations), Redis 7 (Caching/Redlock)         |
-| **Search**         | Elasticsearch 9 (Property Discovery)                                 |
-| **Messaging**      | RabbitMQ 3 (Transactional Outbox Pattern)                            |
+| **Persistence**    | PostgreSQL 18 (Flyway migrations), Redis 8 (Caching/Redlock)         |
+| **Search**         | Elasticsearch 9.1 (Property Discovery)                               |
+| **Messaging**      | RabbitMQ 4 (Transactional Outbox Pattern)                            |
 | **Frontend**       | Angular 21, NgRx Signal Store, Tailwind CSS 4, Leaflet Maps          |
-| **Mobile**         | Flutter 3.8 (Native Android/iOS)                                     |
+| **Mobile**         | Flutter (Android/iOS — separate repo, not in Docker Compose)         |
 | **Infrastructure** | Docker Compose, AWS (ECS Fargate, RDS, S3), Terraform                |
-| **Monitoring**     | ELK Stack (Logstash, Kibana), Prometheus, Grafana                    |
+| **Monitoring**     | ELK Stack 9.1 (Logstash, Kibana), Prometheus 3.5, Grafana 11.6       |
 
 ## Core Architectural Patterns
 
