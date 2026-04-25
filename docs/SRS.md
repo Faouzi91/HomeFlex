@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.9
-**Date:** April 26, 2026
+**Version:** 5.0
+**Date:** April 25, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
 
@@ -29,6 +29,7 @@
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
 | 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
 | 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation. |
+| 5.0     | 2026-04-25 | Architect     | Quick wins: price breakdown 🔴→🟢 (4-row breakdown widget with cleaning fee + 15% platform fee + total); category sub-ratings 🔴→🟡→🟢 (frontend now renders sub-ratings from existing backend fields); profile completeness bar 🔴→🟢 (color-coded progress bar in profile tab); read receipts 🔴→🟢 (single/double SVG check on sent messages in messages tab).
 | 4.9     | 2026-04-26 | Architect     | Sprint 1 close-out: geocoding 🔴→🟢 (GeocodingService via Nominatim, wired into PropertyService.createProperty); email verification gate 🟡→🟢 (BookingService.executeCreateDraft enforces isVerified); image thumbnails 🔴→🟢 (StorageService.uploadImageWithThumbnail generates 400px thumb alongside 1200px full; PropertyImage.thumbnailUrl now populated); admin analytics dashboard 🔴→🟢 (KPI grid, CSS bar charts for type/city/status, top-viewed/favorited lists); trust score 🟡→🟢 (already fully implemented in ReviewService — SRS misclassification corrected); Redis double-booking lock 🔴→🟢 (RedissonClient already used in BookingService — SRS misclassification corrected). Rule added: SRS updated after every implementation session.
 | 4.8     | 2026-04-25 | Architect     | Second audit pass — corrected remaining misclassifications found by manual code inspection: account lockout 🔴→🟢 (LoginAttemptService, Redis-backed, configurable); two-way reviews 🟡→🟢 (POST /reviews handles both types, GET /reviews/tenant/{userId}, POST /reviews/{id}/reply); email verification 🟡→🟢 (endpoint exists, gate not enforced); FR-700 AC-6 landlord reply 🔴→🟢. Updated planned list and FR tables accordingly.
 | 4.7     | 2026-04-25 | Architect     | Comprehensive codebase audit: corrected 15+ misclassified SRS items (🔴→🟢: auto-reject, cancellation policies, ES geo-search, full-text search, Twilio SMS, escrow/refunds/receipts, FR-401 finance dashboard, FR-800 leases, FR-900 maintenance, AC-6 dispute resolution; 🔴→🟡: two-way reviews, notification preferences, trust score, blockchain lease stub; 🟡→🔴: account lockout); added new "Implemented features not in SRS" section (pricing rules, room types, booking audit log, state machine, agency, OTP). SRS now reflects actual codebase state at 4.7.
@@ -55,6 +56,13 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v5.0 (Quick Wins — Price Breakdown, Sub-Ratings, Profile Bar, Read Receipts)
+
+- 🟢 **Price Breakdown Widget** — Property detail page replaces the single estimated price tile with a 4-row breakdown table: base price (nights × nightly rate), cleaning fee (shown only when non-zero), 15% platform service fee, and grand total. Powered by `cleaningFeeEstimate`, `platformFeeEstimate`, and `totalEstimate` computed signals in `property-detail.page.ts`.
+- 🟢 **Category Sub-Ratings in Reviews Tab** — The `Review` TypeScript interface gains 6 optional sub-rating fields (`cleanlinessRating`, `accuracyRating`, `communicationRating`, `locationRating`, `checkinRating`, `valueRating`). `ReviewsTabComponent` renders a responsive sub-ratings grid below the star badge whenever any sub-rating is present, using `hasSubRatings()` / `subRatings()` helpers.
+- 🟢 **Profile Completeness Progress Bar** — The workspace profile tab now shows a color-coded horizontal progress bar directly under the user's name. Color transitions: emerald (≥80%), amber (≥50%), rose (<50%). Reads `User.profileCompleteness` from the session store.
+- 🟢 **Read Receipts in Messages Tab** — Sent messages now display a delivery/read status icon: single checkmark (brand-200) = delivered, double checkmark (emerald-300) = read. Driven by `Message.isRead` from the existing backend field.
 
 ### Implemented since v4.9 (Sprint 1 — Geocoding, Email Gate, Thumbnails, Analytics, Reviews Tab)
 
@@ -1253,7 +1261,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-2                    | Avatar upload                                 | 🟢                                  |
 | AC-3                    | Language preference persisted to localStorage | 🟢 (localStorage, not user profile) |
 | AC-4                    | Users can delete their account (GDPR erasure with typed confirmation guard) | 🟢   |
-| AC-5                    | Profile completeness score                    | 🔴 Planned                          |
+| AC-5                    | Profile completeness score                    | 🟢 Color-coded progress bar in profile tab (emerald ≥80%, amber ≥50%, rose <50%); reads `User.profileCompleteness` from session. |
 
 ### FR-103: KYC Verification (Landlords) 🟢
 
@@ -1324,7 +1332,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-2                    | Payment processed via Stripe at booking time         | 🟢 (PaymentService)               |
 | AC-3                    | Booking confirmation notification sent (push)        | 🟢                                |
 | AC-4                    | Double-booking prevention via Redis distributed lock | 🟢 `RedissonClient` lock in `BookingService.createDraftBooking()` — SRS was misclassified |
-| AC-5                    | Price breakdown with service fee / taxes             | 🔴 Planned                        |
+| AC-5                    | Price breakdown with service fee / taxes             | 🟢 4-row breakdown widget on property detail: base (nights × rate), cleaning fee (conditional), 15% platform service fee, grand total. Computed signals in `property-detail.page.ts`. |
 
 ### FR-301: Manage Booking 🟢
 
@@ -1394,7 +1402,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-6                    | Push notification for new messages                                        | 🟢 (FCM)                       |
 | AC-7                    | Chat room linked to specific property                                     | 🟢                             |
 | AC-8                    | Chat available to registered users only                                   | 🟢                             |
-| AC-9                    | Read receipts                                                             | 🔴 Planned                     |
+| AC-9                    | Read receipts                                                             | 🟢 Single checkmark (delivered, brand-200) / double checkmark (read, emerald-300) SVG icons on sent messages in messages tab; driven by `Message.isRead`. |
 
 ### FR-501: Notifications 🟡
 
@@ -1448,7 +1456,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Acceptance Criteria** | Status                                          |
 | AC-1                    | Tenant reviews property after booking           | 🟢 (Review entity, ReviewService) |
 | AC-2                    | Review fields: rating (1-5 stars), text comment | 🟢                                |
-| AC-3                    | Category ratings (cleanliness, accuracy, etc.)  | 🔴 Planned                        |
+| AC-3                    | Category ratings (cleanliness, accuracy, etc.)  | 🟢 Six sub-rating fields on `Review` entity (cleanlinessRating, accuracyRating, communicationRating, locationRating, checkinRating, valueRating); frontend Reviews tab renders sub-ratings grid when any are present. |
 | AC-4                    | Aggregate rating displayed on property          | 🟢                                |
 | AC-5                    | Two-way reviews (landlord reviews tenant)       | 🟢 `POST /reviews` with `targetUserId` creates tenant review; `GET /reviews/tenant/{userId}` retrieves them; `POST /reviews/{id}/reply` for landlord public response |
 | AC-6                    | Landlord can post a public response             | 🟢 `POST /reviews/{id}/reply` with `@PreAuthorize("hasRole('LANDLORD')")` |
