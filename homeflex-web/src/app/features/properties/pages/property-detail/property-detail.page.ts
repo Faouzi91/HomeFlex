@@ -80,6 +80,7 @@ export class PropertyDetailPageComponent {
   });
 
   protected readonly propertyId = computed(() => this.property()?.id ?? '');
+  protected readonly isInstantBook = computed(() => this.property()?.instantBookEnabled ?? false);
 
   protected readonly nightsEstimate = computed(() => {
     const fv = this.formValue();
@@ -110,10 +111,24 @@ export class PropertyDetailPageComponent {
   protected readonly today = new Date().toISOString().split('T')[0];
 
   constructor() {
-    // Pre-load Stripe so it's ready when the user submits a booking
+    // Pre-load Stripe; also handles retry-payment query params
     if (isPlatformBrowser(this.platformId)) {
       this.initStripe();
     }
+
+    // Handle retry payment flow: ?retryBookingId=&clientSecret=
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const secret = params['clientSecret'];
+        if (secret && isPlatformBrowser(this.platformId)) {
+          this.pendingPaymentSecret.set(secret);
+          this.bookingMessage.set('Payment failed previously — complete payment below to confirm.');
+          // Wait for DOM + Stripe; initStripe() sets this.stripe asynchronously
+          setTimeout(() => this.mountPaymentElement(secret), 300);
+          this.router.navigate([], { queryParams: {}, replaceUrl: true });
+        }
+      });
 
     this.route.paramMap
       .pipe(
@@ -198,6 +213,11 @@ export class PropertyDetailPageComponent {
       .subscribe(async (config) => {
         if (config.stripePublishableKey) {
           this.stripe = await loadStripe(config.stripePublishableKey);
+          // Mount immediately if a retry-payment secret was queued before Stripe loaded
+          const pending = this.pendingPaymentSecret();
+          if (pending && !this.stripeElementsMounted()) {
+            setTimeout(() => this.mountPaymentElement(pending), 50);
+          }
         }
       });
   }
@@ -270,9 +290,6 @@ export class PropertyDetailPageComponent {
       .pipe(
         switchMap((booking) => {
           if (payload.bookingType === 'RENTAL') {
-            import('rxjs').then(({ map }) => {}); // Hack to ensure map is available, but better to import it at top.
-            // Actually I'll just use a direct map since RxJS is already in scope. But `map` isn't imported from rxjs.
-            // I'll just use a sub-subscribe or another switchMap.
             return this.bookingApi
               .initiatePayment(booking.id)
               .pipe(switchMap((res) => of({ booking, clientSecret: res.clientSecret })));

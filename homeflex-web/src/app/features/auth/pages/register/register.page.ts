@@ -24,6 +24,7 @@ export class RegisterPageComponent {
     email: ['', [Validators.required, Validators.email]],
     phoneNumber: [''],
     role: ['TENANT', Validators.required],
+    dualRole: [false],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
@@ -71,6 +72,7 @@ export class RegisterPageComponent {
         lastName: value.lastName ?? '',
         role: value.role ?? 'TENANT',
         phoneNumber: value.phoneNumber || null,
+        dualRole: value.dualRole ?? false,
       })
       .subscribe(() => {
         this.router.navigateByUrl(
@@ -79,13 +81,4 @@ export class RegisterPageComponent {
       });
   }
 
-  protected socialLogin(provider: string): void {
-    const dummyToken = 'dummy-token-' + Date.now();
-    this.session.socialLogin(provider, dummyToken).subscribe(() => {
-      this.router.navigateByUrl(
-        this.route.snapshot.queryParamMap.get('redirectUrl') ||
-          (this.session.isAdmin() ? '/admin' : '/workspace'),
-      );
-    });
-  }
 }

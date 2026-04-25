@@ -1,24 +1,27 @@
 <!-- Hero Section -->
-<section
-  class="relative overflow-hidden bg-gradient-to-br from-brand-700 via-brand-600 to-brand-800 py-16 lg:py-20"
->
-  <div
-    class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2000&q=30')] bg-cover bg-center opacity-10"
-  ></div>
+<section class="relative overflow-hidden bg-slate-950 py-20 lg:py-28">
+  <!-- Full-bleed photo backdrop -->
+  <div class="absolute inset-0">
+    <img
+      src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=2200&q=60"
+      alt=""
+      class="h-full w-full object-cover object-center"
+    />
+    <div class="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/75 to-slate-950/90"></div>
+  </div>
+
   <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-10">
-      <p
-        class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-200 backdrop-blur-sm mb-4"
-      >
-        <span class="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></span>
-        Trusted by thousands across Cameroon
-      </p>
-      <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl mb-4">
-        Find your next home<br class="hidden sm:block" />
-        and your next ride.
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-1.5 backdrop-blur-sm mb-6">
+        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-white/70">Cameroon's premier rental marketplace</span>
+      </div>
+      <h1 class="text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl mb-5 leading-[1.05]">
+        Find your next<br class="hidden sm:block" />
+        <span class="text-brand-400">home</span> or <span class="text-gold-400">ride</span>.
       </h1>
-      <p class="text-lg text-brand-100 max-w-2xl mx-auto">
-        Search properties and vehicles in one polished marketplace built for confidence and ease.
+      <p class="text-lg text-white/60 max-w-xl mx-auto leading-relaxed">
+        Search thousands of verified properties and premium vehicles — all in one secure marketplace.
       </p>
     </div>
 
@@ -405,13 +408,11 @@
     </div>
 
     <!-- Stats row -->
-    <div class="mx-auto max-w-3xl mt-10 grid grid-cols-3 gap-8 text-center">
+    <div class="mx-auto max-w-2xl mt-12 grid grid-cols-3 gap-1">
       @for (stat of heroStats(); track stat.label) {
-        <div>
-          <p class="text-3xl font-extrabold text-white">{{ stat.value }}</p>
-          <p class="text-sm font-medium text-brand-200 uppercase tracking-wider">
-            {{ stat.label }}
-          </p>
+        <div class="text-center px-4 py-5 rounded-2xl bg-white/6 backdrop-blur-sm border border-white/10">
+          <p class="text-3xl font-black text-white tracking-tight">{{ stat.value }}</p>
+          <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-white/45 mt-1">{{ stat.label }}</p>
         </div>
       }
     </div>
@@ -419,64 +420,43 @@
 </section>
 
 <!-- ===== TRUST BAR ===== -->
-<section class="border-b border-slate-100 bg-white py-6">
-  <div
-    class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-8 sm:gap-16 text-slate-400"
-  >
+<section class="bg-white border-b border-slate-100 py-5">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-8 sm:gap-14">
     @for (badge of trustBadges; track badge.label) {
-      <div class="flex items-center gap-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="w-5 h-5"
-        >
+      <div class="flex items-center gap-2.5 text-slate-400 hover:text-brand-600 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="w-4.5 h-4.5 shrink-0">
           <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="badge.icon" />
         </svg>
-        <span class="text-xs font-bold uppercase tracking-wider">{{ badge.label }}</span>
+        <span class="text-[11px] font-black uppercase tracking-[0.1em]">{{ badge.label }}</span>
       </div>
     }
   </div>
 </section>
 
 <!-- ===== HOW IT WORKS ===== -->
-<section class="py-20 bg-white">
+<section class="py-24 bg-slate-50">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14">
-      <p class="eyebrow mb-2">Simple process</p>
-      <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">How it works</h2>
-      <p class="mt-3 text-lg text-slate-500 max-w-xl mx-auto">
-        From search to keys in hand, in three straightforward steps.
-      </p>
+    <div class="text-center mb-16">
+      <p class="eyebrow mb-3">Simple process</p>
+      <h2 class="text-3xl font-black text-slate-900 sm:text-4xl mb-3">Book in 3 steps</h2>
+      <p class="text-slate-500 max-w-lg mx-auto">From search to keys in hand — quick, transparent, and secure.</p>
     </div>
 
-    <div class="grid gap-8 md:grid-cols-3">
+    <div class="grid gap-6 md:grid-cols-3">
       @for (step of howItWorks; track step.step) {
-        <div class="relative text-center group">
-          <div
-            class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-8 h-8"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="step.icon" />
-            </svg>
+        <div class="relative bg-white rounded-3xl p-8 shadow-soft hover:shadow-elevated transition-shadow duration-300 group">
+          <div class="flex items-start gap-5">
+            <div class="shrink-0 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm group-hover:bg-brand-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="step.icon" />
+              </svg>
+            </div>
+            <div>
+              <span class="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-1 block">Step {{ step.step }}</span>
+              <h3 class="text-base font-bold text-slate-900 mb-2">{{ step.title }}</h3>
+              <p class="text-sm text-slate-500 leading-relaxed">{{ step.description }}</p>
+            </div>
           </div>
-          <span
-            class="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white"
-            >{{ step.step }}</span
-          >
-          <h3 class="text-lg font-bold text-slate-900 mb-2">{{ step.title }}</h3>
-          <p class="text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">
-            {{ step.description }}
-          </p>
         </div>
       }
     </div>
@@ -484,14 +464,17 @@
 </section>
 
 <!-- ===== POPULAR DESTINATIONS ===== -->
-<section class="py-20 bg-slate-50">
+<section class="py-24 bg-white">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14">
-      <p class="eyebrow mb-2">Explore</p>
-      <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Popular destinations</h2>
-      <p class="mt-3 text-lg text-slate-500 max-w-xl mx-auto">
-        Discover vibrant cities with the best rental options on the platform.
-      </p>
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+      <div>
+        <p class="eyebrow mb-2">Explore</p>
+        <h2 class="text-3xl font-black text-slate-900 sm:text-4xl">Top destinations</h2>
+      </div>
+      <a routerLink="/properties" class="text-sm font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 shrink-0 transition-colors">
+        See all cities
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+      </a>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -499,20 +482,19 @@
         <a
           [routerLink]="['/properties']"
           [queryParams]="{ query: dest.city }"
-          class="group relative overflow-hidden rounded-2xl aspect-[4/5] cursor-pointer"
+          class="group relative overflow-hidden rounded-3xl cursor-pointer"
+          [class]="$index === 0 ? 'aspect-[3/4] sm:row-span-2' : 'aspect-[4/3]'"
         >
           <img
             [src]="dest.image"
             [alt]="dest.city"
-            class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             loading="lazy"
           />
-          <div
-            class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
-          ></div>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent group-hover:from-black/85 transition-all duration-300"></div>
           <div class="absolute bottom-0 left-0 right-0 p-5">
-            <h3 class="text-xl font-extrabold text-white mb-1">{{ dest.city }}</h3>
-            <p class="text-sm text-white/80">{{ dest.tagline }}</p>
+            <h3 class="text-lg font-black text-white mb-0.5 group-hover:text-gold-300 transition-colors">{{ dest.city }}</h3>
+            <p class="text-xs text-white/70 group-hover:text-white/90 transition-colors">{{ dest.tagline }}</p>
           </div>
         </a>
       }
@@ -521,12 +503,12 @@
 </section>
 
 <!-- ===== FEATURED PROPERTIES ===== -->
-<section class="py-20 bg-white">
+<section class="py-24 bg-slate-50">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="flex flex-col items-baseline justify-between mb-10 sm:flex-row">
+    <div class="flex flex-col items-baseline justify-between mb-12 sm:flex-row">
       <div>
         <p class="eyebrow mb-2">Homes</p>
-        <h2 class="text-3xl font-extrabold text-slate-900">Featured properties</h2>
+        <h2 class="text-3xl font-black text-slate-900 sm:text-4xl">Featured properties</h2>
       </div>
       <a
         class="text-brand-600 font-bold hover:underline flex items-center gap-1"
@@ -559,12 +541,12 @@
 </section>
 
 <!-- ===== FEATURED VEHICLES ===== -->
-<section class="py-20 bg-slate-50">
+<section class="py-24 bg-white">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="flex flex-col items-baseline justify-between mb-10 sm:flex-row">
+    <div class="flex flex-col items-baseline justify-between mb-12 sm:flex-row">
       <div>
         <p class="eyebrow mb-2">Rides</p>
-        <h2 class="text-3xl font-extrabold text-slate-900">Premium vehicles</h2>
+        <h2 class="text-3xl font-black text-slate-900 sm:text-4xl">Premium vehicles</h2>
       </div>
       <a
         class="text-brand-600 font-bold hover:underline flex items-center gap-1"
@@ -597,39 +579,33 @@
 </section>
 
 <!-- ===== WHY HOMEFLEX ===== -->
-<section class="py-20 bg-white">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<section class="py-24 bg-slate-950 relative overflow-hidden">
+  <!-- Subtle pattern -->
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(0,106,255,0.12)_0%,transparent_60%)]"></div>
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(245,158,11,0.08)_0%,transparent_50%)]"></div>
+
+  <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <div class="grid gap-16 lg:grid-cols-2 items-center">
       <div>
-        <p class="eyebrow mb-3">Why HomeFlex</p>
-        <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl mb-6">
-          Built for trust, designed for clarity.
+        <p class="eyebrow--light mb-3">Why HomeFlex</p>
+        <h2 class="text-3xl font-black text-white sm:text-4xl lg:text-5xl mb-6 leading-tight">
+          Built for trust.<br />Designed for clarity.
         </h2>
-        <p class="text-lg text-slate-500 mb-10">
-          Every detail is crafted to make renting simple, safe, and transparent. No hidden fees, no
-          surprises.
+        <p class="text-slate-400 mb-12 text-base leading-relaxed max-w-md">
+          Every detail is crafted to make renting simple, safe, and transparent. No hidden fees, no surprises — ever.
         </p>
 
-        <div class="grid gap-6 sm:grid-cols-2">
+        <div class="grid gap-5 sm:grid-cols-2">
           @for (feature of whyFeatures; track feature.title) {
-            <div class="flex gap-4">
-              <div
-                class="flex-shrink-0 h-10 w-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-5 h-5"
-                >
+            <div class="flex gap-3.5 p-4 rounded-2xl border border-white/8 bg-white/4 hover:bg-white/8 transition-colors">
+              <div class="shrink-0 h-9 w-9 rounded-xl bg-brand-500/20 flex items-center justify-center text-brand-400">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="w-4.5 h-4.5">
                   <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="feature.icon" />
                 </svg>
               </div>
               <div>
-                <h3 class="font-bold text-slate-900 text-sm mb-1">{{ feature.title }}</h3>
-                <p class="text-xs text-slate-500 leading-relaxed">{{ feature.description }}</p>
+                <h3 class="font-bold text-white text-sm mb-1">{{ feature.title }}</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">{{ feature.description }}</p>
               </div>
             </div>
           }
@@ -637,54 +613,48 @@
       </div>
 
       <div class="relative hidden lg:block">
-        <div class="absolute -inset-4 bg-brand-50 rounded-3xl -rotate-3"></div>
+        <div class="absolute -inset-4 bg-brand-500/10 rounded-3xl rotate-2"></div>
         <img
           src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80"
           alt="Modern apartment interior"
-          class="relative rounded-2xl shadow-2xl object-cover aspect-[4/3]"
+          class="relative rounded-3xl shadow-modal object-cover aspect-[4/3]"
           loading="lazy"
         />
+        <div class="absolute -bottom-4 -right-4 bg-slate-900 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
+          <p class="text-white font-extrabold text-2xl">4.9 ★</p>
+          <p class="text-slate-400 text-xs font-semibold">Average host rating</p>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ===== TESTIMONIALS ===== -->
-<section class="py-20 bg-slate-50">
+<section class="py-24 bg-slate-50">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14">
-      <p class="eyebrow mb-2">Social proof</p>
-      <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">What our users say</h2>
+    <div class="text-center mb-16">
+      <p class="eyebrow mb-3">Real stories</p>
+      <h2 class="text-3xl font-black text-slate-900 sm:text-4xl">What our users say</h2>
     </div>
 
-    <div class="grid gap-8 md:grid-cols-3">
+    <div class="grid gap-6 md:grid-cols-3">
       @for (testimonial of testimonials; track testimonial.name) {
-        <div
-          class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm hover:shadow-md transition-shadow"
-        >
-          <div class="flex gap-1 mb-4 text-amber-400">
-            @for (s of [1, 2, 3, 4, 5]; track s) {
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="w-4 h-4"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
-                  clip-rule="evenodd"
-                />
+        <div class="bg-white rounded-3xl p-8 shadow-soft hover:shadow-elevated transition-all duration-300 flex flex-col">
+          <!-- Quote mark -->
+          <svg class="w-8 h-8 text-brand-100 mb-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+          </svg>
+          <!-- Stars -->
+          <div class="flex gap-0.5 mb-4 text-gold-400">
+            @for (s of [1,2,3,4,5]; track s) {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clip-rule="evenodd"/>
               </svg>
             }
           </div>
-          <p class="text-sm text-slate-600 leading-relaxed mb-6 italic">
-            "{{ testimonial.quote }}"
-          </p>
-          <div class="flex items-center gap-3">
-            <div
-              class="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm"
-            >
+          <p class="text-slate-600 text-sm leading-relaxed mb-6 flex-1">"{{ testimonial.quote }}"</p>
+          <div class="flex items-center gap-3 pt-5 border-t border-slate-100">
+            <div class="h-10 w-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-black text-sm shrink-0">
               {{ testimonial.initials }}
             </div>
             <div>
@@ -699,38 +669,31 @@
 </section>
 
 <!-- ===== CTA SECTION ===== -->
-<section
-  class="py-20 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 relative overflow-hidden"
->
-  <div class="absolute inset-0 opacity-10">
-    <div
-      class="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/20 -translate-y-1/2 translate-x-1/2"
-    ></div>
-    <div
-      class="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-white/20 translate-y-1/2 -translate-x-1/2"
-    ></div>
-  </div>
-  <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-    <h2 class="text-3xl font-extrabold text-white sm:text-4xl mb-4">
-      Ready to find your next space?
+<section class="py-28 bg-slate-900 relative overflow-hidden">
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,106,255,0.18)_0%,transparent_70%)]"></div>
+  <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent"></div>
+  <div class="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+    <p class="eyebrow--light mb-4">Start today</p>
+    <h2 class="text-4xl font-black text-white sm:text-5xl mb-5 leading-tight">
+      Ready to find your<br class="hidden sm:block" /> next space?
     </h2>
-    <p class="text-brand-100 text-lg mb-10 max-w-2xl mx-auto">
-      Join thousands of users who trust HomeFlex for their housing and transportation needs. Create
-      an account today and start your journey.
+    <p class="text-slate-400 text-base mb-12 max-w-xl mx-auto leading-relaxed">
+      Join thousands of users across Cameroon who trust HomeFlex for their housing and transportation needs.
     </p>
     <div class="flex flex-wrap justify-center gap-4">
       <a
-        class="inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 text-base font-bold text-brand-600 transition hover:bg-brand-50 shadow-lg"
+        class="inline-flex items-center justify-center rounded-2xl bg-brand-500 px-8 py-4 text-base font-bold text-white hover:bg-brand-400 transition-all shadow-lg shadow-brand-900/50"
         routerLink="/register"
       >
-        Create free account
+        Create free account →
       </a>
       <a
-        class="inline-flex items-center justify-center rounded-xl border-2 border-white/30 bg-transparent px-8 py-4 text-base font-bold text-white transition hover:bg-white/10"
-        routerLink="/workspace"
+        class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-8 py-4 text-base font-bold text-white hover:bg-white/10 hover:border-white/25 transition-all backdrop-blur-sm"
+        routerLink="/properties"
       >
-        Access workspace
+        Browse listings
       </a>
     </div>
+    <p class="mt-8 text-slate-500 text-xs">No credit card required · Free to browse · Cancel anytime</p>
   </div>
 </section>

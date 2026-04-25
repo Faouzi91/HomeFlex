@@ -110,6 +110,10 @@ export class ListingCardComponent {
     return [`${vehicle.year}`, `${vehicle.seats ?? 0} seats`, `${vehicle.mileage ?? 0} km`];
   }
 
+  protected isInstantBook(): boolean {
+    return this.variant() === 'property' && !!(this.item() as Property).instantBookEnabled;
+  }
+
   protected compact(value: number): string {
     return compactNumber(value);
   }

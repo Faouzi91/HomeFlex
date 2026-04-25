@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { SessionStore } from '../core/state/session.store';
@@ -11,7 +11,7 @@ import { AppHeaderComponent } from './components/header/app-header.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, AppHeaderComponent, AppFooterComponent, LoaderComponent, AlertComponent],
+  imports: [RouterOutlet, RouterLink, AppHeaderComponent, AppFooterComponent, LoaderComponent, AlertComponent],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
 })
