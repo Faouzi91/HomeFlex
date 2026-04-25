@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.8
-**Date:** April 25, 2026
+**Version:** 4.9
+**Date:** April 26, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
 
@@ -29,6 +29,7 @@
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
 | 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
 | 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation. |
+| 4.9     | 2026-04-26 | Architect     | Sprint 1 close-out: geocoding 🔴→🟢 (GeocodingService via Nominatim, wired into PropertyService.createProperty); email verification gate 🟡→🟢 (BookingService.executeCreateDraft enforces isVerified); image thumbnails 🔴→🟢 (StorageService.uploadImageWithThumbnail generates 400px thumb alongside 1200px full; PropertyImage.thumbnailUrl now populated); admin analytics dashboard 🔴→🟢 (KPI grid, CSS bar charts for type/city/status, top-viewed/favorited lists); trust score 🟡→🟢 (already fully implemented in ReviewService — SRS misclassification corrected); Redis double-booking lock 🔴→🟢 (RedissonClient already used in BookingService — SRS misclassification corrected). Rule added: SRS updated after every implementation session.
 | 4.8     | 2026-04-25 | Architect     | Second audit pass — corrected remaining misclassifications found by manual code inspection: account lockout 🔴→🟢 (LoginAttemptService, Redis-backed, configurable); two-way reviews 🟡→🟢 (POST /reviews handles both types, GET /reviews/tenant/{userId}, POST /reviews/{id}/reply); email verification 🟡→🟢 (endpoint exists, gate not enforced); FR-700 AC-6 landlord reply 🔴→🟢. Updated planned list and FR tables accordingly.
 | 4.7     | 2026-04-25 | Architect     | Comprehensive codebase audit: corrected 15+ misclassified SRS items (🔴→🟢: auto-reject, cancellation policies, ES geo-search, full-text search, Twilio SMS, escrow/refunds/receipts, FR-401 finance dashboard, FR-800 leases, FR-900 maintenance, AC-6 dispute resolution; 🔴→🟡: two-way reviews, notification preferences, trust score, blockchain lease stub; 🟡→🔴: account lockout); added new "Implemented features not in SRS" section (pricing rules, room types, booking audit log, state machine, agency, OTP). SRS now reflects actual codebase state at 4.7.
 | 4.6     | 2026-04-25 | Architect     | Full UI/UX premium redesign pass: dark `bg-slate-900` editorial hero headers on properties and vehicles listing pages; premium filter sidebars with `rounded-xl` inputs and `.select-styled` dropdowns; insurance tab restyled with emerald/gold sectioned plan cards; disputes tab restyled with amber color scheme and SVG meta rows; finance tab rebuilt with onboarding hero panel, 4-step progress indicator, earnings dashboard tiles, and improved receipts section; raw enum display fixed across all templates (`.replaceAll('_', ' ')` sweep covering `vehicle-detail`, `property-detail`, `favorites-tab`, `hosting-tab`, `admin-properties`); MinIO image proxy via Nginx `/uploads/` → `minio:9000/rental-app-media/`; `StorageService` generates relative `/uploads/<key>` URLs; V38 Flyway migration rewrites existing absolute `http://` image URLs to relative form. |
@@ -54,6 +55,16 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v4.9 (Sprint 1 — Geocoding, Email Gate, Thumbnails, Analytics, Reviews Tab)
+
+- 🟢 **Geocoding via Nominatim** — `GeocodingService` (new, `core/service/`) calls OpenStreetMap Nominatim API (no API key, respects usage policy via `User-Agent` header). `PropertyService.createProperty()` auto-populates `latitude`/`longitude` when the client omits them, unblocking Elasticsearch geo-distance sorting for all new listings.
+- 🟢 **Email Verification Gate for Bookings** — `BookingService.executeCreateDraft()` now throws `DomainException("Please verify your email address before making a booking.")` when `tenant.isVerified` is false. Landlord listing gate already existed via `KycService.requireVerified()`. Google OAuth users bypass the gate (auto-verified on login at `AuthService` line 168).
+- 🟢 **Image Thumbnails** — `StorageService.uploadImageWithThumbnail()` generates two uploads per image: full-size (1200px cap, existing imgscalr) and 400px thumbnail stored under a `thumbs/` sub-prefix. `PropertyImage.thumbnailUrl` is now populated on every property image upload (create and `addImages`). Fallback: if imgscalr fails, original is uploaded and `thumbnailUrl` is null.
+- 🟢 **Admin Analytics Dashboard** — `dashboard.page.ts` / `dashboard.page.html` rebuilt from a 4-card stub into a full intelligence dashboard: 4-tile KPI grid (users with tenant/landlord breakdown, properties with live/pending, bookings with approved/pending, messages); three CSS bar charts (properties-by-type, top-6-cities, bookings-by-status with semantic colour coding); ranked Top Viewed and Top Favorited property lists. All data sourced from existing `GET /admin/analytics` endpoint.
+- 🟢 **Workspace Reviews Tab** — `ReviewsTabComponent` with two sub-tabs: "Property Reviews" (landlords see guest reviews on their properties, inline reply/edit) and "Received Reviews" (tenant reviews about the current user). Star rating display, reviewer avatar initials, skeleton loading, empty states. Wired into workspace routes and sidebar nav.
+- 🟢 **Trust Score** — SRS misclassification corrected: `ReviewService` already recalculates `User.trustScore` on every review create and delete. Landlord score = average property rating; tenant score = average tenant rating. Fully implemented since ≥v4.0.
+- 🟢 **Redis Distributed Lock (double-booking)** — SRS misclassification corrected: `BookingService.createDraftBooking()` already acquires a `RedissonClient` `RLock` keyed by `property:{id}:booking` before checking availability. Fully implemented since ≥v4.3.
 
 ### Implemented since v4.6 (Premium UI/UX Overhaul & Image Proxy)
 
@@ -214,7 +225,7 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 ### Partially Implemented (v2.2)
 
 - 🟡 AWS S3 storage (StorageService exists with dev fallback, not fully wired in production)
-- 🟡 Redis caching and distributed locking (Redis connected for rate limiting; caching and Redlock not yet used)
+- 🟡 Redis caching (Spring `@Cacheable` on `getPropertyById`; `getAllProperties` / search results uncached); 🟢 Redlock distributed locking — `RedissonClient` already used in `BookingService.createDraftBooking()` to prevent double-booking races (SRS misclassification corrected)
 
 ### Implemented since v2.4 (previously "Planned")
 
@@ -226,10 +237,10 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 
 ### Partially Implemented (v2.4+)
 
-- 🟡 **Email verification gate** — Full flow implemented: `GET /api/v1/auth/verify?token=...`, `AuthService.verifyEmail()` sets `user.isVerified = true`, email sent on registration. Gap: `isVerified` is not yet enforced as a prerequisite before creating listings or bookings.
+- 🟢 **Email verification gate** — Full flow implemented: `GET /api/v1/auth/verify?token=...`, `AuthService.verifyEmail()` sets `user.isVerified = true`, email sent on registration. Gate enforced: `BookingService.executeCreateDraft()` now throws `DomainException` if `tenant.isVerified` is false. Landlord listing gate already enforced via `KycService.requireVerified()`. Google OAuth users are auto-verified on login.
 - 🟡 **Notification preferences** — `User` entity has `emailNotificationsEnabled`, `pushNotificationsEnabled`, `smsNotificationsEnabled` boolean flags. No granular per-event-type per-channel `NotificationPreference` entity yet.
 - 🟡 **Blockchain lease contracts** — `BlockchainLeaseService` exists and is called from `LeaseService`, but is a no-op stub. Not a real blockchain integration.
-- 🟡 **Trust Score** — `User.trustScore` (default 5.0, V19 migration) feeds into `UserService.calculateProfileScore()`. No update triggers on review submission yet.
+- 🟢 **Trust Score** — `User.trustScore` (default 5.0, V19 migration). `ReviewService` recalculates and persists the trust score on every review create and delete: landlord score = average property rating across all their properties; tenant score = average tenant rating. SRS was misclassified as 🟡 — fully implemented.
 
 ### Implemented (confirmed in second audit pass — previously misclassified)
 
@@ -244,8 +255,8 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 - 🔴 AI-powered price recommendations
 - 🔴 Recurring monthly rent collection (Stripe Billing subscriptions)
 - 🔴 Image auto-resizing (multiple sizes on upload)
-- 🔴 Geocoding API integration — lat/lng fields exist on `Property` but are never populated
-- 🔴 `isVerified` enforcement gate — email verification exists but is not a hard prerequisite for publishing listings
+- 🟢 Geocoding API integration — `GeocodingService` calls Nominatim (OpenStreetMap, no API key) on property creation when client omits lat/lng; coordinates stored and indexed in Elasticsearch for geo-distance sorting
+- 🟢 `isVerified` enforcement gate — now enforced in `BookingService.executeCreateDraft()`; landlord listing gate via `KycService.requireVerified()`
 
 ## 1.3 Decision Baseline (Approved)
 
@@ -1213,7 +1224,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Roles**               | TENANT, LANDLORD, ADMIN                                                           |
 | **Acceptance Criteria** | Status                                                                            |
 | AC-1                    | Email registration requires: email, password, first name, last name, phone number | 🟢         |
-| AC-2                    | Email verification link sent on registration                                      | 🟢 `GET /auth/verify?token=...` endpoint exists; email sent on register; sets `user.isVerified`. Gate on listing creation not yet enforced. |
+| AC-2                    | Email verification link sent on registration                                      | 🟢 `GET /auth/verify?token=...` endpoint; email sent on register; sets `user.isVerified`. Gate enforced: bookings blocked until verified (`BookingService`); listings blocked via `KycService.requireVerified()`. Google OAuth users auto-verified. |
 | AC-3                    | Google OAuth login creates account on first use, links on subsequent uses         | 🟢         |
 | AC-4                    | Duplicate email registration returns descriptive error                            | 🟢         |
 | AC-5                    | User selects role (TENANT or LANDLORD) at registration                            | 🟢         |
@@ -1270,9 +1281,9 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-3                    | Listing types: Long-term Rent, Short-term Rent, Sale                                                      | 🟢 (ListingType enum)                  |
 | AC-4                    | Optional fields: bedrooms, bathrooms, area (sqm), floor number, total floors, year built, parking spots   | 🟢                                     |
 | AC-5                    | Media: images uploaded via multipart form                                                                 | 🟢                                     |
-| AC-6                    | Images auto-resized to multiple sizes                                                                     | 🔴 Planned                             |
+| AC-6                    | Images auto-resized to multiple sizes                                                                     | 🟢 `StorageService.uploadImageWithThumbnail()`: full-size capped at 1200px (imgscalr) + 400px thumbnail uploaded to `thumbs/` sub-prefix; `PropertyImage.thumbnailUrl` populated on every upload |
 | AC-7                    | Amenities: multi-select from predefined list (categorized by AmenityCategory)                             | 🟢                                     |
-| AC-8                    | Geolocation: lat/lng stored on property                                                                   | 🟡 (stored but no geocoding API)       |
+| AC-8                    | Geolocation: lat/lng stored on property                                                                   | 🟢 `GeocodingService` auto-populates via Nominatim on create; powers ES geo-distance sort |
 | AC-9                    | Availability calendar — landlord blocks dates                                                             | 🟢 (`property_availability` table V11; `POST /properties/{id}/availability/block`)  |
 | AC-10                   | Pricing rules: WEEKEND, SEASONAL, LONG_STAY multipliers                                                   | 🟢 (`PricingRule` entity V33; `PricingService` + `PricingController`)              |
 | AC-11                   | Listing status flow: PENDING → APPROVED / REJECTED (PropertyStatus enum)                                  | 🟢                                     |
@@ -1312,7 +1323,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-1                    | Property booking: select check-in/check-out dates    | 🟢                                |
 | AC-2                    | Payment processed via Stripe at booking time         | 🟢 (PaymentService)               |
 | AC-3                    | Booking confirmation notification sent (push)        | 🟢                                |
-| AC-4                    | Double-booking prevention via Redis distributed lock | 🔴 Planned (no Redis consumption) |
+| AC-4                    | Double-booking prevention via Redis distributed lock | 🟢 `RedissonClient` lock in `BookingService.createDraftBooking()` — SRS was misclassified |
 | AC-5                    | Price breakdown with service fee / taxes             | 🔴 Planned                        |
 
 ### FR-301: Manage Booking 🟢
@@ -1415,7 +1426,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-4                    | Report management: view reported listings, take action            | 🟢 (ReportedListing entity)   |
 | AC-5                    | KYC management                                                    | 🟢 (Admin can view KYC status via user records; webhook-driven updates) |
 | AC-6                    | Dispute resolution                                                | 🟢 (`DisputeController`; admin resolve endpoint; workspace Disputes tab) |
-| AC-7                    | Analytics: user growth, booking trends, revenue charts            | 🔴 Planned (basic stats only) |
+| AC-7                    | Analytics: user growth, booking trends, revenue charts            | 🟢 Admin dashboard rebuilt with KPI grid, CSS bar charts (properties-by-type, top-cities, bookings-by-status), and ranked top-viewed/favorited property lists |
 | AC-8                    | System config: manage amenities, commission rates                 | 🔴 Planned                    |
 | AC-9                    | Audit log                                                         | 🔴 Planned                    |
 
@@ -1442,11 +1453,11 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-5                    | Two-way reviews (landlord reviews tenant)       | 🟢 `POST /reviews` with `targetUserId` creates tenant review; `GET /reviews/tenant/{userId}` retrieves them; `POST /reviews/{id}/reply` for landlord public response |
 | AC-6                    | Landlord can post a public response             | 🟢 `POST /reviews/{id}/reply` with `@PreAuthorize("hasRole('LANDLORD')")` |
 
-### FR-701: Trust Score 🟡 Partial
+### FR-701: Trust Score 🟢 Implemented
 
 | ID              | FR-701                                                                                                              |
 | --------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Description** | `User.trustScore` field (default 5.0) exists via V19 migration. No calculation logic, update triggers, or frontend display implemented. |
+| **Description** | `User.trustScore` field (default 5.0) via V19 migration. `ReviewService` recalculates on every review create and delete: landlord trust score = average rating across all their property reviews (`getAveragePropertyRatingByLandlordId`); tenant trust score = average rating across all their tenant reviews (`getAverageRatingByUserId`). Score persisted to `users.trust_score`. |
 
 ---
 
@@ -2077,7 +2088,7 @@ Currently, properties have a single price field with no currency conversion. Pla
 | CDN                | AWS CloudFront           | Global content delivery                           | 🔴 Planned                                   |
 | Monitoring         | Prometheus + Grafana     | Metrics and dashboards                            | 🟢 Implemented (docker-compose.monitoring.yml) |
 | Logging            | ELK Stack                | Centralized logs                                  | 🟢 Implemented (logstash + kibana services)  |
-| Geocoding          | OpenStreetMap Nominatim  | Address → lat/lng                                 | 🔴 Planned                                   |
+| Geocoding          | OpenStreetMap Nominatim  | Address → lat/lng                                 | 🟢 `GeocodingService` — no API key; auto-called in `PropertyService.createProperty()` when client omits coordinates |
 | Maps               | Leaflet + OSM tiles      | Interactive maps                                  | 🔴 Planned                                   |
 | WAF                | AWS WAF                  | API protection                                    | 🔴 Planned                                   |
 | Secrets            | AWS Secrets Manager      | Credentials management                            | 🔴 Planned (env vars currently)              |
