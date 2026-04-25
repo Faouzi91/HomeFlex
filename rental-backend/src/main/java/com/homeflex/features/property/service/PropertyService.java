@@ -1,6 +1,7 @@
 package com.homeflex.features.property.service;
 
 import com.homeflex.core.service.EventOutboxService;
+import com.homeflex.core.service.GeocodingService;
 import com.homeflex.core.service.KycService;
 import com.homeflex.core.service.StorageService;
 import com.homeflex.core.service.NotificationService;
@@ -53,6 +54,7 @@ public class PropertyService {
     private final KycService kycStatusService;
     private final PropertyMapper propertyMapper;
     private final NotificationService notificationService;
+    private final GeocodingService geocodingService;
     private final com.homeflex.features.property.domain.repository.PropertySearchRepository propertySearchRepository;
 
     public Page<PropertyDto> getAllProperties(Pageable pageable) {
@@ -87,6 +89,16 @@ public class PropertyService {
         property.setPostalCode(request.postalCode());
         property.setLatitude(request.latitude());
         property.setLongitude(request.longitude());
+
+        // Auto-geocode when the client hasn't supplied coordinates
+        if (property.getLatitude() == null || property.getLongitude() == null) {
+            var coords = geocodingService.geocode(request.address(), request.city(), request.country());
+            if (coords.isPresent()) {
+                property.setLatitude(coords.get()[0]);
+                property.setLongitude(coords.get()[1]);
+            }
+        }
+
         property.setBedrooms(request.bedrooms());
         property.setBathrooms(request.bathrooms());
         property.setAreaSqm(request.areaSqm());
