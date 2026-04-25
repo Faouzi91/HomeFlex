@@ -14,6 +14,7 @@ import { MaintenanceTabComponent } from './tabs/maintenance/maintenance-tab.comp
 import { FinanceTabComponent } from './tabs/finance/finance-tab.component';
 import { DisputesTabComponent } from './tabs/disputes/disputes-tab.component';
 import { InsuranceTabComponent } from './tabs/insurance/insurance-tab.component';
+import { ReviewsTabComponent } from './tabs/reviews/reviews-tab.component';
 
 export const workspaceRoutes: Routes = [
   {
@@ -66,6 +67,7 @@ export const workspaceRoutes: Routes = [
       { path: 'finance', component: FinanceTabComponent, title: 'Receipts | Workspace' },
       { path: 'disputes', component: DisputesTabComponent, title: 'Disputes | Workspace' },
       { path: 'insurance', component: InsuranceTabComponent, title: 'Insurance | Workspace' },
+      { path: 'reviews', component: ReviewsTabComponent, title: 'Reviews | Workspace' },
     ],
   },
 ];

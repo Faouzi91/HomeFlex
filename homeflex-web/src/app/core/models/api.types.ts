@@ -259,10 +259,13 @@ export interface Review {
   id: string;
   type: ReviewType;
   propertyId?: string;
+  propertyTitle?: string;
   targetUser?: User;
   reviewer: User;
   rating: number;
   comment: string | null;
+  reply?: string | null;
+  repliedAt?: string | null;
   createdAt: string;
 }
 
