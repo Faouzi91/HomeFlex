@@ -22,6 +22,8 @@ export interface User {
   phoneNumber: string | null;
   profilePictureUrl: string | null;
   role: 'TENANT' | 'LANDLORD' | 'ADMIN' | string;
+  roles?: string[];
+  permissions?: string[];
   isActive: boolean;
   isVerified: boolean;
   languagePreference: string | null;
@@ -90,7 +92,20 @@ export interface Property {
   areaSqm: number | null;
   floorNumber: number | null;
   totalFloors: number | null;
+  instantBookEnabled?: boolean;
   isAvailable: boolean;
+  checkInTime?: string;
+  checkOutTime?: string;
+  starRating?: number | null;
+  petsAllowed?: boolean;
+  smokingAllowed?: boolean;
+  childrenAllowed?: boolean;
+  minStayNights?: number;
+  maxStayNights?: number | null;
+  houseRules?: string | null;
+  rejectionReason?: string | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
   availableFrom: string | null;
   status: string;
   viewCount: number;
@@ -101,6 +116,26 @@ export interface Property {
   landlord: User;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PricingRule {
+  id: string;
+  propertyId: string;
+  ruleType: 'WEEKEND' | 'SEASONAL' | 'LONG_STAY';
+  label: string | null;
+  multiplier: number;
+  minStayDays: number | null;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+export interface PricingRuleCreateRequest {
+  ruleType: string;
+  label?: string;
+  multiplier: number;
+  minStayDays?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface PropertySearchParams {
@@ -190,6 +225,10 @@ export interface Booking {
   modificationReason: string | null;
   respondedAt: string | null;
   createdAt: string;
+  // Hotel room fields
+  roomTypeId?: string | null;
+  roomTypeName?: string | null;
+  numberOfRooms?: number;
 }
 
 export type RentalPhase = 'UPCOMING' | 'ACTIVE' | 'PAST';
@@ -422,6 +461,94 @@ export interface PricingRecommendation {
   recommendedPrice: number;
   confidenceLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   reasoning: string;
+}
+
+export type BedType = 'SINGLE' | 'DOUBLE' | 'TWIN' | 'QUEEN' | 'KING' | 'BUNK' | 'SOFA';
+
+export interface RoomTypeImage {
+  id: string;
+  imageUrl: string;
+  displayOrder: number;
+  isPrimary: boolean;
+}
+
+export interface RoomType {
+  id: string;
+  propertyId: string;
+  name: string;
+  description: string | null;
+  bedType: BedType;
+  numBeds: number;
+  maxOccupancy: number;
+  pricePerNight: number;
+  currency: string;
+  totalRooms: number;
+  sizeSqm: number | null;
+  isActive: boolean;
+  images: RoomTypeImage[];
+  amenities: Amenity[];
+  createdAt: string;
+}
+
+export interface RoomTypeCreateRequest {
+  name: string;
+  description?: string;
+  bedType: BedType;
+  numBeds: number;
+  maxOccupancy: number;
+  pricePerNight: number;
+  currency?: string;
+  totalRooms: number;
+  sizeSqm?: number;
+  amenityIds?: string[];
+}
+
+// Occupancy
+export interface OccupancyDay {
+  date: string;
+  status: 'AVAILABLE' | 'BOOKED' | 'BLOCKED';
+  bookingId?: string;
+}
+
+export interface RoomDay {
+  date: string;
+  bookedRooms: number;
+  availableRooms: number;
+}
+
+export interface RoomTypeOccupancy {
+  roomTypeId: string;
+  roomTypeName: string;
+  totalRooms: number;
+  days: RoomDay[];
+}
+
+export interface StandaloneOccupancy {
+  type: 'STANDALONE';
+  from: string;
+  to: string;
+  days: OccupancyDay[];
+}
+
+export interface HotelOccupancy {
+  type: 'HOTEL';
+  from: string;
+  to: string;
+  roomTypes: RoomTypeOccupancy[];
+}
+
+export type OccupancyData = StandaloneOccupancy | HotelOccupancy;
+
+export interface OccupancySummary {
+  propertyId: string;
+  propertyType: string;
+  from: string;
+  to: string;
+  totalDays: number;
+  occupiedDays: number;
+  occupancyRate: number;
+  totalRoomNights: number;
+  bookedRoomNights: number;
 }
 
 export interface SystemConfig {

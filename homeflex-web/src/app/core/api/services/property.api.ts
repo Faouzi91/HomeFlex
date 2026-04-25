@@ -3,10 +3,14 @@ import { Observable } from 'rxjs';
 import {
   ApiListResponse,
   ApiPageResponse,
+  OccupancyData,
+  OccupancySummary,
   PricingRecommendation,
   Property,
   PropertySearchParams,
   ReportItem,
+  RoomType,
+  RoomTypeCreateRequest,
 } from '../../models/api.types';
 import { BaseApi } from './base.api';
 
@@ -116,5 +120,74 @@ export class PropertyApi extends BaseApi {
     return this.http.get<PricingRecommendation>(
       `${this.baseUrl}/properties/${propertyId}/pricing/recommendation`,
     );
+  }
+
+  getPricingRules(propertyId: string): Observable<import('../../../core/models/api.types').PricingRule[]> {
+    return this.http.get<import('../../../core/models/api.types').PricingRule[]>(
+      `${this.baseUrl}/properties/${propertyId}/pricing/rules`,
+    );
+  }
+
+  createPricingRule(
+    propertyId: string,
+    body: import('../../../core/models/api.types').PricingRuleCreateRequest,
+  ): Observable<import('../../../core/models/api.types').PricingRule> {
+    return this.http.post<import('../../../core/models/api.types').PricingRule>(
+      `${this.baseUrl}/properties/${propertyId}/pricing/rules`,
+      body,
+    );
+  }
+
+  deletePricingRule(propertyId: string, ruleId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/properties/${propertyId}/pricing/rules/${ruleId}`,
+    );
+  }
+
+  // ── Room Types ──────────────────────────────────────────────────────────────
+
+  getRoomTypes(propertyId: string): Observable<ApiListResponse<RoomType>> {
+    return this.http.get<ApiListResponse<RoomType>>(
+      `${this.baseUrl}/properties/${propertyId}/room-types`,
+    );
+  }
+
+  createRoomType(propertyId: string, body: RoomTypeCreateRequest): Observable<RoomType> {
+    return this.http.post<RoomType>(
+      `${this.baseUrl}/properties/${propertyId}/room-types`,
+      body,
+    );
+  }
+
+  updateRoomType(propertyId: string, roomTypeId: string, body: RoomTypeCreateRequest): Observable<RoomType> {
+    return this.http.put<RoomType>(
+      `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}`,
+      body,
+    );
+  }
+
+  deleteRoomType(propertyId: string, roomTypeId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}`,
+    );
+  }
+
+  // ── Occupancy ───────────────────────────────────────────────────────────────
+
+  getOccupancy(propertyId: string, from: string, to: string): Observable<OccupancyData> {
+    return this.http.get<OccupancyData>(`${this.baseUrl}/properties/${propertyId}/occupancy`, {
+      params: this.buildParams({ from, to }),
+    });
+  }
+
+  getOccupancySummary(propertyId: string, from: string, to: string): Observable<OccupancySummary> {
+    return this.http.get<OccupancySummary>(
+      `${this.baseUrl}/properties/${propertyId}/occupancy/summary`,
+      { params: this.buildParams({ from, to }) },
+    );
+  }
+
+  submitForReview(propertyId: string): Observable<Property> {
+    return this.http.post<Property>(`${this.baseUrl}/properties/${propertyId}/submit`, {});
   }
 }

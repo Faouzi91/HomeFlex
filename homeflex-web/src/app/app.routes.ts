@@ -8,6 +8,7 @@ import { PropertyDetailPageComponent } from './features/properties/pages/propert
 import { VehicleDetailPageComponent } from './features/vehicles/pages/vehicle-detail/vehicle-detail.page';
 import { VehiclesPageComponent } from './features/vehicles/pages/vehicles/vehicles.page';
 import { SupportPageComponent } from './features/marketing/pages/support/support.page';
+import { LegalPageComponent } from './features/marketing/pages/legal/legal.page';
 import { AdminLayoutComponent } from './features/admin/layout/admin-layout/admin-layout.component';
 import { AdminDashboardPageComponent } from './features/admin/pages/dashboard/dashboard.page';
 import { AdminLoginPageComponent } from './features/admin/pages/admin-login/admin-login.page';
@@ -59,6 +60,7 @@ export const routes: Routes = [
       import('./features/workspace/workspace.routes').then((m) => m.workspaceRoutes),
   },
   { path: 'support', component: SupportPageComponent, title: 'Support | HomeFlex' },
+  { path: 'legal', component: LegalPageComponent, title: 'Legal | HomeFlex' },
 
   // Admin routes
   {

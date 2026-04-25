@@ -21,8 +21,14 @@ export class SessionStore {
 
   readonly isAuthenticated = computed(() => !!this.user());
   readonly role = computed(() => this.user()?.role ?? 'GUEST');
-  readonly isTenant = computed(() => this.role() === 'TENANT');
-  readonly isLandlord = computed(() => this.role() === 'LANDLORD');
+  readonly isTenant = computed(() => {
+    const u = this.user();
+    return this.role() === 'TENANT' || (u?.roles?.includes('ROLE_TENANT') ?? false);
+  });
+  readonly isLandlord = computed(() => {
+    const u = this.user();
+    return this.role() === 'LANDLORD' || (u?.roles?.includes('ROLE_LANDLORD') ?? false);
+  });
   readonly isAdmin = computed(() => this.role() === 'ADMIN');
   readonly roleLabel = computed(() => {
     const roleMap: Record<string, string> = {
@@ -129,6 +135,7 @@ export class SessionStore {
     lastName: string;
     phoneNumber?: string | null;
     role: string;
+    dualRole?: boolean;
   }): Observable<void> {
     this.pending.set(true);
     this.notifications.setLoading(true);

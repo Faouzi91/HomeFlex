@@ -70,4 +70,11 @@ export class BookingApi extends BaseApi {
       message: reason,
     });
   }
+
+  retryPayment(id: string): Observable<{ clientSecret: string; paymentIntentId: string }> {
+    return this.http.post<{ clientSecret: string; paymentIntentId: string }>(
+      `${this.baseUrl}/bookings/${id}/retry-payment`,
+      {},
+    );
+  }
 }
