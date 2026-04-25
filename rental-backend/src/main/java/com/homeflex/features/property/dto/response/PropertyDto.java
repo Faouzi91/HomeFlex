@@ -5,6 +5,7 @@ import com.homeflex.core.dto.response.UserDto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,11 +32,25 @@ public record PropertyDto(
         String cancellationPolicy,
         BigDecimal cleaningFee,
         BigDecimal securityDeposit,
+        Boolean instantBookEnabled,
         Boolean isAvailable,
         LocalDate availableFrom,
         String status,
         Integer viewCount,
         Integer favoriteCount,
+        // Policy fields
+        LocalTime checkInTime,
+        LocalTime checkOutTime,
+        Integer starRating,
+        Boolean petsAllowed,
+        Boolean smokingAllowed,
+        Boolean childrenAllowed,
+        Integer minStayNights,
+        Integer maxStayNights,
+        String houseRules,
+        String rejectionReason,
+        LocalDateTime submittedAt,
+        LocalDateTime approvedAt,
         List<PropertyImageDto> images,
         List<PropertyVideoDto> videos,
         List<AmenityDto> amenities,

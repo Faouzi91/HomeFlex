@@ -82,8 +82,8 @@ public class ResourcePermissionService {
         boolean isLandlord = booking.getProperty().getLandlord().getId().equals(userId);
 
         return switch (permission) {
-            case Permissions.BOOKING_APPROVE,
-                 Permissions.BOOKING_UPDATE  -> isLandlord;
+            case Permissions.BOOKING_APPROVE -> isLandlord;
+            case Permissions.BOOKING_UPDATE  -> isTenant || isLandlord;
             case Permissions.BOOKING_CANCEL  -> isTenant;
             // BOOKING_READ and any other permission: either party to the booking
             default                          -> isTenant || isLandlord;
@@ -106,8 +106,8 @@ public class ResourcePermissionService {
                 .orElse(false);
 
         return switch (permission) {
-            case Permissions.BOOKING_APPROVE,
-                 Permissions.BOOKING_UPDATE  -> isOwner;
+            case Permissions.BOOKING_APPROVE -> isOwner;
+            case Permissions.BOOKING_UPDATE  -> isTenant || isOwner;
             case Permissions.BOOKING_CANCEL  -> isTenant;
             default                          -> isTenant || isOwner;
         };

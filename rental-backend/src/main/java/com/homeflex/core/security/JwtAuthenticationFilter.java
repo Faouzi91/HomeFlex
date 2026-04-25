@@ -3,6 +3,7 @@ package com.homeflex.core.security;
 import com.homeflex.core.domain.entity.Permission;
 import com.homeflex.core.domain.entity.Role;
 import com.homeflex.core.domain.repository.UserRepository;
+import com.homeflex.core.domain.repository.RoleRepository;
 import com.homeflex.core.domain.entity.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     @Value("${app.jwt.cookie.access-token-name:ACCESS_TOKEN}")
     private String accessTokenCookieName;
@@ -75,10 +77,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        // Fallback: during phased rollout, a user may not yet have RBAC rows.
-        // The legacy enum is still authoritative in that case.
+        // Fallback: user has no RBAC rows (migration not yet run, or broken state).
+        // Look up the role by the legacy enum and load its full permission set so
+        // @PreAuthorize("hasAuthority(BOOKING_CREATE)") still works.
         if (authorities.isEmpty() && user.getRole() != null) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+            String roleName = "ROLE_" + user.getRole().name();
+            authorities.add(new SimpleGrantedAuthority(roleName));
+            roleRepository.findByName(roleName).ifPresent(role -> {
+                for (Permission perm : role.getPermissions()) {
+                    authorities.add(new SimpleGrantedAuthority(perm.getName()));
+                }
+            });
+            logger.warn("User " + user.getId() + " has no user_roles rows — using legacy role fallback. " +
+                "Run V28 migration or check DataInitializer logs.");
         }
 
         return authorities;

@@ -163,4 +163,12 @@ public class PropertyV1Controller {
     public ResponseEntity<ApiListResponse<PropertyDto>> compareProperties(@RequestParam List<UUID> ids) {
         return ResponseEntity.ok(new ApiListResponse<>(propertyService.getPropertiesByIds(ids)));
     }
+
+    /** Landlord submits a DRAFT property for admin review. */
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<PropertyDto> submitForReview(@PathVariable UUID id, Authentication authentication) {
+        UUID landlordId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(propertyService.submitForReview(id, landlordId));
+    }
 }

@@ -12,5 +12,6 @@ public record RegisterRequest(
         @NotBlank String firstName,
         @NotBlank String lastName,
         String phoneNumber,
-        @NotNull UserRole role
+        @NotNull UserRole role,
+        Boolean dualRole  // if true, user also gets the complementary role (landlord↔tenant)
 ) {}

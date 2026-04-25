@@ -24,7 +24,9 @@ import com.homeflex.features.property.domain.entity.ReportedListing;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.PropertyStatus;
+import com.homeflex.features.property.domain.repository.RoomTypeRepository;
 import com.homeflex.core.domain.enums.UserRole;
+import com.homeflex.core.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,6 +56,7 @@ public class AdminService {
     private final ReportMapper reportMapper;
     private final AdminMapper adminMapper;
     private final EventOutboxService eventOutboxService;
+    private final RoomTypeRepository roomTypeRepository;
 
     public Page<PropertyDto> getPendingProperties(Pageable pageable) {
         return propertyRepository.findByStatus(PropertyStatus.PENDING, pageable)
@@ -63,13 +67,30 @@ public class AdminService {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
+        // Hotel-type properties must have at least one active room type
+        if (property.getPropertyType().isHotelType()) {
+            long activeRooms = roomTypeRepository.countByPropertyIdAndIsActiveTrue(propertyId);
+            if (activeRooms == 0) {
+                throw new DomainException(
+                        "Cannot approve: hotel-type properties must have at least one active room type configured.");
+            }
+        }
+
+        // Completeness gate
+        List<String> missing = new ArrayList<>();
+        if (property.getTitle() == null || property.getTitle().length() < 10) missing.add("title (min 10 chars)");
+        if (property.getDescription() == null || property.getDescription().length() < 50) missing.add("description (min 50 chars)");
+        if (property.getImages() == null || property.getImages().isEmpty()) missing.add("at least 1 photo");
+        if (!missing.isEmpty()) {
+            throw new DomainException("Property is incomplete, cannot approve: " + String.join(", ", missing));
+        }
+
         property.setStatus(PropertyStatus.APPROVED);
+        property.setApprovedAt(LocalDateTime.now());
+        property.setRejectionReason(null);
         property = propertyRepository.save(property);
 
-        // Index into Elasticsearch
         eventOutboxService.enqueue("Property", property.getId(), "PropertyIndexed", java.util.Map.of("action", "approved"));
-
-        // Notify landlord
         notificationService.sendPropertyApprovedNotification(property.getLandlord(), property);
 
         return propertyMapper.toDto(property);
@@ -80,10 +101,26 @@ public class AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         property.setStatus(PropertyStatus.REJECTED);
+        property.setRejectionReason(reason);
         property = propertyRepository.save(property);
 
-        // Notify landlord with reason
         notificationService.sendPropertyRejectedNotification(property.getLandlord(), property, reason);
+
+        return propertyMapper.toDto(property);
+    }
+
+    public PropertyDto suspendProperty(UUID propertyId, String reason) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+
+        property.setStatus(PropertyStatus.SUSPENDED);
+        property.setRejectionReason(reason);
+        property = propertyRepository.save(property);
+
+        // Remove from search index
+        eventOutboxService.enqueue("Property", property.getId(), "PropertyIndexed", java.util.Map.of("action", "deleted"));
+        notificationService.sendPropertyRejectedNotification(property.getLandlord(), property,
+                "Your property has been suspended: " + reason);
 
         return propertyMapper.toDto(property);
     }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
 
@@ -63,6 +64,14 @@ public class Booking {
 
     @Column(name = "number_of_occupants")
     private Integer numberOfOccupants;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_type_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private RoomType roomType;
+
+    @Column(name = "number_of_rooms", nullable = false)
+    private Integer numberOfRooms = 1;
 
     @Column(name = "total_price", precision = 12, scale = 2)
     private BigDecimal totalPrice;

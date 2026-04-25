@@ -146,8 +146,8 @@ public class PaymentService {
             return Retry.decorateSupplier(stripeRetry, () -> {
                 try {
                     PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                            .setAmount(toStripeAmount(amount))
-                            .setCurrency(currency)
+                            .setAmount(toStripeAmount(amount, currency))
+                            .setCurrency(currency.toLowerCase())
                             .setDescription(description)
                             .setTransferGroup(transferGroup)
                             .setCaptureMethod(PaymentIntentCreateParams.CaptureMethod.MANUAL)
@@ -187,8 +187,8 @@ public class PaymentService {
             return Retry.decorateSupplier(stripeRetry, () -> {
                 try {
                     TransferCreateParams params = TransferCreateParams.builder()
-                            .setAmount(toStripeAmount(landlordAmount))
-                            .setCurrency(currency)
+                            .setAmount(toStripeAmount(landlordAmount, currency))
+                            .setCurrency(currency.toLowerCase())
                             .setDestination(landlordStripeAccountId)
                             .setTransferGroup(transferGroup)
                             .build();
@@ -249,7 +249,7 @@ public class PaymentService {
                     RefundCreateParams.Builder params = RefundCreateParams.builder()
                             .setCharge(chargeId);
                     if (amount != null) {
-                        params.setAmount(toStripeAmount(amount));
+                        params.setAmount(toStripeAmount(amount, currency));
                     }
                     Refund refund = Refund.create(params.build());
                     log.info("Refund issued: paymentIntent={}, amount={} {}", paymentIntentId, amount, currency);
@@ -325,8 +325,21 @@ public class PaymentService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
+    // Zero-decimal currencies: Stripe expects the whole unit, not cents.
+    private static final java.util.Set<String> ZERO_DECIMAL_CURRENCIES = java.util.Set.of(
+        "bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", "mga", "pyg", "rwf",
+        "ugx", "vnd", "vuv", "xaf", "xof", "xpf"
+    );
+
     private long toStripeAmount(BigDecimal amount) {
-        return amount.multiply(new BigDecimal(100)).longValue();
+        return amount.longValue();
+    }
+
+    private long toStripeAmount(BigDecimal amount, String currency) {
+        if (currency != null && ZERO_DECIMAL_CURRENCIES.contains(currency.toLowerCase())) {
+            return amount.setScale(0, RoundingMode.HALF_UP).longValue();
+        }
+        return amount.multiply(new BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).longValue();
     }
 
     // ── Response Records ───────────────────────────────────────────────

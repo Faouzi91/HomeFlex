@@ -53,6 +53,7 @@ public class PropertyService {
     private final KycService kycStatusService;
     private final PropertyMapper propertyMapper;
     private final NotificationService notificationService;
+    private final com.homeflex.features.property.domain.repository.PropertySearchRepository propertySearchRepository;
 
     public Page<PropertyDto> getAllProperties(Pageable pageable) {
         return propertyRepository.findByStatus(PropertyStatus.APPROVED, pageable)
@@ -94,7 +95,19 @@ public class PropertyService {
         property.setCancellationPolicy(request.cancellationPolicy());
         property.setCleaningFee(request.cleaningFee());
         property.setSecurityDeposit(request.securityDeposit());
-        property.setStatus(PropertyStatus.PENDING);
+        property.setInstantBookEnabled(request.instantBookEnabled());
+        property.setCheckInTime(request.checkInTime());
+        property.setCheckOutTime(request.checkOutTime());
+        property.setStarRating(request.starRating());
+        property.setPetsAllowed(request.petsAllowed());
+        property.setSmokingAllowed(request.smokingAllowed());
+        property.setChildrenAllowed(request.childrenAllowed());
+        property.setMinStayNights(request.minStayNights());
+        property.setMaxStayNights(request.maxStayNights());
+        property.setHouseRules(request.houseRules());
+        property.setAvailableFrom(request.availableFrom());
+        property.setStatus(Boolean.TRUE.equals(request.submitAsDraft())
+                ? PropertyStatus.DRAFT : PropertyStatus.PENDING);
 
         // Map Amenities
         if (request.amenityIds() != null && !request.amenityIds().isEmpty()) {
@@ -290,12 +303,52 @@ public class PropertyService {
      */
     @Transactional
     public int reindexAll() {
+        // Clear stale ES index to avoid garbage hits
+        propertySearchRepository.deleteAll();
+
         List<Property> approved = propertyRepository.findAllByStatusAndDeletedAtIsNull(PropertyStatus.APPROVED);
         for (Property p : approved) {
             eventOutboxService.enqueue("Property", p.getId(), "PropertyIndexed", Map.of("action", "reindex"));
         }
-        log.info("Enqueued {} properties for reindexing", approved.size());
+        log.info("Cleared search index and enqueued {} properties for reindexing", approved.size());
         return approved.size();
+    }
+
+    /**
+     * Transitions a DRAFT property to PENDING after validating completeness.
+     * Hotel-type properties additionally require at least one room type.
+     */
+    @Transactional
+    public PropertyDto submitForReview(UUID propertyId, UUID landlordId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
+
+        if (!property.getLandlord().getId().equals(landlordId)) {
+            throw new UnauthorizedException("Not authorized");
+        }
+        if (property.getStatus() != PropertyStatus.DRAFT) {
+            throw new DomainException("Only DRAFT properties can be submitted for review");
+        }
+
+        // Completeness checklist
+        List<String> missing = new ArrayList<>();
+        if (property.getTitle() == null || property.getTitle().length() < 10) missing.add("title (min 10 chars)");
+        if (property.getDescription() == null || property.getDescription().length() < 50) missing.add("description (min 50 chars)");
+        if (property.getAddress() == null || property.getAddress().isBlank()) missing.add("address");
+        if (property.getCity() == null || property.getCity().isBlank()) missing.add("city");
+        if (property.getCountry() == null || property.getCountry().isBlank()) missing.add("country");
+        if (property.getImages() == null || property.getImages().isEmpty()) missing.add("at least 1 photo");
+        if (!missing.isEmpty()) {
+            throw new DomainException("Property is incomplete: " + String.join(", ", missing));
+        }
+
+        property.setStatus(PropertyStatus.PENDING);
+        property.setSubmittedAt(LocalDateTime.now());
+        propertyRepository.save(property);
+
+        eventOutboxService.enqueue("Property", property.getId(), "PropertyIndexed", Map.of("action", "submitted"));
+        notificationService.notifyAdminsNewProperty(property);
+        return propertyMapper.toDto(property);
     }
 
     @Transactional

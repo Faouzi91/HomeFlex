@@ -16,6 +16,8 @@ import com.homeflex.core.exception.ConflictException;
 import com.homeflex.features.property.domain.entity.Property;
 import com.homeflex.features.property.domain.entity.Booking;
 import com.homeflex.features.property.domain.entity.BookingAuditLog;
+import com.homeflex.features.property.domain.entity.RoomType;
+import com.homeflex.features.property.domain.repository.RoomTypeRepository;
 import com.homeflex.features.property.domain.enums.BookingStatus;
 import com.homeflex.features.property.domain.enums.BookingType;
 import com.homeflex.features.property.domain.BookingStateMachine;
@@ -56,10 +58,13 @@ public class BookingService {
     private final BookingAuditLogRepository auditLogRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
+    private final RoomTypeRepository roomTypeRepository;
     private final NotificationService notificationService;
     private final PaymentService paymentService;
+    private final PricingService pricingService;
     private final BookingMapper bookingMapper;
     private final PropertyAvailabilityService availabilityService;
+    private final RoomInventoryService roomInventoryService;
     private final com.homeflex.features.finance.service.FinanceService financeService;
     private final RedissonClient redissonClient;
 
@@ -78,10 +83,13 @@ public class BookingService {
                           BookingAuditLogRepository auditLogRepository,
                           PropertyRepository propertyRepository,
                           UserRepository userRepository,
+                          RoomTypeRepository roomTypeRepository,
                           NotificationService notificationService,
                           PaymentService paymentService,
+                          PricingService pricingService,
                           BookingMapper bookingMapper,
                           PropertyAvailabilityService availabilityService,
+                          RoomInventoryService roomInventoryService,
                           com.homeflex.features.finance.service.FinanceService financeService,
                           RedissonClient redissonClient,
                           MeterRegistry meterRegistry) {
@@ -89,10 +97,13 @@ public class BookingService {
         this.auditLogRepository = auditLogRepository;
         this.propertyRepository = propertyRepository;
         this.userRepository = userRepository;
+        this.roomTypeRepository = roomTypeRepository;
         this.notificationService = notificationService;
         this.paymentService = paymentService;
+        this.pricingService = pricingService;
         this.bookingMapper = bookingMapper;
         this.availabilityService = availabilityService;
+        this.roomInventoryService = roomInventoryService;
         this.financeService = financeService;
         this.redissonClient = redissonClient;
 
@@ -143,16 +154,42 @@ public class BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
 
         validateBookingDates(request);
-        validateNoDateOverlap(request);
+
+        boolean isHotel = property.getPropertyType().isHotelType();
+        RoomType roomType = null;
+
+        if (isHotel) {
+            if (request.roomTypeId() == null) {
+                throw new DomainException("Room type is required for hotel bookings");
+            }
+            roomType = roomTypeRepository.findById(request.roomTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Room type not found"));
+            if (!roomType.getProperty().getId().equals(property.getId())) {
+                throw new DomainException("Room type does not belong to this property");
+            }
+            // Hotel uses count-based inventory — no date overlap check needed here
+        } else {
+            validateNoDateOverlap(request);
+        }
 
         BigDecimal totalPrice = BigDecimal.ZERO;
         BigDecimal platformFee = BigDecimal.ZERO;
         BigDecimal cleaningFee = property.getCleaningFee() != null ? property.getCleaningFee() : BigDecimal.ZERO;
         BigDecimal taxAmount = BigDecimal.ZERO;
+        int numberOfRooms = request.numberOfRooms();
 
-        if (request.startDate() != null && request.endDate() != null && property.getPrice() != null) {
-            long days = ChronoUnit.DAYS.between(request.startDate(), request.endDate()) + 1;
-            BigDecimal basePrice = property.getPrice().multiply(BigDecimal.valueOf(days));
+        if (request.startDate() != null && request.endDate() != null) {
+            BigDecimal basePrice;
+            if (isHotel && roomType != null) {
+                // Hotel: price = roomType.pricePerNight × nights × rooms
+                long nights = java.time.temporal.ChronoUnit.DAYS.between(request.startDate(), request.endDate());
+                if (nights < 1) nights = 1;
+                basePrice = roomType.getPricePerNight()
+                        .multiply(BigDecimal.valueOf(nights))
+                        .multiply(BigDecimal.valueOf(numberOfRooms));
+            } else {
+                basePrice = pricingService.calculateBasePrice(property, request.startDate(), request.endDate());
+            }
             platformFee = basePrice.multiply(new BigDecimal("0.15")).setScale(2, java.math.RoundingMode.HALF_UP);
             taxAmount   = basePrice.multiply(new BigDecimal("0.05")).setScale(2, java.math.RoundingMode.HALF_UP);
             totalPrice = basePrice.add(cleaningFee).add(taxAmount);
@@ -163,6 +200,8 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setProperty(property);
         booking.setTenant(tenant);
+        booking.setRoomType(roomType);
+        booking.setNumberOfRooms(numberOfRooms);
         booking.setBookingType(type);
         booking.setRequestedDate(request.requestedDate());
         booking.setStartDate(request.startDate());
@@ -181,10 +220,15 @@ public class BookingService {
 
         audit(booking.getId(), null, BookingStatus.DRAFT, "CREATE_DRAFT", tenantId, null);
 
-        // VIEWING bookings skip payment — go straight to PENDING_APPROVAL
+        // VIEWING bookings skip payment
         if (type == BookingType.VIEWING) {
-            transitionAndSave(booking, BookingStatus.PENDING_APPROVAL, "SKIP_PAYMENT_VIEWING", tenantId, null);
-            notificationService.sendBookingRequestNotification(property.getLandlord().getId(), tenant, property);
+            if (Boolean.TRUE.equals(property.getInstantBookEnabled())) {
+                // Instant Book: auto-approve, no landlord action needed
+                transitionAndSave(booking, BookingStatus.APPROVED, "INSTANT_BOOK_VIEWING", tenantId, null);
+            } else {
+                transitionAndSave(booking, BookingStatus.PENDING_APPROVAL, "SKIP_PAYMENT_VIEWING", tenantId, null);
+                notificationService.sendBookingRequestNotification(property.getLandlord().getId(), tenant, property);
+            }
         }
 
         return bookingMapper.toDto(booking);
@@ -264,12 +308,16 @@ public class BookingService {
 
         booking.setPaymentConfirmedAt(LocalDateTime.now());
         booking.setPaymentStatus("succeeded");
-        transitionAndSave(booking, BookingStatus.PENDING_APPROVAL, "CONFIRM_PAYMENT", null, null);
-
         paymentsSucceededCounter.increment();
 
-        notificationService.sendBookingRequestNotification(
-                booking.getProperty().getLandlord().getId(), booking.getTenant(), booking.getProperty());
+        if (Boolean.TRUE.equals(booking.getProperty().getInstantBookEnabled())) {
+            // Instant Book: auto-approve after payment, no landlord action needed
+            transitionAndSave(booking, BookingStatus.APPROVED, "INSTANT_BOOK_CONFIRM_PAYMENT", null, null);
+        } else {
+            transitionAndSave(booking, BookingStatus.PENDING_APPROVAL, "CONFIRM_PAYMENT", null, null);
+            notificationService.sendBookingRequestNotification(
+                    booking.getProperty().getLandlord().getId(), booking.getTenant(), booking.getProperty());
+        }
 
         try {
             financeService.generateReceipt(booking);
@@ -312,9 +360,12 @@ public class BookingService {
         Booking booking = findBookingOrThrow(bookingId);
         BookingStateMachine.transition(booking.getStatus(), BookingStatus.APPROVED);
 
-        // For paid bookings, ensure payment was confirmed
-        if (requiresPayment(booking.getBookingType()) && booking.getPaymentConfirmedAt() == null) {
-            throw new DomainException("Cannot approve unpaid booking");
+        // For paid bookings with an active Stripe PI, ensure payment was confirmed before approving.
+        // If there is no PI (e.g. sample/offline bookings), allow approval without payment check.
+        if (requiresPayment(booking.getBookingType())
+                && booking.getStripePaymentIntentId() != null
+                && booking.getPaymentConfirmedAt() == null) {
+            throw new DomainException("Cannot approve: Stripe payment has not been confirmed yet.");
         }
 
         // Capture the payment if using manual capture
@@ -333,11 +384,17 @@ public class BookingService {
         booking.setRespondedAt(LocalDateTime.now());
         transitionAndSave(booking, BookingStatus.APPROVED, "APPROVE", null, response);
 
-        // Re-check availability and reserve
+        // Reserve dates — hotel uses count-based inventory, standalone uses sparse calendar
         if (booking.getStartDate() != null && booking.getEndDate() != null) {
-            availabilityService.reserveForBooking(
-                    booking.getProperty().getId(), booking.getId(),
-                    booking.getStartDate(), booking.getEndDate());
+            if (booking.getRoomType() != null) {
+                roomInventoryService.reserveRooms(
+                        booking.getRoomType().getId(),
+                        booking.getStartDate(), booking.getEndDate(), booking.getNumberOfRooms());
+            } else {
+                availabilityService.reserveForBooking(
+                        booking.getProperty().getId(), booking.getId(),
+                        booking.getStartDate(), booking.getEndDate());
+            }
         }
 
         notificationService.sendBookingResponseNotification(
@@ -391,9 +448,14 @@ public class BookingService {
         booking.setModificationReason(null);
         transitionAndSave(booking, BookingStatus.APPROVED, "APPROVE_MODIFICATION", null, null);
 
-        availabilityService.reserveForBooking(
-                booking.getProperty().getId(), booking.getId(),
-                booking.getStartDate(), booking.getEndDate());
+        if (booking.getRoomType() != null) {
+            roomInventoryService.reserveRooms(booking.getRoomType().getId(),
+                    booking.getStartDate(), booking.getEndDate(), booking.getNumberOfRooms());
+        } else {
+            availabilityService.reserveForBooking(
+                    booking.getProperty().getId(), booking.getId(),
+                    booking.getStartDate(), booking.getEndDate());
+        }
 
         return bookingMapper.toDto(booking);
     }
@@ -432,7 +494,7 @@ public class BookingService {
         }
 
         transitionAndSave(booking, BookingStatus.CANCELLED, "CANCEL", null, null);
-        availabilityService.releaseForBooking(booking.getId());
+        releaseInventory(booking);
 
         return bookingMapper.toDto(booking);
     }
@@ -469,7 +531,7 @@ public class BookingService {
         }
 
         transitionAndSave(booking, BookingStatus.COMPLETED, "EARLY_CHECKOUT", null, null);
-        availabilityService.releaseForBooking(booking.getId());
+        releaseInventory(booking);
 
         return bookingMapper.toDto(booking);
     }
@@ -592,6 +654,16 @@ public class BookingService {
         if (request.startDate() != null && request.endDate() != null
                 && request.endDate().isBefore(request.startDate())) {
             throw new DomainException("End date must be on or after start date");
+        }
+    }
+
+    private void releaseInventory(Booking booking) {
+        if (booking.getStartDate() == null || booking.getEndDate() == null) return;
+        if (booking.getRoomType() != null) {
+            roomInventoryService.releaseRooms(booking.getRoomType().getId(),
+                    booking.getStartDate(), booking.getEndDate(), booking.getNumberOfRooms());
+        } else {
+            availabilityService.releaseForBooking(booking.getId());
         }
     }
 

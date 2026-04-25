@@ -41,6 +41,13 @@ public class AdminController {
         return ResponseEntity.ok(adminService.rejectProperty(id, request.reason()));
     }
 
+    @PatchMapping("/properties/{id}/suspend")
+    public ResponseEntity<PropertyDto> suspendProperty(
+            @PathVariable UUID id,
+            @RequestBody RejectReasonRequest request) {
+        return ResponseEntity.ok(adminService.suspendProperty(id, request.reason()));
+    }
+
     @GetMapping("/users")
     public ResponseEntity<ApiPageResponse<UserDto>> getAllUsers(Pageable pageable) {
         return ResponseEntity.ok(ApiPageResponse.from(adminService.getAllUsers(pageable)));

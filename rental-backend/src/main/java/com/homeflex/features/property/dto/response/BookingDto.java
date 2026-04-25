@@ -31,5 +31,11 @@ public record BookingDto(
         LocalDate proposedStartDate,
         LocalDate proposedEndDate,
         String modificationReason,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        // Hotel room fields
+        UUID roomTypeId,
+        String roomTypeName,
+        Integer numberOfRooms,
+        LocalDateTime paymentConfirmedAt,
+        LocalDateTime escrowReleasedAt
 ) {}

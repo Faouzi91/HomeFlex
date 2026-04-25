@@ -9,6 +9,14 @@ spring:
   jpa:
     show-sql: true
 
+# Disable Secure flag on cookies for local HTTP (plain http://localhost).
+# Chrome sends Secure cookies to localhost but Firefox/Safari do not — so
+# keeping Secure=true breaks auth on those browsers in local dev.
+app:
+  jwt:
+    cookie:
+      secure: false
+
 # Show detailed errors in dev (never in prod)
 server:
   error:

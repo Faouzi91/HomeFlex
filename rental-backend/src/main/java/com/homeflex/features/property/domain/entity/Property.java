@@ -16,6 +16,7 @@ import org.hibernate.envers.RelationTargetAuditMode;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -105,10 +106,49 @@ public class Property {
     @Column(name = "security_deposit", precision = 12, scale = 2)
     private BigDecimal securityDeposit = BigDecimal.ZERO;
 
+    @Column(name = "check_in_time")
+    private LocalTime checkInTime;
+
+    @Column(name = "check_out_time")
+    private LocalTime checkOutTime;
+
+    @Column(name = "star_rating")
+    private Integer starRating;
+
+    @Column(name = "pets_allowed")
+    private Boolean petsAllowed = false;
+
+    @Column(name = "smoking_allowed")
+    private Boolean smokingAllowed = false;
+
+    @Column(name = "children_allowed")
+    private Boolean childrenAllowed = true;
+
+    @Column(name = "min_stay_nights")
+    private Integer minStayNights = 1;
+
+    @Column(name = "max_stay_nights")
+    private Integer maxStayNights;
+
+    @Column(name = "house_rules", columnDefinition = "TEXT")
+    private String houseRules;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "agency_id")
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private com.homeflex.core.domain.entity.Agency agency;
+
+    @Column(name = "instant_book_enabled")
+    private Boolean instantBookEnabled = false;
 
     @Column(name = "is_available")
     private Boolean isAvailable = true;

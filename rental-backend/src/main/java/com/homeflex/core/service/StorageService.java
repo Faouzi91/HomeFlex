@@ -12,6 +12,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import javax.imageio.ImageIO;
@@ -57,7 +58,10 @@ public class StorageService {
                     .region(Region.of(region));
 
             if (endpoint != null && !endpoint.isEmpty()) {
-                builder.endpointOverride(URI.create(endpoint));
+                builder.endpointOverride(URI.create(endpoint))
+                       .serviceConfiguration(S3Configuration.builder()
+                               .pathStyleAccessEnabled(true)
+                               .build());
             }
 
             s3Client = builder.build();
@@ -100,7 +104,8 @@ public class StorageService {
 
             String url;
             if (endpoint != null && !endpoint.isEmpty()) {
-                url = endpoint + "/" + bucketName + "/" + fileName;
+                // Nginx proxies /uploads/<key> → MinIO; browser-safe relative URL
+                url = "/uploads/" + fileName;
             } else {
                 url = String.format("https://%s.s3.%s.amazonaws.com/%s",
                         bucketName, region, fileName);
@@ -134,7 +139,7 @@ public class StorageService {
 
             String url;
             if (endpoint != null && !endpoint.isEmpty()) {
-                url = endpoint + "/" + bucketName + "/" + fullPath;
+                url = "/uploads/" + fullPath;
             } else {
                 url = String.format("https://%s.s3.%s.amazonaws.com/%s",
                         bucketName, region, fullPath);

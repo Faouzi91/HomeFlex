@@ -75,6 +75,11 @@ public class AuthService {
         user.setPhoneNumber(request.phoneNumber());
         user.setRole(request.role());
         assignRbacRole(user, "ROLE_" + request.role().name());
+        // Dual-role: also assign the complementary role so the user can both host and rent
+        if (Boolean.TRUE.equals(request.dualRole())) {
+            UserRole secondary = request.role() == UserRole.LANDLORD ? UserRole.TENANT : UserRole.LANDLORD;
+            assignRbacRole(user, "ROLE_" + secondary.name());
+        }
         user.setIsActive(true);
         user.setIsVerified(false);
         user.setLanguagePreference("en");
@@ -283,7 +288,11 @@ public class AuthService {
     }
 
     private void assignRbacRole(User user, String roleName) {
-        roleRepository.findByName(roleName).ifPresent(r -> user.getRoles().add(r));
+        roleRepository.findByName(roleName).ifPresentOrElse(
+            r -> user.getRoles().add(r),
+            () -> log.error("RBAC role '{}' not found — check V28 migration. " +
+                "User {} will have no permissions until this is fixed.", roleName, user.getEmail())
+        );
     }
 
     private String createRefreshToken(User user) {

@@ -75,6 +75,7 @@ public class SampleDataInitializer implements CommandLineRunner {
     private final NotificationRepository notificationRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final MessageRepository messageRepository;
+    private final com.homeflex.features.property.service.PropertyService propertyService;
 
     @Value("${app.data.create-sample-properties:true}")
     private boolean createSampleProperties;
@@ -88,7 +89,8 @@ public class SampleDataInitializer implements CommandLineRunner {
         }
 
         if (propertyRepository.count() > 0 || vehicleRepository.count() > 0) {
-            log.info(" Sample data already exists, skipping...");
+            log.info(" Sample data already exists, skipping creation but triggering re-index...");
+            propertyService.reindexAll();
             return;
         }
 
@@ -103,6 +105,7 @@ public class SampleDataInitializer implements CommandLineRunner {
             createSampleReviews();
             createSampleNotifications();
             createSampleChatRoomsAndMessages();
+            propertyService.reindexAll();
 
             log.info("═══════════════════════════════════════════════════════");
             log.info("SAMPLE DATA CREATED SUCCESSFULLY!");
@@ -479,13 +482,15 @@ public class SampleDataInitializer implements CommandLineRunner {
         List<Property> properties = propertyRepository.findAll();
         List<Vehicle> vehicles = vehicleRepository.findAll();
 
-        // Property bookings
+        // Property bookings — VIEWING only for sample data to avoid payment-gate issues.
+        // RENTAL bookings need a confirmed Stripe PaymentIntent; creating them without
+        // one would leave them in a state the landlord cannot approve.
         for (int i = 0; i < Math.min(5, properties.size()); i++) {
             Property property = properties.get(i);
             Booking booking = new Booking();
             booking.setProperty(property);
             booking.setTenant(tenant);
-            booking.setBookingType(i % 2 == 0 ? BookingType.VIEWING : BookingType.RENTAL);
+            booking.setBookingType(BookingType.VIEWING);
             booking.setRequestedDate(LocalDateTime.now().plusDays(i + 1));
             booking.setStartDate(LocalDate.now().plusDays(i + 7));
             booking.setEndDate(LocalDate.now().plusDays(i + 37));

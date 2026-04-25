@@ -7,6 +7,14 @@ public enum PropertyType {
     VILLA,
     ROOM,
     OFFICE,
-    LAND
+    LAND,
+    HOTEL,
+    GUESTHOUSE,
+    HOSTEL,
+    RESORT;
+
+    public boolean isHotelType() {
+        return this == HOTEL || this == GUESTHOUSE || this == HOSTEL || this == RESORT;
+    }
 }
 

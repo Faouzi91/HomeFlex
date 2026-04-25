@@ -15,5 +15,13 @@ public record BookingCreateRequest(
         LocalDate endDate,
         String message,
         Integer numberOfOccupants,
-        String idempotencyKey
-) {}
+        String idempotencyKey,
+        /** Required for HOTEL/GUESTHOUSE/HOSTEL/RESORT properties */
+        UUID roomTypeId,
+        /** How many rooms to reserve (hotel bookings only, defaults to 1) */
+        Integer numberOfRooms
+) {
+    public BookingCreateRequest {
+        if (numberOfRooms == null || numberOfRooms < 1) numberOfRooms = 1;
+    }
+}
