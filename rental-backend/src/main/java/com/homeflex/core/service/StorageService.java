@@ -154,18 +154,68 @@ public class StorageService {
         }
     }
 
+    /**
+     * Uploads a full-size image (max 1200px wide) and a 400px thumbnail in one call.
+     * Returns both URLs; the thumbnail is stored under a "thumbs/" sub-prefix.
+     */
+    public UploadResult uploadImageWithThumbnail(MultipartFile file, String folder) {
+        String contentType = file.getContentType() != null ? file.getContentType() : "image/jpeg";
+        String baseName = UUID.randomUUID() + "-" + sanitizeFilename(file.getOriginalFilename());
+
+        try {
+            BufferedImage original = ImageIO.read(file.getInputStream());
+            if (original == null) {
+                String url = uploadFile(file, folder);
+                return new UploadResult(url, null);
+            }
+
+            String formatName = formatFromContentType(contentType);
+
+            // Full-size (1200px cap)
+            byte[] fullData = encodeImage(
+                    Scalr.resize(original, Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, 1200),
+                    formatName);
+            String fullUrl = uploadFile(fullData, baseName, contentType, folder);
+
+            // Thumbnail (400px cap)
+            byte[] thumbData = encodeImage(
+                    Scalr.resize(original, Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, 400),
+                    formatName);
+            String thumbUrl = uploadFile(thumbData, "thumb-" + baseName, contentType, folder + "/thumbs");
+
+            return new UploadResult(fullUrl, thumbUrl);
+
+        } catch (IOException e) {
+            log.error("Failed to generate thumbnail for {}", baseName, e);
+            String url = uploadFile(file, folder);
+            return new UploadResult(url, null);
+        }
+    }
+
+    public record UploadResult(String imageUrl, String thumbnailUrl) {}
+
     private byte[] resizeImage(InputStream inputStream, String contentType) throws IOException {
         BufferedImage originalImage = ImageIO.read(inputStream);
         if (originalImage == null) return new byte[0];
 
         // Max width 1200px, maintain aspect ratio
         BufferedImage resizedImage = Scalr.resize(originalImage, Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, 1200);
-        
-        String formatName = contentType.substring(contentType.indexOf("/") + 1);
+
+        String formatName = formatFromContentType(contentType);
+        return encodeImage(resizedImage, formatName);
+    }
+
+    private byte[] encodeImage(BufferedImage image, String formatName) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            ImageIO.write(resizedImage, formatName, baos);
+            ImageIO.write(image, formatName, baos);
             return baos.toByteArray();
         }
+    }
+
+    private String formatFromContentType(String contentType) {
+        int slash = contentType.indexOf("/");
+        String fmt = slash >= 0 ? contentType.substring(slash + 1) : "jpeg";
+        return fmt.equals("jpg") ? "jpeg" : fmt;
     }
 
     private String sanitizeFilename(String filename) {

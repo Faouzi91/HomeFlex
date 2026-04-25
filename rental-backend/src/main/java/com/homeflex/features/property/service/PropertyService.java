@@ -130,10 +130,11 @@ public class PropertyService {
         // Upload Images
         if (images != null) {
             for (int i = 0; i < images.size(); i++) {
-                String url = storageService.uploadFile(images.get(i), "properties/images");
+                var upload = storageService.uploadImageWithThumbnail(images.get(i), "properties/images");
                 PropertyImage img = new PropertyImage();
                 img.setProperty(property);
-                img.setImageUrl(url);
+                img.setImageUrl(upload.imageUrl());
+                img.setThumbnailUrl(upload.thumbnailUrl());
                 img.setDisplayOrder(i);
                 img.setIsPrimary(i == 0);
                 property.getImages().add(img);
@@ -375,10 +376,11 @@ public class PropertyService {
 
         int startOrder = property.getImages().size();
         for (int i = 0; i < images.size(); i++) {
-            String url = storageService.uploadFile(images.get(i), "properties/images");
+            var upload = storageService.uploadImageWithThumbnail(images.get(i), "properties/images");
             PropertyImage img = new PropertyImage();
             img.setProperty(property);
-            img.setImageUrl(url);
+            img.setImageUrl(upload.imageUrl());
+            img.setThumbnailUrl(upload.thumbnailUrl());
             img.setDisplayOrder(startOrder + i);
             img.setIsPrimary(property.getImages().isEmpty() && i == 0);
             property.getImages().add(img);

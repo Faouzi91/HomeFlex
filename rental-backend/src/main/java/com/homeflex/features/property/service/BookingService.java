@@ -153,6 +153,10 @@ public class BookingService {
         User tenant = userRepository.findById(tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tenant not found"));
 
+        if (!Boolean.TRUE.equals(tenant.getIsVerified())) {
+            throw new DomainException("Please verify your email address before making a booking.");
+        }
+
         validateBookingDates(request);
 
         boolean isHotel = property.getPropertyType().isHotelType();
