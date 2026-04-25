@@ -2,7 +2,7 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 4.7
+**Version:** 4.8
 **Date:** April 25, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
@@ -29,6 +29,7 @@
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
 | 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
 | 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation. |
+| 4.8     | 2026-04-25 | Architect     | Second audit pass — corrected remaining misclassifications found by manual code inspection: account lockout 🔴→🟢 (LoginAttemptService, Redis-backed, configurable); two-way reviews 🟡→🟢 (POST /reviews handles both types, GET /reviews/tenant/{userId}, POST /reviews/{id}/reply); email verification 🟡→🟢 (endpoint exists, gate not enforced); FR-700 AC-6 landlord reply 🔴→🟢. Updated planned list and FR tables accordingly.
 | 4.7     | 2026-04-25 | Architect     | Comprehensive codebase audit: corrected 15+ misclassified SRS items (🔴→🟢: auto-reject, cancellation policies, ES geo-search, full-text search, Twilio SMS, escrow/refunds/receipts, FR-401 finance dashboard, FR-800 leases, FR-900 maintenance, AC-6 dispute resolution; 🔴→🟡: two-way reviews, notification preferences, trust score, blockchain lease stub; 🟡→🔴: account lockout); added new "Implemented features not in SRS" section (pricing rules, room types, booking audit log, state machine, agency, OTP). SRS now reflects actual codebase state at 4.7.
 | 4.6     | 2026-04-25 | Architect     | Full UI/UX premium redesign pass: dark `bg-slate-900` editorial hero headers on properties and vehicles listing pages; premium filter sidebars with `rounded-xl` inputs and `.select-styled` dropdowns; insurance tab restyled with emerald/gold sectioned plan cards; disputes tab restyled with amber color scheme and SVG meta rows; finance tab rebuilt with onboarding hero panel, 4-step progress indicator, earnings dashboard tiles, and improved receipts section; raw enum display fixed across all templates (`.replaceAll('_', ' ')` sweep covering `vehicle-detail`, `property-detail`, `favorites-tab`, `hosting-tab`, `admin-properties`); MinIO image proxy via Nginx `/uploads/` → `minio:9000/rental-app-media/`; `StorageService` generates relative `/uploads/<key>` URLs; V38 Flyway migration rewrites existing absolute `http://` image URLs to relative form. |
 
@@ -225,22 +226,26 @@ HomeFlex is a **real estate rental marketplace** currently supporting property r
 
 ### Partially Implemented (v2.4+)
 
-- 🟡 **Email verification** — `EmailVerificationToken` entity and `EmailService.sendEmailVerificationToken()` exist (V7 migration). However, no `GET /auth/verify-email?token=...` endpoint to consume the token, and no `isEmailVerified` gate on landlord publishing or booking creation.
-- 🟡 **Two-way reviews** — `ReviewType` enum has both `PROPERTY` and `TENANT` values. Tenant-reviews-property is implemented. Landlord-reviews-tenant submission and `GET /reviews/received` endpoint are missing.
-- 🟡 **Notification preferences** — `User` entity has boolean flags `emailNotificationsEnabled`, `pushNotificationsEnabled`, `smsNotificationsEnabled`. No granular per-event-type per-channel `NotificationPreference` entity yet.
-- 🟡 **Blockchain lease contracts** — `BlockchainLeaseService` exists and is called from `LeaseService`, but the implementation body is a no-op stub (`log.info("Starting blockchain recording...")`). Not a real blockchain integration.
-- 🟡 **Trust Score** — `User.trustScore` field with default 5.0 exists (V19 migration), but no score calculation logic or update triggers are implemented.
+- 🟡 **Email verification gate** — Full flow implemented: `GET /api/v1/auth/verify?token=...`, `AuthService.verifyEmail()` sets `user.isVerified = true`, email sent on registration. Gap: `isVerified` is not yet enforced as a prerequisite before creating listings or bookings.
+- 🟡 **Notification preferences** — `User` entity has `emailNotificationsEnabled`, `pushNotificationsEnabled`, `smsNotificationsEnabled` boolean flags. No granular per-event-type per-channel `NotificationPreference` entity yet.
+- 🟡 **Blockchain lease contracts** — `BlockchainLeaseService` exists and is called from `LeaseService`, but is a no-op stub. Not a real blockchain integration.
+- 🟡 **Trust Score** — `User.trustScore` (default 5.0, V19 migration) feeds into `UserService.calculateProfileScore()`. No update triggers on review submission yet.
+
+### Implemented (confirmed in second audit pass — previously misclassified)
+
+- 🟢 **Account lockout** — `LoginAttemptService` uses Redis to track failed attempts per email; blocks after configurable max (default 5) for configurable duration (default 30 min); wired into `AuthService.login()`.
+- 🟢 **Two-way reviews** — `POST /api/v1/reviews` handles both `ReviewType.PROPERTY` and `ReviewType.TENANT` (auto-detected by request body). `GET /reviews/tenant/{userId}` returns landlord-written tenant reviews. `POST /reviews/{id}/reply` lets landlords post public responses. `DELETE /reviews/{id}` with ownership check.
 
 ### Planned (not yet built)
 
 - 🔴 Multi-region deployment (AWS ECS Fargate, Route53 latency routing)
 - 🔴 Arabic and Spanish i18n
 - 🔴 Apple / Facebook social login — backend stub methods throw exceptions; UI buttons show "Soon" badge
-- 🔴 Account lockout after 5 failed login attempts — no `failedLoginAttempts` counter on `User`
 - 🔴 AI-powered price recommendations
 - 🔴 Recurring monthly rent collection (Stripe Billing subscriptions)
 - 🔴 Image auto-resizing (multiple sizes on upload)
 - 🔴 Geocoding API integration — lat/lng fields exist on `Property` but are never populated
+- 🔴 `isVerified` enforcement gate — email verification exists but is not a hard prerequisite for publishing listings
 
 ## 1.3 Decision Baseline (Approved)
 
@@ -1208,7 +1213,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Roles**               | TENANT, LANDLORD, ADMIN                                                           |
 | **Acceptance Criteria** | Status                                                                            |
 | AC-1                    | Email registration requires: email, password, first name, last name, phone number | 🟢         |
-| AC-2                    | Email verification link sent on registration                                      | 🟡 Token entity + send method exist; verification endpoint missing |
+| AC-2                    | Email verification link sent on registration                                      | 🟢 `GET /auth/verify?token=...` endpoint exists; email sent on register; sets `user.isVerified`. Gate on listing creation not yet enforced. |
 | AC-3                    | Google OAuth login creates account on first use, links on subsequent uses         | 🟢         |
 | AC-4                    | Duplicate email registration returns descriptive error                            | 🟢         |
 | AC-5                    | User selects role (TENANT or LANDLORD) at registration                            | 🟢         |
@@ -1222,7 +1227,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Acceptance Criteria** | Status                                                                     |
 | AC-1                    | JWT access token issued with 15-minute expiry                              | 🟢                                                 |
 | AC-2                    | Refresh token issued with 7-day expiry                                     | 🟢 (stored in httpOnly Secure/SameSite=Strict cookie) |
-| AC-3                    | Failed login attempts: lock account after 5 failures                       | 🔴 Planned                                         |
+| AC-3                    | Failed login attempts: lock account after 5 failures                       | 🟢 `LoginAttemptService` (Redis-backed); configurable max attempts (default 5) and lock duration (default 30 min) via `AppProperties` |
 | AC-4                    | Multi-device support: user can be logged in on web + mobile simultaneously | 🟢                                                 |
 | AC-5                    | Logout invalidates refresh token server-side (DB)                          | 🟢 (DB-backed, not Redis)                          |
 | AC-6                    | Password reset via email link                                              | 🟢 (forgot-password + reset-password routes exist) |
@@ -1424,7 +1429,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 
 ## 5.7 Reviews & Trust
 
-### FR-700: Reviews 🟢
+### FR-700: Reviews & Responses 🟢
 
 | ID                      | FR-700                                          |
 | ----------------------- | ----------------------------------------------- | --------------------------------- |
@@ -1434,8 +1439,8 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-2                    | Review fields: rating (1-5 stars), text comment | 🟢                                |
 | AC-3                    | Category ratings (cleanliness, accuracy, etc.)  | 🔴 Planned                        |
 | AC-4                    | Aggregate rating displayed on property          | 🟢                                |
-| AC-5                    | Two-way reviews (landlord reviews tenant)       | 🟡 `ReviewType` enum has `PROPERTY` and `TENANT` values; missing dedicated submission endpoint and `GET /reviews/received` for landlords |
-| AC-6                    | Landlord can post a public response             | 🔴 Planned                        |
+| AC-5                    | Two-way reviews (landlord reviews tenant)       | 🟢 `POST /reviews` with `targetUserId` creates tenant review; `GET /reviews/tenant/{userId}` retrieves them; `POST /reviews/{id}/reply` for landlord public response |
+| AC-6                    | Landlord can post a public response             | 🟢 `POST /reviews/{id}/reply` with `@PreAuthorize("hasRole('LANDLORD')")` |
 
 ### FR-701: Trust Score 🟡 Partial
 
