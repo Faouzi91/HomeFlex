@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 5.0
-**Date:** April 25, 2026
+**Version:** 5.1
+**Date:** April 26, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
 
@@ -29,6 +29,7 @@
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
 | 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
 | 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation. |
+| 5.1     | 2026-04-26 | Architect     | Sprint 2: booking modification frontend 🔴→🟢 (tenant date-change modal, landlord approve/reject, PENDING_MODIFICATION info card); auto review prompt 🔴→🟢 (NotificationService.sendReviewPromptNotification wired into completeActiveBookings scheduler); admin amenity CRUD 🔴→🟢 (GET/POST/PUT/DELETE /admin/amenities, admin page with table + modal, nav item added).
 | 5.0     | 2026-04-25 | Architect     | Quick wins: price breakdown 🔴→🟢 (4-row breakdown widget with cleaning fee + 15% platform fee + total); category sub-ratings 🔴→🟡→🟢 (frontend now renders sub-ratings from existing backend fields); profile completeness bar 🔴→🟢 (color-coded progress bar in profile tab); read receipts 🔴→🟢 (single/double SVG check on sent messages in messages tab).
 | 4.9     | 2026-04-26 | Architect     | Sprint 1 close-out: geocoding 🔴→🟢 (GeocodingService via Nominatim, wired into PropertyService.createProperty); email verification gate 🟡→🟢 (BookingService.executeCreateDraft enforces isVerified); image thumbnails 🔴→🟢 (StorageService.uploadImageWithThumbnail generates 400px thumb alongside 1200px full; PropertyImage.thumbnailUrl now populated); admin analytics dashboard 🔴→🟢 (KPI grid, CSS bar charts for type/city/status, top-viewed/favorited lists); trust score 🟡→🟢 (already fully implemented in ReviewService — SRS misclassification corrected); Redis double-booking lock 🔴→🟢 (RedissonClient already used in BookingService — SRS misclassification corrected). Rule added: SRS updated after every implementation session.
 | 4.8     | 2026-04-25 | Architect     | Second audit pass — corrected remaining misclassifications found by manual code inspection: account lockout 🔴→🟢 (LoginAttemptService, Redis-backed, configurable); two-way reviews 🟡→🟢 (POST /reviews handles both types, GET /reviews/tenant/{userId}, POST /reviews/{id}/reply); email verification 🟡→🟢 (endpoint exists, gate not enforced); FR-700 AC-6 landlord reply 🔴→🟢. Updated planned list and FR tables accordingly.
@@ -56,6 +57,12 @@
 - 🟢 **CI Pipeline Fixed** — Angular `ng test` was hanging (missing `--watch=false`); `ADMIN_PASSWORD` and `PII_ENCRYPTION_KEY` added to CI env and `application-test.yml` so the backend can start in the test runner.
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
+
+### Implemented since v5.1 (Sprint 2 — Booking Modifications, Auto Review Prompt, Admin Amenity CRUD)
+
+- 🟢 **Booking Modification UI** — Tenants can request a date change from an APPROVED or ACTIVE booking via an inline modal (new check-in / check-out dates + optional reason). The booking transitions to `PENDING_MODIFICATION`. Landlords see an info card with the proposed dates and get "Approve Date Change" / "Reject" action buttons. All three flows wire to the existing `POST /bookings/{id}/modify`, `PATCH /bookings/{id}/modify/approve`, and `PATCH /bookings/{id}/modify/reject` backend endpoints.
+- 🟢 **Auto Review Prompt** — `NotificationService.sendReviewPromptNotification()` added. `BookingService.completeActiveBookings()` (scheduled at noon daily) now calls it for every booking that auto-completes, sending an in-app + push notification to the tenant: "How was your stay? Share your experience with future guests."
+- 🟢 **Admin Amenity Management** — New `AdminAmenitiesPageComponent` at `/admin/amenities` provides a full CRUD table: list (sorted by category/name), create/edit modal (EN name, FR name, SVG icon path, category), delete with confirmation. Backend: `GET /admin/amenities` and `PUT /admin/amenities/{id}` endpoints added alongside the existing POST/DELETE. "Amenities" nav item added to admin sidebar.
 
 ### Implemented since v5.0 (Quick Wins — Price Breakdown, Sub-Ratings, Profile Bar, Read Receipts)
 
@@ -1345,7 +1352,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-3                    | Auto-reject after timeout                          | 🟢 (`BookingService.autoRejectExpiredPendingBookings()` scheduled at 24h) |
 | AC-4                    | Cancellation policies (Flexible, Moderate, Strict) | 🟢 (`Property.cancellationPolicy` field; accepted in `PropertyCreateRequest`) |
 | AC-5                    | Booking history accessible with filters            | 🟢 (bookings list page) |
-| AC-6                    | Booking modification (date changes)                | 🔴 Planned              |
+| AC-6                    | Booking modification (date changes)                | 🟢 Tenant submits date-change request via `POST /bookings/{id}/modify`; landlord approves via `PATCH /bookings/{id}/modify/approve` or rejects via `/modify/reject`; `PENDING_MODIFICATION` info card in `BookingDetailPanel` shows proposed dates/reason; tenant "Request Date Change" button + landlord "Approve/Reject" action buttons wired. |
 
 ### FR-302: Post-Booking 🟡
 
@@ -1354,7 +1361,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | **Description**         | Post-booking actions                               |
 | **Acceptance Criteria** | Status                                             |
 | AC-1                    | Tenant can review property after booking completes | 🟢         |
-| AC-2                    | Review prompt sent automatically                   | 🔴 Planned |
+| AC-2                    | Review prompt sent automatically                   | 🟢 `NotificationService.sendReviewPromptNotification()` called in `BookingService.completeActiveBookings()` scheduler (runs at noon daily). Tenant receives in-app + push notification linking to the property. |
 | AC-3                    | Damage claims, security deposits                   | 🔴 Planned |
 | AC-4                    | Maintenance requests during active booking         | 🟢 (`MaintenanceRequest` entity; workspace Maintenance tab) |
 
@@ -1435,7 +1442,7 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 | AC-5                    | KYC management                                                    | 🟢 (Admin can view KYC status via user records; webhook-driven updates) |
 | AC-6                    | Dispute resolution                                                | 🟢 (`DisputeController`; admin resolve endpoint; workspace Disputes tab) |
 | AC-7                    | Analytics: user growth, booking trends, revenue charts            | 🟢 Admin dashboard rebuilt with KPI grid, CSS bar charts (properties-by-type, top-cities, bookings-by-status), and ranked top-viewed/favorited property lists |
-| AC-8                    | System config: manage amenities, commission rates                 | 🔴 Planned                    |
+| AC-8                    | System config: manage amenities, commission rates                 | 🟡 Amenities: full CRUD via admin page (`/admin/amenities`) backed by `GET/POST/PUT/DELETE /admin/amenities`; commission rates: config endpoint exists (`/admin/config/{key}`) but no dedicated UI yet. |
 | AC-9                    | Audit log                                                         | 🔴 Planned                    |
 
 ### FR-601: Support Agent Tools 🔴 Planned
