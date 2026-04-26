@@ -99,10 +99,22 @@ public class AdminController {
 
     // ── Amenity Management ──────────────────────────────────────────────
 
+    @GetMapping("/amenities")
+    public ResponseEntity<java.util.List<com.homeflex.features.property.domain.entity.Amenity>> listAmenities() {
+        return ResponseEntity.ok(adminService.listAmenities());
+    }
+
     @PostMapping("/amenities")
     public ResponseEntity<com.homeflex.features.property.domain.entity.Amenity> createAmenity(
             @RequestBody com.homeflex.features.property.domain.entity.Amenity amenity) {
         return ResponseEntity.ok(adminService.createAmenity(amenity));
+    }
+
+    @PutMapping("/amenities/{id}")
+    public ResponseEntity<com.homeflex.features.property.domain.entity.Amenity> updateAmenity(
+            @PathVariable UUID id,
+            @RequestBody com.homeflex.features.property.domain.entity.Amenity amenity) {
+        return ResponseEntity.ok(adminService.updateAmenity(id, amenity));
     }
 
     @DeleteMapping("/amenities/{id}")

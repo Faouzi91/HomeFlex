@@ -624,6 +624,8 @@ public class BookingService {
                 BookingStatus.ACTIVE, LocalDate.now());
         for (Booking booking : finished) {
             transitionAndSave(booking, BookingStatus.COMPLETED, "AUTO_COMPLETE", null, null);
+            notificationService.sendReviewPromptNotification(
+                    booking.getTenant().getId(), booking.getProperty());
             log.info("Booking {} completed (end date passed)", booking.getId());
         }
     }

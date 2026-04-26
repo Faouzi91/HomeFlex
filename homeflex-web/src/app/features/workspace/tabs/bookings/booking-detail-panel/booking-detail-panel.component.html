@@ -300,6 +300,33 @@
       }
     </div>
 
+    <!-- ── Modification proposal ── -->
+    @if (booking().status === 'PENDING_MODIFICATION' && booking().proposedStartDate) {
+      <div class="px-6 py-5">
+        <div class="bg-violet-50 border border-violet-100 rounded-xl p-4 space-y-3">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-violet-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+            </svg>
+            <p class="text-xs font-bold text-violet-700">Date Change Requested</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white rounded-lg p-2.5">
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">New Check-in</p>
+              <p class="text-sm font-bold text-slate-900">{{ date(booking().proposedStartDate) }}</p>
+            </div>
+            <div class="bg-white rounded-lg p-2.5">
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">New Check-out</p>
+              <p class="text-sm font-bold text-slate-900">{{ date(booking().proposedEndDate) }}</p>
+            </div>
+          </div>
+          @if (booking().modificationReason) {
+            <p class="text-xs text-violet-600 italic">"{{ booking().modificationReason }}"</p>
+          }
+        </div>
+      </div>
+    }
+
     <!-- ── Landlord response ── -->
     @if (booking().landlordResponse) {
       <div class="px-6 py-4">
@@ -427,6 +454,36 @@
       </button>
     }
 
+    <!-- Landlord: approve/reject modification -->
+    @if (canReviewModification()) {
+      <div class="flex gap-2">
+        <button
+          (click)="approveModification()"
+          [disabled]="actionLoading() === 'approveModify'"
+          class="flex-1 button button--primary py-2.5 text-sm"
+        >
+          {{ actionLoading() === 'approveModify' ? 'Approving…' : 'Approve Date Change' }}
+        </button>
+        <button
+          (click)="rejectModification()"
+          [disabled]="actionLoading() === 'rejectModify'"
+          class="flex-1 py-2.5 text-sm font-semibold text-violet-700 border border-violet-200 rounded-xl hover:bg-violet-50 transition-colors disabled:opacity-50"
+        >
+          {{ actionLoading() === 'rejectModify' ? 'Rejecting…' : 'Reject' }}
+        </button>
+      </div>
+    }
+
+    <!-- Tenant: request date change -->
+    @if (canRequestModification()) {
+      <button
+        (click)="openModifyModal()"
+        class="w-full py-2.5 text-sm font-semibold text-violet-700 border border-violet-200 rounded-xl hover:bg-violet-50 transition-colors"
+      >
+        Request Date Change
+      </button>
+    }
+
     <!-- Dispute -->
     @if (canOpenDispute() && !isLandlord()) {
       <button
@@ -446,11 +503,77 @@
   </div>
 </aside>
 
-<!-- Dispute modal (outside panel so it overlays everything) -->
+<!-- Dispute modal -->
 @if (showDisputeModal()) {
   <app-dispute-modal
     [bookingId]="booking().id"
     (submitted$)="showDisputeModal.set(false)"
     (cancelled)="showDisputeModal.set(false)"
   />
+}
+
+<!-- Modification modal -->
+@if (showModifyModal()) {
+  <div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+      <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-900">Request Date Change</h3>
+        <button (click)="closeModifyModal()" class="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="px-6 py-5 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">New Check-in</label>
+            <input
+              type="date"
+              [ngModel]="modifyStart()"
+              (ngModelChange)="modifyStart.set($event)"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-300"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">New Check-out</label>
+            <input
+              type="date"
+              [ngModel]="modifyEnd()"
+              (ngModelChange)="modifyEnd.set($event)"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-300"
+            />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Reason (optional)</label>
+          <textarea
+            [ngModel]="modifyReason()"
+            (ngModelChange)="modifyReason.set($event)"
+            rows="2"
+            placeholder="Briefly explain the reason for the date change…"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400/40 resize-none"
+          ></textarea>
+        </div>
+        @if (modifyError()) {
+          <p class="text-xs text-rose-500">{{ modifyError() }}</p>
+        }
+      </div>
+      <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+        <button
+          (click)="closeModifyModal()"
+          class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="submitModification()"
+          [disabled]="!modifyStart() || !modifyEnd() || actionLoading() === 'modify'"
+          class="px-4 py-2 rounded-xl text-sm font-semibold bg-violet-500 hover:bg-violet-600 text-white disabled:opacity-50 transition-colors"
+        >
+          {{ actionLoading() === 'modify' ? 'Submitting…' : 'Submit Request' }}
+        </button>
+      </div>
+    </div>
+  </div>
 }

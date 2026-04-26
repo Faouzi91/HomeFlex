@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DisputeModalComponent } from '../dispute-modal/dispute-modal.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -29,7 +30,7 @@ import {
 
 @Component({
   selector: 'app-booking-detail-panel',
-  imports: [NgClass, DisputeModalComponent],
+  imports: [NgClass, FormsModule, DisputeModalComponent],
   templateUrl: './booking-detail-panel.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -51,6 +52,13 @@ export class BookingDetailPanelComponent {
   protected readonly showRejectInput = signal(false);
   protected readonly showCancelConfirm = signal(false);
   protected readonly showDisputeModal = signal(false);
+
+  // Modification modal
+  protected readonly showModifyModal = signal(false);
+  protected readonly modifyStart = signal('');
+  protected readonly modifyEnd = signal('');
+  protected readonly modifyReason = signal('');
+  protected readonly modifyError = signal<string | null>(null);
 
   // ── Derived: images ─────────────────────────────────────────────────────────
 
@@ -119,6 +127,15 @@ export class BookingDetailPanelComponent {
     const s = this.booking().status;
     return s === 'APPROVED' || s === 'ACTIVE' || s === 'COMPLETED';
   });
+
+  protected readonly canRequestModification = computed(() => {
+    const s = this.booking().status;
+    return !this.isLandlord() && (s === 'APPROVED' || s === 'ACTIVE');
+  });
+
+  protected readonly canReviewModification = computed(
+    () => this.isLandlord() && this.booking().status === 'PENDING_MODIFICATION',
+  );
 
   // ── Tenant info display (for landlord view) ─────────────────────────────────
 
@@ -209,6 +226,73 @@ export class BookingDetailPanelComponent {
 
   protected openDispute(): void {
     this.showDisputeModal.set(true);
+  }
+
+  protected openModifyModal(): void {
+    const b = this.booking();
+    this.modifyStart.set(b.startDate ?? '');
+    this.modifyEnd.set(b.endDate ?? '');
+    this.modifyReason.set('');
+    this.modifyError.set(null);
+    this.showModifyModal.set(true);
+  }
+
+  protected closeModifyModal(): void {
+    this.showModifyModal.set(false);
+  }
+
+  protected submitModification(): void {
+    const start = this.modifyStart();
+    const end = this.modifyEnd();
+    if (!start || !end) return;
+    this.actionLoading.set('modify');
+    this.modifyError.set(null);
+    this.bookingApi
+      .requestModification(this.booking().id, {
+        startDate: start,
+        endDate: end,
+        reason: this.modifyReason() || undefined,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.actionLoading.set(null);
+          this.showModifyModal.set(false);
+          this.bookingChanged.emit(updated);
+        },
+        error: (err) => {
+          this.modifyError.set(err?.error?.message ?? 'Failed to submit modification');
+          this.actionLoading.set(null);
+        },
+      });
+  }
+
+  protected approveModification(): void {
+    this.actionLoading.set('approveModify');
+    this.bookingApi
+      .approveModification(this.booking().id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.actionLoading.set(null);
+          this.bookingChanged.emit(updated);
+        },
+        error: () => this.actionLoading.set(null),
+      });
+  }
+
+  protected rejectModification(): void {
+    this.actionLoading.set('rejectModify');
+    this.bookingApi
+      .rejectModification(this.booking().id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.actionLoading.set(null);
+          this.bookingChanged.emit(updated);
+        },
+        error: () => this.actionLoading.set(null),
+      });
   }
 
   protected messageParty(): void {

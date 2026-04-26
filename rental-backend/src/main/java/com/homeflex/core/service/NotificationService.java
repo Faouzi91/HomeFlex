@@ -234,6 +234,16 @@ public class NotificationService {
                 tenantName + " for " + propertyTitle, false);
     }
 
+    public void sendReviewPromptNotification(UUID tenantId, Property property) {
+        String title = "How was your stay?";
+        String message = "You recently stayed at \"" + property.getTitle() + "\". Share your experience with future guests.";
+
+        createNotification(tenantId, title, message,
+                NotificationType.SYSTEM, "PROPERTY", property.getId());
+
+        sendPushNotification(tenantId, title, message);
+    }
+
     public void sendMaintenanceStatusUpdateNotification(UUID tenantId, String titleText, String status, UUID propertyId) {
         String title = "Maintenance Request Update";
         String message = "Your maintenance request '" + titleText + "' status changed to " + status;

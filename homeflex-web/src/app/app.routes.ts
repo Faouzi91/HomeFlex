@@ -16,6 +16,7 @@ import { AdminSettingsPageComponent } from './features/admin/pages/settings/admi
 import { AdminUsersPageComponent } from './features/admin/pages/users/admin-users.page';
 import { AdminPropertiesPageComponent } from './features/admin/pages/properties/admin-properties.page';
 import { AdminReportsPageComponent } from './features/admin/pages/reports/admin-reports.page';
+import { AdminAmenitiesPageComponent } from './features/admin/pages/amenities/admin-amenities.page';
 import { adminGuard } from './core/guards/admin.guard';
 import { guestOnlyGuard } from './core/guards/guest-only.guard';
 import { workspaceGuard } from './core/guards/workspace.guard';
@@ -78,6 +79,7 @@ export const routes: Routes = [
       { path: 'users', component: AdminUsersPageComponent, title: 'Users | Admin' },
       { path: 'properties', component: AdminPropertiesPageComponent, title: 'Properties | Admin' },
       { path: 'reports', component: AdminReportsPageComponent, title: 'Reports | Admin' },
+      { path: 'amenities', component: AdminAmenitiesPageComponent, title: 'Amenities | Admin' },
       { path: 'settings', component: AdminSettingsPageComponent, title: 'Settings | Admin' },
     ],
   },

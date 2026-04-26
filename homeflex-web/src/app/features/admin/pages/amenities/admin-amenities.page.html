@@ -1,0 +1,181 @@
+<section class="flex flex-col min-h-full bg-slate-50/50">
+
+  <!-- ── Header ────────────────────────────────────────────────────────── -->
+  <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-6 shrink-0">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-violet-500 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6Z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900">Amenities</h1>
+          <p class="text-sm text-slate-500">Manage the amenity catalog for property listings.</p>
+        </div>
+      </div>
+      <button (click)="openCreate()" class="button button--primary px-4 py-2 text-sm">
+        + New Amenity
+      </button>
+    </div>
+  </div>
+
+  <div class="flex-1 px-6 lg:px-8 py-8">
+
+    <!-- ── Loading skeleton ──────────────────────────────────────────── -->
+    @if (loading()) {
+      <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="flex items-center gap-4 px-5 py-4 border-b border-slate-50">
+            <div class="h-8 w-8 rounded-lg bg-slate-100 shrink-0"></div>
+            <div class="flex-1 space-y-1.5">
+              <div class="h-3.5 bg-slate-100 rounded w-1/4"></div>
+              <div class="h-3 bg-slate-100 rounded w-1/6"></div>
+            </div>
+            <div class="h-3 bg-slate-100 rounded w-16"></div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Error ─────────────────────────────────────────────────────── -->
+    @else if (error()) {
+      <div class="bg-red-50 border border-red-100 rounded-2xl p-6 text-center text-sm text-red-600">{{ error() }}</div>
+    }
+
+    <!-- ── Table ─────────────────────────────────────────────────────── -->
+    @else {
+      @if (amenities().length === 0) {
+        <div class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center">
+          <div class="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7 text-violet-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3ZM6 6h.008v.008H6V6Z" />
+            </svg>
+          </div>
+          <p class="font-bold text-slate-700 text-sm">No amenities yet</p>
+          <p class="text-slate-400 text-xs mt-1 max-w-xs">Add the first amenity to the catalog.</p>
+        </div>
+      } @else {
+        <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          <!-- Table header -->
+          <div class="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Name (EN)</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Name (FR)</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Category</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Icon</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Actions</span>
+          </div>
+
+          @for (amenity of amenities(); track amenity.id) {
+            <div class="grid grid-cols-[2fr_2fr_1fr_1fr_auto] gap-4 items-center px-5 py-3.5 border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+              <span class="text-sm font-semibold text-slate-900">{{ amenity.name }}</span>
+              <span class="text-sm text-slate-500">{{ amenity.nameFr || '—' }}</span>
+              <span class="text-xs font-medium text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full w-fit">
+                {{ amenity.category ? amenity.category.replaceAll('_', ' ') : '—' }}
+              </span>
+              <span class="text-sm text-slate-400 font-mono truncate">{{ amenity.icon || '—' }}</span>
+              <div class="flex items-center gap-2">
+                <button
+                  (click)="openEdit(amenity)"
+                  class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"
+                >Edit</button>
+                <button
+                  (click)="deleteAmenity(amenity.id)"
+                  [disabled]="deletingId() === amenity.id"
+                  class="text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors disabled:opacity-50"
+                >{{ deletingId() === amenity.id ? '…' : 'Delete' }}</button>
+              </div>
+            </div>
+          }
+        </div>
+        <p class="text-xs text-slate-400 mt-3 text-right">{{ amenities().length }} amenities</p>
+      }
+    }
+  </div>
+</section>
+
+<!-- ── Create / Edit Modal ────────────────────────────────────────────── -->
+@if (showModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+        <h2 class="text-base font-bold text-slate-900">{{ modalTitle() }}</h2>
+        <button (click)="closeModal()" class="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <div class="px-6 py-5 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Name (English) <span class="text-rose-500">*</span></label>
+          <input
+            type="text"
+            [value]="form().name"
+            (input)="updateForm('name', $any($event.target).value)"
+            placeholder="e.g. Wi-Fi"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Name (French)</label>
+          <input
+            type="text"
+            [value]="form().nameFr"
+            (input)="updateForm('nameFr', $any($event.target).value)"
+            placeholder="e.g. Wi-Fi"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-300"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Category</label>
+          <select
+            [value]="form().category"
+            (change)="updateForm('category', $any($event.target).value)"
+            class="select-styled w-full"
+          >
+            <option value="">— Select category —</option>
+            @for (cat of categories; track cat) {
+              <option [value]="cat">{{ cat.replaceAll('_', ' ') }}</option>
+            }
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">Icon (SVG path or class)</label>
+          <input
+            type="text"
+            [value]="form().icon"
+            (input)="updateForm('icon', $any($event.target).value)"
+            placeholder="e.g. M3 12l2-2m0 0..."
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400/40 focus:border-violet-300 font-mono text-xs"
+          />
+        </div>
+        @if (saveError()) {
+          <p class="text-xs text-rose-500">{{ saveError() }}</p>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-3">
+        <button
+          (click)="closeModal()"
+          class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          (click)="save()"
+          [disabled]="!form().name.trim() || saving()"
+          class="px-4 py-2 rounded-xl text-sm font-semibold bg-violet-500 hover:bg-violet-600 text-white disabled:opacity-50 transition-colors"
+        >
+          {{ saving() ? 'Saving…' : (editingId() ? 'Save Changes' : 'Create') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

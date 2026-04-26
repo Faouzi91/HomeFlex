@@ -65,6 +65,10 @@ export class AdminApi extends BaseApi {
     });
   }
 
+  getAmenities(): Observable<Amenity[]> {
+    return this.http.get<Amenity[]>(`${this.baseUrl}/admin/amenities`);
+  }
+
   createAmenity(amenity: {
     name: string;
     nameFr: string;
@@ -72,6 +76,10 @@ export class AdminApi extends BaseApi {
     category: string;
   }): Observable<Amenity> {
     return this.http.post<Amenity>(`${this.baseUrl}/admin/amenities`, amenity);
+  }
+
+  updateAmenity(id: string, amenity: Partial<{ name: string; nameFr: string; icon: string; category: string }>): Observable<Amenity> {
+    return this.http.put<Amenity>(`${this.baseUrl}/admin/amenities/${id}`, amenity);
   }
 
   deleteAmenity(id: string): Observable<void> {

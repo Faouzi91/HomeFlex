@@ -259,8 +259,22 @@ public class AdminService {
         return systemConfigRepository.save(config);
     }
 
+    public List<Amenity> listAmenities() {
+        return amenityRepository.findAll(org.springframework.data.domain.Sort.by("category", "name"));
+    }
+
     public Amenity createAmenity(Amenity amenity) {
         return amenityRepository.save(amenity);
+    }
+
+    public Amenity updateAmenity(UUID id, Amenity patch) {
+        Amenity existing = amenityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Amenity not found"));
+        if (patch.getName() != null) existing.setName(patch.getName());
+        if (patch.getNameFr() != null) existing.setNameFr(patch.getNameFr());
+        if (patch.getIcon() != null) existing.setIcon(patch.getIcon());
+        if (patch.getCategory() != null) existing.setCategory(patch.getCategory());
+        return amenityRepository.save(existing);
     }
 
     public void deleteAmenity(UUID id) {
