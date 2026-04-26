@@ -36,6 +36,8 @@ public record BookingDto(
         UUID roomTypeId,
         String roomTypeName,
         Integer numberOfRooms,
+        UUID unitId,
+        String unitNumber,
         LocalDateTime paymentConfirmedAt,
         LocalDateTime escrowReleasedAt
 ) {}

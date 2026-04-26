@@ -59,6 +59,18 @@
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
 
+### Implemented since v5.3 (Per-Unit Identity Model — Individual Room/Unit Tracking)
+
+> **Spec reference:** _HomeFlex Admin & Availability System Specification_ — every bookable unit has its own identity (Building → Unit Type → Individual Unit). Bookings auto-assign a specific unit number; landlords can label, floor-tag and take individual units out of service.
+
+- 🟢 **`property_units` Table (V39)** — Every `RoomType` now has N concrete `PropertyUnit` rows (one per physical room). Columns: `id`, `room_type_id` (FK), `unit_number` (unique per room type), `floor`, `status` (`AVAILABLE` / `OUT_OF_SERVICE` / `UNDER_MAINTENANCE`), `notes`, `created_at`, `updated_at`. The migration backfills anonymous units `1..totalRooms` for existing room types so legacy data remains valid.
+- 🟢 **`bookings.unit_id` (nullable FK)** — A booking may now bind to a specific `PropertyUnit`. Older bookings without a unit fall back to aggregate count behavior; new single-room bookings are auto-assigned.
+- 🟢 **Auto-Assignment at Reservation** — `BookingService.approveBooking` and `approveModification` call `PropertyUnitService.findFirstAvailable(roomTypeId, start, end)` after the count-based reservation succeeds. Returns the lowest-numbered `AVAILABLE` unit with no overlapping non-terminal booking. Cancellations & rejections release the unit (sets `unit_id = null` on inventory release).
+- 🟢 **`PropertyUnitService.syncUnitCount(roomTypeId, requestedTotal)`** — Called from `RoomTypeService` on create/update; appends new anonymous units when `totalRooms` increases. Never deletes existing units automatically (would orphan bookings); landlords must delete units explicitly.
+- 🟢 **REST API — `/properties/{id}/room-types/{rtId}/units`** — `GET` (list), `GET /available?startDate=&endDate=` (availability filter), `POST` (create), `PUT /{unitId}` (rename / reflag / set floor / status / notes), `DELETE /{unitId}`. All mutating routes are gated by `PROPERTY_UPDATE` permission and authorize that the room type belongs to the property and the caller is the landlord.
+- 🟢 **`BookingDto.unitId` / `unitNumber`** — `BookingMapper` exposes the assigned unit so the frontend booking detail panel can show "Unit 204" alongside "Standard Room × 1".
+- 🟢 **Frontend `PropertyApi` Unit Methods** — `getUnits`, `getAvailableUnits`, `createUnit`, `updateUnit`, `deleteUnit` plus a new `Unit {Pill}` rendered in the booking detail panel.
+
 ### Implemented since v5.2 (Hierarchical Property Model & Admin/Availability System)
 
 > **Spec reference:** _HomeFlex Admin & Availability System Specification_ — admin owns global configuration; properties support hierarchical Building → Unit Type structure; availability is tracked at the lowest bookable level (room type / vehicle); inventory updates are accurate and real-time; same logic applies to vehicles (each vehicle is its own bookable unit).

@@ -65,6 +65,7 @@ public class BookingService {
     private final BookingMapper bookingMapper;
     private final PropertyAvailabilityService availabilityService;
     private final RoomInventoryService roomInventoryService;
+    private final PropertyUnitService propertyUnitService;
     private final com.homeflex.features.finance.service.FinanceService financeService;
     private final RedissonClient redissonClient;
 
@@ -90,6 +91,7 @@ public class BookingService {
                           BookingMapper bookingMapper,
                           PropertyAvailabilityService availabilityService,
                           RoomInventoryService roomInventoryService,
+                          PropertyUnitService propertyUnitService,
                           com.homeflex.features.finance.service.FinanceService financeService,
                           RedissonClient redissonClient,
                           MeterRegistry meterRegistry) {
@@ -104,6 +106,7 @@ public class BookingService {
         this.bookingMapper = bookingMapper;
         this.availabilityService = availabilityService;
         this.roomInventoryService = roomInventoryService;
+        this.propertyUnitService = propertyUnitService;
         this.financeService = financeService;
         this.redissonClient = redissonClient;
 
@@ -394,6 +397,7 @@ public class BookingService {
                 roomInventoryService.reserveRooms(
                         booking.getRoomType().getId(),
                         booking.getStartDate(), booking.getEndDate(), booking.getNumberOfRooms());
+                assignUnitIfPossible(booking);
             } else {
                 availabilityService.reserveForBooking(
                         booking.getProperty().getId(), booking.getId(),
@@ -455,6 +459,8 @@ public class BookingService {
         if (booking.getRoomType() != null) {
             roomInventoryService.reserveRooms(booking.getRoomType().getId(),
                     booking.getStartDate(), booking.getEndDate(), booking.getNumberOfRooms());
+            booking.setUnit(null);
+            assignUnitIfPossible(booking);
         } else {
             availabilityService.reserveForBooking(
                     booking.getProperty().getId(), booking.getId(),
@@ -668,9 +674,29 @@ public class BookingService {
         if (booking.getRoomType() != null) {
             roomInventoryService.releaseRooms(booking.getRoomType().getId(),
                     booking.getStartDate(), booking.getEndDate(), booking.getNumberOfRooms());
+            booking.setUnit(null);
         } else {
             availabilityService.releaseForBooking(booking.getId());
         }
+    }
+
+    /**
+     * For single-room hotel bookings, auto-assign the first available unit so a
+     * specific room number is bound to the booking. No-op if the booking spans
+     * multiple rooms or already has a unit set.
+     */
+    private void assignUnitIfPossible(Booking booking) {
+        if (booking.getUnit() != null) return;
+        if (booking.getRoomType() == null) return;
+        if (booking.getNumberOfRooms() == null || booking.getNumberOfRooms() != 1) return;
+        propertyUnitService.findFirstAvailable(
+                        booking.getRoomType().getId(),
+                        booking.getStartDate(),
+                        booking.getEndDate())
+                .ifPresent(unit -> {
+                    booking.setUnit(unit);
+                    log.info("Auto-assigned unit {} to booking {}", unit.getUnitNumber(), booking.getId());
+                });
     }
 
     private void validateNoDateOverlap(BookingCreateRequest request) {

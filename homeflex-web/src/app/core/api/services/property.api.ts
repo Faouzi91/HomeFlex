@@ -8,6 +8,8 @@ import {
   PricingRecommendation,
   Property,
   PropertySearchParams,
+  PropertyUnit,
+  PropertyUnitRequest,
   ReportItem,
   RoomType,
   RoomTypeCreateRequest,
@@ -169,6 +171,55 @@ export class PropertyApi extends BaseApi {
   deleteRoomType(propertyId: string, roomTypeId: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}`,
+    );
+  }
+
+  // ── Property Units (per-unit identity) ──────────────────────────────────────
+
+  getUnits(propertyId: string, roomTypeId: string): Observable<ApiListResponse<PropertyUnit>> {
+    return this.http.get<ApiListResponse<PropertyUnit>>(
+      `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}/units`,
+    );
+  }
+
+  getAvailableUnits(
+    propertyId: string,
+    roomTypeId: string,
+    startDate: string,
+    endDate: string,
+  ): Observable<ApiListResponse<PropertyUnit>> {
+    return this.http.get<ApiListResponse<PropertyUnit>>(
+      `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}/units/available`,
+      { params: this.buildParams({ startDate, endDate }) },
+    );
+  }
+
+  createUnit(
+    propertyId: string,
+    roomTypeId: string,
+    body: PropertyUnitRequest,
+  ): Observable<PropertyUnit> {
+    return this.http.post<PropertyUnit>(
+      `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}/units`,
+      body,
+    );
+  }
+
+  updateUnit(
+    propertyId: string,
+    roomTypeId: string,
+    unitId: string,
+    body: PropertyUnitRequest,
+  ): Observable<PropertyUnit> {
+    return this.http.put<PropertyUnit>(
+      `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}/units/${unitId}`,
+      body,
+    );
+  }
+
+  deleteUnit(propertyId: string, roomTypeId: string, unitId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}/units/${unitId}`,
     );
   }
 

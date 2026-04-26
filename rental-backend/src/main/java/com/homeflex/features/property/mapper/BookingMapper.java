@@ -20,6 +20,8 @@ public interface BookingMapper {
     @Mapping(target = "roomTypeId", expression = "java(booking.getRoomType() != null ? booking.getRoomType().getId() : null)")
     @Mapping(target = "roomTypeName", expression = "java(booking.getRoomType() != null ? booking.getRoomType().getName() : null)")
     @Mapping(target = "numberOfRooms", source = "numberOfRooms")
+    @Mapping(target = "unitId", expression = "java(booking.getUnit() != null ? booking.getUnit().getId() : null)")
+    @Mapping(target = "unitNumber", expression = "java(booking.getUnit() != null ? booking.getUnit().getUnitNumber() : null)")
     @Mapping(target = "paymentConfirmedAt", source = "paymentConfirmedAt")
     @Mapping(target = "escrowReleasedAt", source = "escrowReleasedAt")
     BookingDto toDto(Booking booking);

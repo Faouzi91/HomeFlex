@@ -70,6 +70,11 @@ public class Booking {
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private RoomType roomType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    private PropertyUnit unit;
+
     @Column(name = "number_of_rooms", nullable = false)
     private Integer numberOfRooms = 1;
 

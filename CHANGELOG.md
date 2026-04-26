@@ -2,6 +2,29 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [5.3] — 2026-04-26 (Per-Unit Identity Model — Individual Room Tracking)
+
+### Added
+
+- **`property_units` Table (V39)** — Each `RoomType` now has N concrete `PropertyUnit` rows (one per physical room). Columns: `unit_number` (unique per room type), `floor`, `status` (`AVAILABLE` / `OUT_OF_SERVICE` / `UNDER_MAINTENANCE`), `notes`. The migration backfills anonymous units `1..totalRooms` for every existing room type so legacy data remains valid.
+- **`bookings.unit_id` FK (nullable)** — Bookings may now bind to a specific `PropertyUnit`. Older bookings without a unit fall back to aggregate count behavior.
+- **`PropertyUnitService`** — Full CRUD plus `findFirstAvailable(roomTypeId, start, end)` (auto-assignment), `syncUnitCount(roomTypeId, totalRooms)` (auto-creates units when room-type capacity grows).
+- **Auto-Assignment at Reservation** — `BookingService.approveBooking` and `approveModification` auto-assign the lowest-numbered available unit after the count-based reservation succeeds. Cancellations release the unit alongside the count.
+- **REST API — `/properties/{id}/room-types/{rtId}/units`** — `GET` (list), `GET /available?startDate=&endDate=` (availability filter), `POST` (create), `PUT /{unitId}`, `DELETE /{unitId}`. All mutating routes gated by `PROPERTY_UPDATE` permission with landlord ownership checks.
+- **`BookingDto.unitId` / `unitNumber`** — Booking responses now include the assigned unit so the booking detail panel can display "Unit 204".
+- **Frontend `PropertyApi` Unit Methods** — `getUnits`, `getAvailableUnits`, `createUnit`, `updateUnit`, `deleteUnit`. New "Unit X" pill rendered in the booking detail panel.
+
+### Changed
+
+- **`RoomTypeService.createRoomType` / `updateRoomType`** — now invoke `PropertyUnitService.syncUnitCount(...)` to keep concrete units in lock-step with `totalRooms`.
+- **`Booking.unit`** — new `@ManyToOne(fetch = LAZY)` field with Envers `NOT_AUDITED` target audit mode.
+
+### Architecture
+
+- **Per-unit identity invariant** — every physically distinct bookable space (hotel room, vehicle, whole house) has its own row. Aggregate counts (`room_inventory`) remain the source of truth for "is space available"; per-unit identity layers _which specific space_ on top.
+
+---
+
 ## [5.2] — 2026-04-26 (Hierarchical Property Model & Admin Availability System)
 
 ### Added

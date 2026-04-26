@@ -232,6 +232,8 @@ export interface Booking {
   roomTypeId?: string | null;
   roomTypeName?: string | null;
   numberOfRooms?: number;
+  unitId?: string | null;
+  unitNumber?: string | null;
 }
 
 export type RentalPhase = 'UPCOMING' | 'ACTIVE' | 'PAST';
@@ -513,6 +515,25 @@ export interface RoomTypeCreateRequest {
   totalRooms: number;
   sizeSqm?: number;
   amenityIds?: string[];
+}
+
+export type UnitStatus = 'AVAILABLE' | 'OUT_OF_SERVICE' | 'UNDER_MAINTENANCE';
+
+export interface PropertyUnit {
+  id: string;
+  roomTypeId: string;
+  unitNumber: string;
+  floor: number | null;
+  status: UnitStatus;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface PropertyUnitRequest {
+  unitNumber: string;
+  floor?: number | null;
+  status?: UnitStatus;
+  notes?: string | null;
 }
 
 // Occupancy
