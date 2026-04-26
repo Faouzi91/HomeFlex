@@ -1,13 +1,25 @@
 <section class="flex flex-col min-h-full bg-slate-50/50">
-
   <!-- ── Header ────────────────────────────────────────────────────────── -->
   <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-6 shrink-0">
     <div class="flex items-center gap-3">
       <div class="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center shrink-0">
-        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        <svg
+          class="w-5 h-5 text-white"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+          />
         </svg>
       </div>
       <div>
@@ -20,7 +32,7 @@
   <div class="flex-1 px-6 lg:px-8 py-8">
     @if (loading()) {
       <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
-        @for (i of [1,2,3,4,5,6]; track i) {
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
           <div class="grid grid-cols-[2fr_2fr_2fr_auto] gap-4 px-5 py-4 border-b border-slate-50">
             <div class="h-4 bg-slate-100 rounded w-2/3"></div>
             <div class="h-8 bg-slate-100 rounded w-3/4"></div>
@@ -30,23 +42,35 @@
         }
       </div>
     } @else if (error()) {
-      <div class="bg-red-50 border border-red-100 rounded-2xl p-6 text-center text-sm text-red-600">{{ error() }}</div>
+      <div class="bg-red-50 border border-red-100 rounded-2xl p-6 text-center text-sm text-red-600">
+        {{ error() }}
+      </div>
     } @else if (configs().length === 0) {
-      <div class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center">
+      <div
+        class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center"
+      >
         <p class="font-bold text-slate-700 text-sm">No configuration entries</p>
-        <p class="text-slate-400 text-xs mt-1 max-w-xs">Run the Flyway migrations to seed system configs.</p>
+        <p class="text-slate-400 text-xs mt-1 max-w-xs">
+          Run the Flyway migrations to seed system configs.
+        </p>
       </div>
     } @else {
       <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-        <div class="grid grid-cols-[2fr_2fr_3fr_auto] gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50">
+        <div
+          class="grid grid-cols-[2fr_2fr_3fr_auto] gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50"
+        >
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Key</span>
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Value</span>
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Description</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400"
+            >Description</span
+          >
           <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Actions</span>
         </div>
 
         @for (c of configs(); track c.configKey) {
-          <div class="grid grid-cols-[2fr_2fr_3fr_auto] gap-4 items-center px-5 py-3.5 border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
+          <div
+            class="grid grid-cols-[2fr_2fr_3fr_auto] gap-4 items-center px-5 py-3.5 border-b border-slate-50 hover:bg-slate-50/30 transition-colors"
+          >
             <div>
               <div class="text-sm font-semibold text-slate-900">{{ formatKey(c.configKey) }}</div>
               <div class="text-[11px] text-slate-400 font-mono mt-0.5">{{ c.configKey }}</div>
@@ -66,18 +90,24 @@
                 <button
                   (click)="reset(c)"
                   class="text-xs font-semibold text-slate-500 hover:text-slate-700 transition-colors"
-                >Reset</button>
+                >
+                  Reset
+                </button>
                 <button
                   (click)="save(c)"
                   [disabled]="savingKey() === c.configKey"
                   class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 transition-colors"
-                >{{ savingKey() === c.configKey ? '…' : 'Save' }}</button>
+                >
+                  {{ savingKey() === c.configKey ? '…' : 'Save' }}
+                </button>
               }
             </div>
           </div>
         }
       </div>
-      <p class="text-xs text-slate-400 mt-3 text-right">{{ configs().length }} configuration entries</p>
+      <p class="text-xs text-slate-400 mt-3 text-right">
+        {{ configs().length }} configuration entries
+      </p>
     }
   </div>
 </section>

@@ -78,10 +78,14 @@ export class AdminPricingRulesPageComponent {
 
   protected typeBadgeClass(t: string): string {
     switch (t) {
-      case 'WEEKEND':   return 'bg-amber-50 text-amber-700';
-      case 'SEASONAL':  return 'bg-sky-50 text-sky-700';
-      case 'LONG_STAY': return 'bg-emerald-50 text-emerald-700';
-      default:          return 'bg-slate-50 text-slate-600';
+      case 'WEEKEND':
+        return 'bg-amber-50 text-amber-700';
+      case 'SEASONAL':
+        return 'bg-sky-50 text-sky-700';
+      case 'LONG_STAY':
+        return 'bg-emerald-50 text-emerald-700';
+      default:
+        return 'bg-slate-50 text-slate-600';
     }
   }
 

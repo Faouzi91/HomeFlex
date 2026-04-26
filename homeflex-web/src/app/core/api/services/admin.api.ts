@@ -85,7 +85,10 @@ export class AdminApi extends BaseApi {
     return this.http.post<Amenity>(`${this.baseUrl}/admin/amenities`, amenity);
   }
 
-  updateAmenity(id: string, amenity: Partial<{ name: string; nameFr: string; icon: string; category: string }>): Observable<Amenity> {
+  updateAmenity(
+    id: string,
+    amenity: Partial<{ name: string; nameFr: string; icon: string; category: string }>,
+  ): Observable<Amenity> {
     return this.http.put<Amenity>(`${this.baseUrl}/admin/amenities/${id}`, amenity);
   }
 
@@ -113,8 +116,14 @@ export class AdminApi extends BaseApi {
     return this.http.post<CancellationPolicy>(`${this.baseUrl}/admin/cancellation-policies`, req);
   }
 
-  updateCancellationPolicy(id: string, req: CancellationPolicyRequest): Observable<CancellationPolicy> {
-    return this.http.put<CancellationPolicy>(`${this.baseUrl}/admin/cancellation-policies/${id}`, req);
+  updateCancellationPolicy(
+    id: string,
+    req: CancellationPolicyRequest,
+  ): Observable<CancellationPolicy> {
+    return this.http.put<CancellationPolicy>(
+      `${this.baseUrl}/admin/cancellation-policies/${id}`,
+      req,
+    );
   }
 
   deleteCancellationPolicy(id: string): Observable<void> {

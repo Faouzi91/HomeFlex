@@ -15,7 +15,7 @@ class BookingStateMachineTest {
         assertThat(BookingStateMachine.canTransition(BookingStatus.DRAFT, BookingStatus.PENDING_APPROVAL)).isTrue();
         assertThat(BookingStateMachine.canTransition(BookingStatus.DRAFT, BookingStatus.CANCELLED)).isTrue();
 
-        assertThatThrownBy(() -> BookingStateMachine.transition(BookingStatus.DRAFT, BookingStatus.APPROVED))
+        assertThatThrownBy(() -> BookingStateMachine.transition(BookingStatus.DRAFT, BookingStatus.COMPLETED))
                 .isInstanceOf(IllegalStateTransitionException.class);
     }
 

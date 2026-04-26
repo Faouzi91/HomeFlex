@@ -115,7 +115,7 @@ class AuthServiceTest {
     @Test
     void register_success_returnsAuthTokens() {
         RegisterRequest request = new RegisterRequest(
-                "new@example.com", "password123", "Jane", "Doe", "123456789", UserRole.TENANT
+                "new@example.com", "password123", "Jane", "Doe", "123456789", UserRole.TENANT, null
         );
 
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
@@ -133,7 +133,7 @@ class AuthServiceTest {
 
     @Test
     void register_duplicateEmail_throwsConflict() {
-        RegisterRequest request = new RegisterRequest("test@example.com", "pass", "A", "B", null, UserRole.TENANT);
+        RegisterRequest request = new RegisterRequest("test@example.com", "pass", "A", "B", null, UserRole.TENANT, null);
         when(userRepository.existsByEmail(request.email())).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(request))

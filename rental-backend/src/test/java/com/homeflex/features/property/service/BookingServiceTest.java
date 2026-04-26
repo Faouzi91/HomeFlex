@@ -57,6 +57,10 @@ class BookingServiceTest {
     @Mock private PaymentService paymentService;
     @Mock private BookingMapper bookingMapper;
     @Mock private PropertyAvailabilityService propertyAvailabilityService;
+    @Mock private com.homeflex.features.property.domain.repository.RoomTypeRepository roomTypeRepository;
+    @Mock private PricingService pricingService;
+    @Mock private RoomInventoryService roomInventoryService;
+    @Mock private PropertyUnitService propertyUnitService;
     @Mock private com.homeflex.features.finance.service.FinanceService financeService;
     @Mock private RedissonClient redissonClient;
     @Mock private RLock rLock;
@@ -73,13 +77,15 @@ class BookingServiceTest {
     void setUp() throws InterruptedException {
         bookingService = new BookingService(
                 bookingRepository, auditLogRepository, propertyRepository, userRepository,
-                notificationService, paymentService, bookingMapper,
-                propertyAvailabilityService, financeService, redissonClient,
+                roomTypeRepository, notificationService, paymentService, pricingService,
+                bookingMapper, propertyAvailabilityService, roomInventoryService,
+                propertyUnitService, financeService, redissonClient,
                 new SimpleMeterRegistry()
         );
 
         when(redissonClient.getLock(anyString())).thenReturn(rLock);
         when(rLock.tryLock(anyLong(), anyLong(), any(TimeUnit.class))).thenReturn(true);
+        when(pricingService.calculateBasePrice(any(), any(), any())).thenReturn(BigDecimal.valueOf(100));
 
         landlord = new User();
         landlord.setId(UUID.randomUUID());
@@ -88,12 +94,14 @@ class BookingServiceTest {
         tenant = new User();
         tenant.setId(UUID.randomUUID());
         tenant.setRole(UserRole.TENANT);
+        tenant.setIsVerified(true);
 
         property = new Property();
         property.setId(UUID.randomUUID());
         property.setLandlord(landlord);
         property.setPrice(BigDecimal.valueOf(100));
         property.setCurrency("XAF");
+        property.setPropertyType(com.homeflex.features.property.domain.enums.PropertyType.APARTMENT);
 
         booking = new Booking();
         booking.setId(UUID.randomUUID());
@@ -114,7 +122,7 @@ class BookingServiceTest {
         BookingCreateRequest request = new BookingCreateRequest(
                 property.getId(), "RENTAL", null,
                 LocalDate.now().plusDays(1), LocalDate.now().plusDays(2),
-                "Msg", 1, null
+                "Msg", 1, null, null, null
         );
 
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
@@ -134,7 +142,7 @@ class BookingServiceTest {
         BookingCreateRequest request = new BookingCreateRequest(
                 property.getId(), "VIEWING", null,
                 LocalDate.now().plusDays(1), LocalDate.now().plusDays(2),
-                "Msg", 1, null
+                "Msg", 1, null, null, null
         );
 
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
@@ -153,7 +161,7 @@ class BookingServiceTest {
     @Test
     void createDraftBooking_propertyNotFound_throws() {
         BookingCreateRequest request = new BookingCreateRequest(
-                UUID.randomUUID(), "RENTAL", null, null, null, null, null, null);
+                UUID.randomUUID(), "RENTAL", null, null, null, null, null, null, null, null);
         when(propertyRepository.findById(any())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.createDraftBooking(request, tenant.getId()))
@@ -164,7 +172,7 @@ class BookingServiceTest {
     void createDraftBooking_dateOverlap_throwsConflict() {
         BookingCreateRequest request = new BookingCreateRequest(
                 property.getId(), "RENTAL", null,
-                LocalDate.now(), LocalDate.now(), null, null, null
+                LocalDate.now(), LocalDate.now(), null, null, null, null, null
         );
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
         when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));
@@ -178,7 +186,7 @@ class BookingServiceTest {
     void createDraftBooking_invalidDates_throwsDomain() {
         BookingCreateRequest request = new BookingCreateRequest(
                 property.getId(), "RENTAL", null,
-                LocalDate.now().plusDays(5), LocalDate.now().plusDays(1), null, null, null
+                LocalDate.now().plusDays(5), LocalDate.now().plusDays(1), null, null, null, null, null
         );
         when(propertyRepository.findById(property.getId())).thenReturn(Optional.of(property));
         when(userRepository.findById(tenant.getId())).thenReturn(Optional.of(tenant));

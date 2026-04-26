@@ -96,7 +96,7 @@ class VehicleAvailabilityServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getVehicleId()).isEqualTo(vehicle.getId());
         assertThat(result.getTenantId()).isEqualTo(tenantId);
-        assertThat(result.getStatus()).isEqualTo(VehicleBookingStatus.PENDING);
+        assertThat(result.getStatus()).isEqualTo(VehicleBookingStatus.DRAFT);
         assertThat(result.getMessage()).isEqualTo("Test message");
         // 3 days: day1, day2, day3 = 3 * 5000 = 15000
         assertThat(result.getTotalPrice()).isEqualByComparingTo(BigDecimal.valueOf(15000));

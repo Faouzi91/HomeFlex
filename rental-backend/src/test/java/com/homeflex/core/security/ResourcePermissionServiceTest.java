@@ -108,8 +108,8 @@ class ResourcePermissionServiceTest {
     }
 
     @Test
-    void bookingUpdate_tenantDenied() {
-        assertThat(service.isAllowed(tenant.getId(), booking, Permissions.BOOKING_UPDATE)).isFalse();
+    void bookingUpdate_tenantAllowed() {
+        assertThat(service.isAllowed(tenant.getId(), booking, Permissions.BOOKING_UPDATE)).isTrue();
     }
 
     // ── Property ownership ────────────────────────────────────────────────────

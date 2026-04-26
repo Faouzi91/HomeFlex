@@ -99,8 +99,9 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 - **Separate login**: `/admin/login` — dark-themed, restricted portal. Non-admin users are rejected and logged out.
 - **Guarded routes**: All `/admin/*` routes protected by `adminGuard` (checks `isAuthenticated && role === 'ADMIN'`).
 - **Dedicated layout**: `AdminLayoutComponent` with sidebar navigation, top bar, and user plate. Consumer shell (header/footer) is hidden.
-- **Admin pages**: Dashboard (analytics), Users (list/suspend/activate), Properties (pending approval/reject), Reports (flagged content/resolve), Settings (profile/password/notifications).
-- **Backend**: `AdminController` with `@PreAuthorize("hasRole('ADMIN')")` — all admin endpoints under `/api/v1/admin/`.
+- **Admin pages**: Dashboard (analytics), Users (list/suspend/activate/role-change), Properties (pending approval/reject), Reports (flagged content/resolve), Amenities (CRUD), Pricing Rules (cross-property listing/delete with type & multiplier filters), Cancellation Policies (CRUD with refund schedule), System Settings (10 platform configs — booking windows, payout delay, KYC gate, rate limits, etc.), My Profile (profile/password/notifications).
+- **Reference data ownership** (per CLAUDE.md mandate): All global config (amenities, pricing rules, cancellation policies, system configs, user roles) is mutated only via `/api/v1/admin/*`. Non-admin endpoints consume read-only.
+- **Backend**: `AdminController` with `@PreAuthorize("hasRole('ADMIN')")` — all admin endpoints under `/api/v1/admin/`. Role changes update both legacy `users.role` and authoritative RBAC `Set<Role>`.
 
 ## API Architecture
 

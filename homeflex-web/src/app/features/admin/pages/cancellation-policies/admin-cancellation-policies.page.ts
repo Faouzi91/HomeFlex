@@ -121,7 +121,12 @@ export class AdminCancellationPoliciesPageComponent {
   }
 
   protected deletePolicy(p: CancellationPolicy): void {
-    if (!confirm(`Delete cancellation policy "${p.name}"? Listings using it will need to be reassigned.`)) return;
+    if (
+      !confirm(
+        `Delete cancellation policy "${p.name}"? Listings using it will need to be reassigned.`,
+      )
+    )
+      return;
     this.deletingId.set(p.id);
     this.adminApi
       .deleteCancellationPolicy(p.id)

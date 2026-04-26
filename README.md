@@ -246,6 +246,7 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | GET    | `/admin/users`                        | Admin    | List all users (paginated)          |
 | PATCH  | `/admin/users/{id}/suspend`           | Admin    | Suspend a user account              |
 | PATCH  | `/admin/users/{id}/activate`          | Admin    | Reactivate a suspended user         |
+| PATCH  | `/admin/users/{id}/role`              | Admin    | Change a user's role (legacy + RBAC)|
 | GET    | `/admin/properties/pending`           | Admin    | List pending properties             |
 | PATCH  | `/admin/properties/{id}/approve`      | Admin    | Approve a property listing          |
 | PATCH  | `/admin/properties/{id}/reject`       | Admin    | Reject a property (with reason)     |
@@ -256,6 +257,12 @@ All endpoints are prefixed with `/api/v1`. Public endpoints don't require authen
 | GET    | `/admin/analytics`                    | Admin    | Platform analytics dashboard        |
 | GET    | `/admin/configs`                      | Admin    | List system configurations          |
 | PATCH  | `/admin/configs/{key}`                | Admin    | Update a system config value        |
+| GET    | `/admin/pricing-rules`                | Admin    | List all pricing rules cross-property|
+| DELETE | `/admin/pricing-rules/{ruleId}`       | Admin    | Delete a pricing rule               |
+| GET    | `/admin/cancellation-policies`        | Admin    | List cancellation policies          |
+| POST   | `/admin/cancellation-policies`        | Admin    | Create a cancellation policy        |
+| PUT    | `/admin/cancellation-policies/{id}`   | Admin    | Update a cancellation policy        |
+| DELETE | `/admin/cancellation-policies/{id}`   | Admin    | Delete a cancellation policy        |
 | GET    | `/vehicles/search`                    | Public   | Search vehicles with filters        |
 | GET    | `/vehicles/{id}`                      | Public   | Vehicle detail                      |
 | POST   | `/vehicles`                           | Landlord | Create vehicle listing              |
