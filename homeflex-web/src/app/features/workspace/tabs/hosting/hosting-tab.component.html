@@ -1399,22 +1399,114 @@
               }
 
               @for (rt of roomTypes(); track rt.id) {
-                <div class="flex items-start justify-between px-3 py-2.5 mb-2 rounded-xl bg-slate-50 border border-slate-100">
-                  <div class="min-w-0">
-                    <p class="text-xs font-bold text-slate-800">{{ rt.name }}</p>
-                    <p class="text-[10px] text-slate-500">
-                      {{ bedTypeLabel(rt.bedType) }} × {{ rt.numBeds }} &middot; Max {{ rt.maxOccupancy }} guests &middot; {{ rt.totalRooms }} rooms
-                    </p>
-                    <p class="text-[10px] font-semibold text-brand-600 mt-0.5">
-                      {{ price(rt.pricePerNight, rt.currency) }}/night
-                    </p>
+                <div class="mb-2 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden">
+                  <div class="flex items-start justify-between px-3 py-2.5">
+                    <div class="min-w-0">
+                      <p class="text-xs font-bold text-slate-800">{{ rt.name }}</p>
+                      <p class="text-[10px] text-slate-500">
+                        {{ bedTypeLabel(rt.bedType) }} × {{ rt.numBeds }} &middot; Max {{ rt.maxOccupancy }} guests &middot; {{ rt.totalRooms }} rooms
+                      </p>
+                      <p class="text-[10px] font-semibold text-brand-600 mt-0.5">
+                        {{ price(rt.pricePerNight, rt.currency) }}/night
+                      </p>
+                    </div>
+                    <div class="flex gap-2 shrink-0 ml-2">
+                      <button (click)="toggleUnits(rt.id)"
+                        class="text-[10px] font-bold text-slate-500 hover:text-emerald-600">
+                        {{ expandedUnitsRoomTypeId() === rt.id ? 'Hide units' : 'Manage units' }}
+                      </button>
+                      <button (click)="editRoomType(rt)"
+                        class="text-[10px] font-bold text-slate-500 hover:text-brand-600">Edit</button>
+                      <button (click)="deleteRoomType(rt.id)"
+                        class="text-[10px] font-bold text-rose-400 hover:text-rose-600">✕</button>
+                    </div>
                   </div>
-                  <div class="flex gap-2 shrink-0 ml-2">
-                    <button (click)="editRoomType(rt)"
-                      class="text-[10px] font-bold text-slate-500 hover:text-brand-600">Edit</button>
-                    <button (click)="deleteRoomType(rt.id)"
-                      class="text-[10px] font-bold text-rose-400 hover:text-rose-600">✕</button>
-                  </div>
+
+                  @if (expandedUnitsRoomTypeId() === rt.id) {
+                    <div class="border-t border-slate-200 bg-white px-3 py-3 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                          Individual Units ({{ (unitsByRoomType()[rt.id] ?? []).length }} / {{ rt.totalRooms }})
+                        </p>
+                        <button (click)="startAddUnit(rt.id)"
+                          class="text-[10px] font-bold text-emerald-600 hover:text-emerald-800">
+                          + Add unit
+                        </button>
+                      </div>
+
+                      @if (unitsLoading() && !(unitsByRoomType()[rt.id])) {
+                        <p class="text-[10px] text-slate-400 italic">Loading units…</p>
+                      }
+
+                      @if ((unitsByRoomType()[rt.id] ?? []).length === 0 && !unitsLoading()) {
+                        <p class="text-[10px] text-slate-400 italic">No units yet for this room type.</p>
+                      }
+
+                      @for (u of unitsByRoomType()[rt.id] ?? []; track u.id) {
+                        <div class="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5">
+                          <div class="min-w-0 flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-800 shrink-0">#{{ u.unitNumber }}</span>
+                            @if (u.floor !== null && u.floor !== undefined) {
+                              <span class="text-[10px] text-slate-500">Floor {{ u.floor }}</span>
+                            }
+                            <span class="inline-flex items-center rounded-full px-1.5 py-0 text-[9px] font-semibold"
+                              [ngClass]="unitStatusClass(u.status)">
+                              {{ u.status.replaceAll('_', ' ') }}
+                            </span>
+                            @if (u.notes) {
+                              <span class="text-[10px] text-slate-400 italic truncate">{{ u.notes }}</span>
+                            }
+                          </div>
+                          <div class="flex gap-2 shrink-0">
+                            <button (click)="startEditUnit(rt.id, u)"
+                              class="text-[10px] font-bold text-slate-500 hover:text-brand-600">Edit</button>
+                            <button (click)="deleteUnit(rt.id, u)"
+                              class="text-[10px] font-bold text-rose-400 hover:text-rose-600">✕</button>
+                          </div>
+                        </div>
+                      }
+
+                      @if (addingUnitForRoomTypeId() === rt.id) {
+                        <form [formGroup]="unitForm" (ngSubmit)="saveUnit()"
+                          class="mt-2 space-y-2 rounded-lg bg-slate-50 border border-slate-200 p-3">
+                          <div class="grid grid-cols-2 gap-2">
+                            <div>
+                              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Unit #</label>
+                              <input type="text" formControlName="unitNumber" placeholder="101"
+                                class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs bg-white" />
+                            </div>
+                            <div>
+                              <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Floor</label>
+                              <input type="number" formControlName="floor" placeholder="1"
+                                class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs bg-white" />
+                            </div>
+                          </div>
+                          <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Status</label>
+                            <select formControlName="status"
+                              class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs bg-white">
+                              <option value="AVAILABLE">Available</option>
+                              <option value="OUT_OF_SERVICE">Out of service</option>
+                              <option value="UNDER_MAINTENANCE">Under maintenance</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Notes</label>
+                            <textarea formControlName="notes" rows="2" placeholder="Sea view, accessible, etc."
+                              class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs bg-white resize-none"></textarea>
+                          </div>
+                          <div class="flex gap-2 justify-end">
+                            <button type="button" (click)="cancelUnitEdit()"
+                              class="text-[10px] font-bold text-slate-500 hover:text-slate-800">Cancel</button>
+                            <button type="submit" [disabled]="unitForm.invalid || savingUnit()"
+                              class="text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg px-3 py-1.5 transition-colors">
+                              {{ savingUnit() ? 'Saving…' : (editingUnit() ? 'Save changes' : 'Add unit') }}
+                            </button>
+                          </div>
+                        </form>
+                      }
+                    </div>
+                  }
                 </div>
               }
 

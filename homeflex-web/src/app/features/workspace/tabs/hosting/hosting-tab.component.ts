@@ -18,9 +18,12 @@ import {
   PricingRule,
   PricingRuleCreateRequest,
   Property,
+  PropertyUnit,
+  PropertyUnitRequest,
   RoomType,
   RoomTypeCreateRequest,
   StandaloneOccupancy,
+  UnitStatus,
   Vehicle,
 } from '../../../../core/models/api.types';
 import { WorkspaceStore } from '../../workspace.store';
@@ -198,6 +201,10 @@ export class HostingTabComponent {
     this.showAddRule.set(false);
     this.roomTypes.set([]);
     this.showAddRoomType.set(false);
+    this.unitsByRoomType.set({});
+    this.expandedUnitsRoomTypeId.set(null);
+    this.editingUnit.set(null);
+    this.addingUnitForRoomTypeId.set(null);
     this.occupancySummary.set(null);
     this.loadDetailAvailability(p.id);
     this.loadPricingRules(p.id);
@@ -314,6 +321,129 @@ export class HostingTabComponent {
       .deleteRoomType(prop.id, rtId)
       .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.roomTypes.update((r) => r.filter((x) => x.id !== rtId)));
+  }
+
+  // ── Property Units (per-unit identity) ───────────────────────────────────
+
+  protected readonly unitsByRoomType = signal<Record<string, PropertyUnit[]>>({});
+  protected readonly expandedUnitsRoomTypeId = signal<string | null>(null);
+  protected readonly unitsLoading = signal(false);
+  protected readonly editingUnit = signal<PropertyUnit | null>(null);
+  protected readonly addingUnitForRoomTypeId = signal<string | null>(null);
+  protected readonly savingUnit = signal(false);
+
+  protected readonly unitForm = this.fb.group({
+    unitNumber: ['', [Validators.required, Validators.maxLength(50)]],
+    floor: [null as number | null],
+    status: ['AVAILABLE' as UnitStatus],
+    notes: [''],
+  });
+
+  protected toggleUnits(rtId: string): void {
+    const open = this.expandedUnitsRoomTypeId();
+    if (open === rtId) {
+      this.expandedUnitsRoomTypeId.set(null);
+      return;
+    }
+    this.expandedUnitsRoomTypeId.set(rtId);
+    if (!this.unitsByRoomType()[rtId]) this.loadUnits(rtId);
+  }
+
+  protected loadUnits(rtId: string): void {
+    const prop = this.detailProperty();
+    if (!prop) return;
+    this.unitsLoading.set(true);
+    this.propertyApi
+      .getUnits(prop.id, rtId)
+      .pipe(
+        catchError(() => of({ data: [] as PropertyUnit[] })),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((res) => {
+        this.unitsByRoomType.update((m) => ({ ...m, [rtId]: res.data }));
+        this.unitsLoading.set(false);
+      });
+  }
+
+  protected startAddUnit(rtId: string): void {
+    this.editingUnit.set(null);
+    this.addingUnitForRoomTypeId.set(rtId);
+    this.unitForm.reset({ unitNumber: '', floor: null, status: 'AVAILABLE', notes: '' });
+  }
+
+  protected startEditUnit(rtId: string, u: PropertyUnit): void {
+    this.editingUnit.set(u);
+    this.addingUnitForRoomTypeId.set(rtId);
+    this.unitForm.patchValue({
+      unitNumber: u.unitNumber,
+      floor: u.floor,
+      status: u.status,
+      notes: u.notes ?? '',
+    });
+  }
+
+  protected cancelUnitEdit(): void {
+    this.editingUnit.set(null);
+    this.addingUnitForRoomTypeId.set(null);
+    this.unitForm.reset({ unitNumber: '', floor: null, status: 'AVAILABLE', notes: '' });
+  }
+
+  protected saveUnit(): void {
+    const prop = this.detailProperty();
+    const rtId = this.addingUnitForRoomTypeId();
+    if (!prop || !rtId || this.unitForm.invalid) return;
+    this.savingUnit.set(true);
+    const v = this.unitForm.getRawValue();
+    const body: PropertyUnitRequest = {
+      unitNumber: (v.unitNumber ?? '').trim(),
+      floor: v.floor ?? null,
+      status: (v.status as UnitStatus) ?? 'AVAILABLE',
+      notes: (v.notes ?? '').trim() || null,
+    };
+    const editing = this.editingUnit();
+    const request$ = editing
+      ? this.propertyApi.updateUnit(prop.id, rtId, editing.id, body)
+      : this.propertyApi.createUnit(prop.id, rtId, body);
+    request$
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe((u) => {
+        if (u) {
+          this.unitsByRoomType.update((m) => {
+            const existing = m[rtId] ?? [];
+            const next = editing
+              ? existing.map((x) => (x.id === u.id ? u : x))
+              : [...existing, u].sort((a, b) =>
+                  a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true }),
+                );
+            return { ...m, [rtId]: next };
+          });
+          this.cancelUnitEdit();
+        }
+        this.savingUnit.set(false);
+      });
+  }
+
+  protected deleteUnit(rtId: string, u: PropertyUnit): void {
+    const prop = this.detailProperty();
+    if (!prop || !confirm(`Delete unit ${u.unitNumber}? This cannot be undone.`)) return;
+    this.propertyApi
+      .deleteUnit(prop.id, rtId, u.id)
+      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() =>
+        this.unitsByRoomType.update((m) => ({
+          ...m,
+          [rtId]: (m[rtId] ?? []).filter((x) => x.id !== u.id),
+        })),
+      );
+  }
+
+  protected unitStatusClass(status: UnitStatus | string): string {
+    switch (status) {
+      case 'AVAILABLE':         return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+      case 'OUT_OF_SERVICE':    return 'bg-rose-50 text-rose-700 ring-1 ring-rose-200';
+      case 'UNDER_MAINTENANCE': return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
+      default:                  return 'bg-slate-100 text-slate-600';
+    }
   }
 
   protected bedTypeLabel(bt: string): string {
