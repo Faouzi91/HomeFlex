@@ -17,6 +17,9 @@ import { AdminUsersPageComponent } from './features/admin/pages/users/admin-user
 import { AdminPropertiesPageComponent } from './features/admin/pages/properties/admin-properties.page';
 import { AdminReportsPageComponent } from './features/admin/pages/reports/admin-reports.page';
 import { AdminAmenitiesPageComponent } from './features/admin/pages/amenities/admin-amenities.page';
+import { AdminSystemSettingsPageComponent } from './features/admin/pages/system-settings/admin-system-settings.page';
+import { AdminPricingRulesPageComponent } from './features/admin/pages/pricing-rules/admin-pricing-rules.page';
+import { AdminCancellationPoliciesPageComponent } from './features/admin/pages/cancellation-policies/admin-cancellation-policies.page';
 import { adminGuard } from './core/guards/admin.guard';
 import { guestOnlyGuard } from './core/guards/guest-only.guard';
 import { workspaceGuard } from './core/guards/workspace.guard';
@@ -80,7 +83,10 @@ export const routes: Routes = [
       { path: 'properties', component: AdminPropertiesPageComponent, title: 'Properties | Admin' },
       { path: 'reports', component: AdminReportsPageComponent, title: 'Reports | Admin' },
       { path: 'amenities', component: AdminAmenitiesPageComponent, title: 'Amenities | Admin' },
-      { path: 'settings', component: AdminSettingsPageComponent, title: 'Settings | Admin' },
+      { path: 'pricing-rules', component: AdminPricingRulesPageComponent, title: 'Pricing Rules | Admin' },
+      { path: 'cancellation-policies', component: AdminCancellationPoliciesPageComponent, title: 'Cancellation Policies | Admin' },
+      { path: 'system-settings', component: AdminSystemSettingsPageComponent, title: 'System Settings | Admin' },
+      { path: 'settings', component: AdminSettingsPageComponent, title: 'My Profile | Admin' },
     ],
   },
 

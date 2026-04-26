@@ -16,7 +16,15 @@ import com.homeflex.core.domain.repository.MessageRepository;
 import com.homeflex.features.property.domain.repository.ReportedListingRepository;
 import com.homeflex.core.domain.repository.SystemConfigRepository;
 import com.homeflex.features.property.domain.repository.AmenityRepository;
+import com.homeflex.features.property.domain.repository.PricingRuleRepository;
+import com.homeflex.features.property.domain.repository.CancellationPolicyRepository;
+import com.homeflex.features.property.domain.entity.PricingRule;
+import com.homeflex.features.property.domain.entity.CancellationPolicy;
+import com.homeflex.features.property.dto.response.AdminPricingRuleDto;
+import com.homeflex.features.property.dto.request.CancellationPolicyRequest;
+import com.homeflex.core.domain.repository.RoleRepository;
 import com.homeflex.core.exception.ResourceNotFoundException;
+import com.homeflex.core.domain.entity.Role;
 import com.homeflex.core.domain.entity.User;
 import com.homeflex.core.domain.entity.SystemConfig;
 import com.homeflex.features.property.domain.entity.Amenity;
@@ -50,6 +58,9 @@ public class AdminService {
     private final ReportedListingRepository reportedListingRepository;
     private final SystemConfigRepository systemConfigRepository;
     private final AmenityRepository amenityRepository;
+    private final RoleRepository roleRepository;
+    private final PricingRuleRepository pricingRuleRepository;
+    private final CancellationPolicyRepository cancellationPolicyRepository;
     private final NotificationService notificationService;
     private final PropertyMapper propertyMapper;
     private final UserMapper userMapper;
@@ -147,6 +158,23 @@ public class AdminService {
         user.setIsActive(true);
         user = userRepository.save(user);
 
+        return userMapper.toDto(user);
+    }
+
+    public UserDto changeUserRole(UUID userId, UserRole newRole) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        String roleName = "ROLE_" + newRole.name();
+        Role rbacRole = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new ResourceNotFoundException("RBAC role not found: " + roleName));
+
+        // Update legacy role column (still consumed by some flows) and authoritative RBAC set.
+        user.setRole(newRole);
+        user.getRoles().clear();
+        user.getRoles().add(rbacRole);
+
+        user = userRepository.save(user);
         return userMapper.toDto(user);
     }
 
@@ -279,5 +307,81 @@ public class AdminService {
 
     public void deleteAmenity(UUID id) {
         amenityRepository.deleteById(id);
+    }
+
+    // ── Admin pricing rules (cross-property) ────────────────────────────
+
+    public List<AdminPricingRuleDto> listAllPricingRules() {
+        return pricingRuleRepository.findAll().stream()
+                .map(this::toAdminPricingRuleDto)
+                .sorted(Comparator.comparing(AdminPricingRuleDto::createdAt).reversed())
+                .collect(Collectors.toList());
+    }
+
+    public void deletePricingRule(UUID ruleId) {
+        if (!pricingRuleRepository.existsById(ruleId)) {
+            throw new ResourceNotFoundException("Pricing rule not found");
+        }
+        pricingRuleRepository.deleteById(ruleId);
+    }
+
+    private AdminPricingRuleDto toAdminPricingRuleDto(PricingRule r) {
+        Property p = r.getProperty();
+        return new AdminPricingRuleDto(
+                r.getId(),
+                p != null ? p.getId() : null,
+                p != null ? p.getTitle() : null,
+                r.getRuleType(),
+                r.getLabel(),
+                r.getMultiplier(),
+                r.getMinStayDays(),
+                r.getStartDate(),
+                r.getEndDate(),
+                r.getCreatedAt()
+        );
+    }
+
+    // ── Cancellation policies ───────────────────────────────────────────
+
+    public List<CancellationPolicy> listCancellationPolicies() {
+        return cancellationPolicyRepository.findAll(
+                org.springframework.data.domain.Sort.by("name"));
+    }
+
+    public CancellationPolicy createCancellationPolicy(CancellationPolicyRequest req) {
+        if (cancellationPolicyRepository.existsByCode(req.code())) {
+            throw new DomainException("A policy with code '" + req.code() + "' already exists");
+        }
+        CancellationPolicy policy = new CancellationPolicy();
+        policy.setCode(req.code());
+        policy.setName(req.name());
+        policy.setDescription(req.description());
+        policy.setRefundPercentage(req.refundPercentage());
+        policy.setHoursBeforeCheckin(req.hoursBeforeCheckin());
+        policy.setIsActive(req.isActive() == null ? Boolean.TRUE : req.isActive());
+        return cancellationPolicyRepository.save(policy);
+    }
+
+    public CancellationPolicy updateCancellationPolicy(UUID id, CancellationPolicyRequest req) {
+        CancellationPolicy policy = cancellationPolicyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cancellation policy not found"));
+        if (!policy.getCode().equals(req.code())
+                && cancellationPolicyRepository.existsByCode(req.code())) {
+            throw new DomainException("A policy with code '" + req.code() + "' already exists");
+        }
+        policy.setCode(req.code());
+        policy.setName(req.name());
+        policy.setDescription(req.description());
+        policy.setRefundPercentage(req.refundPercentage());
+        policy.setHoursBeforeCheckin(req.hoursBeforeCheckin());
+        if (req.isActive() != null) policy.setIsActive(req.isActive());
+        return cancellationPolicyRepository.save(policy);
+    }
+
+    public void deleteCancellationPolicy(UUID id) {
+        if (!cancellationPolicyRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Cancellation policy not found");
+        }
+        cancellationPolicyRepository.deleteById(id);
     }
 }

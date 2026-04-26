@@ -585,9 +585,44 @@ export interface OccupancySummary {
 }
 
 export interface SystemConfig {
-  key: string;
-  value: string;
+  id: string;
+  configKey: string;
+  configValue: string;
   description: string | null;
+}
+
+export interface AdminPricingRule {
+  id: string;
+  propertyId: string | null;
+  propertyTitle: string | null;
+  ruleType: 'WEEKEND' | 'SEASONAL' | 'LONG_STAY' | string;
+  label: string | null;
+  multiplier: number;
+  minStayDays: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  createdAt: string;
+}
+
+export interface CancellationPolicy {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  refundPercentage: number;
+  hoursBeforeCheckin: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CancellationPolicyRequest {
+  code: string;
+  name: string;
+  description?: string | null;
+  refundPercentage: number;
+  hoursBeforeCheckin: number;
+  isActive?: boolean;
 }
 
 export interface DisputeEvidence {

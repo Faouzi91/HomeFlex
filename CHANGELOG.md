@@ -2,6 +2,21 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [5.4] — 2026-04-26 (Admin Console — Reference Tables & Role Management)
+
+### Added
+
+- **Admin System Settings page (`/admin/system-settings`)** — Inline editor over the existing `GET/PATCH /admin/configs` endpoint. Editable per-row with dirty-state tracking, optimistic save and rollback.
+- **Seeded `system_configs` (V40)** — 10 new admin-controlled keys: `booking_min_advance_hours`, `booking_max_advance_days`, `cancellation_grace_hours`, `payout_release_delay_days`, `platform_currency_default`, `kyc_required_for_publish`, `property_max_images`, `dispute_response_window_hours`, `rate_limit_login_per_minute`, `search_index_batch_size`. Inserts use `ON CONFLICT DO NOTHING` so re-runs are safe.
+- **User role management** — New backend endpoint `PATCH /admin/users/{id}/role` accepting `RoleChangeRequest{ role: TENANT|LANDLORD|ADMIN }`. Updates both the legacy `users.role` column and the authoritative RBAC `Set<Role>` via `RoleRepository.findByName("ROLE_…")`. The Users admin page now exposes an inline role selector with confirmation dialog.
+- **Admin pricing rules dashboard (`/admin/pricing-rules`)** — New `GET /admin/pricing-rules` and `DELETE /admin/pricing-rules/{ruleId}` endpoints return a flattened `AdminPricingRuleDto` with property title joined in. UI provides type filter (Weekend/Seasonal/Long-Stay), free-text search, multiplier coloring (red = surcharge, green = discount), and delete-with-confirm.
+- **Cancellation policies reference table (V41)** — New `cancellation_policies` table (id, code, name, description, refund_percentage 0-100, hours_before_checkin, is_active). Seeded with `FLEXIBLE`, `MODERATE`, `STRICT`, `NON_REFUNDABLE`. Full admin CRUD via `GET/POST/PUT/DELETE /admin/cancellation-policies` with code-uniqueness enforcement and dedicated UI page with create/edit modal.
+- **Admin sidebar reorganization** — New nav order: Dashboard / Users / Properties / Reports / Amenities / Pricing Rules / Cancellation / System Settings / My Profile. The pre-existing `Settings` route was relabeled "My Profile" to disambiguate it from system-wide settings.
+
+### Why
+
+Per `CLAUDE.md` the architectural mandate is: *"All global config (amenities, property/vehicle types, listing types, pricing rules, commission rate, cancellation policies) is mutated only by ADMIN via /api/v1/admin/\*"*. The console previously only fulfilled the amenity slice; backend `/admin/configs` existed without UI; user role change had no endpoint at all. This release closes those gaps end-to-end so admin-owned reference data is actually administrable.
+
 ## [5.3] — 2026-04-26 (Per-Unit Identity Model — Individual Room Tracking)
 
 ### Added

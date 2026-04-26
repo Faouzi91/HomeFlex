@@ -1,0 +1,111 @@
+<section class="flex flex-col min-h-full bg-slate-50/50">
+
+  <!-- ── Header ────────────────────────────────────────────────────────── -->
+  <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-6 shrink-0">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-amber-500 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900">Pricing Rules</h1>
+          <p class="text-sm text-slate-500">Cross-property dynamic pricing overrides (weekend, seasonal, long-stay).</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <input
+          type="text"
+          [value]="query()"
+          (input)="query.set($any($event.target).value)"
+          placeholder="Search by property or label…"
+          class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-300 w-64"
+        />
+        <select
+          [value]="typeFilter()"
+          (change)="typeFilter.set($any($event.target).value)"
+          class="select-styled"
+        >
+          @for (t of ruleTypes; track t) {
+            <option [value]="t">{{ t === 'ALL' ? 'All types' : t.replaceAll('_', ' ') }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 px-6 lg:px-8 py-8">
+    @if (loading()) {
+      <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
+        @for (i of [1,2,3,4,5]; track i) {
+          <div class="grid grid-cols-7 gap-4 px-5 py-4 border-b border-slate-50">
+            <div class="h-4 bg-slate-100 rounded col-span-2"></div>
+            <div class="h-4 bg-slate-100 rounded"></div>
+            <div class="h-4 bg-slate-100 rounded"></div>
+            <div class="h-4 bg-slate-100 rounded"></div>
+            <div class="h-4 bg-slate-100 rounded"></div>
+            <div class="h-4 bg-slate-100 rounded"></div>
+          </div>
+        }
+      </div>
+    } @else if (error()) {
+      <div class="bg-red-50 border border-red-100 rounded-2xl p-6 text-center text-sm text-red-600">{{ error() }}</div>
+    } @else if (filtered().length === 0) {
+      <div class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center">
+        <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 text-amber-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </div>
+        <p class="font-bold text-slate-700 text-sm">No pricing rules</p>
+        <p class="text-slate-400 text-xs mt-1 max-w-xs">Landlords create pricing rules from their listing edit page.</p>
+      </div>
+    } @else {
+      <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+        <div class="grid grid-cols-[2fr_1fr_2fr_1fr_1.5fr_1fr_auto] gap-4 px-5 py-3 border-b border-slate-100 bg-slate-50">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Property</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Type</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Label</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Multiplier</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Window</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Created</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Actions</span>
+        </div>
+
+        @for (rule of filtered(); track rule.id) {
+          <div class="grid grid-cols-[2fr_1fr_2fr_1fr_1.5fr_1fr_auto] gap-4 items-center px-5 py-3.5 border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
+            <span class="text-sm font-semibold text-slate-900 truncate">{{ rule.propertyTitle || '—' }}</span>
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full w-fit" [ngClass]="typeBadgeClass(rule.ruleType)">
+              {{ rule.ruleType.replaceAll('_', ' ') }}
+            </span>
+            <span class="text-sm text-slate-600 truncate">{{ rule.label || '—' }}</span>
+            <span class="text-sm font-bold font-mono" [ngClass]="multiplierClass(rule.multiplier)">×{{ rule.multiplier }}</span>
+            <span class="text-xs text-slate-500">
+              @if (rule.ruleType === 'SEASONAL' && rule.startDate) {
+                {{ rule.startDate | date:'MMM d' }} → {{ rule.endDate | date:'MMM d' }}
+              } @else if (rule.ruleType === 'LONG_STAY' && rule.minStayDays) {
+                ≥ {{ rule.minStayDays }} nights
+              } @else if (rule.ruleType === 'WEEKEND') {
+                Fri/Sat
+              } @else {
+                —
+              }
+            </span>
+            <span class="text-xs text-slate-400">{{ rule.createdAt | date:'MMM d, y' }}</span>
+            <div class="flex items-center gap-2">
+              <button
+                (click)="deleteRule(rule)"
+                [disabled]="deletingId() === rule.id"
+                class="text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors disabled:opacity-50"
+              >{{ deletingId() === rule.id ? '…' : 'Delete' }}</button>
+            </div>
+          </div>
+        }
+      </div>
+      <p class="text-xs text-slate-400 mt-3 text-right">{{ filtered().length }} rule{{ filtered().length === 1 ? '' : 's' }}</p>
+    }
+  </div>
+</section>

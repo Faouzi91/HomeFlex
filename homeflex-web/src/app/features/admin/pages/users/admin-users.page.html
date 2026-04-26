@@ -134,28 +134,27 @@
                   </div>
                 </td>
 
-                <!-- Role Badge -->
+                <!-- Role (editable) -->
                 <td class="whitespace-nowrap px-6 py-4">
-                  @switch (user.role) {
-                    @case ('ADMIN') {
-                      <span
-                        class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-700"
-                        >Admin</span
-                      >
-                    }
-                    @case ('LANDLORD') {
-                      <span
-                        class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-700"
-                        >Landlord</span
-                      >
-                    }
-                    @default {
-                      <span
-                        class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-700"
-                        >Tenant</span
-                      >
-                    }
-                  }
+                  <select
+                    [ngModel]="user.role"
+                    (ngModelChange)="changeRole(user, $event)"
+                    [disabled]="actionLoading() === user.id"
+                    class="rounded-full border px-2.5 py-0.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-400/40 cursor-pointer disabled:opacity-50"
+                    [class.border-purple-200]="user.role === 'ADMIN'"
+                    [class.bg-purple-50]="user.role === 'ADMIN'"
+                    [class.text-purple-700]="user.role === 'ADMIN'"
+                    [class.border-blue-200]="user.role === 'LANDLORD'"
+                    [class.bg-blue-50]="user.role === 'LANDLORD'"
+                    [class.text-blue-700]="user.role === 'LANDLORD'"
+                    [class.border-slate-200]="user.role === 'TENANT'"
+                    [class.bg-slate-50]="user.role === 'TENANT'"
+                    [class.text-slate-700]="user.role === 'TENANT'"
+                  >
+                    <option value="TENANT">Tenant</option>
+                    <option value="LANDLORD">Landlord</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
                 </td>
 
                 <!-- Active Status -->

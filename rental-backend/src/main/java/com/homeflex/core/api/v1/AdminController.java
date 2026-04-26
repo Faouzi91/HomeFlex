@@ -6,6 +6,7 @@ import com.homeflex.features.property.dto.response.ReportDto;
 import com.homeflex.core.dto.response.UserDto;
 import com.homeflex.core.dto.common.ApiPageResponse;
 import com.homeflex.features.property.dto.request.RejectReasonRequest;
+import com.homeflex.features.property.dto.request.RoleChangeRequest;
 import com.homeflex.core.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -61,6 +62,13 @@ public class AdminController {
     @PatchMapping("/users/{id}/activate")
     public ResponseEntity<UserDto> activateUser(@PathVariable UUID id) {
         return ResponseEntity.ok(adminService.activateUser(id));
+    }
+
+    @PatchMapping("/users/{id}/role")
+    public ResponseEntity<UserDto> changeUserRole(
+            @PathVariable UUID id,
+            @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid RoleChangeRequest request) {
+        return ResponseEntity.ok(adminService.changeUserRole(id, request.role()));
     }
 
     @GetMapping("/analytics")
@@ -129,5 +137,46 @@ public class AdminController {
     public ResponseEntity<java.util.Map<String, Object>> reindexProperties() {
         int count = propertyService.reindexAll();
         return ResponseEntity.ok(java.util.Map.of("enqueued", count));
+    }
+
+    // ── Pricing Rules (cross-property) ─────────────────────────────────
+
+    @GetMapping("/pricing-rules")
+    public ResponseEntity<java.util.List<com.homeflex.features.property.dto.response.AdminPricingRuleDto>> listAllPricingRules() {
+        return ResponseEntity.ok(adminService.listAllPricingRules());
+    }
+
+    @DeleteMapping("/pricing-rules/{ruleId}")
+    public ResponseEntity<Void> deletePricingRule(@PathVariable UUID ruleId) {
+        adminService.deletePricingRule(ruleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Cancellation Policies ──────────────────────────────────────────
+
+    @GetMapping("/cancellation-policies")
+    public ResponseEntity<java.util.List<com.homeflex.features.property.domain.entity.CancellationPolicy>> listCancellationPolicies() {
+        return ResponseEntity.ok(adminService.listCancellationPolicies());
+    }
+
+    @PostMapping("/cancellation-policies")
+    public ResponseEntity<com.homeflex.features.property.domain.entity.CancellationPolicy> createCancellationPolicy(
+            @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid
+            com.homeflex.features.property.dto.request.CancellationPolicyRequest request) {
+        return ResponseEntity.ok(adminService.createCancellationPolicy(request));
+    }
+
+    @PutMapping("/cancellation-policies/{id}")
+    public ResponseEntity<com.homeflex.features.property.domain.entity.CancellationPolicy> updateCancellationPolicy(
+            @PathVariable UUID id,
+            @org.springframework.web.bind.annotation.RequestBody @jakarta.validation.Valid
+            com.homeflex.features.property.dto.request.CancellationPolicyRequest request) {
+        return ResponseEntity.ok(adminService.updateCancellationPolicy(id, request));
+    }
+
+    @DeleteMapping("/cancellation-policies/{id}")
+    public ResponseEntity<Void> deleteCancellationPolicy(@PathVariable UUID id) {
+        adminService.deleteCancellationPolicy(id);
+        return ResponseEntity.noContent().build();
     }
 }

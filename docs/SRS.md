@@ -59,6 +59,16 @@
 - 🟢 **New Unit Tests** — `AuthServiceTest`: password-reset user-enumeration prevention, `appleLogin`/`facebookLogin` unconditional throws. Angular: `admin.guard.spec.ts` (3 cases).
 - 🟢 **Claude Code Skills** — `security/SKILL.md` (OWASP Top 10, secure auth/PII/rate-limit patterns) and `folder-structure/SKILL.md` (6 languages × multiple architectural styles) added to `.claude/skills/`.
 
+### Implemented since v5.4 (Admin Console — Reference Tables & Role Management)
+
+> **Spec reference:** `CLAUDE.md` Admin-Owned Reference Data mandate — *"All global config (amenities, property/vehicle types, listing types, pricing rules, commission rate, cancellation policies) is mutated only by ADMIN via /api/v1/admin/\*"*. v5.4 closes the long-standing gap where backend admin endpoints existed without UI, and where some reference data had no endpoint at all.
+
+- 🟢 **Admin System Settings** — `GET/PATCH /admin/configs` is now consumed by a dedicated page at `/admin/system-settings`. V40 seeds 10 additional admin-controlled keys (booking advance windows, cancellation grace, payout delay, default currency, KYC gating, max images, dispute window, login rate limit, search batch size). Inline editor with dirty-tracking and save/reset per row.
+- 🟢 **User Role Management** — New endpoint `PATCH /admin/users/{id}/role` (Spring Security `@PreAuthorize("hasRole('ADMIN')")`). Updates both legacy `users.role` column and authoritative RBAC `Set<Role>` via `RoleRepository.findByName("ROLE_…")`. Frontend Users admin page exposes role selector inline with per-row confirmation; promotion to ADMIN displays an extra warning prompt.
+- 🟢 **Admin Pricing Rules** — `GET /admin/pricing-rules` returns `AdminPricingRuleDto` (joins `property_title` for context). `DELETE /admin/pricing-rules/{ruleId}` removes a single rule. UI page at `/admin/pricing-rules` with type filter (Weekend/Seasonal/Long-Stay), free-text search, multiplier coloring, and row-level delete-with-confirm.
+- 🟢 **Cancellation Policies (V41)** — New reference table `cancellation_policies(id, code, name, description, refund_percentage 0..100, hours_before_checkin, is_active)`. Seeded with `FLEXIBLE / MODERATE / STRICT / NON_REFUNDABLE`. Full admin CRUD via `GET/POST/PUT/DELETE /admin/cancellation-policies`, code-uniqueness enforced server-side, dedicated UI at `/admin/cancellation-policies` with create/edit modal.
+- 🟢 **Sidebar reorganization** — `AdminLayoutComponent` menu order updated: Dashboard / Users / Properties / Reports / Amenities / **Pricing Rules** / **Cancellation** / **System Settings** / **My Profile**. The pre-existing personal "Settings" page was relabeled "My Profile" to disambiguate it from system-wide configuration.
+
 ### Implemented since v5.3 (Per-Unit Identity Model — Individual Room/Unit Tracking)
 
 > **Spec reference:** _HomeFlex Admin & Availability System Specification_ — every bookable unit has its own identity (Building → Unit Type → Individual Unit). Bookings auto-assign a specific unit number; landlords can label, floor-tag and take individual units out of service.

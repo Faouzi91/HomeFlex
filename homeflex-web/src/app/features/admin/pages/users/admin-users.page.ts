@@ -80,6 +80,30 @@ export class AdminUsersPageComponent {
       });
   }
 
+  protected changeRole(user: User, newRole: string): void {
+    if (newRole === user.role) return;
+    if (newRole !== 'TENANT' && newRole !== 'LANDLORD' && newRole !== 'ADMIN') return;
+
+    const role = newRole as 'TENANT' | 'LANDLORD' | 'ADMIN';
+    const confirmMsg =
+      role === 'ADMIN'
+        ? `Promote ${user.firstName} ${user.lastName} to ADMIN? They will gain full platform privileges.`
+        : `Change ${user.firstName} ${user.lastName}'s role to ${role}?`;
+    if (!confirm(confirmMsg)) return;
+
+    this.actionLoading.set(user.id);
+    this.adminApi
+      .changeUserRole(user.id, role)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (updated) => {
+          this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
+          this.actionLoading.set(null);
+        },
+        error: () => this.actionLoading.set(null),
+      });
+  }
+
   protected filteredUsers(): User[] {
     let result = this.users();
     const query = this.searchQuery().toLowerCase();

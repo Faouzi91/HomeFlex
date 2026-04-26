@@ -1,9 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
+  AdminPricingRule,
   Amenity,
   Analytics,
   ApiPageResponse,
+  CancellationPolicy,
+  CancellationPolicyRequest,
   Property,
   ReportItem,
   SystemConfig,
@@ -55,6 +58,10 @@ export class AdminApi extends BaseApi {
     return this.http.patch<User>(`${this.baseUrl}/admin/users/${id}/activate`, {});
   }
 
+  changeUserRole(id: string, role: 'TENANT' | 'LANDLORD' | 'ADMIN'): Observable<User> {
+    return this.http.patch<User>(`${this.baseUrl}/admin/users/${id}/role`, { role });
+  }
+
   getSystemConfigs(): Observable<SystemConfig[]> {
     return this.http.get<SystemConfig[]>(`${this.baseUrl}/admin/configs`);
   }
@@ -84,5 +91,33 @@ export class AdminApi extends BaseApi {
 
   deleteAmenity(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/admin/amenities/${id}`);
+  }
+
+  // ── Pricing Rules (cross-property) ─────────────────────────────────
+
+  listAllPricingRules(): Observable<AdminPricingRule[]> {
+    return this.http.get<AdminPricingRule[]>(`${this.baseUrl}/admin/pricing-rules`);
+  }
+
+  deletePricingRule(ruleId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/admin/pricing-rules/${ruleId}`);
+  }
+
+  // ── Cancellation Policies ──────────────────────────────────────────
+
+  listCancellationPolicies(): Observable<CancellationPolicy[]> {
+    return this.http.get<CancellationPolicy[]>(`${this.baseUrl}/admin/cancellation-policies`);
+  }
+
+  createCancellationPolicy(req: CancellationPolicyRequest): Observable<CancellationPolicy> {
+    return this.http.post<CancellationPolicy>(`${this.baseUrl}/admin/cancellation-policies`, req);
+  }
+
+  updateCancellationPolicy(id: string, req: CancellationPolicyRequest): Observable<CancellationPolicy> {
+    return this.http.put<CancellationPolicy>(`${this.baseUrl}/admin/cancellation-policies/${id}`, req);
+  }
+
+  deleteCancellationPolicy(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/admin/cancellation-policies/${id}`);
   }
 }
