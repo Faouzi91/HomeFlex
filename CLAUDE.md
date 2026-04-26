@@ -7,6 +7,8 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 ## Core Architectural Mandates
 
 - **Decoupling**: Controllers MUST NOT access repositories directly. Always use a Service layer.
+- **Hierarchical inventory**: Properties model a **Building → Unit Type** hierarchy. Each `Property` may declare ≥1 `RoomType` (Room / Studio / Apartment / Suite) with `totalRooms` per type. Bookings target either the whole `Property` (standalone) or a specific `RoomType` with `numberOfRooms` (hotel-style). Availability is tracked at the **lowest bookable level** (`RoomInventory` per `room_type_id × date`). Vehicles are inherently per-unit — each `Vehicle` row is its own bookable entity. Never aggregate availability above the bookable unit.
+- **Admin-owned reference data**: All global config (amenities, property/vehicle types, listing types, pricing rules, commission rate, cancellation policies) is mutated only by `ADMIN` via `/api/v1/admin/*`. Non-admin endpoints consume read-only.
 - **Reliability**: Use the transactional outbox pattern for cross-service events (e.g., indexing to Elasticsearch).
 - **Security**:
   - JWTs are stored in httpOnly cookies.
@@ -78,9 +80,11 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 ## Key Database Tables
 
 - `users`: Core identity and roles.
-- `properties` / `vehicles`: Rental assets.
-- `bookings`: Central reservation engine.
-- `property_availability`: Sparse date model for asset availability.
+- `properties` / `vehicles`: Rental assets. Properties are buildings/groups; vehicles are per-unit bookable.
+- `room_types`: Unit-type rows under a `Property` (e.g. "Standard Room", "Studio", "Apartment"). Holds `total_rooms`, `price_per_night`, `bed_type`, `max_occupancy`, per-type images & amenity links. (V35)
+- `room_inventory(room_type_id, date, rooms_booked)`: Sparse date-keyed count for hotel-style aggregate availability. `available = totalRooms − roomsBooked`. (V36)
+- `bookings`: Central reservation engine. May target either a whole property or a specific `room_type_id` with `number_of_rooms`. (V37)
+- `property_availability`: Sparse date model for standalone (whole-home) property availability blocking.
 - `property_leases`: Digital contract tracking with blockchain TX hashes.
 - `agencies`: Multi-tenant agency white-labeling.
 - `maintenance_requests`: Tenant issue tracking.

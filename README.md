@@ -25,6 +25,9 @@ A full-stack real estate rental platform where tenants can search and book prope
 ## Features
 
 - **Property search** with Elasticsearch-powered fuzzy matching, faceted filtering, and geo-distance sorting
+- **Hierarchical property model** — `Property` acts as a building/group, `RoomType` declares unit types (Room / Studio / Apartment / Suite) each with their own `totalRooms`, `pricePerNight`, `bedType`, `maxOccupancy`, images and amenities; bookings target either a whole property or a specific room type with `numberOfRooms`
+- **Real-time inventory tracking** — `room_inventory(room_type_id, date, rooms_booked)` sparse table powers `available = totalRooms − roomsBooked` per night; `RoomInventoryService.reserve/release` runs inside the booking transaction and rejects requests that would exceed available capacity, eliminating overbooking
+- **Admin-owned reference data** — admins control amenities, property/vehicle/listing types, pricing rules, commission rates, cancellation policies and platform-wide settings under `/api/v1/admin/*`; non-admin clients can only consume them
 - **Property availability** with sparse date model, calendar UI, and double-booking prevention (V11)
 - **Digital leases** with e-signature support and automated document management (V12)
 - **Vehicle rentals** with image uploads, condition reports, and availability checking

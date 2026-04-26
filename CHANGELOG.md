@@ -2,6 +2,33 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [5.2] — 2026-04-26 (Hierarchical Property Model & Admin Availability System)
+
+### Added
+
+- **Hierarchical Property Model** — `Property` now acts as a building/group container. `RoomType` entity declares unit types (e.g. "Standard Room", "Studio", "Apartment Suite") with per-type `pricePerNight`, `bedType`, `numBeds`, `maxOccupancy`, `totalRooms`, `sizeSqm`, images (`RoomTypeImage`), and amenity links. Bookings target either the whole property (standalone whole-home rental) or a specific `RoomType` with `numberOfRooms` (hotel-style group inventory).
+- **V35 Migration** — `room_types` and `room_type_images` tables; `room_type_amenities` join.
+- **V36 Migration** — `room_inventory(room_type_id, date, rooms_booked)` sparse date-keyed count table powering `available = totalRooms − roomsBooked` per night.
+- **V37 Migration** — `bookings.room_type_id` FK + `bookings.number_of_rooms` columns; bookings can now target a unit type.
+- **`RoomTypeService` / `RoomTypeController`** — full CRUD for room types under a property (`/api/v1/properties/{id}/room-types`).
+- **`RoomInventoryService`** — `reserve(...)` and `release(...)` transactional methods that atomically increment/decrement `rooms_booked` for each booked night; rejects bookings that would exceed `totalRooms`, preventing overbooking.
+- **`OccupancyService` / `OccupancyController`** — unified occupancy API returning either standalone (whole-home, `property_availability`-driven) or hotel-style (per-room-type, `room_inventory`-driven) responses for any property.
+- **Frontend Hosting Wizard** — `hosting-tab.component.ts` adds inline room-type creation (form fields: name, bed type, num beds, max occupancy, price/night, total rooms, size, amenities) plus a live occupancy summary card showing `roomsBooked` vs. `totalRooms` per date range.
+- **Admin Reference-Table Ownership** — admin owns all global configuration: amenities, property/vehicle/listing types, pricing rules, commission rate, platform-wide cancellation policies and booking constraints. All admin endpoints under `/api/v1/admin/*` with `@PreAuthorize("hasRole('ADMIN')")`.
+
+### Changed
+
+- **`Property` entity** — semantic shift from "single bookable unit" to "building/group". A property's `price` field still applies to whole-home bookings; per-room-type pricing lives on `RoomType.pricePerNight`.
+- **`Booking` entity** — added `roomType` FK and `numberOfRooms` count. Backward-compatible: bookings without a `roomType` are treated as whole-property bookings.
+- **`AdminController`** — full CRUD for `Amenity` (`GET/POST/PUT/DELETE /admin/amenities`) and structured property approval/rejection with `rejection_reason` persistence.
+
+### Architecture
+
+- **Vehicle parity** — vehicles remain per-unit (each `Vehicle` row is its own bookable entity, tracked by `vehicle_availability`); fleet operators model identical vehicles as separate `Vehicle` rows. The same _no-overbooking_ invariant applies — bookings against an already-blocked date range are rejected at the service layer.
+- **Availability invariant** — availability is tracked at the **lowest bookable level** (room type for hotels, vehicle for fleets, whole property for standalone homes). Aggregation above this level is forbidden by the architectural mandates in `CLAUDE.md`.
+
+---
+
 ## [Unreleased] — 2026-04-25 (Premium UI/UX Overhaul & Image Proxy)
 
 ### Added
