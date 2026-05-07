@@ -56,8 +56,12 @@ export class AdminSystemSettingsPageComponent {
     return this.editing()[c.configKey] !== c.configValue;
   }
 
+  protected editingValue(c: SystemConfig): string {
+    return this.editing()[c.configKey] ?? '';
+  }
+
   protected save(c: SystemConfig): void {
-    const next = this.editing()[c.configKey];
+    const next = this.editingValue(c);
     if (next === c.configValue) return;
 
     this.savingKey.set(c.configKey);

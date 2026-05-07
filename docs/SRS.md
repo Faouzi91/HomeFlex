@@ -2,8 +2,8 @@
 
 ## HomeFlex — Real Estate Rental Marketplace Platform
 
-**Version:** 5.2
-**Date:** April 26, 2026
+**Version:** 5.5
+**Date:** May 7, 2026
 **Classification:** Confidential
 **Status:** Active — Aligned with implemented codebase
 
@@ -29,6 +29,7 @@
 | 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation.                                                                                                                                                                                                                                                                                                                                                                          |
+| 5.5     | 2026-05-07 | Architect     | Functional validation pass: Docker Compose now has a root `.env.example` matching the file Compose reads; RabbitMQ and MinIO credential requirements are documented in both root and backend env templates; `minio-init` now uses the same required MinIO credentials as the MinIO service; Angular production build diagnostics cleared in System Settings and Hosting unit loading templates; validation covered Docker Compose config rendering, Angular production build, web unit tests, Prettier lint, and backend tests under Java 21.                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 5.2     | 2026-04-26 | Architect     | Hierarchical Property Model & Admin Availability System: V34 property model enhancements (status/listing-type/policy fields), V35 `room_types` + `room_type_images` tables, V36 `room_inventory` count-based table, V37 booking room-type FK + `numberOfRooms`. Admin owns reference tables, system rules and platform-wide settings. Properties support hierarchical Building → Unit Type structure (RoomType with `totalRooms` per type), real-time availability tracking via `RoomInventoryService.reserve/release` with date-keyed counts. Hotel-style and standalone occupancy unified under `OccupancyController`. Vehicle availability already tracked per-vehicle (each vehicle is its own bookable unit). Frontend: hosting tab now exposes room-types CRUD wizard + occupancy summary; `RoomTypeController`, `OccupancyController` REST endpoints; admin validation checklist for property submissions with structured rejection reasons. |
 | 5.1     | 2026-04-26 | Architect     | Sprint 2: booking modification frontend 🔴→🟢 (tenant date-change modal, landlord approve/reject, PENDING_MODIFICATION info card); auto review prompt 🔴→🟢 (NotificationService.sendReviewPromptNotification wired into completeActiveBookings scheduler); admin amenity CRUD 🔴→🟢 (GET/POST/PUT/DELETE /admin/amenities, admin page with table + modal, nav item added).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 5.0     | 2026-04-25 | Architect     | Quick wins: price breakdown 🔴→🟢 (4-row breakdown widget with cleaning fee + 15% platform fee + total); category sub-ratings 🔴→🟡→🟢 (frontend now renders sub-ratings from existing backend fields); profile completeness bar 🔴→🟢 (color-coded progress bar in profile tab); read receipts 🔴→🟢 (single/double SVG check on sent messages in messages tab).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -129,6 +130,9 @@
 
 ### Implemented since v4.5 (Frontend Production-Readiness Pass)
 
+- 🟢 **Docker Compose Environment Contract** — Root `.env.example` is now the canonical template for `docker compose`. It includes the required DB, RabbitMQ, MinIO, JWT, PII encryption, metrics, CORS, Stripe, and local S3-compatible storage variables that Compose reads from the root `.env` file.
+- 🟢 **MinIO Credential Consistency** — `minio-init` uses the same required `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD` values as the MinIO service instead of silently falling back to hardcoded defaults. This prevents bucket initialization from succeeding against different credentials than the running object-store service.
+- 🟢 **Angular Production Build Cleanliness** — System Settings and Hosting unit-loading templates were adjusted so Angular's strict production compiler no longer reports stale nullish-coalescing diagnostics while preserving runtime fallbacks for unloaded maps/config values.
 - 🟢 **Domain API Services Everywhere** — All workspace tabs (`disputes-tab`, `finance-tab`, `insurance-tab`) migrated from the deprecated `ApiClient` facade to their dedicated domain services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`). `ApiClient` is now only used for legacy/uncategorized calls.
 - 🟢 **Memory Leak Elimination** — `takeUntilDestroyed(destroyRef)` applied to every component subscription in all six workspace tabs. No component now requires manual `ngOnDestroy` unsubscription.
 - 🟢 **Insurance Tab — Both Plan Types** — `InsuranceTabComponent` now fetches TENANT and LANDLORD insurance plans in parallel via `forkJoin`. Previously only TENANT plans were loaded, leaving the Landlord Insurance section permanently empty.
@@ -1939,7 +1943,7 @@ _(Similar RESTful patterns — full endpoint list in Appendix A)_
 
 ## 10.1 Current Deployment Architecture 🟢
 
-The application runs via Docker Compose with 6 services on a shared bridge network (`rental-network`):
+The local application runs via Docker Compose on a shared bridge network (`rental-network`). Compose reads root `.env`; `.env.example` is the canonical local template.
 
 ```
 docker-compose.yml
@@ -1957,8 +1961,12 @@ docker-compose.monitoring.yml
 └── grafana        — Grafana 11.6 (JVM, HTTP, booking/payment dashboards)
 ```
 
+- Core services (`frontend`, `backend`, `db`, `redis`, `rabbitmq`, `minio`, `minio-init`) run by default
+- ELK services (`elasticsearch`, `logstash`, `kibana`) are under the `infra` profile
 - All services have Docker health checks
-- Backend waits for db, redis, rabbitmq, and elasticsearch to be healthy before starting
+- Backend waits for db, redis, and rabbitmq to be healthy before starting
+- Frontend waits for backend and MinIO health before starting
+- Required Compose credentials are explicit: `DB_USERNAME`, `DB_PASSWORD`, `SPRING_RABBITMQ_USERNAME`, `SPRING_RABBITMQ_PASSWORD`, `MINIO_ROOT_USER`, and `MINIO_ROOT_PASSWORD`
 - Multi-stage Dockerfiles with layer caching for fast rebuilds
 - Non-root users in both frontend (nginx) and backend containers
 - Nginx config: gzip, security headers, static asset caching (1yr), WebSocket proxy, SPA fallback
@@ -2241,6 +2249,14 @@ No offline support is currently implemented. All features require network connec
 
 **Test profile** (`application-test.yml`) overrides: in-memory MailHog SMTP, disabled Firebase/AWS/outbox relay, static JWT secret, admin password, and PII key — no real external services required to run unit tests.
 
+**Local validation baseline (v5.5)**:
+
+- `docker compose --env-file .env.example config`
+- `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew test`
+- `npm run lint`
+- `npm test -- --watch=false`
+- `npm run build`
+
 ---
 
 # 17. Release & Rollout Strategy
@@ -2316,27 +2332,40 @@ _(Detailed OpenAPI spec to be auto-generated from code via SpringDoc)_
 
 ### Currently Used
 
-| Variable                     | Description                            | Example                              |
-| ---------------------------- | -------------------------------------- | ------------------------------------ |
-| `SPRING_DATASOURCE_URL`      | PostgreSQL JDBC URL                    | `jdbc:postgresql://db:5432/homeflex` |
-| `SPRING_DATASOURCE_USERNAME` | DB username                            | `postgres`                           |
-| `SPRING_DATASOURCE_PASSWORD` | DB password                            | `(secret)`                           |
-| `JWT_SECRET`                 | JWT signing key                        | `(secret)`                           |
-| `STRIPE_API_KEY`             | Stripe secret key                      | `sk_test_...`                        |
-| `GOOGLE_CLIENT_ID`           | Google OAuth client ID                 | `...apps.googleusercontent.com`      |
-| `FIREBASE_*`                 | Firebase config for push notifications | `(service account JSON)`             |
-| `SPRING_MAIL_*`              | Gmail SMTP config                      | `smtp.gmail.com`                     |
+| Variable                   | Description                            | Example                              |
+| -------------------------- | -------------------------------------- | ------------------------------------ |
+| `SPRING_DATASOURCE_URL`    | PostgreSQL JDBC URL                    | `jdbc:postgresql://db:5432/homeflex` |
+| `DB_USERNAME`              | PostgreSQL username for Compose        | `postgres`                           |
+| `DB_PASSWORD`              | PostgreSQL password for Compose        | `(secret)`                           |
+| `JWT_SECRET`               | JWT signing key                        | `(secret)`                           |
+| `PII_ENCRYPTION_KEY`       | AES-256-GCM key for encrypted PII      | `(base64 32-byte key)`               |
+| `ADMIN_PASSWORD`           | Initial admin account password         | `(secret)`                           |
+| `STRIPE_SECRET_KEY`        | Stripe secret key                      | `sk_test_...`                        |
+| `STRIPE_PUBLISHABLE_KEY`   | Stripe publishable key                 | `pk_test_...`                        |
+| `STRIPE_WEBHOOK_SECRET`    | Stripe webhook signing secret          | `whsec_...`                          |
+| `SPRING_RABBITMQ_USERNAME` | RabbitMQ username for Compose          | `guest`                              |
+| `SPRING_RABBITMQ_PASSWORD` | RabbitMQ password for Compose          | `(secret)`                           |
+| `MINIO_ROOT_USER`          | MinIO root username                    | `admin`                              |
+| `MINIO_ROOT_PASSWORD`      | MinIO root password                    | `(secret)`                           |
+| `AWS_ACCESS_KEY`           | S3/MinIO access key                    | `admin`                              |
+| `AWS_SECRET_KEY`           | S3/MinIO secret key                    | `(secret)`                           |
+| `AWS_REGION`               | S3 region                              | `us-east-1`                          |
+| `AWS_S3_BUCKET`            | Media storage bucket                   | `rental-app-media`                   |
+| `AWS_S3_ENDPOINT`          | Optional S3-compatible endpoint        | `http://minio:9000`                  |
+| `GOOGLE_CLIENT_ID`         | Google OAuth client ID                 | `...apps.googleusercontent.com`      |
+| `FIREBASE_*`               | Firebase config for push notifications | `(service account JSON)`             |
+| `SPRING_MAIL_*`            | Gmail SMTP config                      | `smtp.gmail.com`                     |
 
 ### Planned (not yet used)
 
-| Variable                                      | Description                |
-| --------------------------------------------- | -------------------------- |
-| `REDIS_URL`                                   | Redis connection string    |
-| `RABBITMQ_URL`                                | RabbitMQ connection string |
-| `ELASTICSEARCH_URL`                           | Elasticsearch URL          |
-| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | AWS credentials            |
-| `S3_BUCKET_NAME`                              | S3 bucket for media        |
-| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN`    | Twilio credentials         |
+| Variable                                      | Description                          |
+| --------------------------------------------- | ------------------------------------ |
+| `REDIS_URL`                                   | Redis connection string              |
+| `RABBITMQ_URL`                                | Managed RabbitMQ connection string   |
+| `ELASTICSEARCH_URL`                           | Managed Elasticsearch/OpenSearch URL |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | AWS credentials                      |
+| `S3_BUCKET_NAME`                              | S3 bucket for media                  |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN`    | Twilio credentials                   |
 
 ## Appendix D: Glossary of Domain Terms
 

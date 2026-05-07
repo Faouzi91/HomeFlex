@@ -350,7 +350,7 @@ export class HostingTabComponent {
 
   // ── Property Units (per-unit identity) ───────────────────────────────────
 
-  protected readonly unitsByRoomType = signal<Record<string, PropertyUnit[]>>({});
+  protected readonly unitsByRoomType = signal<Partial<Record<string, PropertyUnit[]>>>({});
   protected readonly expandedUnitsRoomTypeId = signal<string | null>(null);
   protected readonly unitsLoading = signal(false);
   protected readonly editingUnit = signal<PropertyUnit | null>(null);

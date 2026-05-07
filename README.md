@@ -67,11 +67,11 @@ The fastest way to run everything locally. Spins up 6 services: frontend, backen
 
 ### Required environment variables
 
-Before starting, copy `.env.example` and fill in secrets. The following variables **must** be set — the application will fail to start without them:
+Before starting, copy the root `.env.example` and fill in secrets. Docker Compose reads the root `.env` file automatically:
 
 ```bash
-cp rental-backend/.env.example rental-backend/.env
-# then edit rental-backend/.env
+cp .env.example .env
+# then edit .env
 ```
 
 | Variable                   | Purpose                               |
