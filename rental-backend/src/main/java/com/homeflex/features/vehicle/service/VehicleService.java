@@ -83,7 +83,7 @@ public class VehicleService {
     private VehicleResponse toResponseWithOwner(Vehicle vehicle) {
         VehicleResponse base = vehicleMapper.toResponse(vehicle);
         UserDto ownerDto = userRepository.findById(vehicle.getOwnerId())
-                .map(userMapper::toDto)
+                .map(userMapper::toPublicDto)
                 .orElse(null);
         return new VehicleResponse(
                 base.id(), base.ownerId(), base.brand(), base.model(), base.year(),

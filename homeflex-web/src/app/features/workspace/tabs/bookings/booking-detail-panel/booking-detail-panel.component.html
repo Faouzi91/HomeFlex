@@ -294,7 +294,8 @@
             <div
               class="h-10 w-10 rounded-full bg-slate-100 text-slate-600 font-bold text-sm flex items-center justify-center shrink-0"
             >
-              {{ booking().property.landlord.firstName[0] }}{{ booking().property.landlord.lastName[0] }}
+              {{ booking().property.landlord.firstName[0]
+              }}{{ booking().property.landlord.lastName[0] }}
             </div>
           }
           <div class="min-w-0">
@@ -318,18 +319,34 @@
       <div class="px-6 py-5">
         <div class="bg-violet-50 border border-violet-100 rounded-xl p-4 space-y-3">
           <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-violet-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+            <svg
+              class="w-4 h-4 text-violet-500 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+              />
             </svg>
             <p class="text-xs font-bold text-violet-700">Date Change Requested</p>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-white rounded-lg p-2.5">
-              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">New Check-in</p>
-              <p class="text-sm font-bold text-slate-900">{{ date(booking().proposedStartDate) }}</p>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">
+                New Check-in
+              </p>
+              <p class="text-sm font-bold text-slate-900">
+                {{ date(booking().proposedStartDate) }}
+              </p>
             </div>
             <div class="bg-white rounded-lg p-2.5">
-              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">New Check-out</p>
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">
+                New Check-out
+              </p>
               <p class="text-sm font-bold text-slate-900">{{ date(booking().proposedEndDate) }}</p>
             </div>
           </div>
@@ -456,9 +473,25 @@
         class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         @if (actionLoading() === 'retry') {
-          <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          <svg
+            class="h-4 w-4 animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
           </svg>
           Processing…
         } @else {
@@ -527,12 +560,23 @@
 
 <!-- Modification modal -->
 @if (showModifyModal()) {
-  <div class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+  <div
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+  >
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
       <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100">
         <h3 class="text-base font-bold text-slate-900">Request Date Change</h3>
-        <button (click)="closeModifyModal()" class="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
-          <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+        <button
+          (click)="closeModifyModal()"
+          class="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors"
+        >
+          <svg
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            class="w-4 h-4"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
           </svg>
         </button>

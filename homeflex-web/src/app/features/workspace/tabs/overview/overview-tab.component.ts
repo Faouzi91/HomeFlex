@@ -28,6 +28,7 @@ export class OverviewTabComponent {
   protected readonly favorites = signal<Property[]>([]);
   protected readonly propertyBookings = signal<Booking[]>([]);
   protected readonly vehicleBookings = signal<VehicleBooking[]>([]);
+  protected readonly hostPendingCount = signal(0);
   protected readonly loading = signal(true);
 
   protected readonly greeting = computed(() => {
@@ -65,13 +66,18 @@ export class OverviewTabComponent {
 
   protected readonly upcomingBookings = computed(() => this.activePropertyBookings().slice(0, 3));
 
+  protected readonly isLandlord = this.session.isLandlord;
+
   constructor() {
+    const isLandlord = this.session.isLandlord();
+
     forkJoin({
       favorites: this.favoriteApi.getAll().pipe(catchError(() => of({ data: [] as Property[] }))),
       bookings: this.bookingApi.getMine().pipe(catchError(() => of({ data: [] as Booking[] }))),
       vehicles: this.vehicleApi
         .getMyBookings()
         .pipe(catchError(() => of({ data: [] as VehicleBooking[] }))),
+      // If landlord, we could fetch pending counts here, but WorkspaceStore might already have it
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((res) => {

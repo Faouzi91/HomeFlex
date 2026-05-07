@@ -4,7 +4,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { Analytics } from '../../../../core/models/api.types';
 
-interface KvEntry { key: string; value: number; }
+interface KvEntry {
+  key: string;
+  value: number;
+}
 
 @Component({
   selector: 'app-admin-dashboard',

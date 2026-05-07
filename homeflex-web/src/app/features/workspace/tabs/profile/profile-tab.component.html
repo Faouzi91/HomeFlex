@@ -62,11 +62,19 @@
                   <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       class="h-full rounded-full transition-all duration-500"
-                      [class]="(session.user()!.profileCompleteness! >= 80) ? 'bg-emerald-500' : (session.user()!.profileCompleteness! >= 50 ? 'bg-amber-400' : 'bg-rose-400')"
+                      [class]="
+                        session.user()!.profileCompleteness! >= 80
+                          ? 'bg-emerald-500'
+                          : session.user()!.profileCompleteness! >= 50
+                            ? 'bg-amber-400'
+                            : 'bg-rose-400'
+                      "
                       [style.width.%]="session.user()!.profileCompleteness!"
                     ></div>
                   </div>
-                  <span class="text-[11px] font-bold text-slate-500 shrink-0">{{ session.user()!.profileCompleteness! }}% complete</span>
+                  <span class="text-[11px] font-bold text-slate-500 shrink-0"
+                    >{{ session.user()!.profileCompleteness! }}% complete</span
+                  >
                 </div>
               }
             </div>
@@ -114,7 +122,9 @@
               >
                 @if (savingProfile()) {
                   <span class="flex items-center gap-2">
-                    <span class="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+                    <span
+                      class="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"
+                    ></span>
                     Saving…
                   </span>
                 } @else {
@@ -175,7 +185,9 @@
             >
               @if (savingProfile()) {
                 <span class="flex items-center gap-2">
-                  <span class="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+                  <span
+                    class="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"
+                  ></span>
                   Saving…
                 </span>
               } @else {
@@ -213,14 +225,22 @@
               <p class="text-xs text-slate-400 mt-1.5">At least 8 characters.</p>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 mb-1.5">Confirm new password</label>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                >Confirm new password</label
+              >
               <input
                 formControlName="confirmPassword"
                 type="password"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
-                [class.border-rose-300]="passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.dirty"
+                [class.border-rose-300]="
+                  passwordForm.errors?.['passwordMismatch'] &&
+                  passwordForm.get('confirmPassword')?.dirty
+                "
               />
-              @if (passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.dirty) {
+              @if (
+                passwordForm.errors?.['passwordMismatch'] &&
+                passwordForm.get('confirmPassword')?.dirty
+              ) {
                 <p class="text-xs text-rose-600 mt-1.5">Passwords do not match.</p>
               }
             </div>
@@ -232,7 +252,9 @@
               >
                 @if (savingPassword()) {
                   <span class="flex items-center gap-2">
-                    <span class="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
+                    <span
+                      class="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"
+                    ></span>
                     Updating…
                   </span>
                 } @else {

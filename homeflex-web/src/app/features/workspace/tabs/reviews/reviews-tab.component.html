@@ -1,16 +1,19 @@
 <section class="flex flex-col min-h-full bg-slate-50/50">
-
   <!-- ── Header ─────────────────────────────────────────────────────── -->
   <div class="bg-white border-b border-slate-100 px-6 lg:px-8 py-6 shrink-0">
     <div class="flex items-center gap-3">
       <div class="h-10 w-10 rounded-xl bg-amber-400 flex items-center justify-center shrink-0">
         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" />
+          <path
+            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+          />
         </svg>
       </div>
       <div>
         <h1 class="text-lg font-bold text-slate-900">Reviews</h1>
-        <p class="text-sm text-slate-500">Ratings from guests and reviews you've received as a tenant.</p>
+        <p class="text-sm text-slate-500">
+          Ratings from guests and reviews you've received as a tenant.
+        </p>
       </div>
     </div>
 
@@ -18,20 +21,26 @@
     <div class="mt-5 flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
       <button
         (click)="activeTab.set('property')"
-        [class]="activeTab() === 'property'
-          ? 'px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-slate-900 shadow-sm'
-          : 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors'"
+        [class]="
+          activeTab() === 'property'
+            ? 'px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-slate-900 shadow-sm'
+            : 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors'
+        "
       >
         Property Reviews
         @if (propertyReviews().length > 0) {
-          <span class="ml-1.5 text-xs font-black text-amber-500">{{ propertyReviews().length }}</span>
+          <span class="ml-1.5 text-xs font-black text-amber-500">{{
+            propertyReviews().length
+          }}</span>
         }
       </button>
       <button
         (click)="activeTab.set('tenant')"
-        [class]="activeTab() === 'tenant'
-          ? 'px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-slate-900 shadow-sm'
-          : 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors'"
+        [class]="
+          activeTab() === 'tenant'
+            ? 'px-4 py-1.5 rounded-lg text-sm font-bold bg-white text-slate-900 shadow-sm'
+            : 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors'
+        "
       >
         Received Reviews
         @if (tenantReviews().length > 0) {
@@ -42,7 +51,6 @@
   </div>
 
   <div class="flex-1 px-6 lg:px-8 py-8">
-
     <!-- ── Loading skeleton ─────────────────────────────────────────── -->
     @if (loading()) {
       <div class="space-y-4">
@@ -73,25 +81,34 @@
     <!-- ── Property Reviews tab ─────────────────────────────────────── -->
     @else if (activeTab() === 'property') {
       @if (propertyReviews().length === 0) {
-        <div class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center">
+        <div
+          class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center"
+        >
           <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mb-4">
             <svg class="w-7 h-7 text-amber-300" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" />
+              <path
+                d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+              />
             </svg>
           </div>
           <p class="font-bold text-slate-700 text-sm">No property reviews yet</p>
-          <p class="text-slate-400 text-xs mt-1 max-w-xs">Reviews from guests will appear here once they check out.</p>
+          <p class="text-slate-400 text-xs mt-1 max-w-xs">
+            Reviews from guests will appear here once they check out.
+          </p>
         </div>
       } @else {
         <div class="space-y-4">
           @for (review of propertyReviews(); track review.id) {
-            <div class="bg-white rounded-2xl border border-slate-100 p-5 hover:border-slate-200 hover:shadow-sm transition-all">
-
+            <div
+              class="bg-white rounded-2xl border border-slate-100 p-5 hover:border-slate-200 hover:shadow-sm transition-all"
+            >
               <!-- Reviewer row -->
               <div class="flex items-start justify-between gap-4 mb-3">
                 <div class="flex items-start gap-3 min-w-0">
                   <!-- Avatar initials -->
-                  <div class="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-sm font-black text-amber-700">
+                  <div
+                    class="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-sm font-black text-amber-700"
+                  >
                     {{ reviewerInitials(review) }}
                   </div>
                   <div class="min-w-0">
@@ -109,10 +126,15 @@
                 <div class="flex items-center gap-0.5 shrink-0">
                   @for (star of stars(review.rating); track star) {
                     <svg
-                      class="w-4 h-4 {{ star <= review.rating ? 'text-amber-400' : 'text-slate-200' }}"
-                      fill="currentColor" viewBox="0 0 24 24"
+                      class="w-4 h-4 {{
+                        star <= review.rating ? 'text-amber-400' : 'text-slate-200'
+                      }}"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" />
+                      <path
+                        d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                      />
                     </svg>
                   }
                   <span class="ml-1 text-xs font-bold text-slate-600">{{ review.rating }}/5</span>
@@ -149,10 +171,13 @@
 
               <!-- Reply form (inline) -->
               @if (replyingTo() === review.id) {
-                <div class="bg-slate-50 rounded-xl border border-slate-100 px-4 py-3 mb-3 space-y-3">
+                <div
+                  class="bg-slate-50 rounded-xl border border-slate-100 px-4 py-3 mb-3 space-y-3"
+                >
                   <p class="text-xs font-bold text-slate-500">Write a reply</p>
                   <textarea
-                    [ngModel]="replyText()" (ngModelChange)="replyText.set($event)"
+                    [ngModel]="replyText()"
+                    (ngModelChange)="replyText.set($event)"
                     rows="3"
                     placeholder="Thank your guest or address their feedback…"
                     class="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40 resize-none"
@@ -208,24 +233,41 @@
     <!-- ── Received (Tenant) Reviews tab ────────────────────────────── -->
     @else {
       @if (tenantReviews().length === 0) {
-        <div class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center">
+        <div
+          class="bg-white rounded-2xl border border-slate-100 flex flex-col items-center justify-center py-20 text-center"
+        >
           <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-            <svg class="w-7 h-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            <svg
+              class="w-7 h-7 text-slate-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+              />
             </svg>
           </div>
           <p class="font-bold text-slate-700 text-sm">No tenant reviews yet</p>
-          <p class="text-slate-400 text-xs mt-1 max-w-xs">Landlords can leave reviews about you as a tenant after a stay.</p>
+          <p class="text-slate-400 text-xs mt-1 max-w-xs">
+            Landlords can leave reviews about you as a tenant after a stay.
+          </p>
         </div>
       } @else {
         <div class="space-y-4">
           @for (review of tenantReviews(); track review.id) {
-            <div class="bg-white rounded-2xl border border-slate-100 p-5 hover:border-slate-200 hover:shadow-sm transition-all">
-
+            <div
+              class="bg-white rounded-2xl border border-slate-100 p-5 hover:border-slate-200 hover:shadow-sm transition-all"
+            >
               <!-- Reviewer row -->
               <div class="flex items-start justify-between gap-4 mb-3">
                 <div class="flex items-start gap-3 min-w-0">
-                  <div class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-sm font-black text-slate-600">
+                  <div
+                    class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-sm font-black text-slate-600"
+                  >
                     {{ reviewerInitials(review) }}
                   </div>
                   <div class="min-w-0">
@@ -243,10 +285,15 @@
                 <div class="flex items-center gap-0.5 shrink-0">
                   @for (star of stars(review.rating); track star) {
                     <svg
-                      class="w-4 h-4 {{ star <= review.rating ? 'text-amber-400' : 'text-slate-200' }}"
-                      fill="currentColor" viewBox="0 0 24 24"
+                      class="w-4 h-4 {{
+                        star <= review.rating ? 'text-amber-400' : 'text-slate-200'
+                      }}"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <path d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" />
+                      <path
+                        d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
+                      />
                     </svg>
                   }
                   <span class="ml-1 text-xs font-bold text-slate-600">{{ review.rating }}/5</span>
@@ -262,6 +309,5 @@
         </div>
       }
     }
-
   </div>
 </section>

@@ -155,20 +155,33 @@
                   class="text-[10px]"
                   [class.text-brand-200]="isMine(msg)"
                   [class.text-slate-400]="!isMine(msg)"
-                >{{ dt(msg.createdAt) }}</p>
+                >
+                  {{ dt(msg.createdAt) }}
+                </p>
                 @if (isMine(msg)) {
                   <svg
                     class="w-3 h-3 shrink-0"
                     [class.text-brand-200]="!msg.isRead"
                     [class.text-emerald-300]="msg.isRead"
-                    fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2.5"
+                    stroke="currentColor"
                   >
                     @if (msg.isRead) {
                       <!-- Double check (read) -->
-                      <path stroke-linecap="round" stroke-linejoin="round" d="m1.5 12.75 4.5 4.5 9-9M6 12.75l4.5 4.5 9-9" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m1.5 12.75 4.5 4.5 9-9M6 12.75l4.5 4.5 9-9"
+                      />
                     } @else {
                       <!-- Single check (delivered) -->
-                      <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="m4.5 12.75 6 6 9-13.5"
+                      />
                     }
                   </svg>
                 }

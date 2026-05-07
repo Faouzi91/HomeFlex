@@ -11,7 +11,14 @@ import { AppHeaderComponent } from './components/header/app-header.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, AppHeaderComponent, AppFooterComponent, LoaderComponent, AlertComponent],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    AppHeaderComponent,
+    AppFooterComponent,
+    LoaderComponent,
+    AlertComponent,
+  ],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
 })

@@ -13,6 +13,10 @@ export class BookingApi extends BaseApi {
     endDate?: string | null;
     message?: string | null;
     numberOfOccupants?: number | null;
+    /** Required for HOTEL/GUESTHOUSE/HOSTEL/RESORT property types */
+    roomTypeId?: string | null;
+    /** How many rooms to reserve (hotel bookings only, defaults to 1) */
+    numberOfRooms?: number | null;
   }): Observable<Booking> {
     return this.http.post<Booking>(`${this.baseUrl}/bookings/draft`, payload);
   }

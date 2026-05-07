@@ -8,8 +8,13 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring", uses = UserMapper.class)
-public interface ReviewMapper {
+public abstract class ReviewMapper {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    protected UserMapper userMapper;
 
     @Mapping(target = "propertyId", source = "property.id")
-    ReviewDto toDto(Review review);
+    @Mapping(target = "reviewer", expression = "java(userMapper.toPublicDto(review.getReviewer()))")
+    @Mapping(target = "targetUser", expression = "java(userMapper.toPublicDto(review.getTargetUser()))")
+    public abstract ReviewDto toDto(Review review);
 }

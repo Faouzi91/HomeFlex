@@ -17,13 +17,19 @@ import {
   daysRemaining,
 } from '../../../../core/utils/formatters';
 import { BookingDetailPanelComponent } from './booking-detail-panel/booking-detail-panel.component';
+import { VehicleBookingDetailPanelComponent } from './vehicle-booking-detail-panel/vehicle-booking-detail-panel.component';
 
 type SubTab = 'properties' | 'vehicles' | 'received';
 
 @Component({
   selector: 'app-bookings-tab',
   standalone: true,
-  imports: [NgClass, NgTemplateOutlet, BookingDetailPanelComponent],
+  imports: [
+    NgClass,
+    NgTemplateOutlet,
+    BookingDetailPanelComponent,
+    VehicleBookingDetailPanelComponent,
+  ],
   templateUrl: './bookings-tab.component.html',
 })
 export class BookingsTabComponent {
@@ -45,6 +51,7 @@ export class BookingsTabComponent {
 
   // Detail panel
   protected readonly selectedBooking = signal<Booking | null>(null);
+  protected readonly selectedVehicleBooking = signal<VehicleBooking | null>(null);
   private readonly receivedBookingsLoaded = signal(false);
 
   // ── Landlord groupings ───────────────────────────────────────────────────────
@@ -172,6 +179,16 @@ export class BookingsTabComponent {
 
   protected closePanel(): void {
     this.selectedBooking.set(null);
+    this.selectedVehicleBooking.set(null);
+  }
+
+  protected openVehiclePanel(booking: VehicleBooking): void {
+    this.selectedVehicleBooking.set(booking);
+  }
+
+  protected onVehicleBookingChanged(updated: VehicleBooking): void {
+    this.vehicleBookings.update((list) => list.map((b) => (b.id === updated.id ? updated : b)));
+    this.selectedVehicleBooking.set(updated);
   }
 
   protected onBookingChanged(updated: Booking): void {

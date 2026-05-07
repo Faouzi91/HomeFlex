@@ -124,7 +124,9 @@ export class PropertyApi extends BaseApi {
     );
   }
 
-  getPricingRules(propertyId: string): Observable<import('../../../core/models/api.types').PricingRule[]> {
+  getPricingRules(
+    propertyId: string,
+  ): Observable<import('../../../core/models/api.types').PricingRule[]> {
     return this.http.get<import('../../../core/models/api.types').PricingRule[]>(
       `${this.baseUrl}/properties/${propertyId}/pricing/rules`,
     );
@@ -155,13 +157,14 @@ export class PropertyApi extends BaseApi {
   }
 
   createRoomType(propertyId: string, body: RoomTypeCreateRequest): Observable<RoomType> {
-    return this.http.post<RoomType>(
-      `${this.baseUrl}/properties/${propertyId}/room-types`,
-      body,
-    );
+    return this.http.post<RoomType>(`${this.baseUrl}/properties/${propertyId}/room-types`, body);
   }
 
-  updateRoomType(propertyId: string, roomTypeId: string, body: RoomTypeCreateRequest): Observable<RoomType> {
+  updateRoomType(
+    propertyId: string,
+    roomTypeId: string,
+    body: RoomTypeCreateRequest,
+  ): Observable<RoomType> {
     return this.http.put<RoomType>(
       `${this.baseUrl}/properties/${propertyId}/room-types/${roomTypeId}`,
       body,

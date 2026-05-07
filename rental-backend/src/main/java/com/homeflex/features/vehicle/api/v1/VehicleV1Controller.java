@@ -204,4 +204,27 @@ public class VehicleV1Controller {
         UUID ownerId = UUID.fromString(authentication.getName());
         return ResponseEntity.ok(ApiPageResponse.from(vehicleService.getByOwnerId(ownerId, pageable)));
     }
+
+    @PostMapping("/{id}/bookings/{bookingId}/approve")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<Void> approveBooking(
+            @PathVariable UUID id,
+            @PathVariable UUID bookingId,
+            Authentication authentication) {
+        UUID ownerId = UUID.fromString(authentication.getName());
+        vehicleAvailabilityService.approve(bookingId, ownerId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/bookings/{bookingId}/reject")
+    @PreAuthorize("hasAnyRole('LANDLORD', 'ADMIN')")
+    public ResponseEntity<Void> rejectBooking(
+            @PathVariable UUID id,
+            @PathVariable UUID bookingId,
+            @RequestParam(required = false) String reason,
+            Authentication authentication) {
+        UUID ownerId = UUID.fromString(authentication.getName());
+        vehicleAvailabilityService.reject(bookingId, ownerId, reason);
+        return ResponseEntity.ok().build();
+    }
 }

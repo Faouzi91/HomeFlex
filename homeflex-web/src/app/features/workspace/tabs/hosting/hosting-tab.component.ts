@@ -8,8 +8,10 @@ import { HttpClient } from '@angular/common/http';
 import { BookingApi } from '../../../../core/api/services/booking.api';
 import { LeaseApi } from '../../../../core/api/services/lease.api';
 import { PropertyApi } from '../../../../core/api/services/property.api';
+import { VehicleApi } from '../../../../core/api/services/vehicle.api';
 import { PayoutApi } from '../../../../core/api/services/payout.api';
 import {
+  ApiListResponse,
   Booking,
   HotelOccupancy,
   OccupancyData,
@@ -25,6 +27,7 @@ import {
   StandaloneOccupancy,
   UnitStatus,
   Vehicle,
+  VehicleBooking,
 } from '../../../../core/models/api.types';
 import { WorkspaceStore } from '../../workspace.store';
 import { formatCurrency, formatDate, initials } from '../../../../core/utils/formatters';
@@ -39,6 +42,7 @@ export class HostingTabComponent {
   private readonly bookingApi = inject(BookingApi);
   private readonly leaseApi = inject(LeaseApi);
   private readonly propertyApi = inject(PropertyApi);
+  private readonly vehicleApi = inject(VehicleApi);
   private readonly payoutApi = inject(PayoutApi);
   private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
@@ -252,7 +256,10 @@ export class HostingTabComponent {
   protected loadRoomTypes(propertyId: string): void {
     this.propertyApi
       .getRoomTypes(propertyId)
-      .pipe(catchError(() => of({ data: [] as RoomType[] })), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of({ data: [] as RoomType[] })),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((res) => this.roomTypes.set(res.data));
   }
 
@@ -277,7 +284,10 @@ export class HostingTabComponent {
       : this.propertyApi.createRoomType(prop.id, body);
 
     request$
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((rt) => {
         if (rt) {
           if (editId) {
@@ -287,7 +297,13 @@ export class HostingTabComponent {
           }
           this.showAddRoomType.set(false);
           this.editingRoomTypeId.set(null);
-          this.roomTypeForm.reset({ bedType: 'DOUBLE', numBeds: 1, maxOccupancy: 2, totalRooms: 1, pricePerNight: 0 });
+          this.roomTypeForm.reset({
+            bedType: 'DOUBLE',
+            numBeds: 1,
+            maxOccupancy: 2,
+            totalRooms: 1,
+            pricePerNight: 0,
+          });
         }
         this.savingRoomType.set(false);
       });
@@ -311,7 +327,13 @@ export class HostingTabComponent {
   protected cancelEditRoomType(): void {
     this.showAddRoomType.set(false);
     this.editingRoomTypeId.set(null);
-    this.roomTypeForm.reset({ bedType: 'DOUBLE', numBeds: 1, maxOccupancy: 2, totalRooms: 1, pricePerNight: 0 });
+    this.roomTypeForm.reset({
+      bedType: 'DOUBLE',
+      numBeds: 1,
+      maxOccupancy: 2,
+      totalRooms: 1,
+      pricePerNight: 0,
+    });
   }
 
   protected deleteRoomType(rtId: string): void {
@@ -319,7 +341,10 @@ export class HostingTabComponent {
     if (!prop || !confirm('Delete this room type?')) return;
     this.propertyApi
       .deleteRoomType(prop.id, rtId)
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe(() => this.roomTypes.update((r) => r.filter((x) => x.id !== rtId)));
   }
 
@@ -405,7 +430,10 @@ export class HostingTabComponent {
       ? this.propertyApi.updateUnit(prop.id, rtId, editing.id, body)
       : this.propertyApi.createUnit(prop.id, rtId, body);
     request$
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((u) => {
         if (u) {
           this.unitsByRoomType.update((m) => {
@@ -428,7 +456,10 @@ export class HostingTabComponent {
     if (!prop || !confirm(`Delete unit ${u.unitNumber}? This cannot be undone.`)) return;
     this.propertyApi
       .deleteUnit(prop.id, rtId, u.id)
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe(() =>
         this.unitsByRoomType.update((m) => ({
           ...m,
@@ -439,17 +470,26 @@ export class HostingTabComponent {
 
   protected unitStatusClass(status: UnitStatus | string): string {
     switch (status) {
-      case 'AVAILABLE':         return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
-      case 'OUT_OF_SERVICE':    return 'bg-rose-50 text-rose-700 ring-1 ring-rose-200';
-      case 'UNDER_MAINTENANCE': return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
-      default:                  return 'bg-slate-100 text-slate-600';
+      case 'AVAILABLE':
+        return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+      case 'OUT_OF_SERVICE':
+        return 'bg-rose-50 text-rose-700 ring-1 ring-rose-200';
+      case 'UNDER_MAINTENANCE':
+        return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
+      default:
+        return 'bg-slate-100 text-slate-600';
     }
   }
 
   protected bedTypeLabel(bt: string): string {
     const map: Record<string, string> = {
-      SINGLE: 'Single', DOUBLE: 'Double', TWIN: 'Twin',
-      QUEEN: 'Queen', KING: 'King', BUNK: 'Bunk', SOFA: 'Sofa',
+      SINGLE: 'Single',
+      DOUBLE: 'Double',
+      TWIN: 'Twin',
+      QUEEN: 'Queen',
+      KING: 'King',
+      BUNK: 'Bunk',
+      SOFA: 'Sofa',
     };
     return map[bt] ?? bt;
   }
@@ -465,7 +505,10 @@ export class HostingTabComponent {
     const to = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     this.propertyApi
       .getOccupancySummary(propertyId, from, to)
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((s) => this.occupancySummary.set(s));
   }
 
@@ -477,7 +520,10 @@ export class HostingTabComponent {
     const to = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     this.propertyApi
       .getOccupancy(prop.id, from, to)
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((d) => this.occupancyData.set(d));
   }
 
@@ -491,9 +537,12 @@ export class HostingTabComponent {
 
   protected occupancyDayClass(status: string): string {
     switch (status) {
-      case 'BOOKED':  return 'bg-rose-400 text-white';
-      case 'BLOCKED': return 'bg-slate-300 text-slate-600';
-      default:        return 'bg-emerald-100 text-emerald-700';
+      case 'BOOKED':
+        return 'bg-rose-400 text-white';
+      case 'BLOCKED':
+        return 'bg-slate-300 text-slate-600';
+      default:
+        return 'bg-emerald-100 text-emerald-700';
     }
   }
 
@@ -522,7 +571,10 @@ export class HostingTabComponent {
   protected loadPricingRules(propertyId: string): void {
     this.propertyApi
       .getPricingRules(propertyId)
-      .pipe(catchError(() => of([])), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of([])),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((rules) => this.pricingRules.set(rules));
   }
 
@@ -560,7 +612,10 @@ export class HostingTabComponent {
     if (!prop) return;
     this.propertyApi
       .deletePricingRule(prop.id, ruleId)
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe(() => this.pricingRules.update((r) => r.filter((x) => x.id !== ruleId)));
   }
 
@@ -568,10 +623,14 @@ export class HostingTabComponent {
     const pct = ((rule.multiplier - 1) * 100).toFixed(0);
     const sign = rule.multiplier >= 1 ? '+' : '';
     switch (rule.ruleType) {
-      case 'WEEKEND': return `Weekends ${sign}${pct}%`;
-      case 'SEASONAL': return `${rule.label ?? 'Season'} ${sign}${pct}%`;
-      case 'LONG_STAY': return `${rule.minStayDays}+ nights ${sign}${pct}%`;
-      default: return rule.label ?? rule.ruleType;
+      case 'WEEKEND':
+        return `Weekends ${sign}${pct}%`;
+      case 'SEASONAL':
+        return `${rule.label ?? 'Season'} ${sign}${pct}%`;
+      case 'LONG_STAY':
+        return `${rule.minStayDays}+ nights ${sign}${pct}%`;
+      default:
+        return rule.label ?? rule.ruleType;
     }
   }
 
@@ -652,9 +711,12 @@ export class HostingTabComponent {
   // ── Bookings table ────────────────────────────────────────────────────────
 
   protected readonly hostBookings = signal<Booking[]>([]);
+  protected readonly hostVehicleBookings = signal<VehicleBooking[]>([]);
+  protected readonly bookingTypeFilter = signal<'PROPERTY' | 'VEHICLE'>('PROPERTY');
   protected readonly loadingBookings = signal(false);
   protected readonly bookingsLoaded = signal(false);
   protected readonly rejectingId = signal<string | null>(null);
+  protected readonly rejectingType = signal<'PROPERTY' | 'VEHICLE'>('PROPERTY');
   protected readonly rejectReason = signal('');
 
   protected readonly pendingBookings = computed(() =>
@@ -663,16 +725,33 @@ export class HostingTabComponent {
 
   protected loadAllHostBookings(): void {
     const props = this.store.myProperties();
-    if (!props.length) return;
+    const vehicles = this.store.myVehicles();
+    if (!props.length && !vehicles.length) return;
     this.loadingBookings.set(true);
-    forkJoin(
-      props.map((p) =>
-        this.bookingApi.getByProperty(p.id).pipe(catchError(() => of({ data: [] as Booking[] }))),
-      ),
-    )
+
+    const propertyRequests = props.map((p) =>
+      this.bookingApi.getByProperty(p.id).pipe(catchError(() => of({ data: [] as Booking[] }))),
+    );
+
+    const vehicleRequests = vehicles.map((v) =>
+      this.vehicleApi
+        .getActiveBookings(v.id)
+        .pipe(catchError(() => of({ data: [] as VehicleBooking[] }))),
+    );
+
+    forkJoin([...propertyRequests, ...vehicleRequests])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((results) => {
-        this.hostBookings.set(results.flatMap((r) => r.data));
+        const pCount = propertyRequests.length;
+        const pBookings = results
+          .slice(0, pCount)
+          .flatMap((r) => (r as ApiListResponse<Booking>).data);
+        const vBookings = results
+          .slice(pCount)
+          .flatMap((r) => (r as ApiListResponse<VehicleBooking>).data);
+
+        this.hostBookings.set(pBookings);
+        this.hostVehicleBookings.set(vBookings);
         this.loadingBookings.set(false);
         this.bookingsLoaded.set(true);
       });
@@ -685,8 +764,16 @@ export class HostingTabComponent {
       .subscribe(() => this.loadAllHostBookings());
   }
 
-  protected startReject(id: string): void {
+  protected approveVehicleBooking(vehicleId: string, bookingId: string): void {
+    this.vehicleApi
+      .approve(vehicleId, bookingId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadAllHostBookings());
+  }
+
+  protected startReject(id: string, type: 'PROPERTY' | 'VEHICLE' = 'PROPERTY'): void {
     this.rejectingId.set(id);
+    this.rejectingType.set(type);
     this.rejectReason.set('');
   }
 
@@ -697,14 +784,32 @@ export class HostingTabComponent {
   protected submitReject(id: string): void {
     const reason = this.rejectReason().trim();
     if (!reason) return;
-    this.bookingApi
-      .reject(id, reason)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.rejectingId.set(null);
-        this.rejectReason.set('');
-        this.loadAllHostBookings();
-      });
+
+    const type = this.rejectingType();
+    if (type === 'PROPERTY') {
+      this.bookingApi
+        .reject(id, reason)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.rejectingId.set(null);
+          this.rejectReason.set('');
+          this.loadAllHostBookings();
+        });
+    } else {
+      // For vehicles, we need the vehicleId too.
+      // Let's find the booking to get it.
+      const booking = this.hostVehicleBookings().find((b) => b.id === id);
+      if (!booking) return;
+
+      this.vehicleApi
+        .reject(booking.vehicleId, id, reason)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => {
+          this.rejectingId.set(null);
+          this.rejectReason.set('');
+          this.loadAllHostBookings();
+        });
+    }
   }
 
   protected generateLease(bookingId: string): void {
@@ -725,6 +830,17 @@ export class HostingTabComponent {
         if (this.selectedPropertyId() === id) this.selectedPropertyId.set('');
         if (this.detailProperty()?.id === id) this.closeDetail();
         this.store.refreshProperties();
+      });
+  }
+
+  protected deleteVehicle(id: string): void {
+    if (!confirm('Delete this vehicle? This cannot be undone.')) return;
+    this.vehicleApi
+      .delete(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this.detailVehicle()?.id === id) this.closeDetail();
+        this.store.refreshVehicles();
       });
   }
 
@@ -835,7 +951,10 @@ export class HostingTabComponent {
   protected submitForReview(propertyId: string): void {
     this.propertyApi
       .submitForReview(propertyId)
-      .pipe(catchError(() => of(null)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        catchError(() => of(null)),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((updated) => {
         if (updated) {
           this.store.refreshProperties();

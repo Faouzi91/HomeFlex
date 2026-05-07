@@ -2,6 +2,25 @@
 
 All notable changes to the HomeFlex project will be documented in this file.
 
+## [Unreleased] — 2026-05-07 (Validation & Documentation Pass)
+
+### Fixed
+
+- **Angular specs** — Replaced leftover Jasmine spies/assertions with Vitest equivalents in guard, password-reset, and profile tests.
+- **Vehicle detail spec isolation** — Stubbed the Stripe config HTTP dependency and server platform token to prevent unhandled `/api/v1/config` requests during unit tests.
+- **Profile host-data spec** — Flushed Angular signal effects after session changes so KYC and payout loading assertions observe the reactive update.
+
+### Changed
+
+- **Docker Compose docs** — Documented required DB, RabbitMQ, and MinIO credentials now enforced by `docker-compose.yml`.
+- **Backend docs** — Replaced stale Maven/Spring Boot 3 help text with Gradle/Spring Boot 4 guidance and Java 21 test instructions.
+- **Architecture docs** — Updated the system diagram to match the documented PostgreSQL 18, Redis 8, and Elasticsearch 9.1 stack.
+
+### Validation
+
+- `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew test`
+- `docker run --rm -v /home/aboubakar-garba/Documents/Projects/HomeFlex/homeflex-web:/app -w /app node:24 sh -lc "npm test -- --watch=false"`
+
 ## [5.4] — 2026-04-26 (Admin Console — Reference Tables & Role Management)
 
 ### Added
@@ -15,7 +34,7 @@ All notable changes to the HomeFlex project will be documented in this file.
 
 ### Why
 
-Per `CLAUDE.md` the architectural mandate is: *"All global config (amenities, property/vehicle types, listing types, pricing rules, commission rate, cancellation policies) is mutated only by ADMIN via /api/v1/admin/\*"*. The console previously only fulfilled the amenity slice; backend `/admin/configs` existed without UI; user role change had no endpoint at all. This release closes those gaps end-to-end so admin-owned reference data is actually administrable.
+Per `CLAUDE.md` the architectural mandate is: _"All global config (amenities, property/vehicle types, listing types, pricing rules, commission rate, cancellation policies) is mutated only by ADMIN via /api/v1/admin/\*"_. The console previously only fulfilled the amenity slice; backend `/admin/configs` existed without UI; user role change had no endpoint at all. This release closes those gaps end-to-end so admin-owned reference data is actually administrable.
 
 ## [5.3] — 2026-04-26 (Per-Unit Identity Model — Individual Room Tracking)
 
@@ -192,10 +211,12 @@ Per `CLAUDE.md` the architectural mandate is: *"All global config (amenities, pr
 ### Architecture Decision: Defense-in-Depth Guidance
 
 With ownership logic removed from `BookingService`, all enforcement is at the annotation layer. This is correct when:
+
 - Every entry point is a `@PreAuthorize`-annotated controller method.
 - Internal callers (scheduled tasks, webhook handlers) are intentionally admin-level and should not be restricted.
 
 Re-add `ResourcePermissionService.isAllowed()` in the service layer when:
+
 - A method becomes callable from a non-annotated path (Feign client, event-driven consumer, batch job).
 - An `@Async` method runs in a separate thread where `SecurityContextHolder` is not propagated.
 - The method is package-internal and called from a sibling service without going through the controller.

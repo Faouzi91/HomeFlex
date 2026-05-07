@@ -26,6 +26,7 @@ public class StripeWebhookController {
     private final KycService kycService;
     private final AppProperties appProperties;
     private final BookingService bookingService;
+    private final com.homeflex.features.vehicle.service.VehicleAvailabilityService vehicleAvailabilityService;
     private final com.homeflex.core.service.StripeEventService stripeEventService;
 
     @PostMapping("/stripe")
@@ -113,12 +114,22 @@ public class StripeWebhookController {
     private void handlePaymentSucceeded(PaymentIntent pi) {
         log.info("Payment succeeded: piId={}, amount={}, transferGroup={}",
                 pi.getId(), pi.getAmount(), pi.getTransferGroup());
-        bookingService.handlePaymentSucceeded(pi.getId());
+        String group = pi.getTransferGroup();
+        if (group != null && group.startsWith("vehicle_booking_")) {
+            vehicleAvailabilityService.handlePaymentSucceeded(pi.getId());
+        } else {
+            bookingService.handlePaymentSucceeded(pi.getId());
+        }
     }
 
     private void handlePaymentFailed(PaymentIntent pi) {
         log.warn("Payment failed: piId={}, transferGroup={}", pi.getId(), pi.getTransferGroup());
-        bookingService.handlePaymentFailed(pi.getId());
+        String group = pi.getTransferGroup();
+        if (group != null && group.startsWith("vehicle_booking_")) {
+            vehicleAvailabilityService.handlePaymentFailed(pi.getId());
+        } else {
+            bookingService.handlePaymentFailed(pi.getId());
+        }
     }
 
     @SuppressWarnings("unchecked")

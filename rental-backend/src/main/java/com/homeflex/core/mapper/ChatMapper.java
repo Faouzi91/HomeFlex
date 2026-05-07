@@ -12,6 +12,8 @@ public interface ChatMapper {
 
     @Mapping(target = "propertyId", source = "chatRoom.property.id")
     @Mapping(target = "propertyTitle", source = "chatRoom.property.title")
+    @Mapping(target = "tenant", source = "chatRoom.tenant", qualifiedByName = "public")
+    @Mapping(target = "landlord", source = "chatRoom.landlord", qualifiedByName = "public")
     @Mapping(target = "unreadCount", source = "unreadCount")
     ChatRoomDto toDto(ChatRoom chatRoom, Integer unreadCount);
 

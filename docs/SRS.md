@@ -11,31 +11,31 @@
 
 ## Document Control
 
-| Version | Date       | Author        | Description                                                                                                                     |
-| ------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                                                    |
-| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                                                |
-| 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned                                                     |
-| 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion                        |
-| 2.3     | 2026-03-30 | Architect     | Implement: KYC (Stripe Identity), Stripe Connect escrow/payouts, Resilience4j, Prometheus/Grafana monitoring, NgRx Signal Store |
-| 2.4     | 2026-04-09 | Architect     | Implement: Property Availability (V11), Digital Leases (V12), Twilio SMS/WhatsApp, Stripe Webhook Idempotency (V10), Angular 21 |
-| 3.2     | 2026-04-17 | Security Eng. | Security audit: remove OAuth dummy-bypass, fix user-enumeration, constant-time token compare, XFF rate-limit fix, CSP headers, DataInitializer profile-gated, Swagger disabled in prod |
-| 3.3     | 2026-04-17 | Security Eng. | CI hardening: --watch=false, ADMIN_PASSWORD/PII_ENCRYPTION_KEY in CI env; dead code removal; new tests (password-reset enumeration, OAuth stubs, admin guard); skills: security + folder-structure |
-| 3.4     | 2026-04-17 | Architect     | Stripe payment confirmation (client secret → confirmCardPayment), reactive header unread-count badge, landlord received-bookings view, home page resilience fix, public /api/v1/config endpoint. |
-| 3.5     | 2026-04-18 | Architect     | Unread persistence fix (countUnreadInRoom excludes sender), robust avatar upload (null-safe contentType + nginx client_max_body_size 50M), overview stats filtered to active bookings only. |
-| 4.0     | 2026-04-19 | Security Eng. | Full RBAC migration: Role/Permission entities, V27/V28 Flyway migrations, 46 permissions, 4 roles, permission-based authorization with Permissions constants, HomeFlexPermissionEvaluator, OwnershipVerifier; Booking feature refactored to hasAuthority/hasPermission; three new workspace tabs (Finance, Disputes, Insurance); GET /disputes/mine endpoint; comprehensive API smoke-test script. |
-| 4.1     | 2026-04-19 | Security Eng. | Centralized ownership logic: ResourcePermissionService extracts all ownership rules from HomeFlexPermissionEvaluator; BookingService stripped to pure business logic; BookingV1Controller security gap fixed (GET /{id} hasPermission); BookingRepository.findByIdWithParties avoids N+1 in evaluator; 16 ResourcePermissionServiceTest ownership rule tests. |
-| 4.2     | 2026-04-19 | Architect     | Stripe Connect escrow workflow completed: MANUAL capture PaymentIntent, capture-on-approve, prorated early-checkout refund, Stripe Connect Express landlord onboarding (Hosting > Payments tab); DisputeModal standalone component replaces prompt(); BookingDetailPanel wires earlyCheckout API; api.client.ts ConnectOnboardingResponse type fix; payment-modal dead code removed; Prettier lint 100%. |
-| 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules. |
-| 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states. |
-| 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation. |
-| 5.2     | 2026-04-26 | Architect     | Hierarchical Property Model & Admin Availability System: V34 property model enhancements (status/listing-type/policy fields), V35 `room_types` + `room_type_images` tables, V36 `room_inventory` count-based table, V37 booking room-type FK + `numberOfRooms`. Admin owns reference tables, system rules and platform-wide settings. Properties support hierarchical Building → Unit Type structure (RoomType with `totalRooms` per type), real-time availability tracking via `RoomInventoryService.reserve/release` with date-keyed counts. Hotel-style and standalone occupancy unified under `OccupancyController`. Vehicle availability already tracked per-vehicle (each vehicle is its own bookable unit). Frontend: hosting tab now exposes room-types CRUD wizard + occupancy summary; `RoomTypeController`, `OccupancyController` REST endpoints; admin validation checklist for property submissions with structured rejection reasons.
-| 5.1     | 2026-04-26 | Architect     | Sprint 2: booking modification frontend 🔴→🟢 (tenant date-change modal, landlord approve/reject, PENDING_MODIFICATION info card); auto review prompt 🔴→🟢 (NotificationService.sendReviewPromptNotification wired into completeActiveBookings scheduler); admin amenity CRUD 🔴→🟢 (GET/POST/PUT/DELETE /admin/amenities, admin page with table + modal, nav item added).
-| 5.0     | 2026-04-25 | Architect     | Quick wins: price breakdown 🔴→🟢 (4-row breakdown widget with cleaning fee + 15% platform fee + total); category sub-ratings 🔴→🟡→🟢 (frontend now renders sub-ratings from existing backend fields); profile completeness bar 🔴→🟢 (color-coded progress bar in profile tab); read receipts 🔴→🟢 (single/double SVG check on sent messages in messages tab).
-| 4.9     | 2026-04-26 | Architect     | Sprint 1 close-out: geocoding 🔴→🟢 (GeocodingService via Nominatim, wired into PropertyService.createProperty); email verification gate 🟡→🟢 (BookingService.executeCreateDraft enforces isVerified); image thumbnails 🔴→🟢 (StorageService.uploadImageWithThumbnail generates 400px thumb alongside 1200px full; PropertyImage.thumbnailUrl now populated); admin analytics dashboard 🔴→🟢 (KPI grid, CSS bar charts for type/city/status, top-viewed/favorited lists); trust score 🟡→🟢 (already fully implemented in ReviewService — SRS misclassification corrected); Redis double-booking lock 🔴→🟢 (RedissonClient already used in BookingService — SRS misclassification corrected). Rule added: SRS updated after every implementation session.
-| 4.8     | 2026-04-25 | Architect     | Second audit pass — corrected remaining misclassifications found by manual code inspection: account lockout 🔴→🟢 (LoginAttemptService, Redis-backed, configurable); two-way reviews 🟡→🟢 (POST /reviews handles both types, GET /reviews/tenant/{userId}, POST /reviews/{id}/reply); email verification 🟡→🟢 (endpoint exists, gate not enforced); FR-700 AC-6 landlord reply 🔴→🟢. Updated planned list and FR tables accordingly.
-| 4.7     | 2026-04-25 | Architect     | Comprehensive codebase audit: corrected 15+ misclassified SRS items (🔴→🟢: auto-reject, cancellation policies, ES geo-search, full-text search, Twilio SMS, escrow/refunds/receipts, FR-401 finance dashboard, FR-800 leases, FR-900 maintenance, AC-6 dispute resolution; 🔴→🟡: two-way reviews, notification preferences, trust score, blockchain lease stub; 🟡→🔴: account lockout); added new "Implemented features not in SRS" section (pricing rules, room types, booking audit log, state machine, agency, OTP). SRS now reflects actual codebase state at 4.7.
-| 4.6     | 2026-04-25 | Architect     | Full UI/UX premium redesign pass: dark `bg-slate-900` editorial hero headers on properties and vehicles listing pages; premium filter sidebars with `rounded-xl` inputs and `.select-styled` dropdowns; insurance tab restyled with emerald/gold sectioned plan cards; disputes tab restyled with amber color scheme and SVG meta rows; finance tab rebuilt with onboarding hero panel, 4-step progress indicator, earnings dashboard tiles, and improved receipts section; raw enum display fixed across all templates (`.replaceAll('_', ' ')` sweep covering `vehicle-detail`, `property-detail`, `favorites-tab`, `hosting-tab`, `admin-properties`); MinIO image proxy via Nginx `/uploads/` → `minio:9000/rental-app-media/`; `StorageService` generates relative `/uploads/<key>` URLs; V38 Flyway migration rewrites existing absolute `http://` image URLs to relative form. |
+| Version | Date       | Author        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2.1     | 2026-03-28 | Architect     | Align SRS with actual implementation state; separate implemented vs planned                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2.2     | 2026-03-29 | Architect     | Update status: cookie-only auth, Redis rate limiting, ES search, outbox relay, vehicle module completion                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 2.3     | 2026-03-30 | Architect     | Implement: KYC (Stripe Identity), Stripe Connect escrow/payouts, Resilience4j, Prometheus/Grafana monitoring, NgRx Signal Store                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 2.4     | 2026-04-09 | Architect     | Implement: Property Availability (V11), Digital Leases (V12), Twilio SMS/WhatsApp, Stripe Webhook Idempotency (V10), Angular 21                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 3.2     | 2026-04-17 | Security Eng. | Security audit: remove OAuth dummy-bypass, fix user-enumeration, constant-time token compare, XFF rate-limit fix, CSP headers, DataInitializer profile-gated, Swagger disabled in prod                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 3.3     | 2026-04-17 | Security Eng. | CI hardening: --watch=false, ADMIN_PASSWORD/PII_ENCRYPTION_KEY in CI env; dead code removal; new tests (password-reset enumeration, OAuth stubs, admin guard); skills: security + folder-structure                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 3.4     | 2026-04-17 | Architect     | Stripe payment confirmation (client secret → confirmCardPayment), reactive header unread-count badge, landlord received-bookings view, home page resilience fix, public /api/v1/config endpoint.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 3.5     | 2026-04-18 | Architect     | Unread persistence fix (countUnreadInRoom excludes sender), robust avatar upload (null-safe contentType + nginx client_max_body_size 50M), overview stats filtered to active bookings only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 4.0     | 2026-04-19 | Security Eng. | Full RBAC migration: Role/Permission entities, V27/V28 Flyway migrations, 46 permissions, 4 roles, permission-based authorization with Permissions constants, HomeFlexPermissionEvaluator, OwnershipVerifier; Booking feature refactored to hasAuthority/hasPermission; three new workspace tabs (Finance, Disputes, Insurance); GET /disputes/mine endpoint; comprehensive API smoke-test script.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 4.1     | 2026-04-19 | Security Eng. | Centralized ownership logic: ResourcePermissionService extracts all ownership rules from HomeFlexPermissionEvaluator; BookingService stripped to pure business logic; BookingV1Controller security gap fixed (GET /{id} hasPermission); BookingRepository.findByIdWithParties avoids N+1 in evaluator; 16 ResourcePermissionServiceTest ownership rule tests.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 4.2     | 2026-04-19 | Architect     | Stripe Connect escrow workflow completed: MANUAL capture PaymentIntent, capture-on-approve, prorated early-checkout refund, Stripe Connect Express landlord onboarding (Hosting > Payments tab); DisputeModal standalone component replaces prompt(); BookingDetailPanel wires earlyCheckout API; api.client.ts ConnectOnboardingResponse type fix; payment-modal dead code removed; Prettier lint 100%.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 4.3     | 2026-04-23 | Architect     | Production-grade state machine booking workflow: `BookingStatus` expanded to 10 states; `BookingStateMachine` enforces transitions; `BookingAuditLog` tracks all changes; booking creation split into `/draft` and `/pay` endpoints with idempotency keys; `ResourcePermissionService` supports Vehicle ownership rules.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 4.4     | 2026-04-24 | Architect     | Finalized booking workflow parity for vehicles: `VehicleBookingStatus` aligned with `BookingStatus` (10 states); split-payment flow (`/draft` and `/pay`) implemented for vehicles; frontend dashboard filters and visual status mappings updated for all 10 lifecycle states.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 4.5     | 2026-04-23 | Architect     | Frontend quality pass: all workspace tabs migrated off deprecated `ApiClient` to domain API services (`DisputeApi`, `FinanceApi`, `PayoutApi`, `InsuranceApi`); `takeUntilDestroyed` applied to all component subscriptions; insurance tab now fetches both TENANT and LANDLORD plans via `forkJoin`; Stripe Connect banner gated on `stripeNotConnected` computed signal; maintenance tab property selector replaced with `<select>` from `WorkspaceStore.myProperties()`; social login buttons (Apple/Facebook) disabled with "Soon" badge pending OAuth implementation.                                                                                                                                                                                                                                                                                                                                                                          |
+| 5.2     | 2026-04-26 | Architect     | Hierarchical Property Model & Admin Availability System: V34 property model enhancements (status/listing-type/policy fields), V35 `room_types` + `room_type_images` tables, V36 `room_inventory` count-based table, V37 booking room-type FK + `numberOfRooms`. Admin owns reference tables, system rules and platform-wide settings. Properties support hierarchical Building → Unit Type structure (RoomType with `totalRooms` per type), real-time availability tracking via `RoomInventoryService.reserve/release` with date-keyed counts. Hotel-style and standalone occupancy unified under `OccupancyController`. Vehicle availability already tracked per-vehicle (each vehicle is its own bookable unit). Frontend: hosting tab now exposes room-types CRUD wizard + occupancy summary; `RoomTypeController`, `OccupancyController` REST endpoints; admin validation checklist for property submissions with structured rejection reasons. |
+| 5.1     | 2026-04-26 | Architect     | Sprint 2: booking modification frontend 🔴→🟢 (tenant date-change modal, landlord approve/reject, PENDING_MODIFICATION info card); auto review prompt 🔴→🟢 (NotificationService.sendReviewPromptNotification wired into completeActiveBookings scheduler); admin amenity CRUD 🔴→🟢 (GET/POST/PUT/DELETE /admin/amenities, admin page with table + modal, nav item added).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 5.0     | 2026-04-25 | Architect     | Quick wins: price breakdown 🔴→🟢 (4-row breakdown widget with cleaning fee + 15% platform fee + total); category sub-ratings 🔴→🟡→🟢 (frontend now renders sub-ratings from existing backend fields); profile completeness bar 🔴→🟢 (color-coded progress bar in profile tab); read receipts 🔴→🟢 (single/double SVG check on sent messages in messages tab).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 4.9     | 2026-04-26 | Architect     | Sprint 1 close-out: geocoding 🔴→🟢 (GeocodingService via Nominatim, wired into PropertyService.createProperty); email verification gate 🟡→🟢 (BookingService.executeCreateDraft enforces isVerified); image thumbnails 🔴→🟢 (StorageService.uploadImageWithThumbnail generates 400px thumb alongside 1200px full; PropertyImage.thumbnailUrl now populated); admin analytics dashboard 🔴→🟢 (KPI grid, CSS bar charts for type/city/status, top-viewed/favorited lists); trust score 🟡→🟢 (already fully implemented in ReviewService — SRS misclassification corrected); Redis double-booking lock 🔴→🟢 (RedissonClient already used in BookingService — SRS misclassification corrected). Rule added: SRS updated after every implementation session.                                                                                                                                                                                       |
+| 4.8     | 2026-04-25 | Architect     | Second audit pass — corrected remaining misclassifications found by manual code inspection: account lockout 🔴→🟢 (LoginAttemptService, Redis-backed, configurable); two-way reviews 🟡→🟢 (POST /reviews handles both types, GET /reviews/tenant/{userId}, POST /reviews/{id}/reply); email verification 🟡→🟢 (endpoint exists, gate not enforced); FR-700 AC-6 landlord reply 🔴→🟢. Updated planned list and FR tables accordingly.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 4.7     | 2026-04-25 | Architect     | Comprehensive codebase audit: corrected 15+ misclassified SRS items (🔴→🟢: auto-reject, cancellation policies, ES geo-search, full-text search, Twilio SMS, escrow/refunds/receipts, FR-401 finance dashboard, FR-800 leases, FR-900 maintenance, AC-6 dispute resolution; 🔴→🟡: two-way reviews, notification preferences, trust score, blockchain lease stub; 🟡→🔴: account lockout); added new "Implemented features not in SRS" section (pricing rules, room types, booking audit log, state machine, agency, OTP). SRS now reflects actual codebase state at 4.7.                                                                                                                                                                                                                                                                                                                                                                           |
+| 4.6     | 2026-04-25 | Architect     | Full UI/UX premium redesign pass: dark `bg-slate-900` editorial hero headers on properties and vehicles listing pages; premium filter sidebars with `rounded-xl` inputs and `.select-styled` dropdowns; insurance tab restyled with emerald/gold sectioned plan cards; disputes tab restyled with amber color scheme and SVG meta rows; finance tab rebuilt with onboarding hero panel, 4-step progress indicator, earnings dashboard tiles, and improved receipts section; raw enum display fixed across all templates (`.replaceAll('_', ' ')` sweep covering `vehicle-detail`, `property-detail`, `favorites-tab`, `hosting-tab`, `admin-properties`); MinIO image proxy via Nginx `/uploads/` → `minio:9000/rental-app-media/`; `StorageService` generates relative `/uploads/<key>` URLs; V38 Flyway migration rewrites existing absolute `http://` image URLs to relative form.                                                               |
 
 ---
 
@@ -61,7 +61,7 @@
 
 ### Implemented since v5.4 (Admin Console — Reference Tables & Role Management)
 
-> **Spec reference:** `CLAUDE.md` Admin-Owned Reference Data mandate — *"All global config (amenities, property/vehicle types, listing types, pricing rules, commission rate, cancellation policies) is mutated only by ADMIN via /api/v1/admin/\*"*. v5.4 closes the long-standing gap where backend admin endpoints existed without UI, and where some reference data had no endpoint at all.
+> **Spec reference:** `CLAUDE.md` Admin-Owned Reference Data mandate — _"All global config (amenities, property/vehicle types, listing types, pricing rules, commission rate, cancellation policies) is mutated only by ADMIN via /api/v1/admin/\*"_. v5.4 closes the long-standing gap where backend admin endpoints existed without UI, and where some reference data had no endpoint at all.
 
 - 🟢 **Admin System Settings** — `GET/PATCH /admin/configs` is now consumed by a dedicated page at `/admin/system-settings`. V40 seeds 10 additional admin-controlled keys (booking advance windows, cancellation grace, payout delay, default currency, KYC gating, max images, dispute window, login rate limit, search batch size). Inline editor with dirty-tracking and save/reset per row.
 - 🟢 **User Role Management** — New endpoint `PATCH /admin/users/{id}/role` (Spring Security `@PreAuthorize("hasRole('ADMIN')")`). Updates both legacy `users.role` column and authoritative RBAC `Set<Role>` via `RoleRepository.findByName("ROLE_…")`. Frontend Users admin page exposes role selector inline with per-row confirmation; promotion to ADMIN displays an extra warning prompt.
@@ -990,26 +990,26 @@ This matrix is normative for architectural governance. Every major choice includ
 
 This section separates what is implemented from what is planned. Updated 2026-04-23.
 
-| Area                  | Current State (implemented)                                                                                                                                 | Target State (planned)                                                    | Gap Priority |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------ |
-| Backend architecture  | Package-by-feature: `com.homeflex.core` + `com.homeflex.features.<feature>`. Layered within each module: `api/v1/` → `service/` → `domain/repository/` → DB | Evolve to DDD bounded contexts at scale                                   | Low          |
-| Backend build/runtime | Gradle + Java 21 + Spring Boot 4                                                                                                                            | Keep stack, harden runtime controls                                       | Low          |
-| Frontend composition  | Fully standalone components (Angular 21), NgRx Signal Store, `takeUntilDestroyed` subscriptions                                                             | Production deployment on ECS                                              | Medium       |
-| Frontend state        | NgRx Signal Store (`SessionStore`, `WorkspaceStore`)                                                                                                        | DevTools integration, time-travel debugging                               | Low          |
-| Auth token storage    | httpOnly cookies (ACCESS_TOKEN + REFRESH_TOKEN) + CSRF token flow                                                                                           | Secrets Manager for JWT secret                                            | Low          |
-| WebSocket             | STOMP over WebSocket with in-memory Simple Broker                                                                                                           | RabbitMQ-backed STOMP relay for multi-node support                        | Medium       |
-| Caching               | Redis rate-limiting active; Spring Cache not yet applied                                                                                                     | Redis for property search, session data, Redlock distributed locking      | Medium       |
-| Messaging             | Transactional outbox + RabbitMQ consumers (PropertyIndexConsumer)                                                                                           | Full event worker fleet for all domain events                             | Medium       |
-| Search                | Elasticsearch 9.1 via outbox-relay consumer, fuzzy + geo queries                                                                                            | Multi-field boosting, autocomplete, analytics aggregations                | Low          |
-| Email                 | Gmail SMTP via Spring Mail                                                                                                                                  | AWS SES for production-scale transactional email                          | Low          |
-| SMS/WhatsApp          | Twilio integrated (`TwilioSmsGateway`)                                                                                                                      | Phone OTP verification flow                                               | Low          |
-| Storage               | StorageService exists (S3 + dev fallback)                                                                                                                   | Fully configured S3 + CloudFront CDN                                      | Medium       |
-| Deployment            | Docker Compose (8 services on single host)                                                                                                                  | AWS ECS Fargate with auto-scaling, ALB, health checks                     | High         |
-| Monitoring            | Prometheus + Grafana + ELK stack (docker-compose.monitoring.yml)                                                                                            | Production scraping, PagerDuty alerts, SLO dashboards                     | Medium       |
-| Security              | Full RBAC, httpOnly cookies, CSRF, rate-limiting, WAF headers, Resilience4j                                                                                 | Secrets Manager, stricter CORS, policy as code                            | Medium       |
-| OAuth providers       | Google only (Apple/Facebook UI shows "Soon" badge)                                                                                                          | Google + Apple + Facebook                                                 | Low          |
-| Vehicle vertical      | Full implementation (CRUD, images, availability, bookings, split-payment, 10-state lifecycle)                                                                | Condition reports, insurance integration                                  | Low          |
-| KYC                   | Stripe Identity implemented (KycVerification entity, webhook status updates, landlord publishing guard)                                                      | Mandatory KYC gate before first listing                                   | Low          |
+| Area                  | Current State (implemented)                                                                                                                                 | Target State (planned)                                               | Gap Priority |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------ |
+| Backend architecture  | Package-by-feature: `com.homeflex.core` + `com.homeflex.features.<feature>`. Layered within each module: `api/v1/` → `service/` → `domain/repository/` → DB | Evolve to DDD bounded contexts at scale                              | Low          |
+| Backend build/runtime | Gradle + Java 21 + Spring Boot 4                                                                                                                            | Keep stack, harden runtime controls                                  | Low          |
+| Frontend composition  | Fully standalone components (Angular 21), NgRx Signal Store, `takeUntilDestroyed` subscriptions                                                             | Production deployment on ECS                                         | Medium       |
+| Frontend state        | NgRx Signal Store (`SessionStore`, `WorkspaceStore`)                                                                                                        | DevTools integration, time-travel debugging                          | Low          |
+| Auth token storage    | httpOnly cookies (ACCESS_TOKEN + REFRESH_TOKEN) + CSRF token flow                                                                                           | Secrets Manager for JWT secret                                       | Low          |
+| WebSocket             | STOMP over WebSocket with in-memory Simple Broker                                                                                                           | RabbitMQ-backed STOMP relay for multi-node support                   | Medium       |
+| Caching               | Redis rate-limiting active; Spring Cache not yet applied                                                                                                    | Redis for property search, session data, Redlock distributed locking | Medium       |
+| Messaging             | Transactional outbox + RabbitMQ consumers (PropertyIndexConsumer)                                                                                           | Full event worker fleet for all domain events                        | Medium       |
+| Search                | Elasticsearch 9.1 via outbox-relay consumer, fuzzy + geo queries                                                                                            | Multi-field boosting, autocomplete, analytics aggregations           | Low          |
+| Email                 | Gmail SMTP via Spring Mail                                                                                                                                  | AWS SES for production-scale transactional email                     | Low          |
+| SMS/WhatsApp          | Twilio integrated (`TwilioSmsGateway`)                                                                                                                      | Phone OTP verification flow                                          | Low          |
+| Storage               | StorageService exists (S3 + dev fallback)                                                                                                                   | Fully configured S3 + CloudFront CDN                                 | Medium       |
+| Deployment            | Docker Compose (8 services on single host)                                                                                                                  | AWS ECS Fargate with auto-scaling, ALB, health checks                | High         |
+| Monitoring            | Prometheus + Grafana + ELK stack (docker-compose.monitoring.yml)                                                                                            | Production scraping, PagerDuty alerts, SLO dashboards                | Medium       |
+| Security              | Full RBAC, httpOnly cookies, CSRF, rate-limiting, WAF headers, Resilience4j                                                                                 | Secrets Manager, stricter CORS, policy as code                       | Medium       |
+| OAuth providers       | Google only (Apple/Facebook UI shows "Soon" badge)                                                                                                          | Google + Apple + Facebook                                            | Low          |
+| Vehicle vertical      | Full implementation (CRUD, images, availability, bookings, split-payment, 10-state lifecycle)                                                               | Condition reports, insurance integration                             | Low          |
+| KYC                   | Stripe Identity implemented (KycVerification entity, webhook status updates, landlord publishing guard)                                                     | Mandatory KYC gate before first listing                              | Low          |
 
 ## 4.1 High-Level Architecture Diagram
 
@@ -1269,52 +1269,52 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 ### FR-100: User Registration 🟢
 
 | ID                      | FR-100                                                                            |
-| ----------------------- | --------------------------------------------------------------------------------- | ---------- |
+| ----------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Users register via email/password or Google OAuth                                 |
 | **Roles**               | TENANT, LANDLORD, ADMIN                                                           |
 | **Acceptance Criteria** | Status                                                                            |
-| AC-1                    | Email registration requires: email, password, first name, last name, phone number | 🟢         |
+| AC-1                    | Email registration requires: email, password, first name, last name, phone number | 🟢                                                                                                                                                                                                                                                  |
 | AC-2                    | Email verification link sent on registration                                      | 🟢 `GET /auth/verify?token=...` endpoint; email sent on register; sets `user.isVerified`. Gate enforced: bookings blocked until verified (`BookingService`); listings blocked via `KycService.requireVerified()`. Google OAuth users auto-verified. |
-| AC-3                    | Google OAuth login creates account on first use, links on subsequent uses         | 🟢         |
-| AC-4                    | Duplicate email registration returns descriptive error                            | 🟢         |
-| AC-5                    | User selects role (TENANT or LANDLORD) at registration                            | 🟢         |
-| AC-6                    | Phone number verified via OTP (Twilio)                                            | 🔴 Planned |
+| AC-3                    | Google OAuth login creates account on first use, links on subsequent uses         | 🟢                                                                                                                                                                                                                                                  |
+| AC-4                    | Duplicate email registration returns descriptive error                            | 🟢                                                                                                                                                                                                                                                  |
+| AC-5                    | User selects role (TENANT or LANDLORD) at registration                            | 🟢                                                                                                                                                                                                                                                  |
+| AC-6                    | Phone number verified via OTP (Twilio)                                            | 🔴 Planned                                                                                                                                                                                                                                          |
 
 ### FR-101: Authentication 🟢
 
 | ID                      | FR-101                                                                     |
-| ----------------------- | -------------------------------------------------------------------------- | -------------------------------------------------- |
+| ----------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Users authenticate via credentials or Google OAuth                         |
 | **Acceptance Criteria** | Status                                                                     |
-| AC-1                    | JWT access token issued with 15-minute expiry                              | 🟢                                                 |
-| AC-2                    | Refresh token issued with 7-day expiry                                     | 🟢 (stored in httpOnly Secure/SameSite=Strict cookie) |
+| AC-1                    | JWT access token issued with 15-minute expiry                              | 🟢                                                                                                                                    |
+| AC-2                    | Refresh token issued with 7-day expiry                                     | 🟢 (stored in httpOnly Secure/SameSite=Strict cookie)                                                                                 |
 | AC-3                    | Failed login attempts: lock account after 5 failures                       | 🟢 `LoginAttemptService` (Redis-backed); configurable max attempts (default 5) and lock duration (default 30 min) via `AppProperties` |
-| AC-4                    | Multi-device support: user can be logged in on web + mobile simultaneously | 🟢                                                 |
-| AC-5                    | Logout invalidates refresh token server-side (DB)                          | 🟢 (DB-backed, not Redis)                          |
-| AC-6                    | Password reset via email link                                              | 🟢 (forgot-password + reset-password routes exist) |
+| AC-4                    | Multi-device support: user can be logged in on web + mobile simultaneously | 🟢                                                                                                                                    |
+| AC-5                    | Logout invalidates refresh token server-side (DB)                          | 🟢 (DB-backed, not Redis)                                                                                                             |
+| AC-6                    | Password reset via email link                                              | 🟢 (forgot-password + reset-password routes exist)                                                                                    |
 
 ### FR-102: User Profile 🟢
 
-| ID                      | FR-102                                        |
-| ----------------------- | --------------------------------------------- | ----------------------------------- |
-| **Description**         | Users manage their profile and settings       |
-| **Acceptance Criteria** | Status                                        |
-| AC-1                    | Editable fields: name, phone, bio, avatar     | 🟢                                  |
-| AC-2                    | Avatar upload                                 | 🟢                                  |
-| AC-3                    | Language preference persisted to localStorage | 🟢 (localStorage, not user profile) |
-| AC-4                    | Users can delete their account (GDPR erasure with typed confirmation guard) | 🟢   |
-| AC-5                    | Profile completeness score                    | 🟢 Color-coded progress bar in profile tab (emerald ≥80%, amber ≥50%, rose <50%); reads `User.profileCompleteness` from session. |
+| ID                      | FR-102                                                                      |
+| ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Description**         | Users manage their profile and settings                                     |
+| **Acceptance Criteria** | Status                                                                      |
+| AC-1                    | Editable fields: name, phone, bio, avatar                                   | 🟢                                                                                                                               |
+| AC-2                    | Avatar upload                                                               | 🟢                                                                                                                               |
+| AC-3                    | Language preference persisted to localStorage                               | 🟢 (localStorage, not user profile)                                                                                              |
+| AC-4                    | Users can delete their account (GDPR erasure with typed confirmation guard) | 🟢                                                                                                                               |
+| AC-5                    | Profile completeness score                                                  | 🟢 Color-coded progress bar in profile tab (emerald ≥80%, amber ≥50%, rose <50%); reads `User.profileCompleteness` from session. |
 
 ### FR-103: KYC Verification (Landlords) 🟢
 
-| ID                      | FR-103                                                                                          |
-| ----------------------- | ----------------------------------------------------------------------------------------------- | ---- |
-| **Description**         | Landlord identity verification via Stripe Identity before publishing listings                   |
-| **Acceptance Criteria** | Status                                                                                          |
-| AC-1                    | `KycVerification` entity tracks verification status per landlord                               | 🟢   |
-| AC-2                    | Webhook-driven status updates from Stripe Identity events                                       | 🟢   |
-| AC-3                    | Publishing guard prevents listing creation until KYC is verified                               | 🟢   |
-| AC-4                    | KYC status and session launch available in the workspace Settings tab                          | 🟢   |
+| ID                      | FR-103                                                                        |
+| ----------------------- | ----------------------------------------------------------------------------- | --- |
+| **Description**         | Landlord identity verification via Stripe Identity before publishing listings |
+| **Acceptance Criteria** | Status                                                                        |
+| AC-1                    | `KycVerification` entity tracks verification status per landlord              | 🟢  |
+| AC-2                    | Webhook-driven status updates from Stripe Identity events                     | 🟢  |
+| AC-3                    | Publishing guard prevents listing creation until KYC is verified              | 🟢  |
+| AC-4                    | KYC status and session launch available in the workspace Settings tab         | 🟢  |
 
 ---
 
@@ -1323,42 +1323,42 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 ### FR-200: Property Listings 🟢
 
 | ID                      | FR-200                                                                                                    |
-| ----------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Description**         | Landlords create, edit, and manage property listings                                                      |
 | **Acceptance Criteria** | Status                                                                                                    |
-| AC-1                    | Required fields: title, description, property type, listing type, price, currency, address, city, country | 🟢                                     |
-| AC-2                    | Property types: Apartment, House, Villa, Studio, Room, Office, Land, Warehouse, Co-working Space          | 🟢 (PropertyType enum)                 |
-| AC-3                    | Listing types: Long-term Rent, Short-term Rent, Sale                                                      | 🟢 (ListingType enum)                  |
-| AC-4                    | Optional fields: bedrooms, bathrooms, area (sqm), floor number, total floors, year built, parking spots   | 🟢                                     |
-| AC-5                    | Media: images uploaded via multipart form                                                                 | 🟢                                     |
+| AC-1                    | Required fields: title, description, property type, listing type, price, currency, address, city, country | 🟢                                                                                                                                                                                               |
+| AC-2                    | Property types: Apartment, House, Villa, Studio, Room, Office, Land, Warehouse, Co-working Space          | 🟢 (PropertyType enum)                                                                                                                                                                           |
+| AC-3                    | Listing types: Long-term Rent, Short-term Rent, Sale                                                      | 🟢 (ListingType enum)                                                                                                                                                                            |
+| AC-4                    | Optional fields: bedrooms, bathrooms, area (sqm), floor number, total floors, year built, parking spots   | 🟢                                                                                                                                                                                               |
+| AC-5                    | Media: images uploaded via multipart form                                                                 | 🟢                                                                                                                                                                                               |
 | AC-6                    | Images auto-resized to multiple sizes                                                                     | 🟢 `StorageService.uploadImageWithThumbnail()`: full-size capped at 1200px (imgscalr) + 400px thumbnail uploaded to `thumbs/` sub-prefix; `PropertyImage.thumbnailUrl` populated on every upload |
-| AC-7                    | Amenities: multi-select from predefined list (categorized by AmenityCategory)                             | 🟢                                     |
-| AC-8                    | Geolocation: lat/lng stored on property                                                                   | 🟢 `GeocodingService` auto-populates via Nominatim on create; powers ES geo-distance sort |
-| AC-9                    | Availability calendar — landlord blocks dates                                                             | 🟢 (`property_availability` table V11; `POST /properties/{id}/availability/block`)  |
-| AC-10                   | Pricing rules: WEEKEND, SEASONAL, LONG_STAY multipliers                                                   | 🟢 (`PricingRule` entity V33; `PricingService` + `PricingController`)              |
-| AC-11                   | Listing status flow: PENDING → APPROVED / REJECTED (PropertyStatus enum)                                  | 🟢                                     |
-| AC-12                   | Admin reviews and approves/rejects listings                                                               | 🟢                                     |
+| AC-7                    | Amenities: multi-select from predefined list (categorized by AmenityCategory)                             | 🟢                                                                                                                                                                                               |
+| AC-8                    | Geolocation: lat/lng stored on property                                                                   | 🟢 `GeocodingService` auto-populates via Nominatim on create; powers ES geo-distance sort                                                                                                        |
+| AC-9                    | Availability calendar — landlord blocks dates                                                             | 🟢 (`property_availability` table V11; `POST /properties/{id}/availability/block`)                                                                                                               |
+| AC-10                   | Pricing rules: WEEKEND, SEASONAL, LONG_STAY multipliers                                                   | 🟢 (`PricingRule` entity V33; `PricingService` + `PricingController`)                                                                                                                            |
+| AC-11                   | Listing status flow: PENDING → APPROVED / REJECTED (PropertyStatus enum)                                  | 🟢                                                                                                                                                                                               |
+| AC-12                   | Admin reviews and approves/rejects listings                                                               | 🟢                                                                                                                                                                                               |
 
 ### FR-201: Vehicle Listings 🟢 Fully Implemented
 
-| ID              | FR-201                                                                                                                                                                                   |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Description** | Vehicle rental listings — full CRUD with images, condition reports, availability, and split-payment bookings                                                                             |
+| ID              | FR-201                                                                                                                                                                                                                                                                                                                                   |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Description** | Vehicle rental listings — full CRUD with images, condition reports, availability, and split-payment bookings                                                                                                                                                                                                                             |
 | **Note**        | Vehicle entity, repository, service, controller (`VehicleV1Controller`), image uploads, condition reports, soft-delete, 10-state booking lifecycle (`VehicleBookingStatus`), split `/draft`+`/pay` endpoints all implemented. Frontend: vehicle detail page with Stripe Elements, vehicles listing page with dark hero + filter sidebar. |
 
 ### FR-202: Property Search & Discovery 🟢
 
 | ID                      | FR-202                                                                                       |
-| ----------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------- |
+| ----------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | **Description**         | Users search and discover properties with filters and pagination                             |
 | **Acceptance Criteria** | Status                                                                                       |
-| AC-1                    | Search across properties using JPA Specifications (LIKE queries on title, description, city) | 🟢 (not Elasticsearch)              |
+| AC-1                    | Search across properties using JPA Specifications (LIKE queries on title, description, city) | 🟢 (not Elasticsearch)                                                                      |
 | AC-2                    | Geo-search with map view                                                                     | 🟢 (Elasticsearch geo-distance queries in `PropertySearchService`; Leaflet map in frontend) |
-| AC-3                    | Property filters: type, listing type, price range, bedrooms, bathrooms, amenities, city      | 🟢                                  |
-| AC-4                    | Sort options: price, newest                                                                  | 🟢                                  |
-| AC-5                    | Search results: paginated                                                                    | 🟢 (ApiPageResponse)                |
-| AC-6                    | Full-text search via Elasticsearch                                                           | 🟢 (fuzzy matching via `PropertySearchService` + `PropertyIndexConsumer` outbox relay) |
-| AC-7                    | Autocomplete, saved searches, similar listings, comparison                                   | 🔴 Planned                          |
+| AC-3                    | Property filters: type, listing type, price range, bedrooms, bathrooms, amenities, city      | 🟢                                                                                          |
+| AC-4                    | Sort options: price, newest                                                                  | 🟢                                                                                          |
+| AC-5                    | Search results: paginated                                                                    | 🟢 (ApiPageResponse)                                                                        |
+| AC-6                    | Full-text search via Elasticsearch                                                           | 🟢 (fuzzy matching via `PropertySearchService` + `PropertyIndexConsumer` outbox relay)      |
+| AC-7                    | Autocomplete, saved searches, similar listings, comparison                                   | 🔴 Planned                                                                                  |
 
 ---
 
@@ -1367,38 +1367,38 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 ### FR-300: Create Booking 🟢
 
 | ID                      | FR-300                                               |
-| ----------------------- | ---------------------------------------------------- | --------------------------------- |
+| ----------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Tenants book available properties                    |
 | **Acceptance Criteria** | Status                                               |
-| AC-1                    | Property booking: select check-in/check-out dates    | 🟢                                |
-| AC-2                    | Payment processed via Stripe at booking time         | 🟢 (PaymentService)               |
-| AC-3                    | Booking confirmation notification sent (push)        | 🟢                                |
-| AC-4                    | Double-booking prevention via Redis distributed lock | 🟢 `RedissonClient` lock in `BookingService.createDraftBooking()` — SRS was misclassified |
+| AC-1                    | Property booking: select check-in/check-out dates    | 🟢                                                                                                                                                                                    |
+| AC-2                    | Payment processed via Stripe at booking time         | 🟢 (PaymentService)                                                                                                                                                                   |
+| AC-3                    | Booking confirmation notification sent (push)        | 🟢                                                                                                                                                                                    |
+| AC-4                    | Double-booking prevention via Redis distributed lock | 🟢 `RedissonClient` lock in `BookingService.createDraftBooking()` — SRS was misclassified                                                                                             |
 | AC-5                    | Price breakdown with service fee / taxes             | 🟢 4-row breakdown widget on property detail: base (nights × rate), cleaning fee (conditional), 15% platform service fee, grand total. Computed signals in `property-detail.page.ts`. |
 
 ### FR-301: Manage Booking 🟢
 
 | ID                      | FR-301                                             |
-| ----------------------- | -------------------------------------------------- | ----------------------- |
+| ----------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Description**         | Landlords and tenants manage booking lifecycle     |
 | **Acceptance Criteria** | Status                                             |
-| AC-1                    | Landlord approves or rejects booking               | 🟢                      |
-| AC-2                    | Tenant cancels booking                             | 🟢                      |
-| AC-3                    | Auto-reject after timeout                          | 🟢 (`BookingService.autoRejectExpiredPendingBookings()` scheduled at 24h) |
-| AC-4                    | Cancellation policies (Flexible, Moderate, Strict) | 🟢 (`Property.cancellationPolicy` field; accepted in `PropertyCreateRequest`) |
-| AC-5                    | Booking history accessible with filters            | 🟢 (bookings list page) |
+| AC-1                    | Landlord approves or rejects booking               | 🟢                                                                                                                                                                                                                                                                                                                                               |
+| AC-2                    | Tenant cancels booking                             | 🟢                                                                                                                                                                                                                                                                                                                                               |
+| AC-3                    | Auto-reject after timeout                          | 🟢 (`BookingService.autoRejectExpiredPendingBookings()` scheduled at 24h)                                                                                                                                                                                                                                                                        |
+| AC-4                    | Cancellation policies (Flexible, Moderate, Strict) | 🟢 (`Property.cancellationPolicy` field; accepted in `PropertyCreateRequest`)                                                                                                                                                                                                                                                                    |
+| AC-5                    | Booking history accessible with filters            | 🟢 (bookings list page)                                                                                                                                                                                                                                                                                                                          |
 | AC-6                    | Booking modification (date changes)                | 🟢 Tenant submits date-change request via `POST /bookings/{id}/modify`; landlord approves via `PATCH /bookings/{id}/modify/approve` or rejects via `/modify/reject`; `PENDING_MODIFICATION` info card in `BookingDetailPanel` shows proposed dates/reason; tenant "Request Date Change" button + landlord "Approve/Reject" action buttons wired. |
 
 ### FR-302: Post-Booking 🟡
 
 | ID                      | FR-302                                             |
-| ----------------------- | -------------------------------------------------- | ---------- |
+| ----------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Post-booking actions                               |
 | **Acceptance Criteria** | Status                                             |
-| AC-1                    | Tenant can review property after booking completes | 🟢         |
+| AC-1                    | Tenant can review property after booking completes | 🟢                                                                                                                                                                                                              |
 | AC-2                    | Review prompt sent automatically                   | 🟢 `NotificationService.sendReviewPromptNotification()` called in `BookingService.completeActiveBookings()` scheduler (runs at noon daily). Tenant receives in-app + push notification linking to the property. |
-| AC-3                    | Damage claims, security deposits                   | 🔴 Planned |
-| AC-4                    | Maintenance requests during active booking         | 🟢 (`MaintenanceRequest` entity; workspace Maintenance tab) |
+| AC-3                    | Damage claims, security deposits                   | 🔴 Planned                                                                                                                                                                                                      |
+| AC-4                    | Maintenance requests during active booking         | 🟢 (`MaintenanceRequest` entity; workspace Maintenance tab)                                                                                                                                                     |
 
 ---
 
@@ -1407,23 +1407,23 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 ### FR-400: Payment Processing 🟡
 
 | ID                      | FR-400                                                            |
-| ----------------------- | ----------------------------------------------------------------- | --------------------------- |
+| ----------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | **Description**         | Stripe-based payment processing                                   |
 | **Acceptance Criteria** | Status                                                            |
-| AC-1                    | Payments processed via Stripe; HomeFlex never stores card numbers | 🟢 (PaymentService)         |
-| AC-2                    | Stripe payment intent creation for bookings                       | 🟢                          |
-| AC-3                    | Client secret returned to frontend; `confirmCardPayment` called   | 🟢 (v3.4)                   |
-| AC-4                    | Escrow: funds held until service delivery                         | 🟢 (MANUAL-capture `PaymentIntent`; capture-on-approve via `EscrowService`) |
-| AC-5                    | Payout to landlord with platform commission                       | 🟢 (Stripe Connect Express; `POST /payouts/connect/onboard`; 15% platform commission) |
+| AC-1                    | Payments processed via Stripe; HomeFlex never stores card numbers | 🟢 (PaymentService)                                                                      |
+| AC-2                    | Stripe payment intent creation for bookings                       | 🟢                                                                                       |
+| AC-3                    | Client secret returned to frontend; `confirmCardPayment` called   | 🟢 (v3.4)                                                                                |
+| AC-4                    | Escrow: funds held until service delivery                         | 🟢 (MANUAL-capture `PaymentIntent`; capture-on-approve via `EscrowService`)              |
+| AC-5                    | Payout to landlord with platform commission                       | 🟢 (Stripe Connect Express; `POST /payouts/connect/onboard`; 15% platform commission)    |
 | AC-6                    | Refund processing                                                 | 🟢 (`PaymentService.refundPayment()`; full refund on cancel, prorated on early checkout) |
-| AC-7                    | Multi-currency support                                            | 🔴 Planned                  |
-| AC-8                    | Invoice / receipt generation                                      | 🟢 (`Receipt` entity; receipts API; Finance tab PDF download links) |
-| AC-9                    | Recurring monthly rent collection                                 | 🔴 Planned (Stripe Billing subscriptions)                  |
+| AC-7                    | Multi-currency support                                            | 🔴 Planned                                                                               |
+| AC-8                    | Invoice / receipt generation                                      | 🟢 (`Receipt` entity; receipts API; Finance tab PDF download links)                      |
+| AC-9                    | Recurring monthly rent collection                                 | 🔴 Planned (Stripe Billing subscriptions)                                                |
 
 ### FR-401: Financial Dashboard (Landlords) 🟢 Implemented
 
-| ID              | FR-401                                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ID              | FR-401                                                                                                                                                                                    |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description** | Landlord financial overview — Finance workspace tab shows earnings tiles (Total Earned, Available, Pending, Escrow), receipts list with PDF download, and Stripe Connect onboarding panel |
 
 ---
@@ -1433,32 +1433,32 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 ### FR-500: Real-Time Chat 🟢
 
 | ID                      | FR-500                                                                    |
-| ----------------------- | ------------------------------------------------------------------------- | ------------------------------ |
+| ----------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Tenants and landlords communicate via real-time messaging                 |
 | **Acceptance Criteria** | Status                                                                    |
-| AC-1                    | Chat room created between tenant and landlord                             | 🟢                             |
-| AC-2                    | Real-time message delivery via WebSocket (STOMP/SockJS, in-memory broker) | 🟢                             |
-| AC-3                    | Message types: text                                                       | 🟢 (image/document planned)    |
-| AC-4                    | Typing indicators                                                         | 🟢 (TypingNotification entity) |
-| AC-5                    | Message history paginated                                                 | 🟢                             |
-| AC-6                    | Push notification for new messages                                        | 🟢 (FCM)                       |
-| AC-7                    | Chat room linked to specific property                                     | 🟢                             |
-| AC-8                    | Chat available to registered users only                                   | 🟢                             |
+| AC-1                    | Chat room created between tenant and landlord                             | 🟢                                                                                                                                                        |
+| AC-2                    | Real-time message delivery via WebSocket (STOMP/SockJS, in-memory broker) | 🟢                                                                                                                                                        |
+| AC-3                    | Message types: text                                                       | 🟢 (image/document planned)                                                                                                                               |
+| AC-4                    | Typing indicators                                                         | 🟢 (TypingNotification entity)                                                                                                                            |
+| AC-5                    | Message history paginated                                                 | 🟢                                                                                                                                                        |
+| AC-6                    | Push notification for new messages                                        | 🟢 (FCM)                                                                                                                                                  |
+| AC-7                    | Chat room linked to specific property                                     | 🟢                                                                                                                                                        |
+| AC-8                    | Chat available to registered users only                                   | 🟢                                                                                                                                                        |
 | AC-9                    | Read receipts                                                             | 🟢 Single checkmark (delivered, brand-200) / double checkmark (read, emerald-300) SVG icons on sent messages in messages tab; driven by `Message.isRead`. |
 
 ### FR-501: Notifications 🟡
 
 | ID                      | FR-501                                                                      |
-| ----------------------- | --------------------------------------------------------------------------- | ---------- |
+| ----------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Notification system                                                         |
 | **Acceptance Criteria** | Status                                                                      |
-| AC-1                    | Channels: in-app (Notification entity), push (FCM), email (Gmail SMTP)      | 🟢         |
-| AC-2                    | SMS (Twilio), WhatsApp (Twilio)                                             | 🟢 (`TwilioSmsGateway` wired into `NotificationService` and `OtpService`; fires on booking lifecycle events) |
-| AC-3                    | Notification types: BOOKING, CHAT, PROPERTY, SYSTEM (NotificationType enum) | 🟢         |
-| AC-4                    | In-app notifications with unread count                                      | 🟢         |
-| AC-5                    | Header bell badge reactively combines notification + message unread counts  | 🟢 (v3.4)  |
+| AC-1                    | Channels: in-app (Notification entity), push (FCM), email (Gmail SMTP)      | 🟢                                                                                                                                                         |
+| AC-2                    | SMS (Twilio), WhatsApp (Twilio)                                             | 🟢 (`TwilioSmsGateway` wired into `NotificationService` and `OtpService`; fires on booking lifecycle events)                                               |
+| AC-3                    | Notification types: BOOKING, CHAT, PROPERTY, SYSTEM (NotificationType enum) | 🟢                                                                                                                                                         |
+| AC-4                    | In-app notifications with unread count                                      | 🟢                                                                                                                                                         |
+| AC-5                    | Header bell badge reactively combines notification + message unread counts  | 🟢 (v3.4)                                                                                                                                                  |
 | AC-6                    | User configures notification preferences per channel                        | 🟡 Boolean flags per channel (`emailNotificationsEnabled`, `smsNotificationsEnabled`, `pushNotificationsEnabled`) on `User`; no per-event-type granularity |
-| AC-7                    | Notification templates localized                                            | 🔴 Planned |
+| AC-7                    | Notification templates localized                                            | 🔴 Planned                                                                                                                                                 |
 
 ---
 
@@ -1467,18 +1467,18 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 ### FR-600: Admin Dashboard 🟢
 
 | ID                      | FR-600                                                            |
-| ----------------------- | ----------------------------------------------------------------- | ----------------------------- |
+| ----------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Admins manage content, users, and platform health                 |
 | **Acceptance Criteria** | Status                                                            |
-| AC-1                    | Dashboard overview: total users, active listings, bookings, stats | 🟢 (StatsController)          |
-| AC-2                    | Property moderation: approve/reject queue                         | 🟢 (AdminController)          |
-| AC-3                    | User management: view, manage users                               | 🟢 (AdminController)          |
-| AC-4                    | Report management: view reported listings, take action            | 🟢 (ReportedListing entity)   |
-| AC-5                    | KYC management                                                    | 🟢 (Admin can view KYC status via user records; webhook-driven updates) |
-| AC-6                    | Dispute resolution                                                | 🟢 (`DisputeController`; admin resolve endpoint; workspace Disputes tab) |
-| AC-7                    | Analytics: user growth, booking trends, revenue charts            | 🟢 Admin dashboard rebuilt with KPI grid, CSS bar charts (properties-by-type, top-cities, bookings-by-status), and ranked top-viewed/favorited property lists |
+| AC-1                    | Dashboard overview: total users, active listings, bookings, stats | 🟢 (StatsController)                                                                                                                                                                                    |
+| AC-2                    | Property moderation: approve/reject queue                         | 🟢 (AdminController)                                                                                                                                                                                    |
+| AC-3                    | User management: view, manage users                               | 🟢 (AdminController)                                                                                                                                                                                    |
+| AC-4                    | Report management: view reported listings, take action            | 🟢 (ReportedListing entity)                                                                                                                                                                             |
+| AC-5                    | KYC management                                                    | 🟢 (Admin can view KYC status via user records; webhook-driven updates)                                                                                                                                 |
+| AC-6                    | Dispute resolution                                                | 🟢 (`DisputeController`; admin resolve endpoint; workspace Disputes tab)                                                                                                                                |
+| AC-7                    | Analytics: user growth, booking trends, revenue charts            | 🟢 Admin dashboard rebuilt with KPI grid, CSS bar charts (properties-by-type, top-cities, bookings-by-status), and ranked top-viewed/favorited property lists                                           |
 | AC-8                    | System config: manage amenities, commission rates                 | 🟡 Amenities: full CRUD via admin page (`/admin/amenities`) backed by `GET/POST/PUT/DELETE /admin/amenities`; commission rates: config endpoint exists (`/admin/config/{key}`) but no dedicated UI yet. |
-| AC-9                    | Audit log                                                         | 🔴 Planned                    |
+| AC-9                    | Audit log                                                         | 🔴 Planned                                                                                                                                                                                              |
 
 ### FR-601: Support Agent Tools 🔴 Planned
 
@@ -1493,20 +1493,20 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 ### FR-700: Reviews & Responses 🟢
 
 | ID                      | FR-700                                          |
-| ----------------------- | ----------------------------------------------- | --------------------------------- |
+| ----------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description**         | Property review system                          |
 | **Acceptance Criteria** | Status                                          |
-| AC-1                    | Tenant reviews property after booking           | 🟢 (Review entity, ReviewService) |
-| AC-2                    | Review fields: rating (1-5 stars), text comment | 🟢                                |
+| AC-1                    | Tenant reviews property after booking           | 🟢 (Review entity, ReviewService)                                                                                                                                                                                     |
+| AC-2                    | Review fields: rating (1-5 stars), text comment | 🟢                                                                                                                                                                                                                    |
 | AC-3                    | Category ratings (cleanliness, accuracy, etc.)  | 🟢 Six sub-rating fields on `Review` entity (cleanlinessRating, accuracyRating, communicationRating, locationRating, checkinRating, valueRating); frontend Reviews tab renders sub-ratings grid when any are present. |
-| AC-4                    | Aggregate rating displayed on property          | 🟢                                |
-| AC-5                    | Two-way reviews (landlord reviews tenant)       | 🟢 `POST /reviews` with `targetUserId` creates tenant review; `GET /reviews/tenant/{userId}` retrieves them; `POST /reviews/{id}/reply` for landlord public response |
-| AC-6                    | Landlord can post a public response             | 🟢 `POST /reviews/{id}/reply` with `@PreAuthorize("hasRole('LANDLORD')")` |
+| AC-4                    | Aggregate rating displayed on property          | 🟢                                                                                                                                                                                                                    |
+| AC-5                    | Two-way reviews (landlord reviews tenant)       | 🟢 `POST /reviews` with `targetUserId` creates tenant review; `GET /reviews/tenant/{userId}` retrieves them; `POST /reviews/{id}/reply` for landlord public response                                                  |
+| AC-6                    | Landlord can post a public response             | 🟢 `POST /reviews/{id}/reply` with `@PreAuthorize("hasRole('LANDLORD')")`                                                                                                                                             |
 
 ### FR-701: Trust Score 🟢 Implemented
 
-| ID              | FR-701                                                                                                              |
-| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| ID              | FR-701                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Description** | `User.trustScore` field (default 5.0) via V19 migration. `ReviewService` recalculates on every review create and delete: landlord trust score = average rating across all their property reviews (`getAveragePropertyRatingByLandlordId`); tenant trust score = average rating across all their tenant reviews (`getAverageRatingByUserId`). Score persisted to `users.trust_score`. |
 
 ---
@@ -1515,8 +1515,8 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 
 ### FR-800: Digital Leases
 
-| ID              | FR-800                                                                                                                                          |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| ID              | FR-800                                                                                                                                                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description** | `PropertyLease` entity with full lifecycle: generation (`POST /leases/booking/{id}/generate`), e-signing (`POST /leases/{id}/sign`), and listing (`GET /leases/my`). Stores PDF URL and blockchain TX hash stub. `BlockchainLeaseService` is a no-op placeholder. |
 
 ---
@@ -1525,25 +1525,25 @@ The `BookingStatus` enum defines 10 states enforced by `BookingStateMachine`. Al
 
 ### FR-900: Maintenance
 
-| ID              | FR-900                                                                                                                                                              |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ID              | FR-900                                                                                                                                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Description** | `MaintenanceRequest` entity with status flow `OPEN → IN_PROGRESS → RESOLVED`. Full REST API. Workspace Maintenance tab lets tenants file requests (with property selector) and landlords update status. Image attachments via `MaintenanceRequestImage`. |
 
 ## 5.10 Implemented Features Not Previously in SRS 🟢
 
 The following features were discovered during the v4.6 audit — they exist in the codebase but were absent from earlier SRS versions.
 
-| Feature | Evidence | Notes |
-|---|---|---|
-| **Dynamic pricing rules** | `PricingRule` entity (V33 migration); `PricingService`; `PricingController` | WEEKEND, SEASONAL, LONG_STAY multiplier rules on top of base price |
-| **Room types & room inventory** | `RoomType`, `RoomInventory`, `RoomTypeImage` entities (V35–V37 migrations) | Hotel-style room-level granularity within a property; occupancy calendar |
-| **Booking audit log** | `BookingAuditLog` entity; populated on every state transition in `BookingService` | Full history: who triggered what action and when, with optional reason |
-| **Booking state machine** | `BookingStateMachine` class; 10-state `BookingStatus` enum | Enforces valid transitions; `DRAFT → PAYMENT_PENDING → PENDING_APPROVAL → APPROVED → ACTIVE → COMPLETED` |
-| **Instant Book path** | State machine supports `DRAFT → APPROVED` skip-approval transition | Not yet exposed in UI; groundwork in place |
-| **Agency multi-tenancy** | `Agency` entity; `agencyRole` on `User` | White-label foundation; no UI yet |
-| **Resilience4j on Stripe** | Circuit breaker + retry with exponential backoff on all Stripe API calls | 3 attempts, 500ms base; trips after 5 consecutive failures |
-| **OTP via Twilio** | `OtpService` + `TwilioSmsGateway` | Phone OTP flow exists in service layer; not yet exposed in registration flow |
-| **`BookingStateMachine` for vehicles** | `VehicleBookingStatus` 10-state enum; split `/draft`+`/pay` on `VehicleV1Controller` | Full parity with property booking workflow |
+| Feature                                | Evidence                                                                             | Notes                                                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| **Dynamic pricing rules**              | `PricingRule` entity (V33 migration); `PricingService`; `PricingController`          | WEEKEND, SEASONAL, LONG_STAY multiplier rules on top of base price                                       |
+| **Room types & room inventory**        | `RoomType`, `RoomInventory`, `RoomTypeImage` entities (V35–V37 migrations)           | Hotel-style room-level granularity within a property; occupancy calendar                                 |
+| **Booking audit log**                  | `BookingAuditLog` entity; populated on every state transition in `BookingService`    | Full history: who triggered what action and when, with optional reason                                   |
+| **Booking state machine**              | `BookingStateMachine` class; 10-state `BookingStatus` enum                           | Enforces valid transitions; `DRAFT → PAYMENT_PENDING → PENDING_APPROVAL → APPROVED → ACTIVE → COMPLETED` |
+| **Instant Book path**                  | State machine supports `DRAFT → APPROVED` skip-approval transition                   | Not yet exposed in UI; groundwork in place                                                               |
+| **Agency multi-tenancy**               | `Agency` entity; `agencyRole` on `User`                                              | White-label foundation; no UI yet                                                                        |
+| **Resilience4j on Stripe**             | Circuit breaker + retry with exponential backoff on all Stripe API calls             | 3 attempts, 500ms base; trips after 5 consecutive failures                                               |
+| **OTP via Twilio**                     | `OtpService` + `TwilioSmsGateway`                                                    | Phone OTP flow exists in service layer; not yet exposed in registration flow                             |
+| **`BookingStateMachine` for vehicles** | `VehicleBookingStatus` 10-state enum; split `/draft`+`/pay` on `VehicleV1Controller` | Full parity with property booking workflow                                                               |
 
 ---
 
@@ -1887,51 +1887,51 @@ _(Similar RESTful patterns — full endpoint list in Appendix A)_
 
 ## 9.3 Security Controls
 
-| Control              | Implementation                                                                       | Status                         |
-| -------------------- | ------------------------------------------------------------------------------------ | ------------------------------ |
-| Input validation     | Jakarta Bean Validation on request DTOs                                              | 🟢                             |
-| Output encoding      | Jackson auto-escaping                                                                | 🟢                             |
-| SQL injection        | JPA parameterized queries (never string concat)                                      | 🟢                             |
-| XSS prevention       | Angular default escaping + CSP header via Nginx                                      | 🟢                             |
-| CSRF                 | `CookieCsrfTokenRepository` + `SpaCsrfTokenRequestHandler`; `X-XSRF-TOKEN` header   | 🟢                             |
-| Rate limiting        | Redis Lua atomic INCR+EXPIRE; 100 req/min auth, 20 req/min public                   | 🟢                             |
-| Secrets              | All secrets via environment variables; no hardcoded defaults for sensitive values    | 🟢 (Secrets Manager planned)  |
-| Security headers     | Nginx: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions   | 🟢                             |
-| File upload          | Content-Type validation, UUID filename, size limits (10 MB)                         | 🟡 (magic-number check planned) |
-| Dependencies         | GitHub Actions CI                                                                    | 🟡 (Snyk/Dependabot planned)  |
-| OAuth bypass         | Dummy-token shortcut removed from AuthService                                        | 🟢                             |
-| User enumeration     | Password-reset endpoint silently ignores unknown emails                              | 🟢                             |
-| Timing attacks       | Metrics token compared with `MessageDigest.isEqual()` (constant-time)               | 🟢                             |
-| Rate-limit spoofing  | RateLimitFilter uses last X-Forwarded-For value (set by Nginx, not the client)      | 🟢                             |
-| Test data leakage    | `DataInitializer` annotated `@Profile("!prod")` — never runs in production          | 🟢                             |
-| Swagger exposure     | Swagger UI/api-docs disabled globally; re-enabled only under `dev` profile           | 🟢                             |
+| Control             | Implementation                                                                    | Status                          |
+| ------------------- | --------------------------------------------------------------------------------- | ------------------------------- |
+| Input validation    | Jakarta Bean Validation on request DTOs                                           | 🟢                              |
+| Output encoding     | Jackson auto-escaping                                                             | 🟢                              |
+| SQL injection       | JPA parameterized queries (never string concat)                                   | 🟢                              |
+| XSS prevention      | Angular default escaping + CSP header via Nginx                                   | 🟢                              |
+| CSRF                | `CookieCsrfTokenRepository` + `SpaCsrfTokenRequestHandler`; `X-XSRF-TOKEN` header | 🟢                              |
+| Rate limiting       | Redis Lua atomic INCR+EXPIRE; 100 req/min auth, 20 req/min public                 | 🟢                              |
+| Secrets             | All secrets via environment variables; no hardcoded defaults for sensitive values | 🟢 (Secrets Manager planned)    |
+| Security headers    | Nginx: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP, Permissions | 🟢                              |
+| File upload         | Content-Type validation, UUID filename, size limits (10 MB)                       | 🟡 (magic-number check planned) |
+| Dependencies        | GitHub Actions CI                                                                 | 🟡 (Snyk/Dependabot planned)    |
+| OAuth bypass        | Dummy-token shortcut removed from AuthService                                     | 🟢                              |
+| User enumeration    | Password-reset endpoint silently ignores unknown emails                           | 🟢                              |
+| Timing attacks      | Metrics token compared with `MessageDigest.isEqual()` (constant-time)             | 🟢                              |
+| Rate-limit spoofing | RateLimitFilter uses last X-Forwarded-For value (set by Nginx, not the client)    | 🟢                              |
+| Test data leakage   | `DataInitializer` annotated `@Profile("!prod")` — never runs in production        | 🟢                              |
+| Swagger exposure    | Swagger UI/api-docs disabled globally; re-enabled only under `dev` profile        | 🟢                              |
 
 ## 9.4 Security Hardening Requirements
 
-| ID     | Requirement                                              | Status                                        |
-| ------ | -------------------------------------------------------- | --------------------------------------------- |
-| SEC-01 | Secret management (no secrets in source control)         | 🟢 .env untracked; all secrets via env vars   |
-| SEC-02 | CORS policy (explicit allow-list per environment)        | 🟡 Configured but needs per-env strictness    |
-| SEC-03 | Token storage (httpOnly cookies, not localStorage)       | 🟢 httpOnly cookies with SameSite=Lax         |
-| SEC-04 | CSRF defense                                             | 🟢 CookieCsrfTokenRepository + SPA handler    |
-| SEC-05 | API abuse protection (rate limiting)                     | 🟢 Redis-backed rate limiter                  |
-| SEC-06 | Auditability (security event logging)                    | 🔴 Planned                                    |
-| SEC-07 | Soft delete on user-generated entities                   | 🔴 Planned                                    |
-| SEC-08 | Optimistic locking on critical entities                  | 🔴 Planned                                    |
-| SEC-09 | File upload safety (magic-number validation, AV scan)   | 🔴 Planned                                    |
-| SEC-10 | Dependency CVE scanning in CI                            | 🔴 Planned (Snyk/Dependabot)                  |
-| SEC-11 | Production profile enforced in Docker/CI deployments     | 🟢 docker-compose defaults to prod profile    |
-| SEC-12 | Content Security Policy                                  | 🟢 Strict CSP header in Nginx                 |
+| ID     | Requirement                                           | Status                                      |
+| ------ | ----------------------------------------------------- | ------------------------------------------- |
+| SEC-01 | Secret management (no secrets in source control)      | 🟢 .env untracked; all secrets via env vars |
+| SEC-02 | CORS policy (explicit allow-list per environment)     | 🟡 Configured but needs per-env strictness  |
+| SEC-03 | Token storage (httpOnly cookies, not localStorage)    | 🟢 httpOnly cookies with SameSite=Lax       |
+| SEC-04 | CSRF defense                                          | 🟢 CookieCsrfTokenRepository + SPA handler  |
+| SEC-05 | API abuse protection (rate limiting)                  | 🟢 Redis-backed rate limiter                |
+| SEC-06 | Auditability (security event logging)                 | 🔴 Planned                                  |
+| SEC-07 | Soft delete on user-generated entities                | 🔴 Planned                                  |
+| SEC-08 | Optimistic locking on critical entities               | 🔴 Planned                                  |
+| SEC-09 | File upload safety (magic-number validation, AV scan) | 🔴 Planned                                  |
+| SEC-10 | Dependency CVE scanning in CI                         | 🔴 Planned (Snyk/Dependabot)                |
+| SEC-11 | Production profile enforced in Docker/CI deployments  | 🟢 docker-compose defaults to prod profile  |
+| SEC-12 | Content Security Policy                               | 🟢 Strict CSP header in Nginx               |
 
 ## 9.5 Known Remaining Risks (Accepted / Planned)
 
-| Risk                                    | Mitigation Plan                                           |
-| --------------------------------------- | --------------------------------------------------------- |
-| No HTTPS in Docker Compose (dev only)   | TLS terminated at AWS ALB/CloudFront in production (IaC)  |
-| Backend port 8080 exposed in dev stack  | Production: backend only on internal network, no host port |
-| File upload magic-number validation     | Apache Tika integration planned for next sprint           |
-| No AV scanning on uploaded files        | ClamAV / AWS Macie integration planned                    |
-| Dependency CVEs not scanned in CI       | Snyk GitHub Action planned                                |
+| Risk                                   | Mitigation Plan                                            |
+| -------------------------------------- | ---------------------------------------------------------- |
+| No HTTPS in Docker Compose (dev only)  | TLS terminated at AWS ALB/CloudFront in production (IaC)   |
+| Backend port 8080 exposed in dev stack | Production: backend only on internal network, no host port |
+| File upload magic-number validation    | Apache Tika integration planned for next sprint            |
+| No AV scanning on uploaded files       | ClamAV / AWS Macie integration planned                     |
+| Dependency CVEs not scanned in CI      | Snyk GitHub Action planned                                 |
 
 ---
 
@@ -2122,26 +2122,26 @@ Currently, properties have a single price field with no currency conversion. Pla
 
 # 14. Third-Party Integrations
 
-| Service            | Provider                 | Purpose                                           | Status                                       |
-| ------------------ | ------------------------ | ------------------------------------------------- | -------------------------------------------- |
-| Payment processing | Stripe                   | Payment intents for bookings                      | 🟢 Implemented (PaymentService)              |
-| Push notifications | Firebase Cloud Messaging | iOS + Android + web push                          | 🟢 Implemented (FirebaseNotificationGateway) |
-| Email              | Gmail SMTP               | Transactional email (booking confirmations, etc.) | 🟢 Implemented (EmailService)                |
-| OAuth              | Google                   | Social login                                      | 🟢 Implemented (OAuthProvider entity)        |
-| CI/CD              | GitHub Actions           | Build and deploy                                  | 🟢 Implemented (.github/workflows/ci.yml)    |
-| File storage       | AWS S3                   | Media storage                                     | 🟡 StorageService exists (dev fallback)      |
-| KYC verification   | Stripe Identity          | Document + selfie verification                    | 🟢 Implemented (KycVerification entity, webhooks) |
-| SMS                | Twilio                   | OTP, booking alerts                               | 🟢 Implemented (TwilioSmsGateway)            |
-| WhatsApp           | Twilio                   | Rich notifications (MENA)                         | 🟢 Implemented (TwilioSmsGateway)            |
-| OAuth              | Apple, Facebook          | Social login                                      | 🔴 Planned — UI shows "Soon" badge           |
-| Email (production) | AWS SES                  | High-volume transactional email                   | 🔴 Planned (replace Gmail SMTP)              |
-| CDN                | AWS CloudFront           | Global content delivery                           | 🔴 Planned                                   |
-| Monitoring         | Prometheus + Grafana     | Metrics and dashboards                            | 🟢 Implemented (docker-compose.monitoring.yml) |
-| Logging            | ELK Stack                | Centralized logs                                  | 🟢 Implemented (logstash + kibana services)  |
+| Service            | Provider                 | Purpose                                           | Status                                                                                                              |
+| ------------------ | ------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Payment processing | Stripe                   | Payment intents for bookings                      | 🟢 Implemented (PaymentService)                                                                                     |
+| Push notifications | Firebase Cloud Messaging | iOS + Android + web push                          | 🟢 Implemented (FirebaseNotificationGateway)                                                                        |
+| Email              | Gmail SMTP               | Transactional email (booking confirmations, etc.) | 🟢 Implemented (EmailService)                                                                                       |
+| OAuth              | Google                   | Social login                                      | 🟢 Implemented (OAuthProvider entity)                                                                               |
+| CI/CD              | GitHub Actions           | Build and deploy                                  | 🟢 Implemented (.github/workflows/ci.yml)                                                                           |
+| File storage       | AWS S3                   | Media storage                                     | 🟡 StorageService exists (dev fallback)                                                                             |
+| KYC verification   | Stripe Identity          | Document + selfie verification                    | 🟢 Implemented (KycVerification entity, webhooks)                                                                   |
+| SMS                | Twilio                   | OTP, booking alerts                               | 🟢 Implemented (TwilioSmsGateway)                                                                                   |
+| WhatsApp           | Twilio                   | Rich notifications (MENA)                         | 🟢 Implemented (TwilioSmsGateway)                                                                                   |
+| OAuth              | Apple, Facebook          | Social login                                      | 🔴 Planned — UI shows "Soon" badge                                                                                  |
+| Email (production) | AWS SES                  | High-volume transactional email                   | 🔴 Planned (replace Gmail SMTP)                                                                                     |
+| CDN                | AWS CloudFront           | Global content delivery                           | 🔴 Planned                                                                                                          |
+| Monitoring         | Prometheus + Grafana     | Metrics and dashboards                            | 🟢 Implemented (docker-compose.monitoring.yml)                                                                      |
+| Logging            | ELK Stack                | Centralized logs                                  | 🟢 Implemented (logstash + kibana services)                                                                         |
 | Geocoding          | OpenStreetMap Nominatim  | Address → lat/lng                                 | 🟢 `GeocodingService` — no API key; auto-called in `PropertyService.createProperty()` when client omits coordinates |
-| Maps               | Leaflet + OSM tiles      | Interactive maps                                  | 🔴 Planned                                   |
-| WAF                | AWS WAF                  | API protection                                    | 🔴 Planned                                   |
-| Secrets            | AWS Secrets Manager      | Credentials management                            | 🔴 Planned (env vars currently)              |
+| Maps               | Leaflet + OSM tiles      | Interactive maps                                  | 🔴 Planned                                                                                                          |
+| WAF                | AWS WAF                  | API protection                                    | 🔴 Planned                                                                                                          |
+| Secrets            | AWS Secrets Manager      | Credentials management                            | 🔴 Planned (env vars currently)                                                                                     |
 
 ---
 
@@ -2175,51 +2175,51 @@ No offline support is currently implemented. All features require network connec
 
 ## 16.1 Testing Pyramid
 
-| Level            | Tool                                             | Status                         | What to Test                                                   |
-| ---------------- | ------------------------------------------------ | ------------------------------ | -------------------------------------------------------------- |
-| **Unit**         | JUnit 5 + Mockito (backend), Vitest (frontend)   | 🟢 Implemented                 | Business logic, validators, mappers, guards, security fixes    |
-| **Architecture** | ArchUnit                                         | 🟢 Implemented                 | Architectural rules (controllers can't access repos directly)  |
-| **Integration**  | Testcontainers (`BaseIntegrationTest`)           | 🟡 Scaffold present            | Repository queries, service interactions (not yet activated)   |
-| **API**          | REST Assured                                     | 🔴 Planned                     | Request/response contracts, auth, validation                   |
-| **Component**    | Vitest + Angular `TestBed`                       | 🟡 Partial (12 of ~54 files)   | Component creation, guard redirects, signal state              |
-| **E2E**          | Playwright                                       | 🔴 Planned                     | Critical user flows                                            |
-| **Performance**  | k6                                               | 🔴 Planned                     | Load testing                                                   |
-| **Security**     | Manual audit (completed); OWASP ZAP + Snyk       | 🟡 Manual done; tooling planned| Vulnerability scanning                                         |
+| Level            | Tool                                           | Status                          | What to Test                                                  |
+| ---------------- | ---------------------------------------------- | ------------------------------- | ------------------------------------------------------------- |
+| **Unit**         | JUnit 5 + Mockito (backend), Vitest (frontend) | 🟢 Implemented                  | Business logic, validators, mappers, guards, security fixes   |
+| **Architecture** | ArchUnit                                       | 🟢 Implemented                  | Architectural rules (controllers can't access repos directly) |
+| **Integration**  | Testcontainers (`BaseIntegrationTest`)         | 🟡 Scaffold present             | Repository queries, service interactions (not yet activated)  |
+| **API**          | REST Assured                                   | 🔴 Planned                      | Request/response contracts, auth, validation                  |
+| **Component**    | Vitest + Angular `TestBed`                     | 🟡 Partial (12 of ~54 files)    | Component creation, guard redirects, signal state             |
+| **E2E**          | Playwright                                     | 🔴 Planned                      | Critical user flows                                           |
+| **Performance**  | k6                                             | 🔴 Planned                      | Load testing                                                  |
+| **Security**     | Manual audit (completed); OWASP ZAP + Snyk     | 🟡 Manual done; tooling planned | Vulnerability scanning                                        |
 
 ## 16.2 Current Test Coverage (as of v3.3)
 
 ### Backend (8 test classes, 37+ test methods)
 
-| Class | Service Under Test | Methods | Notes |
-|---|---|---|---|
-| `AuthServiceTest` | `AuthService` | 9 | login, register, logout, password-reset enumeration, OAuth stubs |
-| `BookingServiceTest` | `BookingService` | 8 | create, approve, reject, cancel, double-booking prevention |
-| `ReviewServiceTest` | `ReviewService` | 4 | create, ownership enforcement |
-| `MaintenanceServiceTest` | `MaintenanceService` | 3 | create, status update |
-| `VehicleAvailabilityServiceTest` | `VehicleAvailabilityService` | 13 | availability windows, overlap detection |
-| `ArchitectureGuardrailsTest` | Architecture rules | — | Controllers must not import repositories directly |
-| `HomeFlexApplicationTests` | Spring context | 1 | Context loads (`@Tag("integration")`) |
-| `BaseIntegrationTest` | Testcontainers base | — | Scaffold: PostgreSQL + RabbitMQ + Elasticsearch containers |
+| Class                            | Service Under Test           | Methods | Notes                                                            |
+| -------------------------------- | ---------------------------- | ------- | ---------------------------------------------------------------- |
+| `AuthServiceTest`                | `AuthService`                | 9       | login, register, logout, password-reset enumeration, OAuth stubs |
+| `BookingServiceTest`             | `BookingService`             | 8       | create, approve, reject, cancel, double-booking prevention       |
+| `ReviewServiceTest`              | `ReviewService`              | 4       | create, ownership enforcement                                    |
+| `MaintenanceServiceTest`         | `MaintenanceService`         | 3       | create, status update                                            |
+| `VehicleAvailabilityServiceTest` | `VehicleAvailabilityService` | 13      | availability windows, overlap detection                          |
+| `ArchitectureGuardrailsTest`     | Architecture rules           | —       | Controllers must not import repositories directly                |
+| `HomeFlexApplicationTests`       | Spring context               | 1       | Context loads (`@Tag("integration")`)                            |
+| `BaseIntegrationTest`            | Testcontainers base          | —       | Scaffold: PostgreSQL + RabbitMQ + Elasticsearch containers       |
 
 **Coverage gap**: 30 services and all 25 controllers have no tests. Recommended next sprint.
 
 ### Frontend (13 spec files)
 
-| Spec | What is Tested |
-|---|---|
-| `app.spec.ts` | App shell renders |
-| `api.client.spec.ts` | Property search query params |
-| `convert-currency.pipe.spec.ts` | Pipe transforms |
-| `session.store.spec.ts` | Login sets auth state and role signal |
-| `admin.guard.spec.ts` | ADMIN allowed; TENANT + unauthenticated redirect to `/admin/login` |
-| `home.page.spec.ts` | Component creation |
-| `support.page.spec.ts` | FAQ array populated |
-| `properties.page.spec.ts` | Component creation |
-| `property-detail.page.spec.ts` | Component creation with 5 mocked APIs |
-| `vehicles.page.spec.ts` | Component creation |
-| `vehicle-detail.page.spec.ts` | Component creation |
-| `workspace.page.spec.ts` | Component creation with 17 mocked APIs |
-| `app-header.component.spec.ts` | Language/currency menus closed by default |
+| Spec                            | What is Tested                                                     |
+| ------------------------------- | ------------------------------------------------------------------ |
+| `app.spec.ts`                   | App shell renders                                                  |
+| `api.client.spec.ts`            | Property search query params                                       |
+| `convert-currency.pipe.spec.ts` | Pipe transforms                                                    |
+| `session.store.spec.ts`         | Login sets auth state and role signal                              |
+| `admin.guard.spec.ts`           | ADMIN allowed; TENANT + unauthenticated redirect to `/admin/login` |
+| `home.page.spec.ts`             | Component creation                                                 |
+| `support.page.spec.ts`          | FAQ array populated                                                |
+| `properties.page.spec.ts`       | Component creation                                                 |
+| `property-detail.page.spec.ts`  | Component creation with 5 mocked APIs                              |
+| `vehicles.page.spec.ts`         | Component creation                                                 |
+| `vehicle-detail.page.spec.ts`   | Component creation                                                 |
+| `workspace.page.spec.ts`        | Component creation with 17 mocked APIs                             |
+| `app-header.component.spec.ts`  | Language/currency menus closed by default                          |
 
 **Coverage gap**: Admin pages, auth pages, and all API services have no specs.
 
@@ -2270,15 +2270,15 @@ No offline support is currently implemented. All features require network connec
 
 ## 17.4 Implementation Phasing Roadmap
 
-| Phase                              | Primary Outcomes                                                                                                     | Status       |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| **Phase 0: Core Platform**         | User auth, property CRUD, bookings, chat, reviews, admin dashboard, Docker Compose deployment, CI pipeline           | 🟢 Complete  |
-| **Phase 1: Hardening**             | httpOnly cookie auth, CSRF, strict CORS, secrets management, Redis rate limiting, booking overlap validation          | 🟢 Complete  |
-| **Phase 2: Scale Foundations**     | Redis caching, RabbitMQ consumers, Elasticsearch search, Resilience4j, ELK observability, Prometheus/Grafana        | 🟢 Complete  |
-| **Phase 3: Marketplace Expansion** | Stripe Connect payouts, landlord KYC (Stripe Identity), vehicle rental vertical, digital leases, Twilio SMS          | 🟢 Complete  |
-| **Phase 4: Operational Maturity**  | Full security audit (10 vulns fixed), CI hardening, `security` + `folder-structure` AI skills, SRS/docs updated      | 🟢 Complete  |
-| **Phase 5: Test Coverage**         | Controller tests, service integration tests, E2E with Playwright, Snyk CVE scanning in CI                           | 🔴 Next      |
-| **Phase 6: Production Readiness**  | AWS ECS/RDS/ElastiCache/OpenSearch deployment via Terraform, CloudFront CDN, WAF, multi-region                       | 🔴 Planned   |
+| Phase                              | Primary Outcomes                                                                                                | Status      |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----------- |
+| **Phase 0: Core Platform**         | User auth, property CRUD, bookings, chat, reviews, admin dashboard, Docker Compose deployment, CI pipeline      | 🟢 Complete |
+| **Phase 1: Hardening**             | httpOnly cookie auth, CSRF, strict CORS, secrets management, Redis rate limiting, booking overlap validation    | 🟢 Complete |
+| **Phase 2: Scale Foundations**     | Redis caching, RabbitMQ consumers, Elasticsearch search, Resilience4j, ELK observability, Prometheus/Grafana    | 🟢 Complete |
+| **Phase 3: Marketplace Expansion** | Stripe Connect payouts, landlord KYC (Stripe Identity), vehicle rental vertical, digital leases, Twilio SMS     | 🟢 Complete |
+| **Phase 4: Operational Maturity**  | Full security audit (10 vulns fixed), CI hardening, `security` + `folder-structure` AI skills, SRS/docs updated | 🟢 Complete |
+| **Phase 5: Test Coverage**         | Controller tests, service integration tests, E2E with Playwright, Snyk CVE scanning in CI                       | 🔴 Next     |
+| **Phase 6: Production Readiness**  | AWS ECS/RDS/ElastiCache/OpenSearch deployment via Terraform, CloudFront CDN, WAF, multi-region                  | 🔴 Planned  |
 
 ---
 

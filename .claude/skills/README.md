@@ -5,19 +5,19 @@ production-grade code following your architecture conventions.
 
 ## Skills Included
 
-| Skill               | File                              | Triggers on                                               |
-| ------------------- | --------------------------------- | --------------------------------------------------------- |
-| `spring-entity`     | `spring-entity/SKILL.md`          | Create JPA entity, domain model, @Entity                  |
-| `spring-dto`        | `spring-dto/SKILL.md`             | Create DTO, request/response, MapStruct mapper            |
-| `spring-service`    | `spring-service/SKILL.md`         | Create service, business logic, Resilience4j              |
-| `spring-controller` | `spring-controller/SKILL.md`      | Create REST controller, endpoint, API route               |
-| `spring-migration`  | `spring-migration/SKILL.md`       | Create Flyway migration, add column/table                 |
-| `angular-component` | `angular-component/SKILL.md`      | Create Angular component, page, form, list                |
-| `angular-service`   | `angular-service/SKILL.md`        | Create Angular service, HTTP client                       |
-| `angular-feature`   | `angular-feature/SKILL.md`        | Scaffold full Angular CRUD feature                        |
-| `docker-compose`    | `docker-compose/SKILL.md`         | Create docker-compose, Dockerfile, Nginx config           |
-| `security`          | `security/SKILL.md`               | Security hardening, OWASP audit, encryption, rate-limit   |
-| `folder-structure`  | `folder-structure/SKILL.md`       | Scaffold project layout for any language + architecture   |
+| Skill               | File                         | Triggers on                                             |
+| ------------------- | ---------------------------- | ------------------------------------------------------- |
+| `spring-entity`     | `spring-entity/SKILL.md`     | Create JPA entity, domain model, @Entity                |
+| `spring-dto`        | `spring-dto/SKILL.md`        | Create DTO, request/response, MapStruct mapper          |
+| `spring-service`    | `spring-service/SKILL.md`    | Create service, business logic, Resilience4j            |
+| `spring-controller` | `spring-controller/SKILL.md` | Create REST controller, endpoint, API route             |
+| `spring-migration`  | `spring-migration/SKILL.md`  | Create Flyway migration, add column/table               |
+| `angular-component` | `angular-component/SKILL.md` | Create Angular component, page, form, list              |
+| `angular-service`   | `angular-service/SKILL.md`   | Create Angular service, HTTP client                     |
+| `angular-feature`   | `angular-feature/SKILL.md`   | Scaffold full Angular CRUD feature                      |
+| `docker-compose`    | `docker-compose/SKILL.md`    | Create docker-compose, Dockerfile, Nginx config         |
+| `security`          | `security/SKILL.md`          | Security hardening, OWASP audit, encryption, rate-limit |
+| `folder-structure`  | `folder-structure/SKILL.md`  | Scaffold project layout for any language + architecture |
 
 ## Installation
 

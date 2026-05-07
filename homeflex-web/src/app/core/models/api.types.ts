@@ -247,14 +247,17 @@ export interface BookingModificationRequest {
 export interface VehicleBooking {
   id: string;
   vehicleId: string;
+  vehicle: Vehicle;
   tenantId: string;
+  tenant: User;
   startDate: string;
   endDate: string;
   totalPrice: number;
   currency: string;
   status: string;
-  platformFee: number;
-  message: string | null;
+  platformFee?: number;
+  message?: string;
+  rejectionReason?: string;
   createdAt: string;
 }
 
@@ -284,6 +287,12 @@ export interface ReviewCreateRequest {
   propertyId?: string;
   targetUserId?: string;
   rating: number;
+  cleanlinessRating?: number;
+  accuracyRating?: number;
+  communicationRating?: number;
+  locationRating?: number;
+  checkinRating?: number;
+  valueRating?: number;
   comment: string;
 }
 

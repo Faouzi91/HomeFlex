@@ -18,7 +18,7 @@
   --color-brand-900: #003275;
 
   /* Gold accent — warm, premium CTAs */
-  --color-gold-50:  #fffbeb;
+  --color-gold-50: #fffbeb;
   --color-gold-100: #fef3c7;
   --color-gold-200: #fde68a;
   --color-gold-300: #fcd34d;
@@ -30,10 +30,10 @@
   --color-ink: #0f172a;
   --color-paper: #ffffff;
 
-  --shadow-zillow:   0 2px 4px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.06);
-  --shadow-soft:     0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
-  --shadow-elevated: 0 4px 8px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.10);
-  --shadow-modal:    0 20px 60px rgba(0,0,0,0.22);
+  --shadow-zillow: 0 2px 4px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.06);
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 4px 8px rgba(0, 0, 0, 0.06), 0 16px 40px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.22);
 }
 
 /* ---------- base ---------- */
@@ -67,7 +67,10 @@
     @apply block max-w-full;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-bold tracking-tight;
     color: var(--color-ink);
   }

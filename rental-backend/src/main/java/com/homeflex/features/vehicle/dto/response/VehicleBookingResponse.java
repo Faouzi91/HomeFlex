@@ -10,7 +10,9 @@ import java.util.UUID;
 public record VehicleBookingResponse(
         UUID id,
         UUID vehicleId,
+        VehicleResponse vehicle,
         UUID tenantId,
+        com.homeflex.core.dto.response.UserDto tenant,
         LocalDate startDate,
         LocalDate endDate,
         BigDecimal totalPrice,
@@ -18,5 +20,7 @@ public record VehicleBookingResponse(
         VehicleBookingStatus status,
         BigDecimal platformFee,
         String message,
+        String rejectionReason,
+        String stripePaymentIntentId,
         LocalDateTime createdAt
 ) {}

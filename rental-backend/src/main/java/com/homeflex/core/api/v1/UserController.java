@@ -59,7 +59,7 @@ public class UserController {
 
     @PutMapping("/me/language")
     public ResponseEntity<UserDto> updateLanguage(
-            @RequestBody LanguageUpdateRequest request,
+            @RequestBody @jakarta.validation.Valid LanguageUpdateRequest request,
             Authentication authentication) {
 
         UUID userId = UUID.fromString(authentication.getName());

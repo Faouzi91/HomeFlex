@@ -31,9 +31,7 @@ export class FinanceTabComponent {
 
     forkJoin({
       receipts: this.financeApi.getMyReceipts().pipe(catchError(() => of([] as Receipt[]))),
-      payout: isHost
-        ? this.payoutApi.getSummary().pipe(catchError(() => of(null)))
-        : of(null),
+      payout: isHost ? this.payoutApi.getSummary().pipe(catchError(() => of(null))) : of(null),
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

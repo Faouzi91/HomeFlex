@@ -272,6 +272,182 @@
           </div>
         </div>
 
+        <!-- Booking & Policies -->
+        <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-50">
+            <h2 class="text-sm font-semibold text-slate-900">Booking & policies</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Cancellation policy</label
+                >
+                <select formControlName="cancellationPolicy" class="select-styled w-full">
+                  @for (p of cancellationPolicies; track p) {
+                    <option [value]="p">{{ p.replaceAll('_', ' ') | titlecase }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Star rating (1–5)</label
+                >
+                <input
+                  formControlName="starRating"
+                  type="number"
+                  min="1"
+                  max="5"
+                  placeholder="—"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                  [ngClass]="{
+                    'border-rose-300 focus:ring-rose-500/20': isInvalid('starRating'),
+                  }"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Cleaning fee</label
+                >
+                <input
+                  formControlName="cleaningFee"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Security deposit</label
+                >
+                <input
+                  formControlName="securityDeposit"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Check-in time</label
+                >
+                <input
+                  formControlName="checkInTime"
+                  type="time"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Check-out time</label
+                >
+                <input
+                  formControlName="checkOutTime"
+                  type="time"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Min stay (nights)</label
+                >
+                <input
+                  formControlName="minStayNights"
+                  type="number"
+                  min="1"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5"
+                  >Max stay (nights)</label
+                >
+                <input
+                  formControlName="maxStayNights"
+                  type="number"
+                  min="1"
+                  placeholder="—"
+                  class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 mb-1.5">House rules</label>
+              <textarea
+                formControlName="houseRules"
+                rows="3"
+                placeholder="No parties, quiet hours after 10pm…"
+                class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all resize-none"
+              ></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm text-slate-700 font-medium"
+              >
+                <input
+                  type="checkbox"
+                  formControlName="instantBookEnabled"
+                  class="h-4 w-4 rounded text-brand-500 focus:ring-brand-400"
+                />
+                Instant Book
+              </label>
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm text-slate-700 font-medium"
+              >
+                <input
+                  type="checkbox"
+                  formControlName="petsAllowed"
+                  class="h-4 w-4 rounded text-brand-500 focus:ring-brand-400"
+                />
+                Pets allowed
+              </label>
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm text-slate-700 font-medium"
+              >
+                <input
+                  type="checkbox"
+                  formControlName="smokingAllowed"
+                  class="h-4 w-4 rounded text-brand-500 focus:ring-brand-400"
+                />
+                Smoking allowed
+              </label>
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm text-slate-700 font-medium"
+              >
+                <input
+                  type="checkbox"
+                  formControlName="childrenAllowed"
+                  class="h-4 w-4 rounded text-brand-500 focus:ring-brand-400"
+                />
+                Children allowed
+              </label>
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm text-slate-700 font-medium col-span-2"
+              >
+                <input
+                  type="checkbox"
+                  formControlName="submitAsDraft"
+                  class="h-4 w-4 rounded text-brand-500 focus:ring-brand-400"
+                />
+                Save as draft (don't submit for review yet)
+              </label>
+            </div>
+          </div>
+        </div>
+
         <!-- Images -->
         <div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
           <div class="px-6 py-4 border-b border-slate-50">

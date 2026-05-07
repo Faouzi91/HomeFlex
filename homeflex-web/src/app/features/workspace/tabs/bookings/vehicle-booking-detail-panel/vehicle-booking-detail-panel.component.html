@@ -1,0 +1,131 @@
+<div
+  class="fixed inset-0 z-[100] flex justify-end bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300"
+  (click)="close()"
+>
+  <div
+    class="relative h-full w-full max-w-lg bg-white shadow-2xl transition-transform duration-300 ease-out"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Rental Details</h2>
+        <p class="text-xs text-slate-500">Booking #{{ booking.id.slice(0, 8) }}</p>
+      </div>
+      <button
+        (click)="close()"
+        class="h-10 w-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="w-5 h-5"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="h-[calc(100%-80px)] overflow-y-auto">
+      <!-- Vehicle Hero -->
+      <div class="px-6 py-6 border-b border-slate-100">
+        <div class="flex gap-5">
+          <div class="h-24 w-32 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
+            @if (booking.vehicle.images && booking.vehicle.images.length > 0) {
+              <img
+                [src]="booking.vehicle.images[0].imageUrl"
+                [alt]="booking.vehicle.brand"
+                class="h-full w-full object-cover"
+              />
+            }
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-base font-bold text-slate-900 truncate">
+              {{ booking.vehicle.brand }} {{ booking.vehicle.model }}
+            </h3>
+            <p class="text-sm text-slate-500 mt-0.5">
+              {{ booking.vehicle.year }} · {{ booking.vehicle.transmission }} ·
+              {{ booking.vehicle.fuelType }}
+            </p>
+            <div class="mt-3">
+              <span
+                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                [ngClass]="statusClass(booking.status)"
+              >
+                {{ booking.status.replaceAll('_', ' ') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Grid -->
+      <div class="px-6 py-6 border-b border-slate-100 space-y-6">
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+              Start Date
+            </p>
+            <p class="text-sm font-semibold text-slate-900">{{ date(booking.startDate) }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+              End Date
+            </p>
+            <p class="text-sm font-semibold text-slate-900">{{ date(booking.endDate) }}</p>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+            Pickup Location
+          </p>
+          <p class="text-sm font-semibold text-slate-900">{{ booking.vehicle.pickupCity }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">{{ booking.vehicle.pickupAddress }}</p>
+        </div>
+
+        @if (booking.message) {
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+              Message to Host
+            </p>
+            <p class="text-sm text-slate-600 italic">"{{ booking.message }}"</p>
+          </div>
+        }
+
+        @if (booking.rejectionReason) {
+          <div class="rounded-xl bg-rose-50 p-4 border border-rose-100">
+            <p class="text-[10px] font-bold uppercase tracking-widest text-rose-500 mb-1">
+              Rejection Reason
+            </p>
+            <p class="text-sm text-rose-700 font-medium">{{ booking.rejectionReason }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Payment Summary -->
+      <div class="px-6 py-6">
+        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4">
+          Payment Summary
+        </h4>
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-500">Rental Fee</span>
+            <span class="font-medium text-slate-900">{{
+              price(booking.totalPrice, booking.currency)
+            }}</span>
+          </div>
+          <div class="border-t border-slate-100 pt-3 flex justify-between">
+            <span class="text-base font-bold text-slate-900">Total Paid</span>
+            <span class="text-base font-bold text-brand-600">{{
+              price(booking.totalPrice, booking.currency)
+            }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

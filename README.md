@@ -74,14 +74,20 @@ cp rental-backend/.env.example rental-backend/.env
 # then edit rental-backend/.env
 ```
 
-| Variable            | Purpose                          |
-| ------------------- | -------------------------------- |
-| `JWT_SECRET`        | HS256 signing key (≥ 32 chars)   |
-| `ADMIN_PASSWORD`    | Initial admin account password   |
-| `PII_ENCRYPTION_KEY`| AES-256-GCM key for PII fields   |
-| `MAIL_USERNAME`     | SMTP sender address              |
-| `MAIL_PASSWORD`     | SMTP credential / app password   |
-| `ELASTIC_PASSWORD`  | Elasticsearch `elastic` user password |
+| Variable                   | Purpose                               |
+| -------------------------- | ------------------------------------- |
+| `JWT_SECRET`               | HS256 signing key (>= 32 chars)       |
+| `ADMIN_PASSWORD`           | Initial admin account password        |
+| `PII_ENCRYPTION_KEY`       | AES-256-GCM key for PII fields        |
+| `MAIL_USERNAME`            | SMTP sender address                   |
+| `MAIL_PASSWORD`            | SMTP credential / app password        |
+| `DB_USERNAME`              | PostgreSQL application username       |
+| `DB_PASSWORD`              | PostgreSQL application password       |
+| `SPRING_RABBITMQ_USERNAME` | RabbitMQ application username         |
+| `SPRING_RABBITMQ_PASSWORD` | RabbitMQ application password         |
+| `MINIO_ROOT_USER`          | MinIO root username                   |
+| `MINIO_ROOT_PASSWORD`      | MinIO root password                   |
+| `ELASTIC_PASSWORD`         | Elasticsearch `elastic` user password |
 
 ### Run
 
@@ -93,13 +99,13 @@ docker-compose up --build
 
 Once all containers are healthy (~60s):
 
-| Service             | URL                                              |
-| ------------------- | ------------------------------------------------ |
-| Web Frontend        | http://localhost                                 |
-| Backend API         | http://localhost:8080/api/v1                     |
-| Swagger UI          | Dev profile only — not available in `prod`       |
-| Kibana Dashboard    | Internal network only (no host port in prod)     |
-| RabbitMQ Management | Internal network only (no host port in prod)     |
+| Service             | URL                                          |
+| ------------------- | -------------------------------------------- |
+| Web Frontend        | http://localhost                             |
+| Backend API         | http://localhost:8080/api/v1                 |
+| Swagger UI          | Dev profile only — not available in `prod`   |
+| Kibana Dashboard    | Internal network only (no host port in prod) |
+| RabbitMQ Management | Internal network only (no host port in prod) |
 
 ### Monitoring (optional)
 
@@ -134,15 +140,17 @@ cd rental-backend
 
 Key environment variables (set in `.env` or export):
 
-| Variable                | Purpose                                |
-| ----------------------- | -------------------------------------- |
-| `JWT_SECRET`            | Signing key for access/refresh tokens  |
-| `SPRING_DATASOURCE_URL` | PostgreSQL JDBC URL                    |
-| `STRIPE_SECRET_KEY`     | Stripe secret key (`sk_test_...`)      |
-| `STRIPE_PUBLISHABLE_KEY`| Stripe publishable key (`pk_test_...`) |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret          |
-| `GOOGLE_CLIENT_ID`      | Google OAuth client ID                 |
-| `FIREBASE_*`            | Firebase config for push notifications |
+| Variable                 | Purpose                                |
+| ------------------------ | -------------------------------------- |
+| `JWT_SECRET`             | Signing key for access/refresh tokens  |
+| `SPRING_DATASOURCE_URL`  | PostgreSQL JDBC URL                    |
+| `DB_USERNAME`            | PostgreSQL username for Docker Compose |
+| `DB_PASSWORD`            | PostgreSQL password for Docker Compose |
+| `STRIPE_SECRET_KEY`      | Stripe secret key (`sk_test_...`)      |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (`pk_test_...`) |
+| `STRIPE_WEBHOOK_SECRET`  | Stripe webhook signing secret          |
+| `GOOGLE_CLIENT_ID`       | Google OAuth client ID                 |
+| `FIREBASE_*`             | Firebase config for push notifications |
 
 ### Frontend
 
@@ -222,67 +230,67 @@ HomeFlex/
 
 All endpoints are prefixed with `/api/v1`. Public endpoints don't require authentication.
 
-| Method | Endpoint                              | Auth     | Description                         |
-| ------ | ------------------------------------- | -------- | ----------------------------------- |
-| POST   | `/auth/register`                      | Public   | Register a new user                 |
-| POST   | `/auth/login`                         | Public   | Login, sets JWT cookies             |
-| POST   | `/auth/google`                        | Public   | Google OAuth login                  |
-| POST   | `/auth/refresh`                       | Public   | Refresh access token                |
-| GET    | `/properties/search`                  | Public   | Search with filters + pagination    |
-| GET    | `/properties/{id}`                    | Public   | Property detail                     |
-| POST   | `/properties`                         | Landlord | Create property (multipart)         |
-| PUT    | `/properties/{id}`                    | Landlord | Update property                     |
-| DELETE | `/properties/{id}`                    | Landlord | Delete property                     |
-| POST   | `/properties/{id}/bookings/draft`     | Tenant   | Create property booking draft       |
-| POST   | `/properties/{id}/bookings/{bid}/pay` | Tenant   | Initiate property booking payment   |
-| PATCH  | `/bookings/{id}/approve`              | Landlord | Approve booking                     |
-| PATCH  | `/bookings/{id}/reject`               | Landlord | Reject booking                      |
-| PATCH  | `/bookings/{id}/cancel`               | Tenant   | Cancel booking                      |
-| PATCH  | `/bookings/{id}/early-checkout`       | Tenant   | Early checkout with prorated refund |
-| GET    | `/chat/rooms`                         | Auth     | List chat rooms                     |
-| POST   | `/chat/rooms`                         | Auth     | Create chat room                    |
-| GET    | `/favorites`                          | Auth     | List favorites                      |
-| POST   | `/favorites/{propertyId}`             | Auth     | Add to favorites                    |
-| GET    | `/admin/users`                        | Admin    | List all users (paginated)          |
-| PATCH  | `/admin/users/{id}/suspend`           | Admin    | Suspend a user account              |
-| PATCH  | `/admin/users/{id}/activate`          | Admin    | Reactivate a suspended user         |
-| PATCH  | `/admin/users/{id}/role`              | Admin    | Change a user's role (legacy + RBAC)|
-| GET    | `/admin/properties/pending`           | Admin    | List pending properties             |
-| PATCH  | `/admin/properties/{id}/approve`      | Admin    | Approve a property listing          |
-| PATCH  | `/admin/properties/{id}/reject`       | Admin    | Reject a property (with reason)     |
-| GET    | `/admin/reports`                      | Admin    | List flagged content reports        |
-| PATCH  | `/admin/reports/{id}/resolve`         | Admin    | Resolve a report                    |
-| GET    | `/disputes/mine`                      | Auth     | List disputes filed by current user |
-| GET    | `/config`                             | Public   | Stripe publishable key + public cfg |
-| GET    | `/admin/analytics`                    | Admin    | Platform analytics dashboard        |
-| GET    | `/admin/configs`                      | Admin    | List system configurations          |
-| PATCH  | `/admin/configs/{key}`                | Admin    | Update a system config value        |
-| GET    | `/admin/pricing-rules`                | Admin    | List all pricing rules cross-property|
-| DELETE | `/admin/pricing-rules/{ruleId}`       | Admin    | Delete a pricing rule               |
-| GET    | `/admin/cancellation-policies`        | Admin    | List cancellation policies          |
-| POST   | `/admin/cancellation-policies`        | Admin    | Create a cancellation policy        |
-| PUT    | `/admin/cancellation-policies/{id}`   | Admin    | Update a cancellation policy        |
-| DELETE | `/admin/cancellation-policies/{id}`   | Admin    | Delete a cancellation policy        |
-| GET    | `/vehicles/search`                    | Public   | Search vehicles with filters        |
-| GET    | `/vehicles/{id}`                      | Public   | Vehicle detail                      |
-| POST   | `/vehicles`                           | Landlord | Create vehicle listing              |
-| PUT    | `/vehicles/{id}`                      | Landlord | Update vehicle                      |
-| DELETE | `/vehicles/{id}`                      | Landlord | Soft-delete vehicle                 |
-| POST   | `/vehicles/{id}/bookings/draft`       | Tenant   | Create vehicle booking draft        |
-| POST   | `/vehicles/{id}/bookings/{bid}/pay`   | Tenant   | Initiate vehicle booking payment    |
-| POST   | `/vehicles/{id}/images`               | Landlord | Upload vehicle images               |
-| POST   | `/vehicles/{id}/condition`            | Landlord | Create condition report             |
-| GET    | `/vehicles/{id}/condition`            | Landlord | List condition reports              |
-| POST   | `/kyc/session`                        | Landlord | Create Stripe Identity session      |
-| GET    | `/kyc/status`                         | Landlord | Get KYC verification status         |
-| POST   | `/webhooks/stripe`                    | Public   | Stripe webhook (signature-verified) |
-| GET    | `/payouts/summary`                    | Landlord | Payout summary (balance + escrow)   |
-| POST   | `/payouts/connect/onboard`            | Landlord | Create Stripe Connect account       |
-| GET    | `/leases/my`                          | Auth     | List user's rental leases           |
-| POST   | `/leases/booking/{id}/generate`       | Landlord | Generate new lease for booking      |
-| POST   | `/leases/{id}/sign`                   | Tenant   | Electronically sign a lease         |
-| GET    | `/properties/{id}/availability`       | Public   | Get booked/blocked dates            |
-| POST   | `/properties/{id}/availability/block` | Landlord | Manually block dates                |
+| Method | Endpoint                              | Auth     | Description                           |
+| ------ | ------------------------------------- | -------- | ------------------------------------- |
+| POST   | `/auth/register`                      | Public   | Register a new user                   |
+| POST   | `/auth/login`                         | Public   | Login, sets JWT cookies               |
+| POST   | `/auth/google`                        | Public   | Google OAuth login                    |
+| POST   | `/auth/refresh`                       | Public   | Refresh access token                  |
+| GET    | `/properties/search`                  | Public   | Search with filters + pagination      |
+| GET    | `/properties/{id}`                    | Public   | Property detail                       |
+| POST   | `/properties`                         | Landlord | Create property (multipart)           |
+| PUT    | `/properties/{id}`                    | Landlord | Update property                       |
+| DELETE | `/properties/{id}`                    | Landlord | Delete property                       |
+| POST   | `/properties/{id}/bookings/draft`     | Tenant   | Create property booking draft         |
+| POST   | `/properties/{id}/bookings/{bid}/pay` | Tenant   | Initiate property booking payment     |
+| PATCH  | `/bookings/{id}/approve`              | Landlord | Approve booking                       |
+| PATCH  | `/bookings/{id}/reject`               | Landlord | Reject booking                        |
+| PATCH  | `/bookings/{id}/cancel`               | Tenant   | Cancel booking                        |
+| PATCH  | `/bookings/{id}/early-checkout`       | Tenant   | Early checkout with prorated refund   |
+| GET    | `/chat/rooms`                         | Auth     | List chat rooms                       |
+| POST   | `/chat/rooms`                         | Auth     | Create chat room                      |
+| GET    | `/favorites`                          | Auth     | List favorites                        |
+| POST   | `/favorites/{propertyId}`             | Auth     | Add to favorites                      |
+| GET    | `/admin/users`                        | Admin    | List all users (paginated)            |
+| PATCH  | `/admin/users/{id}/suspend`           | Admin    | Suspend a user account                |
+| PATCH  | `/admin/users/{id}/activate`          | Admin    | Reactivate a suspended user           |
+| PATCH  | `/admin/users/{id}/role`              | Admin    | Change a user's role (legacy + RBAC)  |
+| GET    | `/admin/properties/pending`           | Admin    | List pending properties               |
+| PATCH  | `/admin/properties/{id}/approve`      | Admin    | Approve a property listing            |
+| PATCH  | `/admin/properties/{id}/reject`       | Admin    | Reject a property (with reason)       |
+| GET    | `/admin/reports`                      | Admin    | List flagged content reports          |
+| PATCH  | `/admin/reports/{id}/resolve`         | Admin    | Resolve a report                      |
+| GET    | `/disputes/mine`                      | Auth     | List disputes filed by current user   |
+| GET    | `/config`                             | Public   | Stripe publishable key + public cfg   |
+| GET    | `/admin/analytics`                    | Admin    | Platform analytics dashboard          |
+| GET    | `/admin/configs`                      | Admin    | List system configurations            |
+| PATCH  | `/admin/configs/{key}`                | Admin    | Update a system config value          |
+| GET    | `/admin/pricing-rules`                | Admin    | List all pricing rules cross-property |
+| DELETE | `/admin/pricing-rules/{ruleId}`       | Admin    | Delete a pricing rule                 |
+| GET    | `/admin/cancellation-policies`        | Admin    | List cancellation policies            |
+| POST   | `/admin/cancellation-policies`        | Admin    | Create a cancellation policy          |
+| PUT    | `/admin/cancellation-policies/{id}`   | Admin    | Update a cancellation policy          |
+| DELETE | `/admin/cancellation-policies/{id}`   | Admin    | Delete a cancellation policy          |
+| GET    | `/vehicles/search`                    | Public   | Search vehicles with filters          |
+| GET    | `/vehicles/{id}`                      | Public   | Vehicle detail                        |
+| POST   | `/vehicles`                           | Landlord | Create vehicle listing                |
+| PUT    | `/vehicles/{id}`                      | Landlord | Update vehicle                        |
+| DELETE | `/vehicles/{id}`                      | Landlord | Soft-delete vehicle                   |
+| POST   | `/vehicles/{id}/bookings/draft`       | Tenant   | Create vehicle booking draft          |
+| POST   | `/vehicles/{id}/bookings/{bid}/pay`   | Tenant   | Initiate vehicle booking payment      |
+| POST   | `/vehicles/{id}/images`               | Landlord | Upload vehicle images                 |
+| POST   | `/vehicles/{id}/condition`            | Landlord | Create condition report               |
+| GET    | `/vehicles/{id}/condition`            | Landlord | List condition reports                |
+| POST   | `/kyc/session`                        | Landlord | Create Stripe Identity session        |
+| GET    | `/kyc/status`                         | Landlord | Get KYC verification status           |
+| POST   | `/webhooks/stripe`                    | Public   | Stripe webhook (signature-verified)   |
+| GET    | `/payouts/summary`                    | Landlord | Payout summary (balance + escrow)     |
+| POST   | `/payouts/connect/onboard`            | Landlord | Create Stripe Connect account         |
+| GET    | `/leases/my`                          | Auth     | List user's rental leases             |
+| POST   | `/leases/booking/{id}/generate`       | Landlord | Generate new lease for booking        |
+| POST   | `/leases/{id}/sign`                   | Tenant   | Electronically sign a lease           |
+| GET    | `/properties/{id}/availability`       | Public   | Get booked/blocked dates              |
+| POST   | `/properties/{id}/availability/block` | Landlord | Manually block dates                  |
 
 See Swagger UI at `/swagger-ui.html` for the complete API reference.
 

@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Set;
 
 @Mapper(componentModel = "spring", uses = UserMapper.class)
-public interface PropertyMapper {
+public abstract class PropertyMapper {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    protected UserMapper userMapper;
 
     @Mapping(target = "propertyType", expression = "java(property.getPropertyType() != null ? property.getPropertyType().name() : null)")
     @Mapping(target = "listingType", expression = "java(property.getListingType() != null ? property.getListingType().name() : null)")
@@ -25,19 +28,19 @@ public interface PropertyMapper {
     @Mapping(target = "images", expression = "java(toImageList(property.getImages()))")
     @Mapping(target = "videos", expression = "java(toVideoList(property.getVideos()))")
     @Mapping(target = "amenities", expression = "java(toAmenityList(property.getAmenities()))")
-    @Mapping(target = "landlord", source = "landlord")
-    PropertyDto toDto(Property property);
+    @Mapping(target = "landlord", expression = "java(userMapper.toPublicDto(property.getLandlord()))")
+    public abstract PropertyDto toDto(Property property);
 
-    List<PropertyDto> toDto(List<Property> properties);
+    public abstract List<PropertyDto> toDto(List<Property> properties);
 
     @Mapping(target = "category", expression = "java(amenity.getCategory() != null ? amenity.getCategory().name() : null)")
-    AmenityDto toAmenityDto(Amenity amenity);
+    public abstract AmenityDto toAmenityDto(Amenity amenity);
 
-    PropertyImageDto toImageDto(PropertyImage image);
+    public abstract PropertyImageDto toImageDto(PropertyImage image);
 
-    PropertyVideoDto toVideoDto(PropertyVideo video);
+    public abstract PropertyVideoDto toVideoDto(PropertyVideo video);
 
-    default List<PropertyImageDto> toImageList(Set<PropertyImage> images) {
+    public List<PropertyImageDto> toImageList(Set<PropertyImage> images) {
         return images == null ? List.of() : images.stream()
                 .sorted((a, b) -> Integer.compare(
                         a.getDisplayOrder() == null ? 0 : a.getDisplayOrder(),
@@ -46,11 +49,11 @@ public interface PropertyMapper {
                 .toList();
     }
 
-    default List<PropertyVideoDto> toVideoList(Set<PropertyVideo> videos) {
+    public List<PropertyVideoDto> toVideoList(Set<PropertyVideo> videos) {
         return videos == null ? List.of() : videos.stream().map(this::toVideoDto).toList();
     }
 
-    default List<AmenityDto> toAmenityList(Set<Amenity> amenities) {
+    public List<AmenityDto> toAmenityList(Set<Amenity> amenities) {
         return amenities == null ? List.of() : amenities.stream().map(this::toAmenityDto).toList();
     }
 }

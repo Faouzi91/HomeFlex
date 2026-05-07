@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, UrlTree } from '@angular/router';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
+import { vi } from 'vitest';
 import { adminGuard } from './admin.guard';
 import { SessionStore } from '../state/session.store';
 import { User } from '../models/api.types';
@@ -12,7 +13,7 @@ function mockSession(role: string | null) {
       ? ({ role, email: 'test@test.com', isActive: true } as Partial<User> as User)
       : null;
   return {
-    init: jasmine.createSpy('init'),
+    init: vi.fn(),
     user: signal<User | null>(user),
     isAuthenticated: signal(role !== null),
     isAdmin: signal(role === 'ADMIN'),

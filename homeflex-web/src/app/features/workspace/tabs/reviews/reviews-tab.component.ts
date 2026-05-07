@@ -52,9 +52,7 @@ export class ReviewsTabComponent {
       this.error.set(null);
 
       const propertyStreams = properties.map((p) =>
-        this.reviewApi
-          .getByProperty(p.id)
-          .pipe(catchError(() => of({ data: [] as Review[] }))),
+        this.reviewApi.getByProperty(p.id).pipe(catchError(() => of({ data: [] as Review[] }))),
       );
 
       const tenantStream = this.reviewApi

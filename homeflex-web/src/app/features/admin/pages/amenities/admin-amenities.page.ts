@@ -29,11 +29,21 @@ export class AdminAmenitiesPageComponent {
   protected readonly editingId = signal<string | null>(null);
   protected readonly form = signal<AmenityForm>({ name: '', nameFr: '', icon: '', category: '' });
 
-  protected readonly modalTitle = computed(() => this.editingId() ? 'Edit Amenity' : 'New Amenity');
+  protected readonly modalTitle = computed(() =>
+    this.editingId() ? 'Edit Amenity' : 'New Amenity',
+  );
 
   protected readonly categories = [
-    'GENERAL', 'KITCHEN', 'BATHROOM', 'BEDROOM', 'OUTDOOR',
-    'SAFETY', 'ENTERTAINMENT', 'TRANSPORT', 'ACCESSIBILITY', 'OTHER',
+    'GENERAL',
+    'KITCHEN',
+    'BATHROOM',
+    'BEDROOM',
+    'OUTDOOR',
+    'SAFETY',
+    'ENTERTAINMENT',
+    'TRANSPORT',
+    'ACCESSIBILITY',
+    'OTHER',
   ];
 
   constructor() {
@@ -64,7 +74,12 @@ export class AdminAmenitiesPageComponent {
 
   protected openEdit(a: Amenity): void {
     this.editingId.set(a.id);
-    this.form.set({ name: a.name, nameFr: a.nameFr ?? '', icon: a.icon ?? '', category: a.category ?? '' });
+    this.form.set({
+      name: a.name,
+      nameFr: a.nameFr ?? '',
+      icon: a.icon ?? '',
+      category: a.category ?? '',
+    });
     this.saveError.set(null);
     this.showModal.set(true);
   }
@@ -82,7 +97,9 @@ export class AdminAmenitiesPageComponent {
     const id = this.editingId();
     const call$ = id
       ? this.adminApi.updateAmenity(id, f)
-      : this.adminApi.createAmenity(f as { name: string; nameFr: string; icon: string; category: string });
+      : this.adminApi.createAmenity(
+          f as { name: string; nameFr: string; icon: string; category: string },
+        );
 
     call$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {

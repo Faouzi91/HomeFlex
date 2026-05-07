@@ -22,8 +22,16 @@ public class VehicleBooking {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vehicle_id", insertable = false, updatable = false)
+    private Vehicle vehicle;
+
     @Column(name = "vehicle_id", nullable = false)
     private UUID vehicleId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", insertable = false, updatable = false)
+    private com.homeflex.core.domain.entity.User tenant;
 
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
@@ -58,6 +66,9 @@ public class VehicleBooking {
 
     @Column(name = "payment_failure_reason", columnDefinition = "TEXT")
     private String paymentFailureReason;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
 
     @Column(columnDefinition = "TEXT")
     private String message;

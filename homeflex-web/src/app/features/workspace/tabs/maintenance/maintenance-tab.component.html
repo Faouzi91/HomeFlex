@@ -85,9 +85,13 @@
                 type="text"
                 placeholder="e.g. Leaking kitchen tap"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all"
-                [class.border-rose-300]="createForm.get('title')?.invalid && createForm.get('title')?.dirty"
+                [class.border-rose-300]="
+                  createForm.get('title')?.invalid && createForm.get('title')?.dirty
+                "
               />
-              @if (createForm.get('title')?.dirty && createForm.get('title')?.hasError('minlength')) {
+              @if (
+                createForm.get('title')?.dirty && createForm.get('title')?.hasError('minlength')
+              ) {
                 <p class="text-xs text-rose-600 mt-1">At least 5 characters required.</p>
               }
             </div>
@@ -99,9 +103,14 @@
                 rows="3"
                 placeholder="Describe the issue in detail…"
                 class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-300 transition-all resize-none"
-                [class.border-rose-300]="createForm.get('description')?.invalid && createForm.get('description')?.dirty"
+                [class.border-rose-300]="
+                  createForm.get('description')?.invalid && createForm.get('description')?.dirty
+                "
               ></textarea>
-              @if (createForm.get('description')?.dirty && createForm.get('description')?.hasError('minlength')) {
+              @if (
+                createForm.get('description')?.dirty &&
+                createForm.get('description')?.hasError('minlength')
+              ) {
                 <p class="text-xs text-rose-600 mt-1">At least 10 characters required.</p>
               }
             </div>

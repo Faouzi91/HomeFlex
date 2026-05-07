@@ -10,13 +10,17 @@ import org.mapstruct.Mapping;
 import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {PropertyMapper.class, UserMapper.class})
-public interface BookingMapper {
+public abstract class BookingMapper {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    protected UserMapper userMapper;
 
     @Mapping(target = "bookingType", expression = "java(booking.getBookingType() != null ? booking.getBookingType().name() : null)")
     @Mapping(target = "status", expression = "java(booking.getStatus() != null ? booking.getStatus().name() : null)")
     @Mapping(target = "stripeClientSecret", source = "stripeClientSecret")
     @Mapping(target = "paymentStatus", source = "paymentStatus")
     @Mapping(target = "paymentFailureReason", source = "paymentFailureReason")
+    @Mapping(target = "tenant", expression = "java(userMapper.toPublicDto(booking.getTenant()))")
     @Mapping(target = "roomTypeId", expression = "java(booking.getRoomType() != null ? booking.getRoomType().getId() : null)")
     @Mapping(target = "roomTypeName", expression = "java(booking.getRoomType() != null ? booking.getRoomType().getName() : null)")
     @Mapping(target = "numberOfRooms", source = "numberOfRooms")
@@ -24,7 +28,7 @@ public interface BookingMapper {
     @Mapping(target = "unitNumber", expression = "java(booking.getUnit() != null ? booking.getUnit().getUnitNumber() : null)")
     @Mapping(target = "paymentConfirmedAt", source = "paymentConfirmedAt")
     @Mapping(target = "escrowReleasedAt", source = "escrowReleasedAt")
-    BookingDto toDto(Booking booking);
+    public abstract BookingDto toDto(Booking booking);
 
-    List<BookingDto> toDto(List<Booking> bookings);
+    public abstract List<BookingDto> toDto(List<Booking> bookings);
 }

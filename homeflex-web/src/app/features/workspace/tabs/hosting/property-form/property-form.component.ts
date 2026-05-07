@@ -7,9 +7,22 @@ import { switchMap, catchError, of } from 'rxjs';
 import { PropertyApi } from '../../../../../core/api/services/property.api';
 import { WorkspaceStore } from '../../../workspace.store';
 
-const PROPERTY_TYPES = ['APARTMENT', 'HOUSE', 'VILLA', 'STUDIO', 'OFFICE', 'LAND', 'COMMERCIAL'];
-const LISTING_TYPES = ['RENT', 'SALE'];
+const PROPERTY_TYPES = [
+  'APARTMENT',
+  'HOUSE',
+  'STUDIO',
+  'VILLA',
+  'ROOM',
+  'OFFICE',
+  'LAND',
+  'HOTEL',
+  'GUESTHOUSE',
+  'HOSTEL',
+  'RESORT',
+];
+const LISTING_TYPES = ['RENT', 'SALE', 'SHORT_TERM', 'NIGHTLY'];
 const CURRENCIES = ['XAF', 'USD', 'EUR'];
+const CANCELLATION_POLICIES = ['FLEXIBLE', 'MODERATE', 'STRICT', 'NON_REFUNDABLE'];
 
 @Component({
   selector: 'app-property-form',
@@ -35,6 +48,7 @@ export class PropertyFormComponent implements OnInit {
   protected readonly propertyTypes = PROPERTY_TYPES;
   protected readonly listingTypes = LISTING_TYPES;
   protected readonly currencies = CURRENCIES;
+  protected readonly cancellationPolicies = CANCELLATION_POLICIES;
 
   protected readonly form = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(5)]],
@@ -54,6 +68,21 @@ export class PropertyFormComponent implements OnInit {
     floorNumber: [null as number | null],
     totalFloors: [null as number | null],
     availableFrom: [''],
+    // Booking & policy fields (PropertyCreateRequest v5)
+    cancellationPolicy: ['FLEXIBLE'],
+    cleaningFee: [null as number | null, [Validators.min(0)]],
+    securityDeposit: [null as number | null, [Validators.min(0)]],
+    instantBookEnabled: [false],
+    checkInTime: [''],
+    checkOutTime: [''],
+    starRating: [null as number | null, [Validators.min(1), Validators.max(5)]],
+    petsAllowed: [false],
+    smokingAllowed: [false],
+    childrenAllowed: [true],
+    minStayNights: [1, [Validators.min(1)]],
+    maxStayNights: [null as number | null],
+    houseRules: [''],
+    submitAsDraft: [false],
   });
 
   ngOnInit(): void {
@@ -91,6 +120,19 @@ export class PropertyFormComponent implements OnInit {
             floorNumber: p.floorNumber,
             totalFloors: p.totalFloors,
             availableFrom: p.availableFrom ?? '',
+            cancellationPolicy: p.cancellationPolicy ?? 'FLEXIBLE',
+            cleaningFee: p.cleaningFee ?? null,
+            securityDeposit: p.securityDeposit ?? null,
+            instantBookEnabled: p.instantBookEnabled ?? false,
+            checkInTime: p.checkInTime ?? '',
+            checkOutTime: p.checkOutTime ?? '',
+            starRating: p.starRating ?? null,
+            petsAllowed: p.petsAllowed ?? false,
+            smokingAllowed: p.smokingAllowed ?? false,
+            childrenAllowed: p.childrenAllowed ?? true,
+            minStayNights: p.minStayNights ?? 1,
+            maxStayNights: p.maxStayNights ?? null,
+            houseRules: p.houseRules ?? '',
           });
         });
     }
@@ -171,6 +213,20 @@ export class PropertyFormComponent implements OnInit {
       floorNumber: v.floorNumber ?? null,
       totalFloors: v.totalFloors ?? null,
       availableFrom: v.availableFrom || null,
+      cancellationPolicy: v.cancellationPolicy || 'FLEXIBLE',
+      cleaningFee: v.cleaningFee ?? 0,
+      securityDeposit: v.securityDeposit ?? 0,
+      instantBookEnabled: v.instantBookEnabled ?? false,
+      checkInTime: v.checkInTime || null,
+      checkOutTime: v.checkOutTime || null,
+      starRating: v.starRating ?? null,
+      petsAllowed: v.petsAllowed ?? false,
+      smokingAllowed: v.smokingAllowed ?? false,
+      childrenAllowed: v.childrenAllowed ?? true,
+      minStayNights: v.minStayNights ?? 1,
+      maxStayNights: v.maxStayNights ?? null,
+      houseRules: v.houseRules || null,
+      submitAsDraft: v.submitAsDraft ?? false,
     };
   }
 

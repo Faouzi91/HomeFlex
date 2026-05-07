@@ -19,21 +19,21 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 
 ## Tech Stack
 
-| Layer      | Technology                                    |
-| ---------- | --------------------------------------------- |
-| Frontend   | Angular 21, TailwindCSS 4, TypeScript 5.9     |
-| Backend    | Spring Boot 4, Java 21, Gradle                |
-| Database   | PostgreSQL 18, Flyway migrations              |
-| Cache      | Redis 8                                       |
-| Messaging  | RabbitMQ 4                                    |
-| Search     | Elasticsearch 9.1                             |
-| Logging    | Logstash 9.1 + Kibana 9.1 (ELK stack)         |
-| Monitoring | Micrometer, Prometheus 3.5, Grafana 11.6      |
+| Layer      | Technology                                              |
+| ---------- | ------------------------------------------------------- |
+| Frontend   | Angular 21, TailwindCSS 4, TypeScript 5.9               |
+| Backend    | Spring Boot 4, Java 21, Gradle                          |
+| Database   | PostgreSQL 18, Flyway migrations                        |
+| Cache      | Redis 8                                                 |
+| Messaging  | RabbitMQ 4                                              |
+| Search     | Elasticsearch 9.1                                       |
+| Logging    | Logstash 9.1 + Kibana 9.1 (ELK stack)                   |
+| Monitoring | Micrometer, Prometheus 3.5, Grafana 11.6                |
 | Auth       | JWT (httpOnly cookies), Google OAuth (Apple/FB planned) |
-| Payments   | Stripe Connect (escrow, destination charges)  |
-| KYC        | Stripe Identity Verification                  |
-| CI         | GitHub Actions                                |
-| IaC        | Terraform (AWS ECS, RDS, Route53)             |
+| Payments   | Stripe Connect (escrow, destination charges)            |
+| KYC        | Stripe Identity Verification                            |
+| CI         | GitHub Actions                                          |
+| IaC        | Terraform (AWS ECS, RDS, Route53)                       |
 
 ## Module Structure
 
@@ -118,29 +118,31 @@ HomeFlex is an enterprise-grade rental marketplace for properties and vehicles, 
 
 Custom skills live in `.claude/skills/` and are auto-loaded by Claude Code. Always invoke the matching skill instead of generating code freehand.
 
-| Skill                | Trigger phrases                                                        | File                                    |
-| -------------------- | ---------------------------------------------------------------------- | --------------------------------------- |
-| `spring-entity`      | "create entity / domain model / @Entity"                               | `.claude/skills/spring-entity/SKILL.md` |
-| `spring-dto`         | "create DTO / request / response / mapper"                             | `.claude/skills/spring-dto/SKILL.md`    |
-| `spring-service`     | "create service / use case / business logic"                           | `.claude/skills/spring-service/SKILL.md`|
-| `spring-controller`  | "create controller / REST endpoint / API route"                        | `.claude/skills/spring-controller/SKILL.md` |
-| `spring-migration`   | "create migration / add column / add table"                            | `.claude/skills/spring-migration/SKILL.md` |
-| `angular-component`  | "create component / page / form / list / modal"                        | `.claude/skills/angular-component/SKILL.md` |
-| `angular-service`    | "create Angular service / call backend / HTTP client"                  | `.claude/skills/angular-service/SKILL.md` |
-| `angular-feature`    | "scaffold Angular feature / full CRUD module"                          | `.claude/skills/angular-feature/SKILL.md` |
-| `docker-compose`     | "create docker-compose / dockerize / add service"                      | `.claude/skills/docker-compose/SKILL.md` |
-| `security`           | "secure X / harden / audit / OWASP / encrypt / rate-limit"            | `.claude/skills/security/SKILL.md`      |
-| `folder-structure`   | "scaffold project / folder layout / directory structure / architecture" | `.claude/skills/folder-structure/SKILL.md` |
+| Skill               | Trigger phrases                                                         | File                                        |
+| ------------------- | ----------------------------------------------------------------------- | ------------------------------------------- |
+| `spring-entity`     | "create entity / domain model / @Entity"                                | `.claude/skills/spring-entity/SKILL.md`     |
+| `spring-dto`        | "create DTO / request / response / mapper"                              | `.claude/skills/spring-dto/SKILL.md`        |
+| `spring-service`    | "create service / use case / business logic"                            | `.claude/skills/spring-service/SKILL.md`    |
+| `spring-controller` | "create controller / REST endpoint / API route"                         | `.claude/skills/spring-controller/SKILL.md` |
+| `spring-migration`  | "create migration / add column / add table"                             | `.claude/skills/spring-migration/SKILL.md`  |
+| `angular-component` | "create component / page / form / list / modal"                         | `.claude/skills/angular-component/SKILL.md` |
+| `angular-service`   | "create Angular service / call backend / HTTP client"                   | `.claude/skills/angular-service/SKILL.md`   |
+| `angular-feature`   | "scaffold Angular feature / full CRUD module"                           | `.claude/skills/angular-feature/SKILL.md`   |
+| `docker-compose`    | "create docker-compose / dockerize / add service"                       | `.claude/skills/docker-compose/SKILL.md`    |
+| `security`          | "secure X / harden / audit / OWASP / encrypt / rate-limit"              | `.claude/skills/security/SKILL.md`          |
+| `folder-structure`  | "scaffold project / folder layout / directory structure / architecture" | `.claude/skills/folder-structure/SKILL.md`  |
 
 ### Security Skill — Key Rules
 
 The `security` skill encodes HomeFlex's security architecture. Always consult it when:
+
 - Writing any auth, CSRF, session, or token-handling code
 - Adding a new endpoint that needs `@PreAuthorize`
 - Implementing file upload, encryption, or secret management
 - Reviewing or generating rate-limiting logic
 
 Critical rules enforced by this skill:
+
 1. Secrets: `${VAR}` with **no fallback** for sensitive values — fail fast if unset
 2. `DataInitializer` (and any seed class) must be `@Profile("!prod")`
 3. Token comparisons use `MessageDigest.isEqual()` — never `String.equals()`
@@ -152,6 +154,7 @@ Critical rules enforced by this skill:
 ### Folder Structure Skill — Key Rules
 
 The `folder-structure` skill generates idiomatic directory trees for:
+
 - **Java / Spring Boot**: Layered (current), Hexagonal, Vertical Slice
 - **TypeScript / Angular**: Feature-Sliced Design (current)
 - **Python / FastAPI**: Clean Architecture

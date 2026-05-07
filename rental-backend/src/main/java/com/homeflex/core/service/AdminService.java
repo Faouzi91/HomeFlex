@@ -291,17 +291,22 @@ public class AdminService {
         return amenityRepository.findAll(org.springframework.data.domain.Sort.by("category", "name"));
     }
 
-    public Amenity createAmenity(Amenity amenity) {
+    public Amenity createAmenity(com.homeflex.features.property.dto.request.AmenityRequest request) {
+        Amenity amenity = new Amenity();
+        amenity.setName(request.name());
+        amenity.setNameFr(request.nameFr());
+        amenity.setIcon(request.icon());
+        amenity.setCategory(request.category());
         return amenityRepository.save(amenity);
     }
 
-    public Amenity updateAmenity(UUID id, Amenity patch) {
+    public Amenity updateAmenity(UUID id, com.homeflex.features.property.dto.request.AmenityRequest patch) {
         Amenity existing = amenityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Amenity not found"));
-        if (patch.getName() != null) existing.setName(patch.getName());
-        if (patch.getNameFr() != null) existing.setNameFr(patch.getNameFr());
-        if (patch.getIcon() != null) existing.setIcon(patch.getIcon());
-        if (patch.getCategory() != null) existing.setCategory(patch.getCategory());
+        existing.setName(patch.name());
+        existing.setNameFr(patch.nameFr());
+        existing.setIcon(patch.icon());
+        existing.setCategory(patch.category());
         return amenityRepository.save(existing);
     }
 

@@ -35,7 +35,7 @@
                        +----------+     | | | | |  +----------+
                        |                | | | | |             |
               +--------v-----+   +------v-+ | +-v------+  +--v---------+
-              | PostgreSQL 16|   | Redis 7| | |RabbitMQ|  |Elastic 9   |
+              | PostgreSQL 18|   | Redis 8| | |RabbitMQ|  |Elastic 9.1 |
               | (db:5432)    |   | (:6379)| | |(:5672) |  |search      |
               |              |   |        | | |        |  |(:9200)     |
               | - users      |   | cache  | | | outbox |  | property   |

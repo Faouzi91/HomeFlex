@@ -95,4 +95,19 @@ export class VehicleApi extends BaseApi {
       `${this.baseUrl}/vehicles/${id}/bookings`,
     );
   }
+
+  approve(vehicleId: string, bookingId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/vehicles/${vehicleId}/bookings/${bookingId}/approve`,
+      {},
+    );
+  }
+
+  reject(vehicleId: string, bookingId: string, reason?: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/vehicles/${vehicleId}/bookings/${bookingId}/reject`,
+      {},
+      { params: this.buildParams({ reason }) },
+    );
+  }
 }

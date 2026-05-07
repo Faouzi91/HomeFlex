@@ -6,6 +6,7 @@ import com.homeflex.core.domain.entity.Permission;
 import com.homeflex.core.domain.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
@@ -17,4 +18,39 @@ public interface UserMapper {
     @Mapping(target = "profileCompleteness", ignore = true)
     @Mapping(target = "stripeConnected", expression = "java(user.getStripeAccountId() != null)")
     UserDto toDto(User user);
+
+    /**
+     * Embedded variant for public-facing payloads (PropertyDto.landlord, ReviewDto.reviewer,
+     * BookingDto.tenant when seen by counterparties, etc.). Strips PII (email, phoneNumber,
+     * notification prefs, Stripe account id, agency role) so it never leaks via embedded views.
+     */
+    @Named("public")
+    default UserDto toPublicDto(User user) {
+        if (user == null) return null;
+        UserDto full = toDto(user);
+        return new UserDto(
+                full.id(),
+                null,                  // email
+                full.firstName(),
+                full.lastName(),
+                null,                  // phoneNumber
+                full.profilePictureUrl(),
+                full.role(),
+                full.roles(),
+                java.util.List.of(),   // permissions
+                full.isActive(),
+                full.isVerified(),
+                null,                  // languagePreference
+                full.agencyId(),
+                null,                  // agencyRole
+                full.trustScore(),
+                null,                  // emailNotificationsEnabled
+                null,                  // pushNotificationsEnabled
+                null,                  // smsNotificationsEnabled
+                null,                  // profileCompleteness
+                full.createdAt(),
+                full.stripeConnected(),
+                null                   // stripeAccountId
+        );
+    }
 }

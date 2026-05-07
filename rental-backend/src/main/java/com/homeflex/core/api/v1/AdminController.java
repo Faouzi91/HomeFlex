@@ -38,14 +38,14 @@ public class AdminController {
     @PatchMapping("/properties/{id}/reject")
     public ResponseEntity<PropertyDto> rejectProperty(
             @PathVariable UUID id,
-            @RequestBody RejectReasonRequest request) {
+            @RequestBody @jakarta.validation.Valid RejectReasonRequest request) {
         return ResponseEntity.ok(adminService.rejectProperty(id, request.reason()));
     }
 
     @PatchMapping("/properties/{id}/suspend")
     public ResponseEntity<PropertyDto> suspendProperty(
             @PathVariable UUID id,
-            @RequestBody RejectReasonRequest request) {
+            @RequestBody @jakarta.validation.Valid RejectReasonRequest request) {
         return ResponseEntity.ok(adminService.suspendProperty(id, request.reason()));
     }
 
@@ -114,15 +114,17 @@ public class AdminController {
 
     @PostMapping("/amenities")
     public ResponseEntity<com.homeflex.features.property.domain.entity.Amenity> createAmenity(
-            @RequestBody com.homeflex.features.property.domain.entity.Amenity amenity) {
-        return ResponseEntity.ok(adminService.createAmenity(amenity));
+            @RequestBody @jakarta.validation.Valid
+            com.homeflex.features.property.dto.request.AmenityRequest request) {
+        return ResponseEntity.ok(adminService.createAmenity(request));
     }
 
     @PutMapping("/amenities/{id}")
     public ResponseEntity<com.homeflex.features.property.domain.entity.Amenity> updateAmenity(
             @PathVariable UUID id,
-            @RequestBody com.homeflex.features.property.domain.entity.Amenity amenity) {
-        return ResponseEntity.ok(adminService.updateAmenity(id, amenity));
+            @RequestBody @jakarta.validation.Valid
+            com.homeflex.features.property.dto.request.AmenityRequest request) {
+        return ResponseEntity.ok(adminService.updateAmenity(id, request));
     }
 
     @DeleteMapping("/amenities/{id}")

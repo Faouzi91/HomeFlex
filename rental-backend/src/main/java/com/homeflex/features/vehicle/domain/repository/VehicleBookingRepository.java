@@ -14,6 +14,11 @@ import java.util.UUID;
 
 public interface VehicleBookingRepository extends JpaRepository<VehicleBooking, UUID> {
 
+    Optional<VehicleBooking> findByStripePaymentIntentId(String stripePaymentIntentId);
+
+    List<VehicleBooking> findByVehicleId(UUID vehicleId);
+
+
     /**
      * Detects date overlaps for a vehicle using standard interval logic:
      * {@code existing.start <= requested.end AND existing.end >= requested.start}.

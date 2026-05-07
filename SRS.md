@@ -11,15 +11,15 @@
 
 ## Document Control
 
-| Version | Date       | Author        | Description                                                                                                             |
-| ------- | ---------- | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                                            |
-| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                                        |
-| 3.0     | 2026-04-11 | Architect     | 100% Technical Parity: ELK, Maps, i18n, AI, Blockchain, Redlock, GDPR, PII Encryption, Terraform, SLOs, Flutter native. |
-| 3.1     | 2026-04-14 | Architect     | Admin console separation, role-based profiles, notification preferences, user/property/report management pages.         |
-| 3.2     | 2026-04-15 | Architect     | Security Hardening: AES-GCM PII encryption, mandatory env-based secret management, infrastructure isolation.            |
-| 3.3     | 2026-04-17 | Architect     | CI hardening, dead-code removal, admin guard tests, SRS test inventory update.                                          |
-| 3.4     | 2026-04-17 | Architect     | Stripe payment flow (client secret, confirmCardPayment), reactive unread counts, landlord booking view, home page fix.  |
+| Version | Date       | Author        | Description                                                                                                                                               |
+| ------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2024-XX-XX | Original Team | Initial real estate platform                                                                                                                              |
+| 2.0     | 2026-03-24 | Architect     | Full enterprise-grade overhaul + vehicle rentals                                                                                                          |
+| 3.0     | 2026-04-11 | Architect     | 100% Technical Parity: ELK, Maps, i18n, AI, Blockchain, Redlock, GDPR, PII Encryption, Terraform, SLOs, Flutter native.                                   |
+| 3.1     | 2026-04-14 | Architect     | Admin console separation, role-based profiles, notification preferences, user/property/report management pages.                                           |
+| 3.2     | 2026-04-15 | Architect     | Security Hardening: AES-GCM PII encryption, mandatory env-based secret management, infrastructure isolation.                                              |
+| 3.3     | 2026-04-17 | Architect     | CI hardening, dead-code removal, admin guard tests, SRS test inventory update.                                                                            |
+| 3.4     | 2026-04-17 | Architect     | Stripe payment flow (client secret, confirmCardPayment), reactive unread counts, landlord booking view, home page fix.                                    |
 | 3.5     | 2026-04-18 | Architect     | Unread chat count persists across refresh (repo query fix), robust avatar upload (null-safe + 50M nginx limit), overview stats filter to active bookings. |
 
 ---

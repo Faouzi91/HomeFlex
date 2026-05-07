@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PLATFORM_ID } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { VehicleDetailPageComponent } from './vehicle-detail.page';
 import { provideRouter } from '@angular/router';
 import { VehicleApi } from '../../../../core/api/services/vehicle.api';
@@ -26,6 +28,8 @@ describe('VehicleDetailPageComponent', () => {
         CurrencyPipe,
         ConvertCurrencyPipe,
         { provide: VehicleApi, useValue: mockApi },
+        { provide: HttpClient, useValue: { get: vi.fn().mockReturnValue(of({})) } },
+        { provide: PLATFORM_ID, useValue: 'server' },
       ],
     }).compileComponents();
 

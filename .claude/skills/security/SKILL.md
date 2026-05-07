@@ -14,17 +14,17 @@ description: >
 
 ## Architecture Security Baseline (HomeFlex)
 
-| Layer         | Mechanism                                                              |
-| ------------- | ---------------------------------------------------------------------- |
-| Auth tokens   | httpOnly + Secure + SameSite=Lax cookies (no localStorage)            |
-| CSRF          | `CookieCsrfTokenRepository` + `SpaCsrfTokenRequestHandler`            |
-| PII at rest   | AES-256-GCM with per-record random IVs (`PiiEncryptionService`)        |
-| Rate limiting | Redis Lua INCR+EXPIRE — 100 req/min (auth), 20 req/min (public)        |
-| Authorization | Spring Security `@PreAuthorize` + method-level RBAC                    |
-| Passwords     | BCrypt (strength 12)                                                   |
+| Layer         | Mechanism                                                                  |
+| ------------- | -------------------------------------------------------------------------- |
+| Auth tokens   | httpOnly + Secure + SameSite=Lax cookies (no localStorage)                 |
+| CSRF          | `CookieCsrfTokenRepository` + `SpaCsrfTokenRequestHandler`                 |
+| PII at rest   | AES-256-GCM with per-record random IVs (`PiiEncryptionService`)            |
+| Rate limiting | Redis Lua INCR+EXPIRE — 100 req/min (auth), 20 req/min (public)            |
+| Authorization | Spring Security `@PreAuthorize` + method-level RBAC                        |
+| Passwords     | BCrypt (strength 12)                                                       |
 | Secrets       | Environment variables only — never hardcoded defaults for sensitive values |
-| CSP           | Strict Content-Security-Policy via Nginx `add_header ... always`       |
-| IP resolution | Last `X-Forwarded-For` entry (Nginx-appended), never the first        |
+| CSP           | Strict Content-Security-Policy via Nginx `add_header ... always`           |
+| IP resolution | Last `X-Forwarded-For` entry (Nginx-appended), never the first             |
 
 ---
 
@@ -114,7 +114,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
 ```typescript
 // Already wired in app.config.ts — every mutating request sends X-XSRF-TOKEN
 const credentialsInterceptor: HttpInterceptorFn = (req, next) => {
-  const mutating = ['POST','PUT','PATCH','DELETE'].includes(req.method);
+  const mutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
   let headers = req.headers;
   const token = readCookie('XSRF-TOKEN');
   if (mutating && token) {
@@ -424,18 +424,18 @@ add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
 ## OWASP Top 10 Checklist
 
-| # | Risk                               | Mitigation in this stack                                      | Status |
-|---|-----------------------------------|---------------------------------------------------------------|--------|
-| A01 | Broken Access Control           | `@PreAuthorize` + ownership checks on every resource          | 🟢     |
-| A02 | Cryptographic Failures          | AES-256-GCM PII, BCrypt passwords, TLS (prod ALB)            | 🟢     |
-| A03 | Injection                       | JPA parameterized queries; Jakarta validation on DTOs         | 🟢     |
-| A04 | Insecure Design                 | Layered architecture, no controller→repository, RBAC          | 🟢     |
-| A05 | Security Misconfiguration       | No hardcoded defaults; dev profile gated; Swagger prod-off   | 🟢     |
-| A06 | Vulnerable Components           | Dependabot planned (SEC-10)                                   | 🔴     |
-| A07 | Auth & Session Failures         | httpOnly cookies, refresh rotation, logout clears DB token   | 🟢     |
-| A08 | Software & Data Integrity       | Stripe webhook idempotency; outbox relay; Flyway migrations   | 🟢     |
-| A09 | Security Logging & Monitoring   | ELK + Prometheus; security event logging planned (SEC-06)    | 🟡     |
-| A10 | SSRF                            | No user-controlled URL fetching; S3 presigned via UUID key   | 🟢     |
+| #   | Risk                          | Mitigation in this stack                                    | Status |
+| --- | ----------------------------- | ----------------------------------------------------------- | ------ |
+| A01 | Broken Access Control         | `@PreAuthorize` + ownership checks on every resource        | 🟢     |
+| A02 | Cryptographic Failures        | AES-256-GCM PII, BCrypt passwords, TLS (prod ALB)           | 🟢     |
+| A03 | Injection                     | JPA parameterized queries; Jakarta validation on DTOs       | 🟢     |
+| A04 | Insecure Design               | Layered architecture, no controller→repository, RBAC        | 🟢     |
+| A05 | Security Misconfiguration     | No hardcoded defaults; dev profile gated; Swagger prod-off  | 🟢     |
+| A06 | Vulnerable Components         | Dependabot planned (SEC-10)                                 | 🔴     |
+| A07 | Auth & Session Failures       | httpOnly cookies, refresh rotation, logout clears DB token  | 🟢     |
+| A08 | Software & Data Integrity     | Stripe webhook idempotency; outbox relay; Flyway migrations | 🟢     |
+| A09 | Security Logging & Monitoring | ELK + Prometheus; security event logging planned (SEC-06)   | 🟡     |
+| A10 | SSRF                          | No user-controlled URL fetching; S3 presigned via UUID key  | 🟢     |
 
 ---
 

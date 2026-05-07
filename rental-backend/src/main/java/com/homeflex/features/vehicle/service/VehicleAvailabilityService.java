@@ -41,6 +41,92 @@ public class VehicleAvailabilityService {
     private final VehicleBookingRepository bookingRepository;
     private final com.homeflex.core.service.PaymentService paymentService;
 
+    @Transactional
+    public void handlePaymentSucceeded(String paymentIntentId) {
+        log.info("Handling payment success for vehicle booking: PI={}", paymentIntentId);
+        VehicleBooking booking = bookingRepository.findByStripePaymentIntentId(paymentIntentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle booking not found for PI: " + paymentIntentId));
+
+        if (booking.getStatus() == VehicleBookingStatus.PAYMENT_PENDING) {
+            booking.setStatus(VehicleBookingStatus.PENDING_APPROVAL);
+            booking.setPaymentStatus("succeeded");
+            bookingRepository.save(booking);
+            log.info("Vehicle booking {} moved to PENDING_APPROVAL", booking.getId());
+        }
+    }
+
+    @Transactional
+    public void handlePaymentFailed(String paymentIntentId) {
+        log.warn("Handling payment failure for vehicle booking: PI={}", paymentIntentId);
+        VehicleBooking booking = bookingRepository.findByStripePaymentIntentId(paymentIntentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle booking not found for PI: " + paymentIntentId));
+
+        booking.setStatus(VehicleBookingStatus.PAYMENT_FAILED);
+        booking.setPaymentStatus("failed");
+        bookingRepository.save(booking);
+    }
+
+    @Transactional
+    public void approve(UUID bookingId, UUID ownerId) {
+        VehicleBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle booking not found: " + bookingId));
+
+        Vehicle vehicle = vehicleRepository.findById(booking.getVehicleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+
+        if (!vehicle.getOwnerId().equals(ownerId)) {
+            throw new DomainException("Only the vehicle owner can approve bookings");
+        }
+
+        if (booking.getStatus() != VehicleBookingStatus.PENDING_APPROVAL) {
+            throw new DomainException("Booking is not in PENDING_APPROVAL status (current: " + booking.getStatus() + ")");
+        }
+
+        // Capture Stripe payment
+        if (booking.getStripePaymentIntentId() != null) {
+            try {
+                paymentService.capturePaymentIntent(booking.getStripePaymentIntentId());
+            } catch (Exception e) {
+                log.warn("Could not capture payment for vehicle booking {}: {}", booking.getId(), e.getMessage());
+            }
+        }
+
+        booking.setStatus(VehicleBookingStatus.APPROVED);
+        bookingRepository.save(booking);
+        log.info("Vehicle booking {} approved by owner {}", bookingId, ownerId);
+    }
+
+    @Transactional
+    public void reject(UUID bookingId, UUID ownerId, String reason) {
+        VehicleBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle booking not found: " + bookingId));
+
+        Vehicle vehicle = vehicleRepository.findById(booking.getVehicleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
+
+        if (!vehicle.getOwnerId().equals(ownerId)) {
+            throw new DomainException("Only the vehicle owner can reject bookings");
+        }
+
+        if (booking.getStatus() != VehicleBookingStatus.PENDING_APPROVAL && booking.getStatus() != VehicleBookingStatus.PAYMENT_PENDING) {
+            throw new DomainException("Booking status cannot be rejected (current: " + booking.getStatus() + ")");
+        }
+
+        // Cancel Stripe PI
+        if (booking.getStripePaymentIntentId() != null) {
+            try {
+                paymentService.cancelPaymentIntent(booking.getStripePaymentIntentId());
+            } catch (Exception e) {
+                log.warn("Could not cancel PI for vehicle booking {}: {}", booking.getId(), e.getMessage());
+            }
+        }
+
+        booking.setStatus(VehicleBookingStatus.REJECTED);
+        booking.setRejectionReason(reason);
+        bookingRepository.save(booking);
+        log.info("Vehicle booking {} rejected by owner {}. Reason: {}", bookingId, ownerId, reason);
+    }
+
     /**
      * Returns {@code true} when the vehicle has no overlapping bookings
      * in the requested date range.

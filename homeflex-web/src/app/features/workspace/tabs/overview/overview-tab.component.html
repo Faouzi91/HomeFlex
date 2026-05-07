@@ -262,6 +262,59 @@
           </svg>
         </a>
       </div>
+
+      <!-- Host Insights (Conditional) -->
+      @if (isLandlord()) {
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 sm:col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Host Insights</h3>
+              <p class="text-sm text-slate-500">Manage your listings and requests.</p>
+            </div>
+            <a
+              routerLink="/workspace/hosting"
+              class="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors"
+            >
+              Go to Hosting Tab →
+            </a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100">
+              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                Your Listings
+              </p>
+              <div class="flex items-end gap-2">
+                <span class="text-2xl font-bold text-slate-900">
+                  {{ store.myProperties().length + store.myVehicles().length }}
+                </span>
+                <span class="text-xs text-slate-400 mb-1">Total items</span>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl bg-amber-50 border border-amber-100">
+              <p class="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">
+                Pending Requests
+              </p>
+              <div class="flex items-end gap-2">
+                <span class="text-2xl font-bold text-amber-700">
+                  {{ store.pendingBookingsCount() }}
+                </span>
+                <span class="text-xs text-amber-600 mb-1">Needs action</span>
+              </div>
+            </div>
+            <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+              <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">
+                Active Rentals
+              </p>
+              <div class="flex items-end gap-2">
+                <span class="text-2xl font-bold text-emerald-700">
+                  {{ store.activeBookingsCount() }}
+                </span>
+                <span class="text-xs text-emerald-600 mb-1">Earning now</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     </div>
 
     <!-- Upcoming bookings preview -->

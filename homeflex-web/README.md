@@ -4,19 +4,19 @@ Modern web frontend for the HomeFlex rental marketplace, built with **Angular 21
 
 ## Workspace Tabs
 
-| Tab | Route | Roles |
-|---|---|---|
-| Overview | `/workspace/overview` | All |
-| Favorites | `/workspace/favorites` | All |
-| Bookings | `/workspace/bookings` | All |
-| Messages | `/workspace/messages` | All |
-| Alerts | `/workspace/notifications` | All |
-| Settings | `/workspace/profile` | All |
-| Finance / Receipts | `/workspace/finance` | All |
-| Disputes | `/workspace/disputes` | All |
-| Insurance | `/workspace/insurance` | All |
-| Hosting | `/workspace/hosting` | Landlord / Admin |
-| Work Orders | `/workspace/maintenance` | Landlord / Admin |
+| Tab                | Route                      | Roles            |
+| ------------------ | -------------------------- | ---------------- |
+| Overview           | `/workspace/overview`      | All              |
+| Favorites          | `/workspace/favorites`     | All              |
+| Bookings           | `/workspace/bookings`      | All              |
+| Messages           | `/workspace/messages`      | All              |
+| Alerts             | `/workspace/notifications` | All              |
+| Settings           | `/workspace/profile`       | All              |
+| Finance / Receipts | `/workspace/finance`       | All              |
+| Disputes           | `/workspace/disputes`      | All              |
+| Insurance          | `/workspace/insurance`     | All              |
+| Hosting            | `/workspace/hosting`       | Landlord / Admin |
+| Work Orders        | `/workspace/maintenance`   | Landlord / Admin |
 
 ## Key Features
 
@@ -49,7 +49,7 @@ Requires Node.js 20+.
 npm install
 npm start          # Dev server on port 4200
 npm run build      # Production build
-npm test           # Unit tests (Karma/Jasmine)
+npm test           # Unit tests (Vitest)
 npm run lint       # Prettier check
 ```
 

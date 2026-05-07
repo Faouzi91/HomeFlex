@@ -30,7 +30,7 @@ description: >
 | **Clean Architecture** | Complex domain, multiple delivery mechanisms (REST + CLI + events) | "Uncle Bob", "use cases", "entities/interactors" |
 | **Feature-Sliced**     | Large frontends with many independent features                     | "Angular", "React", "feature modules"            |
 | **Vertical Slice**     | Teams own full vertical slices (UI → DB) per feature               | "CQRS", "minimal coupling", "slice per feature"  |
-| **Modular Monolith**   | Monolith with clear module boundaries ready to split               | "bounded contexts", "future microservices"        |
+| **Modular Monolith**   | Monolith with clear module boundaries ready to split               | "bounded contexts", "future microservices"       |
 | **Event-Driven**       | Async processing, outbox pattern, pub/sub                          | "RabbitMQ", "Kafka", "events", "outbox"          |
 
 ---
@@ -79,6 +79,7 @@ rental-backend/src/main/java/com/homeflex/
 ```
 
 **Rules:**
+
 - Controllers → Services → Repositories (never skip layers)
 - No `@Autowired` — use `@RequiredArgsConstructor` (Lombok)
 - One `@Entity` per table; one `Service` per aggregate root
@@ -123,6 +124,7 @@ src/main/java/com/homeflex/<domain>/
 ```
 
 **Rules:**
+
 - `domain/` package: zero Spring imports — pure business logic
 - Ports are interfaces; adapters are implementations
 - Domain model ≠ JPA entity (mapped separately in persistence adapter)
@@ -145,6 +147,7 @@ src/main/java/com/homeflex/
 ```
 
 **Rules:**
+
 - No shared service layer — each slice owns its own query/mutation logic
 - Cross-slice communication via domain events, not direct calls
 - Each slice can choose its own persistence strategy (JPA, JDBC, ES)
@@ -222,6 +225,7 @@ homeflex-web/src/app/
 ```
 
 **Component rules:**
+
 - `standalone: true` — no NgModules ever
 - `changeDetection: ChangeDetectionStrategy.OnPush` — always
 - State via `signal()` / `computed()` / NgRx Signal Store — no `BehaviorSubject`
@@ -447,6 +451,7 @@ lib/
 ```
 
 **Flutter rules:**
+
 - State via Riverpod `AsyncNotifierProvider` — no `setState` in page-level widgets
 - Domain layer: zero Flutter imports — plain Dart
 - All models use `freezed` for immutability and `json_serializable` for JSON

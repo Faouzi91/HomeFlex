@@ -99,3 +99,12 @@ rental-backend/${project.build.directory}/
 **/google-services.json
 
 *.zip
+
+# Local debug / scratch artefacts (do not commit)
+.codex
+rental-backend/TestCsrf.java
+rental-backend/build_errors.txt
+rental-backend/compile_errors.txt
+rental-backend/compile_output.txt
+scripts/jar.txt
+scripts/test-csrf*.sh

@@ -59,14 +59,16 @@ export class AppHeaderComponent {
   );
 
   constructor() {
-    this.translate.onLangChange.subscribe((event) => {
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
       this.currentLang.set(event.lang);
     });
-    this.translate.onDefaultLangChange.subscribe((event) => {
-      if (!this.translate.currentLang) {
-        this.currentLang.set(event.lang);
-      }
-    });
+    this.translate.onDefaultLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        if (!this.translate.currentLang) {
+          this.currentLang.set(event.lang);
+        }
+      });
 
     // Sync language from user's backend preference when authenticated
     effect(() => {

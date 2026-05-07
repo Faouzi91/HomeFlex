@@ -9,6 +9,7 @@ import com.homeflex.features.vehicle.dto.response.ConditionReportResponse;
 import com.homeflex.features.vehicle.dto.response.VehicleBookingResponse;
 import com.homeflex.features.vehicle.dto.response.VehicleImageDto;
 import com.homeflex.features.vehicle.dto.response.VehicleResponse;
+import com.homeflex.core.mapper.UserMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -16,7 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
 public interface VehicleMapper {
 
     @Mapping(target = "transmission", expression = "java(vehicle.getTransmission() != null ? vehicle.getTransmission().name() : null)")
@@ -31,6 +32,9 @@ public interface VehicleMapper {
 
     ConditionReportResponse toConditionReportResponse(ConditionReport report);
 
+    @Mapping(target = "vehicle", source = "vehicle")
+    @Mapping(target = "tenant", source = "tenant", qualifiedByName = "public")
+    @Mapping(target = "stripePaymentIntentId", source = "stripePaymentIntentId")
     VehicleBookingResponse toBookingResponse(VehicleBooking booking);
 
     default List<VehicleBookingResponse> toBookingResponseList(List<VehicleBooking> bookings) {

@@ -13,7 +13,7 @@ import { FavoriteApi } from '../../../../core/api/services/favorite.api';
 import { ReviewApi } from '../../../../core/api/services/review.api';
 import { ChatApi } from '../../../../core/api/services/chat.api';
 import { HttpClient } from '@angular/common/http';
-import { Booking, Property, Review } from '../../../../core/models/api.types';
+import { Booking, Property, Review, RoomType } from '../../../../core/models/api.types';
 import { NotificationService } from '../../../../core/service/notification.service';
 import { SessionStore } from '../../../../core/state/session.store';
 import {
@@ -47,6 +47,7 @@ export class PropertyDetailPageComponent {
   private readonly notifications = inject(NotificationService);
 
   protected readonly property = signal<Property | null>(null);
+  protected readonly roomTypes = signal<RoomType[]>([]);
   protected readonly reviews = signal<Review[]>([]);
   protected readonly similar = signal<Property[]>([]);
   protected readonly favorite = signal(false);
@@ -67,10 +68,18 @@ export class PropertyDetailPageComponent {
     endDate: [''],
     numberOfOccupants: [1],
     message: [''],
+    roomTypeId: [''],
+    numberOfRooms: [1, [Validators.min(1)]],
   });
 
   protected readonly reviewForm = this.fb.group({
     rating: [5, [Validators.required, Validators.min(1), Validators.max(5)]],
+    cleanlinessRating: [null as number | null, [Validators.min(1), Validators.max(5)]],
+    accuracyRating: [null as number | null, [Validators.min(1), Validators.max(5)]],
+    communicationRating: [null as number | null, [Validators.min(1), Validators.max(5)]],
+    locationRating: [null as number | null, [Validators.min(1), Validators.max(5)]],
+    checkinRating: [null as number | null, [Validators.min(1), Validators.max(5)]],
+    valueRating: [null as number | null, [Validators.min(1), Validators.max(5)]],
     comment: ['', Validators.maxLength(1000)],
   });
 
@@ -81,6 +90,10 @@ export class PropertyDetailPageComponent {
 
   protected readonly propertyId = computed(() => this.property()?.id ?? '');
   protected readonly isInstantBook = computed(() => this.property()?.instantBookEnabled ?? false);
+  protected readonly isHotelType = computed(() => {
+    const t = this.property()?.propertyType;
+    return t === 'HOTEL' || t === 'GUESTHOUSE' || t === 'HOSTEL' || t === 'RESORT';
+  });
 
   protected readonly nightsEstimate = computed(() => {
     const fv = this.formValue();
@@ -128,18 +141,16 @@ export class PropertyDetailPageComponent {
     }
 
     // Handle retry payment flow: ?retryBookingId=&clientSecret=
-    this.route.queryParams
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((params) => {
-        const secret = params['clientSecret'];
-        if (secret && isPlatformBrowser(this.platformId)) {
-          this.pendingPaymentSecret.set(secret);
-          this.bookingMessage.set('Payment failed previously — complete payment below to confirm.');
-          // Wait for DOM + Stripe; initStripe() sets this.stripe asynchronously
-          setTimeout(() => this.mountPaymentElement(secret), 300);
-          this.router.navigate([], { queryParams: {}, replaceUrl: true });
-        }
-      });
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const secret = params['clientSecret'];
+      if (secret && isPlatformBrowser(this.platformId)) {
+        this.pendingPaymentSecret.set(secret);
+        this.bookingMessage.set('Payment failed previously — complete payment below to confirm.');
+        // Wait for DOM + Stripe; initStripe() sets this.stripe asynchronously
+        setTimeout(() => this.mountPaymentElement(secret), 300);
+        this.router.navigate([], { queryParams: {}, replaceUrl: true });
+      }
+    });
 
     this.route.paramMap
       .pipe(
@@ -184,6 +195,16 @@ export class PropertyDetailPageComponent {
           response.similar.data.filter((item) => item.id !== response.property.id).slice(0, 3),
         );
         this.favorite.set(response.favorite.data);
+
+        if (this.isHotelType()) {
+          this.propertyApi
+            .getRoomTypes(response.property.id)
+            .pipe(
+              catchError(() => of({ data: [] as RoomType[] })),
+              takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => this.roomTypes.set(res.data));
+        }
 
         if (isPlatformBrowser(this.platformId)) {
           setTimeout(() => this.initMap(), 0);
@@ -307,6 +328,8 @@ export class PropertyDetailPageComponent {
       endDate: form.endDate ?? null,
       numberOfOccupants: form.numberOfOccupants ?? null,
       message: form.message ?? null,
+      roomTypeId: this.isHotelType() ? form.roomTypeId || null : null,
+      numberOfRooms: this.isHotelType() ? (form.numberOfRooms ?? 1) : null,
     };
 
     this.bookingApi
@@ -387,6 +410,12 @@ export class PropertyDetailPageComponent {
       .create({
         propertyId,
         rating: Number(form.rating),
+        cleanlinessRating: form.cleanlinessRating ?? undefined,
+        accuracyRating: form.accuracyRating ?? undefined,
+        communicationRating: form.communicationRating ?? undefined,
+        locationRating: form.locationRating ?? undefined,
+        checkinRating: form.checkinRating ?? undefined,
+        valueRating: form.valueRating ?? undefined,
         comment: form.comment ?? '',
       })
       .pipe(
@@ -401,7 +430,16 @@ export class PropertyDetailPageComponent {
       .subscribe(({ reviews, average }) => {
         this.reviews.set(reviews.data);
         this.averageRating.set(average.data);
-        this.reviewForm.patchValue({ rating: 5, comment: '' });
+        this.reviewForm.patchValue({
+          rating: 5,
+          cleanlinessRating: null,
+          accuracyRating: null,
+          communicationRating: null,
+          locationRating: null,
+          checkinRating: null,
+          valueRating: null,
+          comment: '',
+        });
       });
   }
 

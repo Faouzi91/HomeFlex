@@ -39,7 +39,9 @@ export class InsuranceTabComponent {
 
   constructor() {
     forkJoin({
-      tenant: this.insuranceApi.getPlans('TENANT').pipe(catchError(() => of([] as InsurancePlan[]))),
+      tenant: this.insuranceApi
+        .getPlans('TENANT')
+        .pipe(catchError(() => of([] as InsurancePlan[]))),
       landlord: this.insuranceApi
         .getPlans('LANDLORD')
         .pipe(catchError(() => of([] as InsurancePlan[]))),
